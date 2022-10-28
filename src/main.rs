@@ -8,11 +8,18 @@ use rayon::prelude::*;
 
 use clap::Parser;
 use regex::Regex;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Parser)]
 struct SearchArgs {
     #[clap(help = "The pattern to search for (can be a regex)")]
     pattern: Regex,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+struct Manifest {
+    /// The only thing we actually need
+    version: String,
 }
 
 fn get_scoop_path() -> PathBuf {
