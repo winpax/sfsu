@@ -8,10 +8,6 @@ edition = "2021"
 strip = true
 codegen-units = 1
 
-[[bin]]
-name = "scoop-search"
-path = "src/main.rs"
-
 [dependencies]
 clap = { version = "4.0.18", features = ["derive"] }
 dirs = "4.0.0"
