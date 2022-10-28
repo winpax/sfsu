@@ -4,6 +4,10 @@ description = "Stupid Fast Scoop Search"
 version = "0.1.0"
 edition = "2021"
 
+[profile.release]
+strip = true
+codegen-units = 1
+
 [[bin]]
 name = "scoop-search"
 path = "src/main.rs"
