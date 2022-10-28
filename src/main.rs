@@ -1,4 +1,5 @@
 use std::{
+    ffi::OsString,
     fs::read_dir,
     io::{Error, Result},
     path::PathBuf,
@@ -68,6 +69,20 @@ fn main() -> Result<()> {
         .collect::<Result<Vec<_>>>()?;
 
     matches.par_sort_by_key(|x| x.0.clone());
+
+    let mut old_bucket = OsString::new();
+
+    for (bucket, matches) in matches {
+        if bucket != old_bucket {
+            println!("{} bucket:", bucket.to_string_lossy());
+
+            old_bucket = bucket;
+        }
+
+        for mtch in matches {
+            println!("  {}", mtch);
+        }
+    }
 
     Ok(())
 }
