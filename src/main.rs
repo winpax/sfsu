@@ -15,6 +15,9 @@ use serde::{Deserialize, Serialize};
 struct SearchArgs {
     #[clap(help = "The pattern to search for (can be a regex)")]
     pattern: Regex,
+
+    #[clap(help = "Print the Powershell hook")]
+    hook: bool,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -34,6 +37,11 @@ fn main() -> Result<()> {
     let scoop_buckets_path = scoop_path.join("buckets");
 
     let args = SearchArgs::parse();
+
+    if args.hook {
+        const HOOK: &str = r#"function scoop { if ($args[0] -eq "search") { scoop-search.exe @($args | Select-Object -Skip 1) } else { scoop.ps1 @args } }"#;
+        print!("{HOOK}");
+    }
 
     let scoop_buckets = read_dir(scoop_buckets_path)?.collect::<Result<Vec<_>>>()?;
 
