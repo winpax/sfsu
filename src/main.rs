@@ -38,12 +38,13 @@ fn main() -> Result<()> {
 
     let args = SearchArgs::parse();
 
-    let pattern = args.pattern.unwrap();
-
     if args.hook {
         const HOOK: &str = r#"function scoop { if ($args[0] -eq "search") { sfss.exe @($args | Select-Object -Skip 1) } else { scoop.ps1 @args } }"#;
         print!("{HOOK}");
+        return Ok(());
     }
+
+    let pattern = args.pattern.expect("No pattern provided");
 
     let scoop_buckets = read_dir(scoop_buckets_path)?.collect::<Result<Vec<_>>>()?;
 
