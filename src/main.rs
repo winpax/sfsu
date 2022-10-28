@@ -1,7 +1,7 @@
 use std::{
     ffi::OsString,
-    fs::read_dir,
-    io::{Error, Result},
+    fs::{read_dir, File},
+    io::{Error, Read, Result},
     path::PathBuf,
 };
 
@@ -63,8 +63,18 @@ fn main() -> Result<()> {
                     // This may be a bit of a hack, but it works
                     let path = file.path().with_extension("");
                     let file_name = path.file_name();
+                    let package = file_name.unwrap().to_string_lossy().to_string();
 
-                    file_name.unwrap().to_string_lossy().to_string()
+                    let mut buf = String::new();
+
+                    File::open(file.path())
+                        .unwrap()
+                        .read_to_string(&mut buf)
+                        .unwrap();
+
+                    let manifest: Manifest = serde_json::from_str(&buf).unwrap();
+
+                    format!("{} ({})", package, manifest.version)
                 })
                 .collect::<Vec<_>>();
 
