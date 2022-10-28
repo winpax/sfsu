@@ -60,10 +60,11 @@ fn main() -> Result<()> {
                     args.pattern.is_match(&path)
                 })
                 .map(|file| {
-                    let path_raw = file.file_name();
-                    let path = path_raw.as_os_str().to_string_lossy();
+                    // This may be a bit of a hack, but it works
+                    let path = file.path().with_extension("");
+                    let file_name = path.file_name();
 
-                    path.to_string()
+                    file_name.unwrap().to_string_lossy().to_string()
                 })
                 .collect::<Vec<_>>();
 
