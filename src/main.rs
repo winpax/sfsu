@@ -1,4 +1,10 @@
-use std::{fs::read_dir, io::Result, path::PathBuf};
+use std::{
+    fs::read_dir,
+    io::{Error, Result},
+    path::PathBuf,
+};
+
+use rayon::prelude::*;
 
 use clap::Parser;
 use regex::Regex;
@@ -23,22 +29,27 @@ fn main() -> Result<()> {
 
     let scoop_buckets = read_dir(scoop_buckets_path)?.collect::<Result<Vec<_>>>()?;
 
-    for bucket in scoop_buckets {
-        let bucket_path = if bucket.path().join("bucket").exists() {
-            bucket.path().join("bucket")
-        } else {
-            bucket.path()
-        };
+    scoop_buckets
+        .par_iter()
+        .map(|bucket| {
+            let bucket_path = if bucket.path().join("bucket").exists() {
+                bucket.path().join("bucket")
+            } else {
+                bucket.path()
+            };
 
-        let bucket_contents = read_dir(bucket_path)?.collect::<Result<Vec<_>>>()?;
+            let bucket_contents = read_dir(bucket_path)?.collect::<Result<Vec<_>>>()?;
 
-        let matches = bucket_contents.iter().filter(|file| {
-            let path_raw = file.path();
-            let path = path_raw.as_os_str().to_string_lossy();
+            let matches = bucket_contents.iter().filter(|file| {
+                let path_raw = file.path();
+                let path = path_raw.as_os_str().to_string_lossy();
 
-            args.pattern.is_match(&path)
-        });
-    }
+                args.pattern.is_match(&path)
+            });
+
+            Ok::<_, Error>(())
+        })
+        .collect::<Result<_>>()?;
 
     Ok(())
 }
