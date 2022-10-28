@@ -11,7 +11,7 @@ use regex::Regex;
 
 #[derive(Debug, Parser)]
 struct SearchArgs {
-    #[clap(help = "The pattern to search for")]
+    #[clap(help = "The pattern to search for (can be a regex)")]
     pattern: Regex,
 }
 
@@ -29,7 +29,7 @@ fn main() -> Result<()> {
 
     let scoop_buckets = read_dir(scoop_buckets_path)?.collect::<Result<Vec<_>>>()?;
 
-    scoop_buckets
+    let matches = scoop_buckets
         .par_iter()
         .map(|bucket| {
             let bucket_path = if bucket.path().join("bucket").exists() {
@@ -40,16 +40,25 @@ fn main() -> Result<()> {
 
             let bucket_contents = read_dir(bucket_path)?.collect::<Result<Vec<_>>>()?;
 
-            let matches = bucket_contents.iter().filter(|file| {
-                let path_raw = file.path();
-                let path = path_raw.as_os_str().to_string_lossy();
+            let matches = bucket_contents
+                .par_iter()
+                .filter(|file| {
+                    let path_raw = file.path();
+                    let path = path_raw.as_os_str().to_string_lossy();
 
-                args.pattern.is_match(&path)
-            });
+                    args.pattern.is_match(&path)
+                })
+                .map(|file| {
+                    let path_raw = file.path();
+                    let path = path_raw.as_os_str().to_string_lossy();
 
-            Ok::<_, Error>(())
+                    path.to_string()
+                })
+                .collect::<Vec<_>>();
+
+            Ok::<_, Error>((bucket.file_name(), matches))
         })
-        .collect::<Result<_>>()?;
+        .collect::<Result<Vec<_>>>()?;
 
     Ok(())
 }
