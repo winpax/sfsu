@@ -39,7 +39,7 @@ fn main() -> Result<()> {
     let args = SearchArgs::parse();
 
     if args.hook {
-        const HOOK: &str = r#"function scoop { if ($args[0] -eq "search") { scoop-search.exe @($args | Select-Object -Skip 1) } else { scoop.ps1 @args } }"#;
+        const HOOK: &str = r#"function scoop { if ($args[0] -eq "search") { sfss.exe @($args | Select-Object -Skip 1) } else { scoop.ps1 @args } }"#;
         print!("{HOOK}");
     }
 
