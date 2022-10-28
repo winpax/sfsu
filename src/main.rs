@@ -39,14 +39,17 @@ fn main() -> Result<()> {
 
     let mut matches = scoop_buckets
         .par_iter()
-        .map(|bucket| {
+        .filter_map(|bucket| {
             let bucket_path = if bucket.path().join("bucket").exists() {
                 bucket.path().join("bucket")
             } else {
                 bucket.path()
             };
 
-            let bucket_contents = read_dir(bucket_path)?.collect::<Result<Vec<_>>>()?;
+            let bucket_contents = read_dir(bucket_path)
+                .unwrap()
+                .collect::<Result<Vec<_>>>()
+                .unwrap();
 
             let matches = bucket_contents
                 .par_iter()
@@ -57,14 +60,18 @@ fn main() -> Result<()> {
                     args.pattern.is_match(&path)
                 })
                 .map(|file| {
-                    let path_raw = file.path();
+                    let path_raw = file.file_name();
                     let path = path_raw.as_os_str().to_string_lossy();
 
                     path.to_string()
                 })
                 .collect::<Vec<_>>();
 
-            Ok::<_, Error>((bucket.file_name(), matches))
+            if matches.is_empty() {
+                None
+            } else {
+                Some(Ok::<_, Error>((bucket.file_name(), matches)))
+            }
         })
         .collect::<Result<Vec<_>>>()?;
 
@@ -74,7 +81,7 @@ fn main() -> Result<()> {
 
     for (bucket, matches) in matches {
         if bucket != old_bucket {
-            println!("{} bucket:", bucket.to_string_lossy());
+            println!("\n'{}' bucket:", bucket.to_string_lossy());
 
             old_bucket = bucket;
         }
