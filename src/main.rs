@@ -36,7 +36,7 @@ fn main() -> Result<()> {
 
     let scoop_buckets = read_dir(scoop_buckets_path)?.collect::<Result<Vec<_>>>()?;
 
-    let matches = scoop_buckets
+    let mut matches = scoop_buckets
         .par_iter()
         .map(|bucket| {
             let bucket_path = if bucket.path().join("bucket").exists() {
@@ -66,6 +66,8 @@ fn main() -> Result<()> {
             Ok::<_, Error>((bucket.file_name(), matches))
         })
         .collect::<Result<Vec<_>>>()?;
+
+    matches.par_sort_by_key(|x| x.0.clone());
 
     Ok(())
 }
