@@ -16,7 +16,7 @@ struct SearchArgs {
     #[clap(help = "The pattern to search for (can be a regex)")]
     pattern: Regex,
 
-    #[clap(help = "Print the Powershell hook")]
+    #[clap(short, long, help = "Print the Powershell hook")]
     hook: bool,
 }
 
