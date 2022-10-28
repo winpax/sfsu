@@ -92,7 +92,12 @@ fn main() -> Result<()> {
 
     for (bucket, matches) in matches {
         if bucket != old_bucket {
-            println!("\n'{}' bucket:", bucket.to_string_lossy());
+            // Do not print the newline on the first bucket
+            if old_bucket != OsString::new() {
+                println!();
+            }
+
+            println!("'{}' bucket:", bucket.to_string_lossy());
 
             old_bucket = bucket;
         }
