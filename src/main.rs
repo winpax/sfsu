@@ -63,7 +63,7 @@ fn parse_output(file: &DirEntry, bucket: impl AsRef<str>) -> String {
         package,
         manifest.version,
         if is_installed(&package, bucket) {
-            "[Installed]"
+            "[installed]"
         } else {
             ""
         }
