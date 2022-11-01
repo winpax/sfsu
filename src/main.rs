@@ -2,7 +2,7 @@ use std::{
     ffi::OsString,
     fs::{read_dir, DirEntry, File},
     io::{Error, Read, Result},
-    path::PathBuf,
+    path::{Path, PathBuf},
 };
 
 use rayon::prelude::*;
@@ -25,8 +25,14 @@ struct SearchArgs {
 
 #[derive(Debug, Deserialize, Serialize)]
 struct Manifest {
-    /// The only thing we actually need
+    /// The version of the package
     version: String,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+struct InstallManifest {
+    /// The bucket the package was installed from
+    bucket: String,
 }
 
 fn get_scoop_path() -> PathBuf {
@@ -37,7 +43,7 @@ fn get_scoop_path() -> PathBuf {
 
 // TODO: Add installed marker
 
-fn parse_output(file: &DirEntry) -> String {
+fn parse_output(file: &DirEntry, bucket: impl AsRef<str>) -> String {
     // This may be a bit of a hack, but it works
     let path = file.path().with_extension("");
     let file_name = path.file_name();
@@ -52,7 +58,39 @@ fn parse_output(file: &DirEntry) -> String {
 
     let manifest: Manifest = serde_json::from_str(&buf).unwrap();
 
-    format!("{} ({})", package, manifest.version)
+    format!(
+        "{} ({}) {}",
+        package,
+        manifest.version,
+        if is_installed(&package, bucket) {
+            "[Installed]"
+        } else {
+            ""
+        }
+    )
+}
+
+fn is_installed(manifest_name: impl AsRef<Path>, bucket: impl AsRef<str>) -> bool {
+    let scoop_path = get_scoop_path();
+    let installed_path = scoop_path
+        .join("apps")
+        .join(manifest_name)
+        .join("current/install.json");
+
+    if installed_path.exists() {
+        let mut buf = String::new();
+
+        File::open(installed_path)
+            .unwrap()
+            .read_to_string(&mut buf)
+            .unwrap();
+
+        let manifest: InstallManifest = serde_json::from_str(&buf).unwrap();
+
+        manifest.bucket == bucket.as_ref()
+    } else {
+        false
+    }
 }
 
 fn main() -> Result<()> {
@@ -85,7 +123,7 @@ fn main() -> Result<()> {
             .filter_map(|file| {
                 if let Ok(file) = file {
                     if pattern.is_match(&file.path().to_string_lossy()) {
-                        return Some(parse_output(&file));
+                        return Some(parse_output(&file, &bucket));
                     }
                 }
 
@@ -132,7 +170,7 @@ fn main() -> Result<()> {
 
                     pattern.is_match(&path)
                 })
-                .map(parse_output)
+                .map(|x| parse_output(x, bucket.file_name().to_string_lossy()))
                 .collect::<Vec<_>>();
 
             if matches.is_empty() {
