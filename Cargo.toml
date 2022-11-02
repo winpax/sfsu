@@ -17,6 +17,7 @@ strip = true
 codegen-units = 1
 
 [dependencies]
+chrono = { version = "0.4.22", features = ["serde"] }
 clap = { version = "4.0.18", features = ["derive"] }
 dirs = "4.0.0"
 rayon = "1.5.3"
