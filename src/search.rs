@@ -2,7 +2,7 @@ use std::{
     ffi::OsString,
     fs::{read_dir, DirEntry, File},
     io::{Error, Read, Result},
-    path::{Path, PathBuf},
+    path::Path,
 };
 
 use rayon::prelude::*;
@@ -10,6 +10,7 @@ use rayon::prelude::*;
 use clap::Parser;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
+use sfst::get_scoop_path;
 
 #[derive(Debug, Parser)]
 struct SearchArgs {
@@ -33,12 +34,6 @@ struct Manifest {
 struct InstallManifest {
     /// The bucket the package was installed from
     bucket: String,
-}
-
-fn get_scoop_path() -> PathBuf {
-    let home_dir = dirs::home_dir().unwrap_or_else(|| panic!("Could not find home directory"));
-
-    home_dir.join("scoop")
 }
 
 // TODO: Add installed marker
