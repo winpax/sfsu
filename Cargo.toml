@@ -4,6 +4,10 @@ description = "Stupid Fast Scoop Search"
 version = "1.0.0"
 edition = "2021"
 
+[[bin]]
+name = "sfss"
+path = "src/search.rs"
+
 [profile.release]
 strip = true
 codegen-units = 1
