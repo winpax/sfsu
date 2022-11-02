@@ -1,4 +1,4 @@
-use std::{env, path::PathBuf};
+use std::{env, path::PathBuf, process::Command};
 
 use serde::{Deserialize, Serialize};
 
@@ -38,6 +38,18 @@ impl ScoopConfig {
         }
 
         path
+    }
+
+    pub fn update_last_update_time(&mut self) {
+        let date_time = Command::new("powershell.exe")
+            .args(["-Command", "[System.DateTime]::Now.ToString('o')"])
+            .output()
+            .expect("Failed to get time from powershell");
+
+        let stdout_raw = date_time.stdout;
+        let stdout = String::from_utf8(stdout_raw).unwrap();
+
+        self.last_update = Some(stdout);
     }
 
     pub fn save(&self) -> std::io::Result<()> {
