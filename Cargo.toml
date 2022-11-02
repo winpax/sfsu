@@ -8,6 +8,10 @@ edition = "2021"
 name = "sfss"
 path = "src/search.rs"
 
+[[bin]]
+name = "sfsu"
+path = "src/update.rs"
+
 [profile.release]
 strip = true
 codegen-units = 1
