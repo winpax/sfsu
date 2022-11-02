@@ -39,4 +39,14 @@ impl ScoopConfig {
 
         path
     }
+
+    pub fn save(&self) -> std::io::Result<()> {
+        let config_path = ScoopConfig::get_path();
+
+        let config = serde_json::to_string_pretty(self)?;
+
+        std::fs::write(config_path, config)?;
+
+        Ok(())
+    }
 }
