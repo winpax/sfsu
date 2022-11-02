@@ -368,7 +368,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "sfss"
+name = "sfst"
 version = "1.0.0"
 dependencies = [
  "clap",

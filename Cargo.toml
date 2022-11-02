@@ -1,6 +1,6 @@
 [package]
-name = "sfss"
-description = "Stupid Fast Scoop Search"
+name = "sfst"
+description = "Stupid Fast Scoop Tools"
 version = "1.0.0"
 edition = "2021"
 
