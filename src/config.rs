@@ -11,7 +11,7 @@ pub struct ScoopConfig {
 }
 
 impl ScoopConfig {
-    pub fn read() -> std::io::Result<ScoopConfig> {
+    pub fn read() -> std::io::Result<Self> {
         let config_path = ScoopConfig::get_path();
 
         let config = std::fs::read_to_string(config_path)?;
