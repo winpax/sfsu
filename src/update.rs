@@ -1,3 +1,7 @@
-use sfst::config::get_config_path;
+use sfst::config::ScoopConfig;
 
-fn main() {}
+fn main() {
+    let mut config = ScoopConfig::read().unwrap();
+    config.update_last_update_time();
+    config.save().unwrap();
+}

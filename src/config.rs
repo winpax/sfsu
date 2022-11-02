@@ -47,7 +47,12 @@ impl ScoopConfig {
             .expect("Failed to get time from powershell");
 
         let stdout_raw = date_time.stdout;
-        let stdout = String::from_utf8(stdout_raw).unwrap();
+        let mut stdout = String::from_utf8(stdout_raw).unwrap();
+
+        // Remove '\r' from the end of the string
+        stdout.pop();
+        // Remove '\n' from the end of the string
+        stdout.pop();
 
         self.last_update = Some(stdout);
     }
