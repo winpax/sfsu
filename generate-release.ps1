@@ -29,7 +29,21 @@ foreach ($i in $items) {
     mv $i.Name "../$NewName";
 }
 
-cd ../..
+cd ../
 
-rm -r release/64bit
-rm -r release/32bit
+rm -r 64bit
+rm -r 32bit
+
+$items = Get-ChildItem;
+
+foreach ($i in $items) {
+    $ExeName = $i.Name;
+    $HashFile = "$ExeName.sha256"
+    touch $HashFile;
+
+    $Hash = Get-FileHash $ExeName;
+
+    $Hash | Out-File $HashFile;
+}
+
+cd ..
