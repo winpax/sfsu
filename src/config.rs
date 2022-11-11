@@ -2,6 +2,8 @@ use std::{env, path::PathBuf, process::Command};
 
 use serde::{Deserialize, Serialize};
 
+use crate::get_powershell_path;
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ScoopConfig {
     pub last_update: Option<String>,
@@ -41,7 +43,8 @@ impl ScoopConfig {
     }
 
     pub fn update_last_update_time(&mut self) {
-        let date_time = Command::new("powershell.exe")
+        // TODO: Move to using chrono for time serialization
+        let date_time = Command::new(get_powershell_path().unwrap())
             .args(["-Command", "[System.DateTime]::Now.ToString('o')"])
             .output()
             .expect("Failed to get time from powershell");
