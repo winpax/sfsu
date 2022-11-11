@@ -17,7 +17,7 @@ You may set up the hook to use the `scoop search` command normally and have it u
 Add the following to your Powershell profile
 
 ```powershell
-Invoke-Expression (&scoop-search --hook)
+Invoke-Expression (&sfss --hook)
 ```
 
 ## Benchmarks
