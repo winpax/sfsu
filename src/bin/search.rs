@@ -15,8 +15,15 @@ use sfst::{
 
 #[derive(Debug, Parser)]
 struct SearchArgs {
-    #[clap(help = "The pattern to search for (can be a regex)")]
-    pattern: Option<Regex>,
+    #[clap(help = "The regex pattern to search for, using Rust Regex syntax")]
+    pattern: Option<String>,
+
+    #[clap(
+        short = 'C',
+        long,
+        help = "Whether or not the pattern should match case-sensitively"
+    )]
+    case_sensitive: bool,
 
     #[clap(short, long, help = "The bucket to exclusively search in")]
     bucket: Option<String>,
@@ -65,7 +72,17 @@ fn main() -> Result<()> {
         return Ok(());
     }
 
-    let pattern = args.pattern.expect("No pattern provided");
+    let pattern = {
+        if let Some(pattern) = args.pattern {
+            Regex::new(&format!(
+                "{case}{pattern}",
+                case = if !args.case_sensitive { "(?i)" } else { "" }
+            ))
+            .expect("Invalid Regex provided. See https://docs.rs/regex/latest/regex/ for more info")
+        } else {
+            panic!("No pattern provided")
+        }
+    };
 
     if let Some(bucket) = args.bucket {
         let path = {
