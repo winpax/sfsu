@@ -13,3 +13,15 @@ pub fn get_scoop_path() -> PathBuf {
 pub mod buckets;
 
 pub mod packages;
+
+pub fn get_powershell_path() -> anyhow::Result<PathBuf> {
+    use which::which;
+
+    if let Ok(path) = which("pwsh") {
+        Ok(path)
+    } else if let Ok(path) = which("powershell") {
+        Ok(path)
+    } else {
+        Err(anyhow::anyhow!("Could not find powershell"))
+    }
+}

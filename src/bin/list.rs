@@ -10,6 +10,7 @@ use sfst::{
 };
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 struct OutputPackage {
     name: String,
     version: String,
@@ -76,7 +77,13 @@ fn main() -> anyhow::Result<()> {
         })
         .collect::<Result<Vec<_>, _>>()?;
 
-    let output_json = serde_json::to_string(output);
+    if args.json {
+        let output_json = serde_json::to_string_pretty(&outputs)?;
+
+        println!("{output_json}");
+    } else {
+        let output = serde_json::to_string(&outputs)?;
+    }
 
     Ok(())
 }
