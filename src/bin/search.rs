@@ -8,15 +8,15 @@ use rayon::prelude::*;
 
 use clap::Parser;
 use regex::Regex;
-use sfst::{buckets::is_installed, get_scoop_path, packages::Manifest};
+use sfst::{
+    get_scoop_path,
+    packages::{is_installed, Manifest},
+};
 
 #[derive(Debug, Parser)]
 struct SearchArgs {
     #[clap(help = "The regex pattern to search for, using Rust Regex syntax")]
     pattern: Option<String>,
-
-    #[clap(long, help = "Print the Powershell hook")]
-    hook: bool,
 
     #[clap(
         short = 'C',
@@ -27,6 +27,9 @@ struct SearchArgs {
 
     #[clap(short, long, help = "The bucket to exclusively search in")]
     bucket: Option<String>,
+
+    #[clap(long, help = "Print the Powershell hook")]
+    hook: bool,
 }
 
 // TODO: Add installed marker
@@ -50,7 +53,7 @@ fn parse_output(file: &DirEntry, bucket: impl AsRef<str>) -> String {
         "{} ({}) {}",
         package,
         manifest.version,
-        if is_installed(&package, bucket) {
+        if is_installed(&package, Some(bucket)) {
             "[installed]"
         } else {
             ""

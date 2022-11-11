@@ -1,16 +1,20 @@
 [package]
 name = "sfst"
 description = "Stupid Fast Scoop Tools"
-version = "1.0.0"
+version = "1.1.0"
 edition = "2021"
 
 [[bin]]
 name = "sfss"
-path = "src/search.rs"
+path = "src/bin/search.rs"
 
 [[bin]]
 name = "sfsu"
-path = "src/update.rs"
+path = "src/bin/update.rs"
+
+[[bin]]
+name = "sfsl"
+path = "src/bin/list.rs"
 
 [profile.release]
 strip = true

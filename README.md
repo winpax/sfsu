@@ -1,6 +1,6 @@
-# *S*tupid *F*ast *S*coop *S*earch
+# *S*tupid *F*ast *S*coop *U*tils
 
-Super fast `scoop search` replacement written in Rust
+Super fast replacements for scoop commands written in Rust
 
 ## Installation
 
@@ -12,12 +12,12 @@ scoop install sfss
 
 ## Hook
 
-You may set up the hook to use the `scoop search` command normally and have it use `sfss` instead
+You may set up the hooks to use the `scoop search` command normally and have it use `sfss` instead
 
 Add the following to your Powershell profile
 
 ```powershell
-Invoke-Expression (&scoop-search --hook)
+Invoke-Expression (&sfss --hook)
 ```
 
 ## Benchmarks
@@ -53,7 +53,7 @@ Summary
 ```powershell
 dorado      https://github.com/chawyehsu/dorado
 extras      https://github.com/ScoopInstaller/Extras
-games       ~\scoop\buckets\games
+games       https://github.com/Calinou/scoop-games
 java        https://github.com/ScoopInstaller/Java
 lemon       https://github.com/hoilc/scoop-lemon
 main        https://github.com/ScoopInstaller/Main
@@ -71,4 +71,3 @@ wsl         https://github.com/KNOXDEV/wsl
 ```
 
 **Made with 💗 by Juliette Cordor**
-
