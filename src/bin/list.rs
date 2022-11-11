@@ -1,8 +1,8 @@
-use std::{os::windows::prelude::MetadataExt, process::Command, time::UNIX_EPOCH};
+use std::{process::Command, time::UNIX_EPOCH};
 
 use rayon::prelude::*;
 
-use chrono::{DateTime, FixedOffset, NaiveDateTime, TimeZone};
+use chrono::{DateTime, FixedOffset, NaiveDateTime};
 use clap::Parser;
 use serde::{Deserialize, Serialize};
 use sfst::{
