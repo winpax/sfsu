@@ -11,11 +11,12 @@ cp target/x86_64-pc-windows-gnu/release/*.exe release/64bit
 
 cd release/64bit;
 
-$items = Get-ChildItem;
-foreach ($i in $items) {
-    $NewName = $i.Name.Replace(".exe", "-x86_64.exe");
-    mv $i.Name "../$NewName";
-}
+7z a 'all-x86_64' '*.exe'
+
+$Hash = Get-FileHash all-x86_64.7z
+$Hash | Out-File all-x86_64.7z.sha256
+
+mv *.7z* ../
 
 cd ../..
 
@@ -23,27 +24,11 @@ cp target/x86_64-pc-windows-gnu/release/*.exe release/32bit
 
 cd release/32bit
 
-$items = Get-ChildItem;
-foreach ($i in $items) {
-    $NewName = $i.Name.Replace(".exe", "-i686.exe");
-    mv $i.Name "../$NewName";
-}
+7z a 'all-i686' '*.exe'
 
-cd ../
+$Hash = Get-FileHash all-i686.7z
+$Hash | Out-File all-i686.7z.sha256
 
-rm -r 64bit
-rm -r 32bit
+mv *.7z* ../
 
-$items = Get-ChildItem;
-
-foreach ($i in $items) {
-    $ExeName = $i.Name;
-    $HashFile = "$ExeName.sha256"
-    touch $HashFile;
-
-    $Hash = Get-FileHash $ExeName;
-
-    $Hash | Out-File $HashFile;
-}
-
-cd ..
+cd ../..
