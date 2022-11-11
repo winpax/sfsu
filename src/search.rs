@@ -19,7 +19,7 @@ struct SearchArgs {
     hook: bool,
 
     #[clap(
-        short,
+        short = 'C',
         long,
         help = "Whether or not the pattern should match case-sensitively"
     )]
