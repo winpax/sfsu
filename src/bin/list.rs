@@ -1,11 +1,11 @@
-use std::os::windows::prelude::MetadataExt;
+use std::{os::windows::prelude::MetadataExt, process::Command};
 
 use chrono::{DateTime, FixedOffset, NaiveDateTime};
 use clap::Parser;
 use serde::{Deserialize, Serialize};
 use sfst::{
     buckets::Bucket,
-    get_scoop_path,
+    get_powershell_path, get_scoop_path,
     packages::{FromPath, InstallManifest, Manifest},
 };
 
@@ -83,6 +83,9 @@ fn main() -> anyhow::Result<()> {
         println!("{output_json}");
     } else {
         let output = serde_json::to_string(&outputs)?;
+
+        let pwsh_path = get_powershell_path()?;
+        let cmd = Command::new(pwsh_path);
     }
 
     Ok(())
