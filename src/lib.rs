@@ -27,6 +27,23 @@ pub mod buckets {
             Ok(Self { path, repo })
         }
     }
+
+    pub fn get_buckets() -> std::io::Result<Vec<Bucket>> {
+        let mut buckets = vec![];
+
+        let bucket_path = get_scoop_path().join("buckets");
+
+        for bucket in bucket_path.read_dir()? {
+            let bucket = bucket?;
+            let bucket_name = bucket.file_name();
+
+            let bucket = Bucket::open(bucket_name).unwrap();
+
+            buckets.push(bucket);
+        }
+
+        Ok(buckets)
+    }
 }
 
 pub mod packages {
