@@ -1,5 +1,7 @@
 use std::path::PathBuf;
 
+// TODO: Global custom hook fn
+
 pub mod config;
 
 pub fn get_scoop_path() -> PathBuf {

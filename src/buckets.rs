@@ -19,7 +19,13 @@ impl Bucket {
     }
 
     pub fn update(&self) -> Result<(), git2::Error> {
-        Ok(())
+        unimplemented!()
+    }
+
+    pub fn get_remote(&self) -> Result<String, git2::Error> {
+        let remote = self.repo.find_remote("origin")?;
+
+        Ok(remote.url().unwrap().to_string())
     }
 }
 
