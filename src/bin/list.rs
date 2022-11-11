@@ -3,7 +3,10 @@ use std::{fs::DirEntry, os::windows::prelude::MetadataExt};
 use chrono::{DateTime, FixedOffset, NaiveDateTime};
 use clap::Parser;
 use serde::{Deserialize, Serialize};
-use sfst::buckets::{self, Bucket};
+use sfst::{
+    buckets::{self, Bucket},
+    get_scoop_path,
+};
 
 #[derive(Debug, Serialize, Deserialize)]
 struct OutputBucket {
@@ -26,9 +29,9 @@ struct ListArgs {
 }
 
 fn main() -> anyhow::Result<()> {
-    let scoop_buckets_path = buckets::get_path();
+    let scoop_apps_path = get_scoop_path().join("apps");
 
-    let read = scoop_buckets_path
+    let read = scoop_apps_path
         .read_dir()?
         .collect::<Result<Vec<DirEntry>, _>>()?;
 
@@ -38,9 +41,16 @@ fn main() -> anyhow::Result<()> {
         *now.offset()
     };
 
-    for bucket in read {
-        let path = bucket.path();
+    for package in read {
+        let path = dunce::realpath(package.path())?;
         let updated = path.metadata()?.last_write_time();
+
+        let bucket_name = path
+            .components()
+            .last()
+            .unwrap()
+            .as_os_str()
+            .to_string_lossy();
 
         let naive_time = NaiveDateTime::from_timestamp(updated.try_into()?, 0);
 
@@ -49,7 +59,7 @@ fn main() -> anyhow::Result<()> {
         let bucket = Bucket::open(path)?;
 
         OutputBucket {
-            name: bucket.name().to_string(),
+            name: bucket_name,
             version: bucket.version().to_string(),
             source: bucket.source().to_string(),
             updated: date_time.unwrap().to_string(),
