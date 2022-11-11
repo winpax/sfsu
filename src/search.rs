@@ -12,8 +12,8 @@ use sfst::{buckets::is_installed, get_scoop_path, packages::Manifest};
 
 #[derive(Debug, Parser)]
 struct SearchArgs {
-    #[clap(help = "The pattern to search for (can be a regex)")]
-    pattern: Option<Regex>,
+    #[clap(help = "The regex pattern to search for")]
+    pattern: Option<String>,
 
     #[clap(long, help = "Print the Powershell hook")]
     hook: bool,
@@ -63,7 +63,13 @@ fn main() -> Result<()> {
         return Ok(());
     }
 
-    let pattern = args.pattern.expect("No pattern provided");
+    let pattern = {
+        if let Some(pattern) = args.pattern {
+            Regex::new(&format!("(?i){pattern}")).expect("Invalid Regex provided")
+        } else {
+            panic!("No pattern provided")
+        }
+    };
 
     if let Some(bucket) = args.bucket {
         let path = {
