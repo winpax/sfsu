@@ -12,11 +12,18 @@ use sfst::{buckets::is_installed, get_scoop_path, packages::Manifest};
 
 #[derive(Debug, Parser)]
 struct SearchArgs {
-    #[clap(help = "The regex pattern to search for")]
+    #[clap(help = "The regex pattern to search for, using Rust Regex syntax")]
     pattern: Option<String>,
 
     #[clap(long, help = "Print the Powershell hook")]
     hook: bool,
+
+    #[clap(
+        short,
+        long,
+        help = "Whether or not the pattern should match case-sensitively"
+    )]
+    case_sensitive: bool,
 
     #[clap(short, long, help = "The bucket to exclusively search in")]
     bucket: Option<String>,
@@ -65,7 +72,11 @@ fn main() -> Result<()> {
 
     let pattern = {
         if let Some(pattern) = args.pattern {
-            Regex::new(&format!("(?i){pattern}")).expect("Invalid Regex provided")
+            Regex::new(&format!(
+                "{case}{pattern}",
+                case = if !args.case_sensitive { "(?i)" } else { "" }
+            ))
+            .expect("Invalid Regex provided. See https://docs.rs/regex/latest/regex/ for more info")
         } else {
             panic!("No pattern provided")
         }
