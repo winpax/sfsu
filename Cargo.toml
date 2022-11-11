@@ -9,10 +9,6 @@ name = "sfss"
 path = "src/bin/search.rs"
 
 [[bin]]
-name = "sfsu"
-path = "src/bin/update.rs"
-
-[[bin]]
 name = "sfsl"
 path = "src/bin/list.rs"
 
