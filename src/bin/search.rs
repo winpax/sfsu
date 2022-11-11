@@ -9,7 +9,7 @@ use rayon::prelude::*;
 use clap::Parser;
 use regex::Regex;
 use sfst::{
-    get_scoop_path,
+    buckets,
     packages::{is_installed, Manifest},
 };
 
@@ -55,8 +55,7 @@ fn parse_output(file: &DirEntry, bucket: impl AsRef<str>) -> String {
 }
 
 fn main() -> Result<()> {
-    let scoop_path = get_scoop_path();
-    let scoop_buckets_path = scoop_path.join("buckets");
+    let scoop_buckets_path = buckets::get_path();
 
     let args = SearchArgs::parse();
 

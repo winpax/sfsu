@@ -1,4 +1,5 @@
 use clap::Parser;
+use sfst::buckets;
 
 #[derive(Debug, Parser)]
 pub struct ListArgs {
@@ -12,4 +13,6 @@ pub struct ListArgs {
     hook: bool,
 }
 
-fn main() {}
+fn main() {
+    let scoop_buckets_path = buckets::get_path();
+}

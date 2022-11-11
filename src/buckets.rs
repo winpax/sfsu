@@ -39,3 +39,9 @@ pub fn get_buckets() -> std::io::Result<Vec<Bucket>> {
 
     Ok(buckets)
 }
+
+pub fn get_path() -> PathBuf {
+    let scoop_path = get_scoop_path();
+
+    scoop_path.join("buckets")
+}
