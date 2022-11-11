@@ -45,7 +45,11 @@ impl ScoopConfig {
     pub fn update_last_update_time(&mut self) {
         // TODO: Move to using chrono for time serialization
         let date_time = Command::new(get_powershell_path().unwrap())
-            .args(["-Command", "[System.DateTime]::Now.ToString('o')"])
+            .args([
+                "-NoProfile",
+                "-Command",
+                "[System.DateTime]::Now.ToString('o')",
+            ])
             .output()
             .expect("Failed to get time from powershell");
 

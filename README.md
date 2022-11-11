@@ -12,12 +12,18 @@ scoop install sfss
 
 ## Hook
 
-You may set up the hooks to use the `scoop search` command normally and have it use `sfss` instead
+You may set up the hooks to use the scoop commands normally
 
 Add the following to your Powershell profile
 
 ```powershell
-Invoke-Expression (&sfss --hook)
+Invoke-Expression (&sfst-hook)
+```
+
+You can also optionally disable certain hooks via the `--no-<hook>` flag
+
+```powershell
+Invoke-Expression (&sfst-hook --no-list)
 ```
 
 ## Benchmarks

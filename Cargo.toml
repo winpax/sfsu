@@ -16,6 +16,10 @@ path = "src/bin/update.rs"
 name = "sfsl"
 path = "src/bin/list.rs"
 
+[[bin]]
+name = "sfst-hook"
+path = "src/bin/hook.rs"
+
 [profile.release]
 strip = true
 codegen-units = 1

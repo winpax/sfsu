@@ -30,9 +30,6 @@ struct ListArgs {
 
     #[clap(long, help = "Print in JSON format rather than Powershell format")]
     json: bool,
-
-    #[clap(long, help = "Print the Powershell hook")]
-    hook: bool,
 }
 
 fn main() -> anyhow::Result<()> {
@@ -104,7 +101,12 @@ fn main() -> anyhow::Result<()> {
 
         let pwsh_path = get_powershell_path()?;
         let cmd_output = Command::new(pwsh_path)
-            .args(["-Command", "ConvertFrom-Json", &format!("'{output}'")])
+            .args([
+                "-NoProfile",
+                "-Command",
+                "ConvertFrom-Json",
+                &format!("'{output}'"),
+            ])
             .output()?;
 
         let formatted = String::from_utf8(cmd_output.stdout)?;
