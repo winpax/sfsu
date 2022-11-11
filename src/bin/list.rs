@@ -1,8 +1,8 @@
-use std::{os::windows::prelude::MetadataExt, process::Command};
+use std::{os::windows::prelude::MetadataExt, process::Command, time::UNIX_EPOCH};
 
 use rayon::prelude::*;
 
-use chrono::{DateTime, FixedOffset, NaiveDateTime};
+use chrono::{DateTime, FixedOffset, NaiveDateTime, TimeZone};
 use clap::Parser;
 use serde::{Deserialize, Serialize};
 use sfst::{
@@ -50,9 +50,22 @@ fn main() -> anyhow::Result<()> {
 
     let outputs = read
         .par_iter()
+        // We cannot search the scoop app as it is built in and hence doesn't contain any manifest
+        // TODO: More efficient way to do this check?
+        .filter(|package| {
+            package
+                .path()
+                .components()
+                .last()
+                .unwrap()
+                .as_os_str()
+                .to_string_lossy()
+                != "scoop"
+        })
         .map(|package| {
             let path = dunce::realpath(package.path())?;
-            let updated = path.metadata()?.last_write_time();
+            let updated_sys = path.metadata()?.modified()?;
+            let updated = updated_sys.duration_since(UNIX_EPOCH)?.as_secs();
 
             let package_name = path
                 .components()
@@ -65,8 +78,11 @@ fn main() -> anyhow::Result<()> {
 
             let date_time = DateTime::<FixedOffset>::from_local(naive_time, offset);
 
-            let manifest = Manifest::from_path(&path)?;
-            let install_manifest = InstallManifest::from_path(&path)?;
+            let app_current = path.join("current");
+
+            let manifest = Manifest::from_path(&app_current.join("manifest.json"))?;
+
+            let install_manifest = InstallManifest::from_path(&app_current.join("install.json"))?;
 
             let bucket = Bucket::open(install_manifest.bucket)?;
 
@@ -88,7 +104,7 @@ fn main() -> anyhow::Result<()> {
 
         let pwsh_path = get_powershell_path()?;
         let cmd_output = Command::new(pwsh_path)
-            .args(["-Command", "ConvertFrom-Json", &output])
+            .args(["-Command", "ConvertFrom-Json", &format!("'{output}'")])
             .output()?;
 
         let formatted = String::from_utf8(cmd_output.stdout)?;
