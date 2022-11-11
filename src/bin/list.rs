@@ -6,7 +6,12 @@ use serde::{Deserialize, Serialize};
 use sfst::buckets::{self, Bucket};
 
 #[derive(Debug, Serialize, Deserialize)]
-struct ListOutput {}
+struct OutputBucket {
+    name: String,
+    version: String,
+    source: String,
+    updated: String,
+}
 
 #[derive(Debug, Parser)]
 struct ListArgs {
@@ -42,6 +47,13 @@ fn main() -> anyhow::Result<()> {
         let date_time = DateTime::<FixedOffset>::from_local(naive_time, offset);
 
         let bucket = Bucket::open(path)?;
+
+        OutputBucket {
+            name: bucket.name().to_string(),
+            version: bucket.version().to_string(),
+            source: bucket.source().to_string(),
+            updated: date_time.unwrap().to_string(),
+        }
     }
 
     Ok(())
