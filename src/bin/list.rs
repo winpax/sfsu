@@ -1,5 +1,7 @@
 use std::{os::windows::prelude::MetadataExt, process::Command};
 
+use rayon::prelude::*;
+
 use chrono::{DateTime, FixedOffset, NaiveDateTime};
 use clap::Parser;
 use serde::{Deserialize, Serialize};
@@ -47,7 +49,7 @@ fn main() -> anyhow::Result<()> {
     };
 
     let outputs = read
-        .iter()
+        .par_iter()
         .map(|package| {
             let path = dunce::realpath(package.path())?;
             let updated = path.metadata()?.last_write_time();
@@ -85,7 +87,13 @@ fn main() -> anyhow::Result<()> {
         let output = serde_json::to_string(&outputs)?;
 
         let pwsh_path = get_powershell_path()?;
-        let cmd = Command::new(pwsh_path);
+        let cmd_output = Command::new(pwsh_path)
+            .args(["-Command", "ConvertFrom-Json", &output])
+            .output()?;
+
+        let formatted = String::from_utf8(cmd_output.stdout)?;
+
+        println!("{formatted}");
     }
 
     Ok(())
