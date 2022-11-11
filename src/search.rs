@@ -2,15 +2,13 @@ use std::{
     ffi::OsString,
     fs::{read_dir, DirEntry, File},
     io::{Error, Read, Result},
-    path::Path,
 };
 
 use rayon::prelude::*;
 
 use clap::Parser;
 use regex::Regex;
-use serde::{Deserialize, Serialize};
-use sfst::get_scoop_path;
+use sfst::{buckets::is_installed, get_scoop_path, packages::Manifest};
 
 #[derive(Debug, Parser)]
 struct SearchArgs {
@@ -22,18 +20,6 @@ struct SearchArgs {
 
     #[clap(short, long, help = "The bucket to exclusively search in")]
     bucket: Option<String>,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-struct Manifest {
-    /// The version of the package
-    version: String,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-struct InstallManifest {
-    /// The bucket the package was installed from
-    bucket: String,
 }
 
 // TODO: Add installed marker
@@ -63,29 +49,6 @@ fn parse_output(file: &DirEntry, bucket: impl AsRef<str>) -> String {
             ""
         }
     )
-}
-
-fn is_installed(manifest_name: impl AsRef<Path>, bucket: impl AsRef<str>) -> bool {
-    let scoop_path = get_scoop_path();
-    let installed_path = scoop_path
-        .join("apps")
-        .join(manifest_name)
-        .join("current/install.json");
-
-    if installed_path.exists() {
-        let mut buf = String::new();
-
-        File::open(installed_path)
-            .unwrap()
-            .read_to_string(&mut buf)
-            .unwrap();
-
-        let manifest: InstallManifest = serde_json::from_str(&buf).unwrap();
-
-        manifest.bucket == bucket.as_ref()
-    } else {
-        false
-    }
 }
 
 fn main() -> Result<()> {
