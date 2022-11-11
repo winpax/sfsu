@@ -8,7 +8,10 @@ use rayon::prelude::*;
 
 use clap::Parser;
 use regex::Regex;
-use sfst::{buckets::is_installed, get_scoop_path, packages::Manifest};
+use sfst::{
+    get_scoop_path,
+    packages::{is_installed, Manifest},
+};
 
 #[derive(Debug, Parser)]
 struct SearchArgs {
@@ -43,7 +46,7 @@ fn parse_output(file: &DirEntry, bucket: impl AsRef<str>) -> String {
         "{} ({}) {}",
         package,
         manifest.version,
-        if is_installed(&package, bucket) {
+        if is_installed(&package, Some(bucket)) {
             "[installed]"
         } else {
             ""

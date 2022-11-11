@@ -9,36 +9,32 @@ pub fn get_scoop_path() -> PathBuf {
 }
 
 pub mod buckets {
-    use std::{fs::File, io::Read, path::Path};
+    use std::path::{Path, PathBuf};
 
-    use crate::{get_scoop_path, packages::InstallManifest};
+    use crate::get_scoop_path;
 
-    pub fn is_installed(manifest_name: impl AsRef<Path>, bucket: impl AsRef<str>) -> bool {
-        let scoop_path = get_scoop_path();
-        let installed_path = scoop_path
-            .join("apps")
-            .join(manifest_name)
-            .join("current/install.json");
+    pub struct Bucket {
+        path: PathBuf,
+        repo: git2::Repository,
+    }
 
-        if installed_path.exists() {
-            let mut buf = String::new();
+    impl Bucket {
+        pub fn open(name: impl AsRef<Path>) -> Result<Self, git2::Error> {
+            let path = get_scoop_path().join("buckets").join(name);
 
-            File::open(installed_path)
-                .unwrap()
-                .read_to_string(&mut buf)
-                .unwrap();
+            let repo = git2::Repository::open(&path)?;
 
-            let manifest: InstallManifest = serde_json::from_str(&buf).unwrap();
-
-            manifest.bucket == bucket.as_ref()
-        } else {
-            false
+            Ok(Self { path, repo })
         }
     }
 }
 
 pub mod packages {
+    use std::{fs::File, io::Read, path::Path};
+
     use serde::{Deserialize, Serialize};
+
+    use crate::get_scoop_path;
 
     #[derive(Debug, Deserialize, Serialize)]
     pub struct Manifest {
@@ -50,6 +46,33 @@ pub mod packages {
     pub struct InstallManifest {
         /// The bucket the package was installed from
         pub bucket: String,
+    }
+
+    pub fn is_installed(manifest_name: impl AsRef<Path>, bucket: Option<impl AsRef<str>>) -> bool {
+        let scoop_path = get_scoop_path();
+        let installed_path = scoop_path
+            .join("apps")
+            .join(manifest_name)
+            .join("current/install.json");
+
+        if installed_path.exists() {
+            if let Some(bucket) = bucket {
+                let mut buf = String::new();
+
+                File::open(installed_path)
+                    .unwrap()
+                    .read_to_string(&mut buf)
+                    .unwrap();
+
+                let manifest: InstallManifest = serde_json::from_str(&buf).unwrap();
+
+                manifest.bucket == bucket.as_ref()
+            } else {
+                true
+            }
+        } else {
+            false
+        }
     }
 }
 
