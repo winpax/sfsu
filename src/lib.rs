@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-// TODO: Global custom hook fn
+// TODO: Use glob instaed of regex
 
 pub mod config;
 
