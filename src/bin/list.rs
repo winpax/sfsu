@@ -114,7 +114,22 @@ fn main() -> anyhow::Result<()> {
         })
         .collect::<Result<Vec<_>, _>>()?;
 
-    println!("{json}", json = serde_json::to_string_pretty(&outputs)?);
+    if args.json {
+        println!("{json}", json = serde_json::to_string_pretty(&outputs)?);
+    } else {
+        // TODO: Improve this output
+        println!("Installed apps:");
+
+        for output in outputs {
+            println!(
+                "{name} - {version} ({bucket}) {updated}",
+                name = output.name,
+                version = output.version,
+                bucket = output.bucket_name,
+                updated = output.updated
+            );
+        }
+    }
 
     Ok(())
 }
