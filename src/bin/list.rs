@@ -18,6 +18,8 @@ struct OutputPackage {
     name: String,
     version: String,
     source: String,
+    #[serde(skip_serializing)]
+    bucket_name: String,
     updated: String,
 }
 
@@ -55,6 +57,7 @@ fn main() -> anyhow::Result<()> {
     let outputs = read
         .par_iter()
         // We cannot search the scoop app as it is built in and hence doesn't contain any manifest
+        // Additionally don't search any apps that don't match the pattern
         // TODO: More efficient way to do this check?
         .filter(|package| {
             let name = {
@@ -93,14 +96,21 @@ fn main() -> anyhow::Result<()> {
 
             let install_manifest = InstallManifest::from_path(&app_current.join("install.json"))?;
 
-            let bucket = Bucket::open(install_manifest.bucket)?;
+            let bucket = Bucket::open(&install_manifest.bucket)?;
 
             anyhow::Ok(OutputPackage {
                 name: package_name.to_string(),
                 version: manifest.version,
                 source: bucket.get_remote()?,
+                bucket_name: install_manifest.bucket,
                 updated: date_time.to_rfc3339(),
             })
+        })
+        // Remove results that do not match the bucket
+        .filter(|f| match (f, &args.bucket) {
+            (Ok(_), None) => true,
+            (Ok(f), Some(ref bucket)) => f.bucket_name == *bucket,
+            (Err(_), _) => false,
         })
         .collect::<Result<Vec<_>, _>>()?;
 
