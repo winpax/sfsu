@@ -7,7 +7,6 @@ use std::{
 use rayon::prelude::*;
 
 use clap::Parser;
-use regex::Regex;
 use sfst::{
     buckets,
     packages::{is_installed, Manifest},
@@ -63,13 +62,18 @@ fn main() -> Result<()> {
 
     let args = SearchArgs::parse();
 
+    let glob_options = glob::MatchOptions {
+        case_sensitive: args.case_sensitive,
+        ..Default::default()
+    };
+
     let pattern = {
         if let Some(pattern) = args.pattern {
-            Regex::new(&format!(
+            glob::Pattern::new(&format!(
                 "{case}{pattern}",
                 case = if !args.case_sensitive { "(?i)" } else { "" }
             ))
-            .expect("Invalid Regex provided. See https://docs.rs/regex/latest/regex/ for more info")
+            .expect("Invalid Glob provided. See https://docs.rs/glob/latest/glob/ for more info")
         } else {
             panic!("No pattern provided")
         }
@@ -90,7 +94,7 @@ fn main() -> Result<()> {
         let manifests = read_dir(path)?
             .filter_map(|file| {
                 if let Ok(file) = file {
-                    if pattern.is_match(&file.path().to_string_lossy()) {
+                    if pattern.matches_with(&file.path().to_string_lossy(), glob_options) {
                         return Some(parse_output(&file, &bucket));
                     }
                 }
@@ -136,7 +140,7 @@ fn main() -> Result<()> {
                     let path_raw = file.path();
                     let path = path_raw.to_string_lossy();
 
-                    pattern.is_match(&path)
+                    pattern.matches_with(&path, glob_options)
                 })
                 .map(|x| parse_output(x, bucket.file_name().to_string_lossy()))
                 .collect::<Vec<_>>();
