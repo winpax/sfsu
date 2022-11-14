@@ -4,6 +4,7 @@ use rayon::prelude::*;
 
 use chrono::{DateTime, FixedOffset, NaiveDateTime};
 use clap::Parser;
+use regex::Regex;
 use serde::{Deserialize, Serialize};
 use sfst::{
     buckets::Bucket,
@@ -27,6 +28,12 @@ struct ListArgs {
 
     #[clap(short, long, help = "The bucket to exclusively search in")]
     bucket: Option<String>,
+
+    #[clap(
+        long,
+        help = "Print the output as json, rather than a human readable format"
+    )]
+    json: bool,
 }
 
 fn main() -> anyhow::Result<()> {
@@ -42,19 +49,27 @@ fn main() -> anyhow::Result<()> {
         *now.offset()
     };
 
+    let pattern = args.pattern.unwrap_or_else(|| ".*".to_string());
+    let name_regex = Regex::new(&pattern)?;
+
     let outputs = read
         .par_iter()
         // We cannot search the scoop app as it is built in and hence doesn't contain any manifest
         // TODO: More efficient way to do this check?
         .filter(|package| {
-            package
-                .path()
-                .components()
-                .last()
-                .unwrap()
-                .as_os_str()
-                .to_string_lossy()
-                != "scoop"
+            let name = {
+                let path = package.path();
+                let components = path.components();
+
+                components
+                    .last()
+                    .unwrap()
+                    .as_os_str()
+                    .to_string_lossy()
+                    .to_string()
+            };
+
+            name != "scoop" && name_regex.is_match(&name)
         })
         .map(|package| {
             let path = dunce::realpath(package.path())?;
