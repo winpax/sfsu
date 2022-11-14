@@ -1,4 +1,4 @@
-use std::{process::Command, time::UNIX_EPOCH};
+use std::time::UNIX_EPOCH;
 
 use rayon::prelude::*;
 
@@ -7,7 +7,7 @@ use clap::Parser;
 use serde::{Deserialize, Serialize};
 use sfst::{
     buckets::Bucket,
-    get_powershell_path, get_scoop_path,
+    get_scoop_path,
     packages::{FromPath, InstallManifest, Manifest},
 };
 
@@ -27,9 +27,6 @@ struct ListArgs {
 
     #[clap(short, long, help = "The bucket to exclusively search in")]
     bucket: Option<String>,
-
-    #[clap(long, help = "Print in JSON format rather than Powershell format")]
-    json: bool,
 }
 
 fn main() -> anyhow::Result<()> {
@@ -92,27 +89,7 @@ fn main() -> anyhow::Result<()> {
         })
         .collect::<Result<Vec<_>, _>>()?;
 
-    if args.json {
-        let output_json = serde_json::to_string_pretty(&outputs)?;
-
-        println!("{output_json}");
-    } else {
-        let output = serde_json::to_string(&outputs)?;
-
-        let pwsh_path = get_powershell_path()?;
-        let cmd_output = Command::new(pwsh_path)
-            .args([
-                "-NoProfile",
-                "-Command",
-                "ConvertFrom-Json",
-                &format!("'{output}'"),
-            ])
-            .output()?;
-
-        let formatted = String::from_utf8(cmd_output.stdout)?;
-
-        println!("{formatted}");
-    }
+    println!("{json}", json = serde_json::to_string_pretty(&outputs)?);
 
     Ok(())
 }
