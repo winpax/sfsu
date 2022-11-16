@@ -7,7 +7,7 @@ Super fast replacements for scoop commands written in Rust
 ```powershell
 scoop bucket add extras
 
-scoop install sfss
+scoop install sfsu
 ```
 
 ## Hook
