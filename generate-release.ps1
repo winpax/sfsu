@@ -29,7 +29,7 @@ cd release/32bit
 7z a 'all-i686' '*.exe'
 
 $Hash = Get-FileHash all-i686.7z
-$Hash | Out-File all-i686.7z.sha256
+$Hash.Hash | Out-File all-i686.7z.sha256
 
 mv *.7z* ../
 
