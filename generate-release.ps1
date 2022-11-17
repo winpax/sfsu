@@ -1,7 +1,9 @@
 cargo b -r --target x86_64-pc-windows-msvc
 cargo b -r --target i686-pc-windows-msvc
 
-rm -r -Force release
+if (Test-Path release) {
+    rm -r release
+}
 
 mkdir release
 mkdir release/64bit
