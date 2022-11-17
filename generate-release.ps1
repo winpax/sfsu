@@ -16,7 +16,7 @@ cd release/64bit;
 7z a 'all-x86_64' '*.exe'
 
 $Hash = Get-FileHash all-x86_64.7z
-$Hash | Out-File all-x86_64.7z.sha256
+$Hash.Hash | Out-File all-x86_64.7z.sha256
 
 mv *.7z* ../
 
