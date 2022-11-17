@@ -22,7 +22,7 @@ mv *.7z* ../
 
 cd ../..
 
-cp target/x86_64-pc-windows-msvc/release/*.exe release/32bit
+cp target/i686-pc-windows-msvc/release/*.exe release/32bit
 
 cd release/32bit
 
