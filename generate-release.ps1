@@ -7,7 +7,7 @@ mkdir release
 mkdir release/64bit
 mkdir release/32bit
 
-cp target/x86_64-pc-windows-gnu/release/*.exe release/64bit
+cp target/x86_64-pc-windows-msvc/release/*.exe release/64bit
 
 cd release/64bit;
 
@@ -20,7 +20,7 @@ mv *.7z* ../
 
 cd ../..
 
-cp target/x86_64-pc-windows-gnu/release/*.exe release/32bit
+cp target/x86_64-pc-windows-msvc/release/*.exe release/32bit
 
 cd release/32bit
 
