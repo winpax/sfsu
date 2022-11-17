@@ -1,7 +1,7 @@
 cargo b -r --target x86_64-pc-windows-msvc
 cargo b -r --target i686-pc-windows-msvc
 
-rm -r release
+rm -r -Force release
 
 mkdir release
 mkdir release/64bit
