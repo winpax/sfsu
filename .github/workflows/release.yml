@@ -21,10 +21,14 @@ jobs:
     steps:
       - uses: Swatinem/rust-cache@v2.2.0
       - uses: actions/checkout@v3
+      
       - name: Build
         run: cargo build --verbose
       #     - name: Run tests (none exist yet)
       #       run: cargo test --verbose
+
+      - name: Generate release artifacts
+        run: ./generate-release.ps1
 
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v3.1.1
@@ -33,6 +37,7 @@ jobs:
           name: packaged-builds
           # A file, directory or wildcard pattern that describes what to upload
           path: release/*
+
       - name: Upload & Publish
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
