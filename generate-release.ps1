@@ -1,3 +1,8 @@
+function Out-Hashes($Path) {
+    $Hash = Get-FileHash $Path -Algorithm SHA256
+    $Hash.Hash | Out-File "$Path.sha256"
+}
+
 cargo b -r --target x86_64-pc-windows-msvc
 cargo b -r --target i686-pc-windows-msvc
 
@@ -15,8 +20,7 @@ cd release/64bit;
 
 7z a 'all-x86_64' '*.exe'
 
-$Hash = Get-FileHash all-x86_64.7z
-$Hash.Hash | Out-File all-x86_64.7z.sha256
+Out-Hashes all-x86_64.7z
 
 mv *.7z* ../
 
@@ -28,8 +32,7 @@ cd release/32bit
 
 7z a 'all-i686' '*.exe'
 
-$Hash = Get-FileHash all-i686.7z
-$Hash.Hash | Out-File all-i686.7z.sha256
+Out-Hashes all-i686.7z
 
 mv *.7z* ../
 
