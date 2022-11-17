@@ -24,10 +24,9 @@ jobs:
       
       - name: Update toolchain
         run: |
-          rustup default x86_64-pc-windows-msvc
+          rustup default stable-x86_64-pc-windows-msvc
           rustup update stable
           rustup toolchain add i686-pc-windows-msvc
-          rustup toolchain add x86_64-pc-windows-msvc
 
       - name: Build and Package
         run: ./generate-release.ps1
