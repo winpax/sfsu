@@ -1,0 +1,30 @@
+name: Rust
+
+on:
+  push:
+    branches: [ "trunk" ]
+  pull_request:
+    branches: [ "trunk" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build
+      run: cargo build --verbose
+#     - name: Run tests (none exist yet)
+#       run: cargo test --verbose
+      
+    - name: Upload a Build Artifact
+      uses: actions/upload-artifact@v3.1.1
+      with:
+        # Artifact name
+        name: packaged-builds
+        # A file, directory or wildcard pattern that describes what to upload
+        path: release/*
