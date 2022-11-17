@@ -1,0 +1,36 @@
+name: Build
+
+on: push
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+
+    runs-on: windows-latest
+
+    steps:
+    - uses: Swatinem/rust-cache@v2.2.0
+    - uses: actions/checkout@v3
+    - name: Build
+      run: cargo build --verbose
+#     - name: Run tests (none exist yet)
+#       run: cargo test --verbose
+      
+    - name: Upload a Build Artifact
+      uses: actions/upload-artifact@v3.1.1
+      with:
+        # Artifact name
+        name: packaged-builds
+        # A file, directory or wildcard pattern that describes what to upload
+        path: release/*
+     - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            release/all-x86_64.7z
+            release/all-x86_64.7z.sha256
+            release/all-i686.7z
+            release/all-i686.7z.sha256
