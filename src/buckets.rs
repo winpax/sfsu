@@ -2,8 +2,6 @@ use std::path::{Path, PathBuf};
 
 use crate::get_scoop_path;
 
-mod update_repo {}
-
 pub struct Bucket {
     path: PathBuf,
     repo: git2::Repository,

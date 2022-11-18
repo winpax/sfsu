@@ -7,18 +7,14 @@ pub mod config;
 pub fn get_scoop_path() -> PathBuf {
     use std::env::var_os;
 
-    let scoop_path = var_os("SCOOP").map(PathBuf::from);
-    let scoop_global_path = var_os("SCOOP_GLOBAL").map(PathBuf::from);
-
     // TODO: Add support for both global and non-global scoop installs
-    let path = match (scoop_path, scoop_global_path) {
-        (Some(path), _) => path,
-        (None, Some(path)) => path,
-        (None, None) => dirs::home_dir().unwrap().join("scoop"),
-    };
 
-    if path.exists() {
-        path
+    let scoop_path = var_os("SCOOP")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| dirs::home_dir().unwrap().join("scoop"));
+
+    if scoop_path.exists() {
+        scoop_path
     } else {
         panic!("Scoop path does not exist");
     }
