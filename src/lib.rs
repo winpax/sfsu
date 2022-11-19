@@ -30,7 +30,7 @@ pub fn get_powershell_path() -> anyhow::Result<PathBuf> {
     if let Ok(path) = which("powershell") {
         Ok(path)
     } else {
-        Err(anyhow::anyhow!("Could not find powershell"))
+        Err(anyhow::anyhow!("Could not find powershell installation"))
     }
 }
 

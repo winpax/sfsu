@@ -1,4 +1,4 @@
-use std::{process::Command, time::UNIX_EPOCH};
+use std::{io::Write, process::Command, time::UNIX_EPOCH};
 
 use rayon::prelude::*;
 
@@ -108,9 +108,7 @@ fn main() -> anyhow::Result<()> {
             ])
             .output()?;
 
-        let formatted = String::from_utf8(cmd_output.stdout)?;
-
-        println!("{formatted}");
+        std::io::stdout().lock().write_all(&cmd_output.stdout)?;
     }
 
     Ok(())
