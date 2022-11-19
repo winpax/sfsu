@@ -22,8 +22,8 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - uses: Swatinem/rust-cache@v2.2.0
       - uses: actions/checkout@v3
+      - uses: Swatinem/rust-cache@v2.2.0
 
       - name: Update toolchain
         run: |
