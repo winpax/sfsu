@@ -44,8 +44,4 @@ jobs:
         uses: softprops/action-gh-release@v0.1.14
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: |
-            release/all-x86_64.7z
-            release/all-x86_64.7z.sha256
-            release/all-i686.7z
-            release/all-i686.7z.sha256
+          files: release/*.7z*
