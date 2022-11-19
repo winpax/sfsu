@@ -33,3 +33,7 @@ pub fn get_powershell_path() -> anyhow::Result<PathBuf> {
         Err(anyhow::anyhow!("Could not find powershell"))
     }
 }
+
+pub fn init_panic() {
+    human_panic::setup_panic!();
+}
