@@ -59,6 +59,8 @@ fn parse_output(file: &DirEntry, bucket: impl AsRef<str>) -> String {
 }
 
 fn main() -> Result<()> {
+    sfst::init_panic();
+
     let scoop_buckets_path = buckets::get_path();
 
     let args = SearchArgs::parse();
