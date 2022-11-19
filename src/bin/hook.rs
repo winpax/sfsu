@@ -10,6 +10,8 @@ struct ListArgs {
 }
 
 fn main() {
+    sfst::init_panic();
+
     let args = ListArgs::parse();
 
     print!("function scoop {{ ");

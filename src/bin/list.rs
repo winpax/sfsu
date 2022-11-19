@@ -32,6 +32,8 @@ struct ListArgs {
 }
 
 fn main() -> anyhow::Result<()> {
+    sfst::init_panic();
+
     let args = ListArgs::parse();
 
     let scoop_apps_path = get_scoop_path().join("apps");
