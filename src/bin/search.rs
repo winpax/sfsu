@@ -69,11 +69,9 @@ fn main() -> Result<()> {
 
     let pattern = {
         if let Some(pattern) = args.pattern {
-            glob::Pattern::new(&format!(
-                "{case}{pattern}",
-                case = if !args.case_sensitive { "(?i)" } else { "" }
-            ))
-            .expect("Invalid Glob provided. See https://docs.rs/glob/latest/glob/ for more info")
+            glob::Pattern::new(&pattern).expect(
+                "Invalid Glob provided. See https://docs.rs/glob/latest/glob/ for more info",
+            )
         } else {
             panic!("No pattern provided")
         }

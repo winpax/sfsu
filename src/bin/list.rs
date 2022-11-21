@@ -6,7 +6,6 @@ use chrono::{DateTime, FixedOffset, NaiveDateTime};
 use clap::Parser;
 use serde::{Deserialize, Serialize};
 use sfst::{
-    buckets::Bucket,
     get_powershell_path, get_scoop_path,
     packages::{FromPath, InstallManifest, Manifest},
 };
@@ -81,12 +80,10 @@ fn main() -> anyhow::Result<()> {
 
             let install_manifest = InstallManifest::from_path(&app_current.join("install.json"))?;
 
-            let bucket = Bucket::open(install_manifest.bucket)?;
-
             anyhow::Ok(OutputPackage {
                 name: package_name.to_string(),
                 version: manifest.version,
-                source: bucket.get_remote()?,
+                source: install_manifest.bucket,
                 updated: date_time.to_rfc3339(),
             })
         })
