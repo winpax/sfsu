@@ -28,7 +28,7 @@ dirs = "4.0.0"
 dunce = "1.0.3"
 git2 = "0.15.0"
 rayon = "1.5.3"
-regex = "1.6.0"
+regex = "1.7.0"
 serde = { version = "1.0.147", features = ["derive"] }
 serde_json = "1.0.87"
 which = "4.3.0"
