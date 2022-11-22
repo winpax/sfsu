@@ -14,7 +14,7 @@ pub fn get_scoop_path() -> PathBuf {
         .unwrap_or_else(|| dirs::home_dir().unwrap().join("scoop"));
 
     if scoop_path.exists() {
-        scoop_path
+        dunce::canonicalize(scoop_path).expect("failed to find real path to scoop")
     } else {
         panic!("Scoop path does not exist");
     }
