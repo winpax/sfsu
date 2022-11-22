@@ -70,7 +70,12 @@ fn main() -> anyhow::Result<()> {
                 .as_os_str()
                 .to_string_lossy();
 
-            let naive_time = NaiveDateTime::from_timestamp(updated.try_into()?, 0);
+            let naive_time = {
+                let secs = updated.try_into()?;
+
+                NaiveDateTime::from_timestamp_opt(secs, 0)
+                    .expect("invalid or out-of-range datetime")
+            };
 
             let date_time = DateTime::<FixedOffset>::from_local(naive_time, offset);
 
