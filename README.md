@@ -97,4 +97,10 @@ versions    https://github.com/ScoopInstaller/Versions
 wsl         https://github.com/KNOXDEV/wsl
 ```
 
+## Long Term Goals
+
+Currently I am considering creating an entire package manager that works fundamentally the same as Scoop but written in Rust.
+
+In the meantime I will continue working on this independently of Scoop as "seperate" tools that work without an entire package manager.
+
 **Made with 💗 by Juliette Cordor**
