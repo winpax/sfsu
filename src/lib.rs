@@ -1,13 +1,24 @@
 use std::path::PathBuf;
 
 // TODO: Replace regex with glob
+// TODO: Global custom hook fn
 
 pub mod config;
 
 pub fn get_scoop_path() -> PathBuf {
-    let home_dir = dirs::home_dir().unwrap_or_else(|| panic!("Could not find home directory"));
+    use std::env::var_os;
 
-    home_dir.join("scoop")
+    // TODO: Add support for both global and non-global scoop installs
+
+    let scoop_path = var_os("SCOOP")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| dirs::home_dir().unwrap().join("scoop"));
+
+    if scoop_path.exists() {
+        dunce::canonicalize(scoop_path).expect("failed to find real path to scoop")
+    } else {
+        panic!("Scoop path does not exist");
+    }
 }
 
 pub mod buckets;
