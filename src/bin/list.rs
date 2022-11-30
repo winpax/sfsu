@@ -27,8 +27,8 @@ struct ListArgs {
     #[clap(short, long, help = "The bucket to exclusively search in")]
     bucket: Option<String>,
 
-    #[clap(long, help = "Print in JSON format rather than Powershell format")]
-    json: bool,
+    #[clap(long, help = "Print in a more human readable format, rather than JSON")]
+    human: bool,
 }
 
 fn main() -> anyhow::Result<()> {
@@ -94,11 +94,7 @@ fn main() -> anyhow::Result<()> {
         })
         .collect::<Result<Vec<_>, _>>()?;
 
-    if args.json {
-        let output_json = serde_json::to_string_pretty(&outputs)?;
-
-        println!("{output_json}");
-    } else {
+    if args.human {
         let output = serde_json::to_string(&outputs)?;
 
         let pwsh_path = get_powershell_path()?;
@@ -114,6 +110,10 @@ fn main() -> anyhow::Result<()> {
         let formatted = String::from_utf8(cmd_output.stdout)?;
 
         println!("{formatted}");
+    } else {
+        let output_json = serde_json::to_string_pretty(&outputs)?;
+
+        println!("{output_json}");
     }
 
     Ok(())
