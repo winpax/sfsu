@@ -99,16 +99,26 @@ fn main() -> anyhow::Result<()> {
     let max_lengths = outputs.iter().fold((0, 0, 0, 0), |mut og, pkg| {
         use std::cmp;
 
-        og.0 = cmp::min(pkg.name.len(), og.0);
-        og.1 = cmp::min(pkg.version.len(), og.1);
-        og.2 = cmp::min(pkg.source.len(), og.2);
-        og.3 = cmp::min(pkg.updated.len(), og.3);
+        og.0 = cmp::max(pkg.name.len(), og.0);
+        og.1 = cmp::max(pkg.version.len(), og.1);
+        og.2 = cmp::max(pkg.source.len(), og.2);
+        og.3 = cmp::max(pkg.updated.len(), og.3);
 
         og
     });
 
     if args.human {
-        println!("Name | Version | Source | Updated");
+        println!(
+            "{:nwidth$} | {:vwidth$} | {:swidth$} | {:uwidth$}",
+            "Name",
+            "Version",
+            "Source",
+            "Updated",
+            nwidth = max_lengths.0,
+            vwidth = max_lengths.1,
+            swidth = max_lengths.2,
+            uwidth = max_lengths.3
+        );
 
         for pkg in outputs {
             println!(
