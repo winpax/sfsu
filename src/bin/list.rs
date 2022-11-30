@@ -95,21 +95,14 @@ fn main() -> anyhow::Result<()> {
         .collect::<Result<Vec<_>, _>>()?;
 
     if args.human {
-        let output = serde_json::to_string(&outputs)?;
+        println!("Name | Version | Source | Updated");
 
-        let pwsh_path = get_powershell_path()?;
-        let cmd_output = Command::new(pwsh_path)
-            .args([
-                "-NoProfile",
-                "-Command",
-                "ConvertFrom-Json",
-                &format!("'{output}'"),
-            ])
-            .output()?;
-
-        let formatted = String::from_utf8(cmd_output.stdout)?;
-
-        println!("{formatted}");
+        for pkg in outputs {
+            println!(
+                "{} | {} | {} | {}",
+                pkg.name, pkg.version, pkg.source, pkg.updated
+            );
+        }
     } else {
         let output_json = serde_json::to_string_pretty(&outputs)?;
 
