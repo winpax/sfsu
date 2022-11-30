@@ -18,7 +18,7 @@ pub trait FromPath {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Default, Deserialize, Serialize)]
 pub struct Manifest {
     /// The version of the package
     pub version: String,
@@ -26,7 +26,7 @@ pub struct Manifest {
 
 impl FromPath for Manifest {}
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Default, Deserialize, Serialize)]
 pub struct InstallManifest {
     /// The bucket the package was installed from
     pub bucket: String,
