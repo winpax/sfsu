@@ -110,8 +110,15 @@ fn main() -> anyhow::Result<()> {
 
         for pkg in outputs {
             println!(
-                "{} | {} | {} | {}",
-                pkg.name, pkg.version, pkg.source, pkg.updated
+                "{:nwidth$} | {:vwidth$} | {:swidth$} | {:uwidth$}",
+                pkg.name,
+                pkg.version,
+                pkg.source,
+                pkg.updated,
+                nwidth = max_lengths.0,
+                vwidth = max_lengths.1,
+                swidth = max_lengths.2,
+                uwidth = max_lengths.3
             );
         }
     } else {
