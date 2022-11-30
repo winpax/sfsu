@@ -94,6 +94,17 @@ fn main() -> anyhow::Result<()> {
         })
         .collect::<Result<Vec<_>, _>>()?;
 
+    let max_lengths = outputs.iter().fold((0, 0, 0, 0), |mut og, pkg| {
+        use std::cmp;
+
+        og.0 = cmp::min(pkg.name.len(), og.0);
+        og.1 = cmp::min(pkg.version.len(), og.1);
+        og.2 = cmp::min(pkg.source.len(), og.2);
+        og.3 = cmp::min(pkg.updated.len(), og.3);
+
+        og
+    });
+
     if args.human {
         println!("Name | Version | Source | Updated");
 
