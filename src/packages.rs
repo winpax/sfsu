@@ -14,6 +14,10 @@ pub trait FromPath {
 
         file.read_to_string(&mut contents)?;
 
+        if contents.contains("\u{feff}") {
+            contents.trim_start_matches("\u{feff}").to_string();
+        }
+    
         Ok(serde_json::from_str(&contents)?)
     }
 }
