@@ -21,6 +21,7 @@ pub trait FromPath {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Manifest {
     /// The version of the package
+    #[serde(default="String::new")]
     pub version: String,
 }
 
@@ -29,6 +30,7 @@ impl FromPath for Manifest {}
 #[derive(Debug, Deserialize, Serialize)]
 pub struct InstallManifest {
     /// The bucket the package was installed from
+    #[serde(default="String::new")]
     pub bucket: String,
 }
 
