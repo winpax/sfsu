@@ -15,7 +15,7 @@ pub trait FromPath {
         file.read_to_string(&mut contents)?;
 
         Ok(serde_json::from_str(
-            &contents.trim_start_matches("\u{feff}"),
+            contents.trim_start_matches('\u{feff}'),
         )?)
     }
 }
@@ -55,7 +55,7 @@ pub fn is_installed(manifest_name: impl AsRef<Path>, bucket: Option<impl AsRef<s
                 .unwrap();
 
             let manifest: InstallManifest =
-                serde_json::from_str(&buf.trim_start_matches("\u{feff}")).unwrap();
+                serde_json::from_str(buf.trim_start_matches('\u{feff}')).unwrap();
 
             manifest.bucket == bucket.as_ref()
         } else {
