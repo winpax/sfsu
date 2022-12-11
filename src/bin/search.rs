@@ -44,7 +44,7 @@ fn parse_output(file: &DirEntry, bucket: impl AsRef<str>) -> String {
         .read_to_string(&mut buf)
         .unwrap();
 
-    let manifest: Manifest = serde_json::from_str(&buf.trim_start_matches("\u{feff}")).unwrap();
+    let manifest: Manifest = serde_json::from_str(buf.trim_start_matches('\u{feff}')).unwrap();
 
     format!(
         "{} ({}) {}",
