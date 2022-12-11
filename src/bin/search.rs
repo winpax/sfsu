@@ -1,5 +1,5 @@
 use std::{
-    ffi::OsString,
+    ffi::{OsStr, OsString},
     fs::{read_dir, DirEntry, File},
     io::{Error, Read, Result},
 };
@@ -114,13 +114,21 @@ fn main() -> Result<()> {
 
             let matches = bucket_contents
                 .par_iter()
-                .filter(|file| {
+                .filter_map(|file| {
                     let path_raw = file.path();
                     let path = path_raw.to_string_lossy();
 
-                    pattern.is_match(&path)
+                    let is_valid_extension = matches!(
+                        file.path().extension().and_then(OsStr::to_str),
+                        Some("json")
+                    );
+
+                    if pattern.is_match(&path) && is_valid_extension {
+                        Some(parse_output(file, bucket.file_name().to_string_lossy()))
+                    } else {
+                        None
+                    }
                 })
-                .map(|x| parse_output(x, bucket.file_name().to_string_lossy()))
                 .collect::<Vec<_>>();
 
             if matches.is_empty() {
