@@ -13,15 +13,17 @@ pub trait FromPath {
         let mut contents = String::new();
 
         file.read_to_string(&mut contents)?;
-        
-        Ok(serde_json::from_str(&contents.trim_start_matches("\u{feff}"))?)
+
+        Ok(serde_json::from_str(
+            &contents.trim_start_matches("\u{feff}"),
+        )?)
     }
 }
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Manifest {
     /// The version of the package
-    #[serde(default="String::new")]
+    #[serde(default = "String::new")]
     pub version: String,
 }
 
@@ -30,7 +32,7 @@ impl FromPath for Manifest {}
 #[derive(Debug, Deserialize, Serialize)]
 pub struct InstallManifest {
     /// The bucket the package was installed from
-    #[serde(default="String::new")]
+    #[serde(default = "String::new")]
     pub bucket: String,
 }
 
@@ -52,7 +54,8 @@ pub fn is_installed(manifest_name: impl AsRef<Path>, bucket: Option<impl AsRef<s
                 .read_to_string(&mut buf)
                 .unwrap();
 
-            let manifest: InstallManifest = serde_json::from_str(&buf.trim_start_matches("\u{feff}")).unwrap();
+            let manifest: InstallManifest =
+                serde_json::from_str(&buf.trim_start_matches("\u{feff}")).unwrap();
 
             manifest.bucket == bucket.as_ref()
         } else {
