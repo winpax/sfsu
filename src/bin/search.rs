@@ -75,42 +75,24 @@ fn main() -> Result<()> {
         }
     };
 
-    if let Some(bucket) = args.bucket {
-        let path = {
-            let bk_base = scoop_buckets_path.join(&bucket);
-            let bk_path = bk_base.join("bucket");
+    let all_scoop_buckets = read_dir(scoop_buckets_path)?.collect::<Result<Vec<_>>>()?;
 
-            if bk_path.exists() {
-                bk_path
-            } else {
-                bk_base
-            }
-        };
-
-        let manifests = read_dir(path)?
-            .filter_map(|file| {
-                if let Ok(file) = file {
-                    if pattern.is_match(&file.path().to_string_lossy()) {
-                        return Some(parse_output(&file, &bucket));
+    let scoop_buckets = {
+        if let Some(bucket) = args.bucket {
+            all_scoop_buckets
+                .into_iter()
+                .filter(|scoop_bucket| {
+                    let path = scoop_bucket.path();
+                    match path.components().last() {
+                        Some(x) => x.as_os_str() == bucket.as_str(),
+                        None => false,
                     }
-                }
-
-                None
-            })
-            .collect::<Vec<_>>();
-
-        if manifests.is_empty() {
-            println!("Did not find any matching manifests in bucket '{}'", bucket);
+                })
+                .collect::<Vec<_>>()
         } else {
-            println!("Found in bucket '{}':", bucket);
-
-            for manifest in manifests {
-                println!("  {}", manifest);
-            }
+            all_scoop_buckets
         }
-    }
-
-    let scoop_buckets = read_dir(scoop_buckets_path)?.collect::<Result<Vec<_>>>()?;
+    };
 
     let mut matches = scoop_buckets
         .par_iter()
