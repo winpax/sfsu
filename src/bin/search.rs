@@ -59,7 +59,7 @@ fn parse_output(file: &DirEntry, bucket: impl AsRef<str>) -> String {
 }
 
 fn main() -> Result<()> {
-    let scoop_buckets_path = buckets::get_path();
+    let scoop_buckets_path = buckets::Bucket::get_path();
 
     let args = SearchArgs::parse();
 
