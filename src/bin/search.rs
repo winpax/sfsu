@@ -1,5 +1,5 @@
 use std::{
-    ffi::OsString,
+    ffi::{OsStr, OsString},
     fs::{read_dir, DirEntry, File},
     io::{Error, Read, Result},
 };
@@ -44,7 +44,7 @@ fn parse_output(file: &DirEntry, bucket: impl AsRef<str>) -> String {
         .read_to_string(&mut buf)
         .unwrap();
 
-    let manifest: Manifest = serde_json::from_str(&buf).unwrap();
+    let manifest: Manifest = serde_json::from_str(buf.trim_start_matches('\u{feff}')).unwrap();
 
     format!(
         "{} ({}) {}",
@@ -59,7 +59,7 @@ fn parse_output(file: &DirEntry, bucket: impl AsRef<str>) -> String {
 }
 
 fn main() -> Result<()> {
-    let scoop_buckets_path = buckets::get_path();
+    let scoop_buckets_path = buckets::Bucket::get_path();
 
     let args = SearchArgs::parse();
 
@@ -75,42 +75,24 @@ fn main() -> Result<()> {
         }
     };
 
-    if let Some(bucket) = args.bucket {
-        let path = {
-            let bk_base = scoop_buckets_path.join(&bucket);
-            let bk_path = bk_base.join("bucket");
+    let all_scoop_buckets = read_dir(scoop_buckets_path)?.collect::<Result<Vec<_>>>()?;
 
-            if bk_path.exists() {
-                bk_path
-            } else {
-                bk_base
-            }
-        };
-
-        let manifests = read_dir(path)?
-            .filter_map(|file| {
-                if let Ok(file) = file {
-                    if pattern.is_match(&file.path().to_string_lossy()) {
-                        return Some(parse_output(&file, &bucket));
+    let scoop_buckets = {
+        if let Some(bucket) = args.bucket {
+            all_scoop_buckets
+                .into_iter()
+                .filter(|scoop_bucket| {
+                    let path = scoop_bucket.path();
+                    match path.components().last() {
+                        Some(x) => x.as_os_str() == bucket.as_str(),
+                        None => false,
                     }
-                }
-
-                None
-            })
-            .collect::<Vec<_>>();
-
-        if manifests.is_empty() {
-            println!("Did not find any matching manifests in bucket '{}'", bucket);
+                })
+                .collect::<Vec<_>>()
         } else {
-            println!("Found in bucket '{}':", bucket);
-
-            for manifest in manifests {
-                println!("  {}", manifest);
-            }
+            all_scoop_buckets
         }
-    }
-
-    let scoop_buckets = read_dir(scoop_buckets_path)?.collect::<Result<Vec<_>>>()?;
+    };
 
     let mut matches = scoop_buckets
         .par_iter()
@@ -132,13 +114,21 @@ fn main() -> Result<()> {
 
             let matches = bucket_contents
                 .par_iter()
-                .filter(|file| {
+                .filter_map(|file| {
                     let path_raw = file.path();
                     let path = path_raw.to_string_lossy();
 
-                    pattern.is_match(&path)
+                    let is_valid_extension = matches!(
+                        file.path().extension().and_then(OsStr::to_str),
+                        Some("json")
+                    );
+
+                    if pattern.is_match(&path) && is_valid_extension {
+                        Some(parse_output(file, bucket.file_name().to_string_lossy()))
+                    } else {
+                        None
+                    }
                 })
-                .map(|x| parse_output(x, bucket.file_name().to_string_lossy()))
                 .collect::<Vec<_>>();
 
             if matches.is_empty() {
