@@ -1,4 +1,4 @@
-use std::{fs::DirEntry, path::PathBuf, process::Command, time::UNIX_EPOCH};
+use std::time::UNIX_EPOCH;
 
 use rayon::prelude::*;
 
@@ -6,7 +6,7 @@ use chrono::{DateTime, FixedOffset, NaiveDateTime};
 use clap::Parser;
 use serde::{Deserialize, Serialize};
 use sfst::{
-    get_powershell_path, get_scoop_path,
+    get_scoop_path,
     packages::{FromPath, InstallManifest, Manifest},
 };
 
@@ -27,8 +27,11 @@ struct ListArgs {
     #[clap(short, long, help = "The bucket to exclusively search in")]
     bucket: Option<String>,
 
-    #[clap(long, help = "Print in a more human readable format, rather than JSON")]
-    human: bool,
+    #[clap(
+        long,
+        help = "Print in the raw JSON output, rather than a human readable format"
+    )]
+    json: bool,
 }
 
 fn main() -> anyhow::Result<()> {
@@ -107,7 +110,11 @@ fn main() -> anyhow::Result<()> {
         og
     });
 
-    if args.human {
+    if args.json {
+        let output_json = serde_json::to_string_pretty(&outputs)?;
+
+        println!("{output_json}");
+    } else {
         println!(
             "{:nwidth$} | {:vwidth$} | {:swidth$} | {:uwidth$}",
             "Name",
@@ -133,10 +140,6 @@ fn main() -> anyhow::Result<()> {
                 uwidth = max_lengths.3
             );
         }
-    } else {
-        let output_json = serde_json::to_string_pretty(&outputs)?;
-
-        println!("{output_json}");
     }
 
     Ok(())
