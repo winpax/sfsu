@@ -5,20 +5,20 @@ use serde::{Deserialize, Serialize};
 use crate::get_powershell_path;
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct ScoopConfig {
+pub struct Scoop {
     pub last_update: Option<String>,
     pub virustotal_api_key: Option<String>,
     pub scoop_repo: Option<String>,
     pub scoop_branch: Option<String>,
 }
 
-impl ScoopConfig {
+impl Scoop {
     pub fn read() -> std::io::Result<Self> {
-        let config_path = ScoopConfig::get_path();
+        let config_path = Self::get_path();
 
         let config = std::fs::read_to_string(config_path)?;
 
-        let config: ScoopConfig = serde_json::from_str(&config)?;
+        let config: Self = serde_json::from_str(&config)?;
 
         Ok(config)
     }
@@ -65,7 +65,7 @@ impl ScoopConfig {
     }
 
     pub fn save(&self) -> std::io::Result<()> {
-        let config_path = ScoopConfig::get_path();
+        let config_path = Self::get_path();
 
         let config = serde_json::to_string_pretty(self)?;
 
