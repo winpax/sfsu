@@ -3,7 +3,6 @@ use std::path::{Path, PathBuf};
 use crate::get_scoop_path;
 
 pub struct Bucket {
-    path: PathBuf,
     repo: git2::Repository,
 }
 
@@ -13,7 +12,7 @@ impl Bucket {
 
         let repo = git2::Repository::open(&path)?;
 
-        Ok(Self { path, repo })
+        Ok(Self { repo })
     }
 
     pub fn update(&self) -> Result<(), git2::Error> {
