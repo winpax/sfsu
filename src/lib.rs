@@ -33,7 +33,10 @@ pub mod buckets;
 
 pub mod packages;
 
-#[must_use]
+/// Gets the powershell executable path
+///
+/// # Errors
+/// - There is no installed powershell executable
 pub fn get_powershell_path() -> anyhow::Result<PathBuf> {
     use which::which;
 
