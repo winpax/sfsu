@@ -1,3 +1,5 @@
+#![warn(clippy::pedantic, rust_2018_idioms)]
+
 use std::path::PathBuf;
 
 // TODO: Use glob instaed of regex
