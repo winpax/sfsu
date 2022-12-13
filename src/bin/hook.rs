@@ -19,7 +19,7 @@ fn main() {
     }
 
     if !args.no_list {
-        print!("if ($args[0] -eq 'list') {{ sfsl.exe @($args | Select-Object -Skip 1) }} else");
+        print!("if ($args[0] -eq 'list') {{ sfsl.exe --json @($args | Select-Object -Skip 1) | ConvertFrom-Json }} else");
     }
 
     print!(" {{ scoop.ps1 @args }} }}");

@@ -1,4 +1,4 @@
-use std::{process::Command, time::UNIX_EPOCH};
+use std::time::UNIX_EPOCH;
 
 use rayon::prelude::*;
 
@@ -6,7 +6,7 @@ use chrono::{DateTime, FixedOffset, NaiveDateTime};
 use clap::Parser;
 use serde::{Deserialize, Serialize};
 use sfst::{
-    get_powershell_path, get_scoop_path,
+    get_scoop_path,
     packages::{FromPath, InstallManifest, Manifest},
 };
 
@@ -27,7 +27,10 @@ struct ListArgs {
     #[clap(short, long, help = "The bucket to exclusively search in")]
     bucket: Option<String>,
 
-    #[clap(long, help = "Print in JSON format rather than Powershell format")]
+    #[clap(
+        long,
+        help = "Print in the raw JSON output, rather than a human readable format"
+    )]
     json: bool,
 }
 
@@ -81,9 +84,11 @@ fn main() -> anyhow::Result<()> {
 
             let app_current = path.join("current");
 
-            let manifest = Manifest::from_path(&app_current.join("manifest.json"))?;
+            let manifest =
+                Manifest::from_path(&app_current.join("manifest.json")).unwrap_or_default();
 
-            let install_manifest = InstallManifest::from_path(&app_current.join("install.json"))?;
+            let install_manifest =
+                InstallManifest::from_path(&app_current.join("install.json")).unwrap_or_default();
 
             anyhow::Ok(OutputPackage {
                 name: package_name.to_string(),
@@ -94,26 +99,47 @@ fn main() -> anyhow::Result<()> {
         })
         .collect::<Result<Vec<_>, _>>()?;
 
+    let max_lengths = outputs.iter().fold((0, 0, 0, 0), |mut og, pkg| {
+        use std::cmp;
+
+        og.0 = cmp::max(pkg.name.len(), og.0);
+        og.1 = cmp::max(pkg.version.len(), og.1);
+        og.2 = cmp::max(pkg.source.len(), og.2);
+        og.3 = cmp::max(pkg.updated.len(), og.3);
+
+        og
+    });
+
     if args.json {
         let output_json = serde_json::to_string_pretty(&outputs)?;
 
         println!("{output_json}");
     } else {
-        let output = serde_json::to_string(&outputs)?;
+        println!(
+            "{:nwidth$} | {:vwidth$} | {:swidth$} | {:uwidth$}",
+            "Name",
+            "Version",
+            "Source",
+            "Updated",
+            nwidth = max_lengths.0,
+            vwidth = max_lengths.1,
+            swidth = max_lengths.2,
+            uwidth = max_lengths.3
+        );
 
-        let pwsh_path = get_powershell_path()?;
-        let cmd_output = Command::new(pwsh_path)
-            .args([
-                "-NoProfile",
-                "-Command",
-                "ConvertFrom-Json",
-                &format!("'{output}'"),
-            ])
-            .output()?;
-
-        let formatted = String::from_utf8(cmd_output.stdout)?;
-
-        println!("{formatted}");
+        for pkg in outputs {
+            println!(
+                "{:nwidth$} | {:vwidth$} | {:swidth$} | {:uwidth$}",
+                pkg.name,
+                pkg.version,
+                pkg.source,
+                pkg.updated,
+                nwidth = max_lengths.0,
+                vwidth = max_lengths.1,
+                swidth = max_lengths.2,
+                uwidth = max_lengths.3
+            );
+        }
     }
 
     Ok(())
