@@ -63,6 +63,7 @@ impl Bucket {
     }
 
     #[must_use]
+    /// Get the paths where buckets are stored
     pub fn get_path() -> PathBuf {
         let scoop_path = get_scoop_path();
 
