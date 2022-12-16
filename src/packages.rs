@@ -25,20 +25,34 @@ pub trait FromPath {
     }
 }
 
-#[derive(Debug, Default, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Manifest {
     /// The version of the package
-    #[serde(default = "String::new")]
     pub version: String,
+}
+
+impl Default for Manifest {
+    fn default() -> Self {
+        Manifest {
+            version: "Invalid".to_string(),
+        }
+    }
 }
 
 impl FromPath for Manifest {}
 
-#[derive(Debug, Default, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct InstallManifest {
     /// The bucket the package was installed from
-    #[serde(default = "String::new")]
     pub bucket: String,
+}
+
+impl Default for InstallManifest {
+    fn default() -> Self {
+        InstallManifest {
+            bucket: "Invalid".to_string(),
+        }
+    }
 }
 
 impl FromPath for InstallManifest {}
