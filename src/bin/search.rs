@@ -31,7 +31,7 @@ struct SearchArgs {
 
 // TODO: Add installed marker
 
-fn parse_output(file: &DirEntry, bucket: impl AsRef<str>) -> String {
+fn parse_output(file: &DirEntry, bucket: impl AsRef<str>) -> anyhow::Result<String> {
     // This may be a bit of a hack, but it works
     let path = file.path().with_extension("");
     let file_name = path.file_name();
@@ -39,30 +39,27 @@ fn parse_output(file: &DirEntry, bucket: impl AsRef<str>) -> String {
 
     let mut buf = String::new();
 
-    File::open(file.path())
-        .unwrap()
-        .read_to_string(&mut buf)
-        .unwrap();
+    File::open(file.path()).unwrap().read_to_string(&mut buf)?;
 
-    let manifest: Manifest = serde_json::from_str(buf.trim_start_matches('\u{feff}'))
-        .unwrap_or_else(|e| {
-            panic!(
-                "{} manifest could not be interpreted as a valid JSON. Panicked with the following error:\n{}",
-                file.file_name().to_string_lossy(),
-                e
+    let result = match serde_json::from_str::<Manifest>(buf.trim_start_matches('\u{feff}')) {
+        Ok(manifest) => {
+            format!(
+                "{} ({}) {}",
+                package,
+                manifest.version,
+                if is_installed(&package, Some(bucket)) {
+                    "[installed]"
+                } else {
+                    ""
+                }
             )
-        });
-
-    format!(
-        "{} ({}) {}",
-        package,
-        manifest.version,
-        if is_installed(&package, Some(bucket)) {
-            "[installed]"
-        } else {
-            ""
         }
-    )
+        Err(_) => {
+            format!("{package} - Invalid")
+        }
+    };
+
+    Ok(result)
 }
 
 fn main() -> Result<()> {
@@ -163,7 +160,11 @@ fn main() -> Result<()> {
         }
 
         for mtch in matches {
-            println!("  {}", mtch);
+            match mtch {
+                Ok(x) => println!("{x}"),
+                // These errors can, for now, be ignored, because they are due to system errors, not invalid manifests
+                Err(_) => continue,
+            }
         }
     }
 
