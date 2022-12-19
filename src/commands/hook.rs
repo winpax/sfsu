@@ -9,18 +9,24 @@ pub struct Args {
     no_list: bool,
 }
 
-fn main() {
-    let args = Args::parse();
+impl super::Command for Args {
+    type Error = anyhow::Error;
 
-    print!("function scoop {{ ");
+    fn run(self) -> Result<(), Self::Error> {
+        print!("function scoop {{ ");
 
-    if !args.no_search {
-        print!("if ($args[0] -eq 'search') {{ sfss.exe @($args | Select-Object -Skip 1) }} else");
+        if !self.no_search {
+            print!(
+                "if ($args[0] -eq 'search') {{ sfss.exe @($args | Select-Object -Skip 1) }} else"
+            );
+        }
+
+        if !self.no_list {
+            print!("if ($args[0] -eq 'list') {{ sfsl.exe --json @($args | Select-Object -Skip 1) | ConvertFrom-Json }} else");
+        }
+
+        print!(" {{ scoop.ps1 @args }} }}");
+
+        Ok(())
     }
-
-    if !args.no_list {
-        print!("if ($args[0] -eq 'list') {{ sfsl.exe --json @($args | Select-Object -Skip 1) | ConvertFrom-Json }} else");
-    }
-
-    print!(" {{ scoop.ps1 @args }} }}");
 }
