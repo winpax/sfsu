@@ -1,3 +1,5 @@
+use clap::Subcommand;
+
 pub mod hook;
 pub mod list;
 pub mod search;
@@ -10,4 +12,11 @@ pub trait Command {
     /// # Errors
     /// - May run into an error
     fn run(self) -> Result<(), Self::Error>;
+}
+
+#[derive(Debug, Subcommand)]
+pub enum Commands {
+    Search(search::Args),
+    List(list::Args),
+    Hook(hook::Args),
 }

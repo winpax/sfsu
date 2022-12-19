@@ -1,4 +1,4 @@
-use clap::{Parser, Subcommand};
+use clap::Parser;
 
 use sfsu::commands::*;
 
@@ -6,16 +6,9 @@ use sfsu::commands::*;
 #[clap(about, author, version)]
 struct Args {
     #[clap(subcommand)]
-    command: Command,
-}
-
-#[derive(Debug, Subcommand)]
-enum Command {
-    Search(search::Args),
-    List(list::Args),
-    Hook(hook::Args),
+    command: Commands,
 }
 
 fn main() {
-    _ = Args::parse();
+    let args = Args::parse();
 }
