@@ -69,14 +69,12 @@ impl super::Command for Args {
     fn run(self) -> Result<(), Self::Error> {
         let scoop_buckets_path = buckets::Bucket::get_path();
 
-        let args = Args::parse();
-
         let pattern =
             {
-                if let Some(pattern) = args.pattern {
+                if let Some(pattern) = self.pattern {
                     Regex::new(&format!(
                 "{case}{pattern}",
-                case = if args.case_sensitive { "" } else { "(?i)" }
+                case = if self.case_sensitive { "" } else { "(?i)" }
             ))
             .expect("Invalid Regex provided. See https://docs.rs/regex/latest/regex/ for more info")
                 } else {
@@ -88,7 +86,7 @@ impl super::Command for Args {
             read_dir(scoop_buckets_path)?.collect::<Result<Vec<_>, Self::Error>>()?;
 
         let scoop_buckets = {
-            if let Some(bucket) = args.bucket {
+            if let Some(bucket) = self.bucket {
                 all_scoop_buckets
                     .into_iter()
                     .filter(|scoop_bucket| {
