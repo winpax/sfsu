@@ -17,7 +17,7 @@ use crate::{
 #[derive(Debug, Parser)]
 pub struct Args {
     #[clap(help = "The regex pattern to search for, using Rust Regex syntax")]
-    pattern: Option<String>,
+    pattern: String,
 
     #[clap(
         short = 'C',
@@ -69,18 +69,14 @@ impl super::Command for Args {
     fn run(self) -> Result<(), Self::Error> {
         let scoop_buckets_path = buckets::Bucket::get_path();
 
-        let pattern =
-            {
-                if let Some(pattern) = self.pattern {
-                    Regex::new(&format!(
-                "{case}{pattern}",
-                case = if self.case_sensitive { "" } else { "(?i)" }
+        let pattern = {
+            Regex::new(&format!(
+                "{}{}",
+                if self.case_sensitive { "" } else { "(?i)" },
+                self.pattern
             ))
             .expect("Invalid Regex provided. See https://docs.rs/regex/latest/regex/ for more info")
-                } else {
-                    panic!("No pattern provided")
-                }
-            };
+        };
 
         let all_scoop_buckets =
             read_dir(scoop_buckets_path)?.collect::<Result<Vec<_>, Self::Error>>()?;
