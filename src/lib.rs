@@ -5,6 +5,7 @@ use std::path::PathBuf;
 // TODO: Replace regex with glob
 // TODO: Global custom hook fn
 
+pub mod commands;
 pub mod config;
 
 #[must_use]

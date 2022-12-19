@@ -8,7 +8,8 @@ use rayon::prelude::*;
 
 use clap::Parser;
 use regex::Regex;
-use sfst::{
+
+use crate::{
     buckets,
     packages::{is_installed, Manifest},
 };

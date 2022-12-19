@@ -5,7 +5,8 @@ use rayon::prelude::*;
 use chrono::{DateTime, FixedOffset, NaiveDateTime};
 use clap::Parser;
 use serde::{Deserialize, Serialize};
-use sfst::{
+
+use crate::{
     get_scoop_path,
     packages::{FromPath, InstallManifest, Manifest},
 };
