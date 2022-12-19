@@ -20,3 +20,18 @@ pub enum Commands {
     List(list::Args),
     Hook(hook::Args),
 }
+
+impl Command for Commands {
+    type Error = anyhow::Error;
+
+    fn run(self) -> Result<(), Self::Error> {
+        // TODO: Find a way to unpack inner value without match statement
+        match self {
+            Commands::Search(args) => args.run()?,
+            Commands::List(args) => args.run()?,
+            Commands::Hook(args) => args.run()?,
+        }
+
+        Ok(())
+    }
+}

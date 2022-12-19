@@ -9,6 +9,8 @@ struct Args {
     command: Commands,
 }
 
-fn main() {
+fn main() -> anyhow::Result<()> {
     let args = Args::parse();
+
+    args.command.run()
 }
