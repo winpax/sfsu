@@ -16,8 +16,11 @@ pub trait Command {
 
 #[derive(Debug, Subcommand)]
 pub enum Commands {
+    #[command(about = "Search for a package")]
     Search(search::Args),
+    #[command(about = "List all installed packages")]
     List(list::Args),
+    #[command(about = "Generate PowerShell hook")]
     Hook(hook::Args),
 }
 
