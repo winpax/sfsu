@@ -21,7 +21,7 @@ struct OutputPackage {
 }
 
 #[derive(Debug, Parser)]
-struct ListArgs {
+pub struct Args {
     #[clap(help = "The pattern to search for (can be a regex)")]
     pattern: Option<String>,
 
@@ -36,7 +36,7 @@ struct ListArgs {
 }
 
 fn main() -> anyhow::Result<()> {
-    let args = ListArgs::parse();
+    let args = Args::parse();
 
     let scoop_apps_path = get_scoop_path().join("apps");
 

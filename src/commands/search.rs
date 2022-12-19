@@ -15,7 +15,7 @@ use crate::{
 };
 
 #[derive(Debug, Parser)]
-struct SearchArgs {
+pub struct Args {
     #[clap(help = "The regex pattern to search for, using Rust Regex syntax")]
     pattern: Option<String>,
 
@@ -66,7 +66,7 @@ fn parse_output(file: &DirEntry, bucket: impl AsRef<str>) -> anyhow::Result<Stri
 fn main() -> Result<()> {
     let scoop_buckets_path = buckets::Bucket::get_path();
 
-    let args = SearchArgs::parse();
+    let args = Args::parse();
 
     let pattern = {
         if let Some(pattern) = args.pattern {

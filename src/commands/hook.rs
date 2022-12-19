@@ -1,7 +1,7 @@
 use clap::Parser;
 
 #[derive(Debug, Parser)]
-struct ListArgs {
+pub struct Args {
     #[clap(long, help = "Disable the `scoop search` hook")]
     no_search: bool,
 
@@ -10,12 +10,12 @@ struct ListArgs {
 }
 
 fn main() {
-    let args = ListArgs::parse();
+    let args = Args::parse();
 
     print!("function scoop {{ ");
 
     if !args.no_search {
-        print!("if ($args[0] -eq 'search') {{ sfss.exe @($args | Select-Object -Skip 1) }} else")
+        print!("if ($args[0] -eq 'search') {{ sfss.exe @($args | Select-Object -Skip 1) }} else");
     }
 
     if !args.no_list {
