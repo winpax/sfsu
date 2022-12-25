@@ -1,7 +1,7 @@
 use std::{
     ffi::{OsStr, OsString},
-    fs::{read_dir, DirEntry, File},
-    io::{Error, Read, Result},
+    fs::{read_dir, DirEntry},
+    io::{Error, Result},
 };
 
 use rayon::prelude::*;
@@ -10,7 +10,7 @@ use clap::Parser;
 use regex::Regex;
 use sfst::{
     buckets,
-    packages::{is_installed, Manifest},
+    packages::{is_installed, FromPath, Manifest},
 };
 
 #[derive(Debug, Parser)]
@@ -37,11 +37,7 @@ fn parse_output(file: &DirEntry, bucket: impl AsRef<str>) -> anyhow::Result<Stri
     let file_name = path.file_name();
     let package = file_name.unwrap().to_string_lossy().to_string();
 
-    let mut buf = String::new();
-
-    File::open(file.path()).unwrap().read_to_string(&mut buf)?;
-
-    let result = match serde_json::from_str::<Manifest>(buf.trim_start_matches('\u{feff}')) {
+    let result = match Manifest::from_path(file.path()) {
         Ok(manifest) => {
             format!(
                 "{} ({}) {}",
