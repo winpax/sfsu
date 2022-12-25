@@ -87,11 +87,10 @@ impl super::Command for Args {
                 let app_current = path.join("current");
 
                 let manifest =
-                    Manifest::from_path(&app_current.join("manifest.json")).unwrap_or_default();
+                    Manifest::from_path(app_current.join("manifest.json")).unwrap_or_default();
 
-                let install_manifest =
-                    InstallManifest::from_path(&app_current.join("install.json"))
-                        .unwrap_or_default();
+                let install_manifest = InstallManifest::from_path(app_current.join("install.json"))
+                    .unwrap_or_default();
 
                 anyhow::Ok(OutputPackage {
                     name: package_name.to_string(),

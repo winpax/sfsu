@@ -11,7 +11,7 @@ codegen-units = 1
 [dependencies]
 anyhow = "1.0.68"
 chrono = { version = "0.4.23", features = ["serde", "clock", "std"], default-features = false }
-clap = { version = "4.0.29", features = ["derive"] }
+clap = { version = "4.0.32", features = ["derive"] }
 dirs = "4.0.0"
 dunce = "1.0.3"
 git2 = "0.15.0"
