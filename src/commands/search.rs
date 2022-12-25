@@ -1,7 +1,7 @@
 use std::{
     ffi::{OsStr, OsString},
-    fs::{read_dir, DirEntry, File},
-    io::{Error, Read},
+    fs::{read_dir, DirEntry},
+    io::Error,
 };
 
 use rayon::prelude::*;
@@ -11,7 +11,7 @@ use regex::Regex;
 
 use crate::{
     buckets,
-    packages::{is_installed, Manifest},
+    packages::{is_installed, FromPath, Manifest},
 };
 
 #[derive(Debug, Parser)]
@@ -32,17 +32,13 @@ pub struct Args {
 
 // TODO: Add installed marker
 
-fn parse_output(file: &DirEntry, bucket: impl AsRef<str>) -> anyhow::Result<String> {
+fn parse_output(file: &DirEntry, bucket: impl AsRef<str>) -> String {
     // This may be a bit of a hack, but it works
     let path = file.path().with_extension("");
     let file_name = path.file_name();
     let package = file_name.unwrap().to_string_lossy().to_string();
 
-    let mut buf = String::new();
-
-    File::open(file.path()).unwrap().read_to_string(&mut buf)?;
-
-    let result = match serde_json::from_str::<Manifest>(buf.trim_start_matches('\u{feff}')) {
+    match Manifest::from_path(file.path()) {
         Ok(manifest) => {
             format!(
                 "{} ({}) {}",
@@ -58,9 +54,7 @@ fn parse_output(file: &DirEntry, bucket: impl AsRef<str>) -> anyhow::Result<Stri
         Err(_) => {
             format!("{package} - Invalid")
         }
-    };
-
-    Ok(result)
+    }
 }
 
 impl super::Command for Args {
@@ -160,11 +154,7 @@ impl super::Command for Args {
             }
 
             for mtch in matches {
-                match mtch {
-                    Ok(x) => println!("{x}"),
-                    // These errors can, for now, be ignored, because they are due to system errors, not invalid manifests
-                    Err(_) => continue,
-                }
+                println!("{mtch}");
             }
         }
 
