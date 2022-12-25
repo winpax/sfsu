@@ -2,7 +2,7 @@
 
 > NOTE: I am looking into an issue where sfsu is being flagged for having `BScope.Trojan.Agent`. I can pinky promise this is not the case, but if you want to be sure, feel free to build it yourself and check the hashes match, or just use the built version, because you can look through my source code, it is all right here, and there are no trojans here :)
 
-Super fast replacements for scoop commands written in Rust
+Super fast replacements and additions to scoop commands written in Rust
 
 ## Installation
 
@@ -42,6 +42,7 @@ Done on a _AMD Ryzen 7 2700X @ 4.3GHz_ with _16GB_ of RAM and 17 scoop buckets l
 
 ```powershell
 ❯  hyperfine --warmup 1 'sfss google' 'scoop-search google' 'scoop search google'
+
 Benchmark 1: sfss google
   Time (mean ± σ):      30.8 ms ±   2.8 ms    [User: 4.0 ms, System: 4.2 ms]
   Range (min … max):    26.6 ms …  40.8 ms    70 runs
@@ -64,6 +65,7 @@ Summary
 
 ```powershell
 ❯ hyperfine --warmup 1 'sfsl' 'scoop list'
+
 Benchmark 1: sfsl
   Time (mean ± σ):     396.3 ms ±  26.3 ms    [User: 21.9 ms, System: 45.3 ms]
   Range (min … max):   359.6 ms … 435.1 ms    10 runs
@@ -80,23 +82,25 @@ Summary
 ### Scoop Buckets
 
 ```powershell
-dorado      https://github.com/chawyehsu/dorado
-extras      https://github.com/ScoopInstaller/Extras
-games       https://github.com/Calinou/scoop-games
-java        https://github.com/ScoopInstaller/Java
-lemon       https://github.com/hoilc/scoop-lemon
-main        https://github.com/ScoopInstaller/Main
-nerd-fonts  https://github.com/matthewjberger/scoop-nerd-fonts
-nirsoft     https://github.com/kodybrown/scoop-nirsoft
-nonportable https://github.com/ScoopInstaller/Nonportable
-personal    https://github.com/jewlexx/personal-scoop.git
-php         https://github.com/ScoopInstaller/PHP
-python      https://github.com/TheRandomLabs/Scoop-Python.git
-random      https://github.com/TheRandomLabs/Scoop-Bucket.git
-scoopet     https://github.com/ivaquero/scoopet
-spotify     https://github.com/TheRandomLabs/Scoop-Spotify.git
-versions    https://github.com/ScoopInstaller/Versions
-wsl         https://github.com/KNOXDEV/wsl
+dorado       https://github.com/chawyehsu/dorado
+emulators    https://github.com/borger/scoop-emulators.git
+extras       https://github.com/ScoopInstaller/Extras
+games        https://github.com/Calinou/scoop-games
+java         https://github.com/ScoopInstaller/Java
+lemon        https://github.com/hoilc/scoop-lemon
+main         https://github.com/ScoopInstaller/Main
+nerd-fonts   https://github.com/matthewjberger/scoop-nerd-fonts
+nirsoft      https://github.com/kodybrown/scoop-nirsoft
+nonportable  https://github.com/ScoopInstaller/Nonportable
+personal     https://github.com/jewlexx/personal-scoop.git
+php          https://github.com/ScoopInstaller/PHP
+python       https://github.com/TheRandomLabs/Scoop-Python.git
+random       https://github.com/TheRandomLabs/Scoop-Bucket.git
+scoopet      https://github.com/ivaquero/scoopet
+spotify      https://github.com/TheRandomLabs/Scoop-Spotify.git
+sysinternals https://github.com/niheaven/scoop-sysinternals.git
+versions     https://github.com/ScoopInstaller/Versions
+wsl          https://github.com/KNOXDEV/wsl
 ```
 
 ## Long Term Goals
