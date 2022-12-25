@@ -50,6 +50,7 @@ jobs:
         uses: crazy-max/ghaction-virustotal@v3
         if: startsWith(github.ref, 'refs/tags/')
         with:
+          update_release_body: true
           vt_api_key: ${{ secrets.VT_API_KEY }}
           files: |
             .7z$
