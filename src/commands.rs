@@ -24,7 +24,7 @@ pub enum Commands {
     #[command(about = "Generate PowerShell hook")]
     Hook(hook::Args),
     #[command(about = "Find buckets that do not have any installed packages")]
-    UnusedPackages(unused::Args),
+    UnusedBuckets(unused::Args),
 }
 
 impl Command for Commands {
@@ -36,7 +36,7 @@ impl Command for Commands {
             Commands::Search(args) => args.run()?,
             Commands::List(args) => args.run()?,
             Commands::Hook(args) => args.run()?,
-            Commands::UnusedPackages(args) => args.run()?,
+            Commands::UnusedBuckets(args) => args.run()?,
         }
 
         Ok(())
