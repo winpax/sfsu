@@ -7,6 +7,9 @@ pub struct Args {
 
     #[clap(long, help = "Disable the `scoop list` hook")]
     no_list: bool,
+
+    #[clap(long, help = "Disable the `scoop unused-buckets` hook")]
+    no_unused_buckets: bool,
 }
 
 impl super::Command for Args {
@@ -23,6 +26,10 @@ impl super::Command for Args {
 
         if !self.no_list {
             print!("if ($args[0] -eq 'list') {{ sfsu.exe list --json @($args | Select-Object -Skip 1) | ConvertFrom-Json }} else");
+        }
+
+        if !self.no_unused_buckets {
+            print!("if ($args[0] -eq 'unused-buckets') {{ sfsu.exe unused-buckets @($args | Select-Object -Skip 1 }} else");
         }
 
         print!(" {{ scoop.ps1 @args }} }}");
