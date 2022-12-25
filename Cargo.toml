@@ -1,20 +1,8 @@
 [package]
-name = "sfst"
-description = "Stupid Fast Scoop Tools"
+name = "sfsu"
+description = "Stupid Fast Scoop Utils"
 version = "1.1.5"
 edition = "2021"
-
-[[bin]]
-name = "sfss"
-path = "src/bin/search.rs"
-
-[[bin]]
-name = "sfsl"
-path = "src/bin/list.rs"
-
-[[bin]]
-name = "sfst-hook"
-path = "src/bin/hook.rs"
 
 [profile.release]
 strip = true

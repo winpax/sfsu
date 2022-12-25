@@ -5,6 +5,7 @@ use std::path::PathBuf;
 // TODO: Replace regex with glob
 // TODO: Global custom hook fn
 
+pub mod commands;
 pub mod config;
 
 #[must_use]
@@ -44,6 +45,6 @@ pub fn get_powershell_path() -> anyhow::Result<PathBuf> {
     if let Ok(path) = which("powershell") {
         Ok(path)
     } else {
-        Err(anyhow::anyhow!("Could not find powershell"))
+        Err(anyhow::anyhow!("Could not find PowerShell"))
     }
 }
