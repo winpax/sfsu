@@ -3,6 +3,7 @@ use clap::Subcommand;
 pub mod hook;
 pub mod list;
 pub mod search;
+pub mod unused;
 
 pub trait Command {
     type Error;
@@ -22,6 +23,8 @@ pub enum Commands {
     List(list::Args),
     #[command(about = "Generate PowerShell hook")]
     Hook(hook::Args),
+    #[command(about = "Find buckets that do not have any installed packages")]
+    UnusedBuckets(unused::Args),
 }
 
 impl Command for Commands {
@@ -33,6 +36,7 @@ impl Command for Commands {
             Commands::Search(args) => args.run()?,
             Commands::List(args) => args.run()?,
             Commands::Hook(args) => args.run()?,
+            Commands::UnusedBuckets(args) => args.run()?,
         }
 
         Ok(())
