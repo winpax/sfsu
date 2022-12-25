@@ -1,3 +1,4 @@
+//! Currently unused
 // Borrowed from https://github.com/rust-lang/git2-rs/blob/master/examples/pull.rs
 // The following is licensed under the MIT or the Apache-2.0 license, at your option.
 // Licensed by Alex Crichton

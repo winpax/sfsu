@@ -1,35 +1,23 @@
 [package]
-name = "sfst"
-description = "Stupid Fast Scoop Tools"
-version = "1.1.2"
+name = "sfsu"
+description = "Stupid Fast Scoop Utils"
+version = "1.1.5"
 edition = "2021"
-
-[[bin]]
-name = "sfss"
-path = "src/bin/search.rs"
-
-[[bin]]
-name = "sfsl"
-path = "src/bin/list.rs"
-
-[[bin]]
-name = "sfst-hook"
-path = "src/bin/hook.rs"
 
 [profile.release]
 strip = true
 codegen-units = 1
 
 [dependencies]
-anyhow = "1.0.66"
-chrono = { version = "0.4.22", features = ["serde"] }
-clap = { version = "4.0.26", features = ["derive"] }
+anyhow = "1.0.68"
+chrono = { version = "0.4.23", features = ["serde", "clock", "std"], default-features = false }
+clap = { version = "4.0.32", features = ["derive"] }
 dirs = "4.0.0"
 dunce = "1.0.3"
 git2 = "0.15.0"
 glob = "0.3.0"
-rayon = "1.5.3"
+rayon = "1.6.1"
 regex = "1.7.0"
-serde = { version = "1.0.147", features = ["derive"] }
-serde_json = "1.0.88"
+serde = { version = "1.0.151", features = ["derive"] }
+serde_json = "1.0.91"
 which = "4.3.0"
