@@ -5,7 +5,7 @@ version = "1.2.1"
 edition = "2021"
 
 [profile.release]
-strip = true
+# strip = true
 codegen-units = 1
 
 [dependencies]

@@ -53,7 +53,21 @@ impl Scoop {
     /// # Panics
     /// - The powershell path does not exist
     pub fn update_last_update_time(&mut self) {
+        use std::time::{SystemTime, UNIX_EPOCH};
+
+        use chrono::{DateTime, FixedOffset, NaiveDateTime};
         // TODO: Move to using chrono for time serialization
+        let naive_time = NaiveDateTime::from_timestamp_opt(
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .expect("time went backwards")
+                .as_secs() as i64,
+            0,
+        )
+        .expect("invalid or out-of-range datetime");
+
+        let date_time = DateTime::<FixedOffset>::from_local(naive_time, offset);
+
         let date_time = Command::new(get_powershell_path().unwrap())
             .args([
                 "-NoProfile",
