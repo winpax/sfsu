@@ -5,8 +5,10 @@ use std::path::PathBuf;
 // TODO: Replace regex with glob
 // TODO: Global custom hook fn
 
+pub mod buckets;
 pub mod commands;
 pub mod config;
+pub mod packages;
 
 #[must_use]
 /// Gets the user's scoop path, via either the default path or as provided by the SCOOP env variable
@@ -30,10 +32,6 @@ pub fn get_scoop_path() -> PathBuf {
         panic!("Scoop path does not exist");
     }
 }
-
-pub mod buckets;
-
-pub mod packages;
 
 /// Gets the powershell executable path
 ///
