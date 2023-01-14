@@ -1,8 +1,6 @@
-use std::{env, path::PathBuf, process::Command};
+use std::{env, path::PathBuf};
 
 use serde::{Deserialize, Serialize};
-
-use crate::get_powershell_path;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Scoop {
@@ -61,31 +59,17 @@ impl Scoop {
             SystemTime::now()
                 .duration_since(UNIX_EPOCH)
                 .expect("time went backwards")
-                .as_secs() as i64,
+                .as_secs()
+                .try_into()
+                .unwrap(),
             0,
         )
         .expect("invalid or out-of-range datetime");
 
-        let date_time = DateTime::<FixedOffset>::from_local(naive_time, offset);
+        let date_time =
+            DateTime::<FixedOffset>::from_local(naive_time, *chrono::Local::now().offset());
 
-        let date_time = Command::new(get_powershell_path().unwrap())
-            .args([
-                "-NoProfile",
-                "-Command",
-                "[System.DateTime]::Now.ToString('o')",
-            ])
-            .output()
-            .expect("Failed to get time from powershell");
-
-        let stdout_raw = date_time.stdout;
-        let mut stdout = String::from_utf8(stdout_raw).unwrap();
-
-        // Remove '\r' from the end of the string
-        stdout.pop();
-        // Remove '\n' from the end of the string
-        stdout.pop();
-
-        self.last_update = Some(stdout);
+        self.last_update = Some(date_time.to_string());
     }
 
     /// Save the modified scoop config
