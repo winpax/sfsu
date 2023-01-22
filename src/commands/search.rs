@@ -61,7 +61,7 @@ impl super::Command for Args {
     type Error = std::io::Error;
 
     fn run(self) -> Result<(), Self::Error> {
-        let scoop_buckets_path = buckets::Bucket::get_path();
+        let scoop_buckets_path = buckets::Bucket::get_buckets_path();
 
         let pattern = {
             Regex::new(&format!(

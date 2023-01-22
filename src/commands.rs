@@ -1,5 +1,6 @@
 use clap::Subcommand;
 
+pub mod describe;
 pub mod hook;
 pub mod list;
 pub mod search;
@@ -8,10 +9,6 @@ pub mod unused;
 pub trait Command {
     type Error;
 
-    /// Execute the command
-    ///
-    /// # Errors
-    /// - May run into an error
     fn run(self) -> Result<(), Self::Error>;
 }
 
@@ -25,6 +22,8 @@ pub enum Commands {
     Hook(hook::Args),
     #[command(about = "Find buckets that do not have any installed packages")]
     UnusedBuckets(unused::Args),
+    #[command(about = "Describe a package")]
+    Describe(describe::Args),
 }
 
 impl Command for Commands {
@@ -37,6 +36,7 @@ impl Command for Commands {
             Commands::List(args) => args.run()?,
             Commands::Hook(args) => args.run()?,
             Commands::UnusedBuckets(args) => args.run()?,
+            Commands::Describe(args) => args.run()?,
         }
 
         Ok(())

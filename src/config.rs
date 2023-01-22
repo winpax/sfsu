@@ -47,9 +47,6 @@ impl Scoop {
     }
 
     /// Update the last time the scoop was updated
-    ///
-    /// # Panics
-    /// - The powershell path does not exist
     pub fn update_last_update_time(&mut self) {
         use std::time::{SystemTime, UNIX_EPOCH};
 
