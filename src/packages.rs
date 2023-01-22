@@ -30,7 +30,11 @@ where
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Manifest {
     /// The description of the package
-    description: Option<String>,
+    pub description: Option<String>,
+    /// The license of the package,
+    pub license: Option<String>,
+    /// The homepage of the package
+    pub homepage: Option<String>,
     /// The version of the package
     pub version: String,
 }
@@ -38,8 +42,10 @@ pub struct Manifest {
 impl Default for Manifest {
     fn default() -> Self {
         Manifest {
-            description: None,
             version: "Invalid".to_string(),
+            description: None,
+            license: None,
+            homepage: None,
         }
     }
 }

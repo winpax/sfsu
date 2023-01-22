@@ -6,12 +6,14 @@ use crate::{
 };
 
 pub struct Bucket {
-    name: String,
+    pub name: String,
 }
 
 impl Bucket {
-    pub fn new(name: String) -> Self {
-        Self { name }
+    pub fn new(name: impl AsRef<str>) -> Self {
+        Self {
+            name: name.as_ref().to_owned(),
+        }
     }
 
     /// Open the given path as a bucket
@@ -40,7 +42,6 @@ impl Bucket {
         unimplemented!()
     }
 
-    #[must_use]
     /// Get the paths where buckets are stored
     pub fn get_buckets_path() -> PathBuf {
         let scoop_path = get_scoop_path();
@@ -50,6 +51,27 @@ impl Bucket {
 
     pub fn get_path(&self) -> PathBuf {
         Self::get_buckets_path().join(&self.name)
+    }
+
+    pub fn get_all() -> std::io::Result<Vec<Bucket>> {
+        let buckets_path = Self::get_buckets_path();
+
+        let bucket_dir = std::fs::read_dir(buckets_path)?;
+
+        let buckets = bucket_dir.map(|entry| {
+            let entry = entry?;
+            let name = {
+                let name = entry.file_name();
+
+                name.to_string_lossy().to_string()
+            };
+
+            Ok::<Bucket, std::io::Error>(Self { name })
+        });
+
+        let buckets = buckets.collect::<Result<Vec<_>, _>>()?;
+
+        Ok(buckets)
     }
 
     /// Gets the manifest that represents the given package name
