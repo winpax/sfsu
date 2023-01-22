@@ -1,4 +1,4 @@
-#![warn(clippy::pedantic, rust_2018_idioms)]
+#![warn(clippy::all, clippy::pedantic, rust_2018_idioms)]
 
 // TODO: Replace regex with glob
 // TODO: Global custom hook fn

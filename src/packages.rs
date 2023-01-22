@@ -13,7 +13,7 @@ where
     /// # Errors
     /// - The file does not exist
     /// - The file was not valid UTF-8
-    fn from_path(path: impl AsRef<Path>) -> anyhow::Result<Self>
+    fn from_path(path: impl AsRef<Path>) -> std::io::Result<Self>
     where
         Self: for<'a> Deserialize<'a>,
     {
@@ -29,6 +29,8 @@ where
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Manifest {
+    /// The description of the package
+    description: Option<String>,
     /// The version of the package
     pub version: String,
 }
@@ -36,6 +38,7 @@ pub struct Manifest {
 impl Default for Manifest {
     fn default() -> Self {
         Manifest {
+            description: None,
             version: "Invalid".to_string(),
         }
     }

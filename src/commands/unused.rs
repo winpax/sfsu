@@ -11,7 +11,7 @@ impl super::Command for Args {
     type Error = anyhow::Error;
 
     fn run(self) -> Result<(), Self::Error> {
-        let scoop_buckets_path = crate::buckets::Bucket::get_path();
+        let scoop_buckets_path = crate::buckets::Bucket::get_buckets_path();
         let scoop_apps_path = crate::get_scoop_path().join("apps");
 
         let apps = read_dir(scoop_apps_path)?.collect::<Result<Vec<_>, _>>()?;
