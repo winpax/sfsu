@@ -1,11 +1,7 @@
-use std::{
-    any::{Any, TypeId},
-    fs::File,
-    io::Read,
-    path::Path,
-};
+use std::{fs::File, io::Read, path::Path};
 
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 
 use crate::get_scoop_path;
 
@@ -29,10 +25,40 @@ pub trait FromPath {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Serialize)]
 pub struct License {
     identifier: String,
     url: Option<String>,
+}
+
+impl<'de> Deserialize<'de> for License {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let v: Value = Deserialize::deserialize(deserializer)?;
+
+        match v {
+            Value::String(identifier) => Ok(License {
+                identifier,
+                url: None,
+            }),
+            Value::Object(license) => {
+                let id = license
+                    .get("identifier")
+                    .and_then(|v| v.as_str())
+                    .expect("string identifier");
+
+                let url = license.get("url").map(|v| v.to_string());
+
+                Ok(License {
+                    identifier: id.to_owned(),
+                    url,
+                })
+            }
+            _ => panic!("Invalid license in manifest"),
+        }
+    }
 }
 
 impl std::fmt::Display for License {
@@ -49,40 +75,22 @@ impl std::fmt::Display for License {
 
 #[derive(Debug, Default, Deserialize, Serialize)]
 pub struct Manifest {
-    #[serde(default, deserialize_with = "ok_or_default")]
-    /// The description of the package
-    pub description: Option<String>,
-    #[serde(default, deserialize_with = "deserialize_license")]
-    /// The license of the package,
-    pub license: Option<License>,
-    #[serde(default, deserialize_with = "ok_or_default")]
-    /// The homepage of the package
-    pub homepage: Option<String>,
     #[serde(default = "default_version")]
     /// The version of the package
     pub version: String,
+    #[serde(default, deserialize_with = "ok_or_default")]
+    /// The description of the package
+    pub description: Option<String>,
+    #[serde(default, deserialize_with = "ok_or_default")]
+    /// The homepage of the package
+    pub homepage: Option<String>,
+    #[serde(default)]
+    /// The license of the package,
+    pub license: Option<License>,
 }
 
 fn default_version() -> String {
     "Invalid Manifest".to_string()
-}
-
-fn deserialize_license<'a, D>(deserializer: D) -> Result<Option<License>, D::Error>
-where
-    D: serde::Deserializer<'a>,
-{
-    let v: serde_json::Value = Deserialize::deserialize(deserializer)?;
-
-    if v.type_id() == TypeId::of::<String>() {
-        let id = v.to_string();
-
-        Ok(Some(License {
-            identifier: id,
-            url: None,
-        }))
-    } else {
-        Ok(Some(serde_json::from_value(v).unwrap()))
-    }
 }
 
 fn ok_or_default<'a, T, D>(deserializer: D) -> Result<T, D::Error>
@@ -90,7 +98,7 @@ where
     T: Deserialize<'a> + Default,
     D: serde::Deserializer<'a>,
 {
-    let v: serde_json::Value = Deserialize::deserialize(deserializer)?;
+    let v: Value = Deserialize::deserialize(deserializer)?;
     Ok(T::deserialize(v).unwrap_or_default())
 }
 
