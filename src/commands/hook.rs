@@ -15,6 +15,8 @@ pub struct Args {
     no_describe: bool,
 }
 
+// TODO: Add function to generate hooks
+
 impl super::Command for Args {
     type Error = anyhow::Error;
 
