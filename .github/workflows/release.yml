@@ -37,7 +37,7 @@ jobs:
           target: i686-pc-windows-gnu
 
       - name: Build and Package
-        shell: powershell
+        shell: pwsh
         run: ./generate-release.ps1
 
       - name: Upload a Build Artifact
