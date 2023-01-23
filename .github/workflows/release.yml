@@ -62,4 +62,4 @@ jobs:
           update_release_body: true
           vt_api_key: ${{ secrets.VT_API_KEY }}
           files: |
-            .7z$
+            release/*.7z$
