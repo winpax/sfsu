@@ -49,7 +49,10 @@ impl<'de> Deserialize<'de> for License {
                     .and_then(|v| v.as_str())
                     .expect("string identifier");
 
-                let url = license.get("url").map(|v| v.to_string());
+                let url = license
+                    .get("url")
+                    .and_then(|v| v.as_str())
+                    .map(|v| v.to_string());
 
                 Ok(License {
                     identifier: id.to_owned(),
