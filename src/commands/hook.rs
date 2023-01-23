@@ -32,11 +32,11 @@ impl super::Command for Args {
         }
 
         if !self.no_unused_buckets {
-            print!("if ($args[0] -eq 'unused-buckets') {{ sfsu.exe unused-buckets @($args | Select-Object -Skip 1 }} else");
+            print!("if ($args[0] -eq 'unused-buckets') {{ sfsu.exe unused-buckets @($args | Select-Object -Skip 1) }} else");
         }
 
         if !self.no_describe {
-            print!("if ($args[0] -eq 'describe') {{ sfsu.exe describe @($args | Select-Object -Skip 1 }} else");
+            print!("if ($args[0] -eq 'describe') {{ sfsu.exe describe @($args | Select-Object -Skip 1) }} else");
         }
 
         print!(" {{ scoop.ps1 @args }} }}");
