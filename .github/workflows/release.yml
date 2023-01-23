@@ -26,14 +26,18 @@ jobs:
       - uses: Swatinem/rust-cache@v2.2.0
 
       - name: Install i686 gcc
-        run: sudo apt-get install gcc-mingw-w64
+        run: sudo apt-get update && sudo apt-get install gcc-mingw-w64 -y
 
       - name: Install latest stable
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           override: true
-          target: i686-pc-windows-gnu, x86_64-pc-windows-gnu
+
+      - name: Update toolchains
+        run: |
+          rustup target add x86_64-pc-windows-gnu
+          rustup target add i686-pc-windows-gnu
 
       - name: Build and Package
         shell: pwsh
