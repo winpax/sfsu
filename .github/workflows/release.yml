@@ -33,8 +33,7 @@ jobs:
         with:
           toolchain: stable
           override: true
-          default: x86_64-pc-windows-gnu
-          target: i686-pc-windows-gnu
+          target: i686-pc-windows-gnu, x86_64-pc-windows-gnu
 
       - name: Build and Package
         shell: pwsh
