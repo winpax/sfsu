@@ -1,7 +1,5 @@
 # *S*tupid *F*ast *S*coop *U*tils
 
-> NOTE: I am looking into an issue where the 32bit build of sfsu is being flagged for having `BScope.Trojan.Agent`. I can pinky promise this is not the case, but if you want to be sure, feel free to build it yourself and check the hashes match, or just use the built version, because you can look through my source code, it is all right here, and there are no trojans here :)
-
 Super fast replacements and additions to scoop commands written in Rust
 
 ## Installation

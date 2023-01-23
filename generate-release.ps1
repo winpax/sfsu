@@ -1,3 +1,5 @@
+# Uses GNU rather than MSVC because for some reason the MSVC build is picked up as a trojan
+
 function Out-Hashes($Path)
 {
     $Hash = Get-FileHash $Path -Algorithm SHA256
