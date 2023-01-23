@@ -19,13 +19,13 @@ You may set up the hooks to use the scoop commands normally
 Add the following to your Powershell profile
 
 ```powershell
-Invoke-Expression (&sfst-hook)
+Invoke-Expression (&sfsu hook)
 ```
 
 You can also optionally disable certain hooks via the `--no-<hook>` flag
 
 ```powershell
-Invoke-Expression (&sfst-hook --no-list)
+Invoke-Expression (&sfsu hook --no-list)
 ```
 
 ## Benchmarks
