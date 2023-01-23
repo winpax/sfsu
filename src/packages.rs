@@ -4,10 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::get_scoop_path;
 
-pub trait FromPath
-where
-    Self: Default,
-{
+pub trait FromPath {
     /// Convert a path into a manifest
     ///
     /// # Errors
@@ -23,31 +20,37 @@ where
 
         file.read_to_string(&mut contents)?;
 
-        Ok(serde_json::from_str(contents.trim_start_matches('\u{feff}')).unwrap_or_default())
+        Ok(serde_json::from_str(contents.trim_start_matches('\u{feff}')).unwrap())
     }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Default, Deserialize, Serialize)]
 pub struct Manifest {
+    #[serde(default, deserialize_with = "ok_or_default")]
     /// The description of the package
     pub description: Option<String>,
+    #[serde(default, deserialize_with = "ok_or_default")]
     /// The license of the package,
     pub license: Option<String>,
+    #[serde(default, deserialize_with = "ok_or_default")]
     /// The homepage of the package
     pub homepage: Option<String>,
+    #[serde(default = "default_version")]
     /// The version of the package
     pub version: String,
 }
 
-impl Default for Manifest {
-    fn default() -> Self {
-        Manifest {
-            version: "Invalid".to_string(),
-            description: None,
-            license: None,
-            homepage: None,
-        }
-    }
+fn default_version() -> String {
+    "Invalid Manifest".to_string()
+}
+
+fn ok_or_default<'a, T, D>(deserializer: D) -> Result<T, D::Error>
+where
+    T: Deserialize<'a> + Default,
+    D: serde::Deserializer<'a>,
+{
+    let v: serde_json::Value = Deserialize::deserialize(deserializer)?;
+    Ok(T::deserialize(v).unwrap_or_default())
 }
 
 impl FromPath for Manifest {}
