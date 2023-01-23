@@ -30,20 +30,20 @@ Invoke-Expression (&sfsu hook --no-list)
 
 ## Benchmarks
 
-On average, `sfss` is **~1200** times faster than regular `scoop search` and ~7 times faster than [scoop-search](https://github.com/shilangyu/scoop-search)
+On average, `sfsu search` is **~1200** times faster than regular `scoop search` and ~7 times faster than [scoop-search](https://github.com/shilangyu/scoop-search)
 
-`sfsl` is ~4 times faster than `scoop list`
+`sfsu list` is ~4 times faster than `scoop list`
 
 Done on a _AMD Ryzen 7 2700X @ 4.3GHz_ with _16GB_ of RAM and 17 scoop buckets listed below
 
 ### Benchmark Results
 
-#### SFSS Benchmarks
+#### Searching Benchmarks
 
 ```powershell
-❯  hyperfine --warmup 1 'sfss google' 'scoop-search google' 'scoop search google'
+❯  hyperfine --warmup 1 'sfsu search google' 'scoop-search google' 'scoop search google'
 
-Benchmark 1: sfss google
+Benchmark 1: sfsu search google
   Time (mean ± σ):      30.8 ms ±   2.8 ms    [User: 4.0 ms, System: 4.2 ms]
   Range (min … max):    26.6 ms …  40.8 ms    70 runs
 
@@ -56,17 +56,17 @@ Benchmark 3: scoop search google
   Range (min … max):   37.182 s … 39.419 s    10 runs
 
 Summary
-  'sfss google' ran
+  'sfsu search google' ran
     7.56 ± 0.75 times faster than 'scoop-search google'
  1239.47 ± 114.54 times faster than 'scoop search google'
 ```
 
-#### SFSL Benchmarks
+#### Listing Benchmarks
 
 ```powershell
-❯ hyperfine --warmup 1 'sfsl' 'scoop list'
+❯ hyperfine --warmup 1 'sfsu list' 'scoop list'
 
-Benchmark 1: sfsl
+Benchmark 1: sfsu list
   Time (mean ± σ):     396.3 ms ±  26.3 ms    [User: 21.9 ms, System: 45.3 ms]
   Range (min … max):   359.6 ms … 435.1 ms    10 runs
 
@@ -75,7 +75,7 @@ Benchmark 2: scoop list
   Range (min … max):    1.518 s …  1.569 s    10 runs
 
 Summary
-  'sfsl' ran
+  'sfsu list' ran
     3.89 ± 0.26 times faster than 'scoop list'
 ```
 
