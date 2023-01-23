@@ -103,7 +103,7 @@ wsl          https://github.com/KNOXDEV/wsl
 
 ## Long Term Goals
 
-Currently I am considering creating an entire package manager that works fundamentally the same as Scoop but written in Rust.
+Currently I am considering creating an entire Scoop alternative that has 100% interoperability with existing Scoop buckets, but way way way faster than Scoop.
 
 In the meantime I will continue working on this independently of Scoop as "seperate" tools that work without an entire package manager.
 
