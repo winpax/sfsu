@@ -104,29 +104,7 @@ wsl          https://github.com/KNOXDEV/wsl
 
 ## Building yourself
 
-> ⚠️ Instructions are only for Windows for now
-
-### Windows
-
-#### Prerequisites
-
-- [Rustup](https://rustup.rs/)
-- [Rust](https://www.rust-lang.org/) toolchain matching the one referenced in [rust-toolchain.toml](rust-toolchain.toml) (should be automatically installed)
-- [gcc][gcc]
-- [msys2][msys2] [^1] with `mingw-w64-x86_64-gcc` and `mingw-w64-i686-gcc` [^2] installed
-- [PowerShell v7](https://github.com/PowerShell/PowerShell) - Optional, used for the [generate-release](generate-release.ps1) script and Scoop itself
-
-[^1]: If you prefer, you may use the MSVC toolchain if simply building yourself, removing the requirement for [gcc][gcc] and [msys2][msys2], but adding the requirement for [Visual Studio](https://visualstudio.microsoft.com/) as detailed [here](https://learn.microsoft.com/en-us/windows/dev-environment/rust/setup), but GNU must be used in distribution
-[^2]: Only the package that matches the target CPU architecture is required, so if simply editing yourself, you may just install the one that matches your CPU architecture.
-
-[msys2]:https://www.msys2.org/
-[gcc]: https://gcc.gnu.org/
-
-#### Building
-
-> You may need to restart your shell in order for the Rust toolchain to appear in your PATH
-
-Building at this point is as simple as running `cargo build` in the root folder of the project. Cargo will handle the rest. This may take a while the first time, don't worry, Rust builds are [notoriously slow](https://prev.rust-lang.org/en-US/faq.html#why-is-rustc-slow)
+The build instructions can be found [in the wiki](https://github.com/jewlexx/sfsu/wiki/Building)
 
 ## Long Term Goals
 
