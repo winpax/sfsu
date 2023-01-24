@@ -1,4 +1,4 @@
-use std::time::UNIX_EPOCH;
+use std::{ffi::OsStr, time::UNIX_EPOCH};
 
 use rayon::prelude::*;
 
@@ -52,17 +52,7 @@ impl super::Command for Args {
         let outputs = read
             .par_iter()
             // We cannot search the scoop app as it is built in and hence doesn't contain any manifest
-            // TODO: More efficient way to do this check?
-            .filter(|package| {
-                package
-                    .path()
-                    .components()
-                    .last()
-                    .unwrap()
-                    .as_os_str()
-                    .to_string_lossy()
-                    != "scoop"
-            })
+            .filter(|package| package.path().iter().last() != Some(OsStr::new("scoop")))
             .map(|package| {
                 let path = dunce::realpath(package.path())?;
                 let updated_sys = path.metadata()?.modified()?;

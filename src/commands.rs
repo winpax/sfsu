@@ -26,10 +26,8 @@ pub enum Commands {
     Describe(describe::Args),
 }
 
-impl Command for Commands {
-    type Error = anyhow::Error;
-
-    fn run(self) -> Result<(), Self::Error> {
+impl Commands {
+    pub fn run(self) -> Result<(), anyhow::Error> {
         // TODO: Find a way to unpack inner value without match statement
         match self {
             Commands::Search(args) => args.run()?,

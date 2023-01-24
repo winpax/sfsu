@@ -30,8 +30,6 @@ pub struct Args {
     bucket: Option<String>,
 }
 
-// TODO: Add installed marker
-
 fn parse_output(file: &DirEntry, bucket: impl AsRef<str>) -> String {
     // This may be a bit of a hack, but it works
     let path = file.path().with_extension("");
