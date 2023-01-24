@@ -1,5 +1,7 @@
 # *S*tupid *F*ast *S*coop *U*tils
 
+<!-- TODO: Add version numbers for the benchmarks run, and re-run them on latest versions -->
+
 Super fast replacements and additions to scoop commands written in Rust
 
 ## Installation
@@ -32,14 +34,12 @@ On average, `sfsu search` is **~1200** times faster than regular `scoop search` 
 
 `sfsu list` is ~4 times faster than `scoop list`
 
-Done on a _AMD Ryzen 7 2700X @ 4.3GHz_ with _16GB_ of RAM and 17 scoop buckets listed below
+Done on a *AMD Ryzen 7 2700X @ 4.3GHz* with *16GB* of RAM and 17 scoop buckets listed below
 
-### Benchmark Results
+### Searching
 
-#### Searching Benchmarks
-
-```powershell
-❯  hyperfine --warmup 1 'sfsu search google' 'scoop-search google' 'scoop search google'
+```shell
+$ hyperfine --warmup 1 'sfsu search google' 'scoop-search google' 'scoop search google'
 
 Benchmark 1: sfsu search google
   Time (mean ± σ):      30.8 ms ±   2.8 ms    [User: 4.0 ms, System: 4.2 ms]
@@ -59,10 +59,10 @@ Summary
  1239.47 ± 114.54 times faster than 'scoop search google'
 ```
 
-#### Listing Benchmarks
+### Listing
 
-```powershell
-❯ hyperfine --warmup 1 'sfsu list' 'scoop list'
+```shell
+$ hyperfine --warmup 1 'sfsu list' 'scoop list'
 
 Benchmark 1: sfsu list
   Time (mean ± σ):     396.3 ms ±  26.3 ms    [User: 21.9 ms, System: 45.3 ms]
@@ -79,7 +79,8 @@ Summary
 
 ### Scoop Buckets
 
-```powershell
+<!-- markdownlint-disable-next-line MD040 -->
+```
 dorado       https://github.com/chawyehsu/dorado
 emulators    https://github.com/borger/scoop-emulators.git
 extras       https://github.com/ScoopInstaller/Extras
@@ -101,10 +102,15 @@ versions     https://github.com/ScoopInstaller/Versions
 wsl          https://github.com/KNOXDEV/wsl
 ```
 
+## Building yourself
+
+The build instructions can be found [in the wiki](https://github.com/jewlexx/sfsu/wiki/Building)
+
 ## Long Term Goals
 
 Currently I am considering creating an entire Scoop alternative that has 100% interoperability with existing Scoop buckets, but way way way faster than Scoop.
 
 In the meantime I will continue working on this independently of Scoop as "seperate" tools that work without an entire package manager.
 
+<!-- markdownlint-disable-next-line MD036 -->
 **Made with 💗 by Juliette Cordor**
