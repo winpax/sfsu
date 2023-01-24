@@ -108,6 +108,13 @@ wsl          https://github.com/KNOXDEV/wsl
 
 ### Windows
 
+#### Prerequisites
+
+- [Rustup](https://rustup.rs/)
+- [Rust](https://www.rust-lang.org/) toolchain matching the one referenced in [rust-toolchain.toml](rust-toolchain.toml) (should be automatically installed)
+- [gcc][gcc]
+- [msys2][msys2] [^1] with `mingw-w64-x86_64-gcc` and `mingw-w64-i686-gcc` [^2] installed
+
 ## Long Term Goals
 
 Currently I am considering creating an entire Scoop alternative that has 100% interoperability with existing Scoop buckets, but way way way faster than Scoop.
@@ -116,3 +123,9 @@ In the meantime I will continue working on this independently of Scoop as "seper
 
 <!-- markdownlint-disable-next-line MD036 -->
 **Made with 💗 by Juliette Cordor**
+
+[^1]: If you prefer, you may use the MSVC toolchain if simply building yourself, removing the requirement for [gcc][gcc] and [msys2][msys2], but adding the requirement for [Visual Studio](https://visualstudio.microsoft.com/) as detailed [here](https://learn.microsoft.com/en-us/windows/dev-environment/rust/setup), but GNU must be used in distribution
+[^2]: Only the package that matches the target CPU architecture, so if simply editing yourself, you may just install the one that matches your CPU architecture.
+
+[msys2]:https://www.msys2.org/
+[gcc]: https://gcc.gnu.org/
