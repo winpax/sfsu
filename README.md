@@ -20,10 +20,10 @@ Add the following to your Powershell profile
 Invoke-Expression (&sfsu hook)
 ```
 
-You can also optionally disable certain hooks via the `--no-<hook>` flag
+You can also optionally disable certain hooks via the `--disable <COMMAND>` flag
 
 ```powershell
-Invoke-Expression (&sfsu hook --no-list)
+Invoke-Expression (&sfsu hook --disable list)
 ```
 
 ## Benchmarks
