@@ -28,54 +28,64 @@ You can also optionally disable certain hooks via the `--disable <COMMAND>` flag
 Invoke-Expression (&sfsu hook --disable list)
 ```
 
-## Benchmarks
+## Benchmarks [^1]
 
-On average, `sfsu search` is **~1200** times faster than regular `scoop search` and ~7 times faster than [scoop-search](https://github.com/shilangyu/scoop-search)
+On average, `sfsu search` is **~500** times faster than regular `scoop search` and **~6.5** times faster than [scoop-search](https://github.com/shilangyu/scoop-search).
 
-`sfsu list` is ~4 times faster than `scoop list`
+That takes you from about 25 seconds on `scoop search` down to `50 milliseconds` with `sfsu search`
+
+`sfsu list` is **~30** times faster than `scoop list`
 
 Done on a *AMD Ryzen 7 2700X @ 4.3GHz* with *16GB* of RAM and 17 scoop buckets listed below
 
-### Searching
+[^1]: These benchmarks are done after warmups. You will likely see far greater improvements when run on "cold" systems. Results will also differ depending on search request and the number of results, as well as installed buckets, and a few other factors
+
+### Searching [^search-version]
 
 ```shell
-$ hyperfine --warmup 1 'sfsu search google' 'scoop-search google' 'scoop search google'
+$ hyperfine --warmup 3 'sfsu search google' 'scoop-search google' 'scoop search google'
 
 Benchmark 1: sfsu search google
-  Time (mean ± σ):      30.8 ms ±   2.8 ms    [User: 4.0 ms, System: 4.2 ms]
-  Range (min … max):    26.6 ms …  40.8 ms    70 runs
+  Time (mean ± σ):      55.3 ms ±   5.3 ms    [User: 3.6 ms, System: 3.9 ms]
+  Range (min … max):    47.8 ms …  73.0 ms    26 runs
 
 Benchmark 2: scoop-search google
-  Time (mean ± σ):     232.8 ms ±   9.6 ms    [User: 11.7 ms, System: 72.9 ms]
-  Range (min … max):   218.5 ms … 251.7 ms    12 runs
+  Time (mean ± σ):     342.1 ms ±  24.6 ms    [User: 15.6 ms, System: 130.0 ms]
+  Range (min … max):   316.8 ms … 384.0 ms    10 runs
 
 Benchmark 3: scoop search google
-  Time (mean ± σ):     38.186 s ±  0.673 s    [User: 5.330 s, System: 14.492 s]
-  Range (min … max):   37.182 s … 39.419 s    10 runs
+  Time (mean ± σ):     25.794 s ±  2.048 s    [User: 5.261 s, System: 10.469 s]
+  Range (min … max):   24.352 s … 31.234 s    10 runs
 
 Summary
   'sfsu search google' ran
-    7.56 ± 0.75 times faster than 'scoop-search google'
- 1239.47 ± 114.54 times faster than 'scoop search google'
+    6.19 ± 0.74 times faster than 'scoop-search google'
+  466.67 ± 57.90 times faster than 'scoop search google'
 ```
 
-### Listing
+[^search-version]: Run on version [v1.4.0][v1.4.0]
+
+### Listing [^list-version]
 
 ```shell
-$ hyperfine --warmup 1 'sfsu list' 'scoop list'
+$ hyperfine --warmup 3 'sfsu list' 'scoop list'
 
 Benchmark 1: sfsu list
-  Time (mean ± σ):     396.3 ms ±  26.3 ms    [User: 21.9 ms, System: 45.3 ms]
-  Range (min … max):   359.6 ms … 435.1 ms    10 runs
+  Time (mean ± σ):      72.3 ms ±   8.5 ms    [User: 0.0 ms, System: 13.1 ms]
+  Range (min … max):    64.3 ms … 110.3 ms    27 runs
 
 Benchmark 2: scoop list
-  Time (mean ± σ):      1.541 s ±  0.015 s    [User: 0.473 s, System: 0.253 s]
-  Range (min … max):    1.518 s …  1.569 s    10 runs
+  Time (mean ± σ):      2.128 s ±  0.030 s    [User: 0.634 s, System: 0.301 s]
+  Range (min … max):    2.090 s …  2.182 s    10 runs
 
 Summary
   'sfsu list' ran
-    3.89 ± 0.26 times faster than 'scoop list'
+   29.43 ± 3.50 times faster than 'scoop list'
 ```
+
+[^list-version]: Run on version [v1.4.0][v1.4.0]
+
+[v1.4.0]: https://github.com/jewlexx/sfsu/releases/tag/v1.4.0
 
 ### Scoop Buckets
 
