@@ -1,10 +1,10 @@
-use clap::Subcommand;
-
 pub mod describe;
 pub mod hook;
 pub mod list;
 pub mod search;
 pub mod unused;
+
+use clap::Subcommand;
 
 pub trait Command {
     type Error;
@@ -12,7 +12,7 @@ pub trait Command {
     fn run(self) -> Result<(), Self::Error>;
 }
 
-#[derive(Debug, Subcommand)]
+#[derive(Debug, Clone, Subcommand)]
 pub enum Commands {
     #[command(about = "Search for a package")]
     Search(search::Args),

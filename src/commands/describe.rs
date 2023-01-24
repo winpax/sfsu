@@ -2,7 +2,7 @@ use clap::Parser;
 
 use crate::buckets::Bucket;
 
-#[derive(Debug, Parser)]
+#[derive(Debug, Clone, Parser)]
 pub struct Args {
     #[clap(help = "The package to describe")]
     package: String,

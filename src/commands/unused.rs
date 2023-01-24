@@ -4,7 +4,7 @@ use clap::Parser;
 
 use crate::packages::FromPath;
 
-#[derive(Debug, Parser)]
+#[derive(Debug, Clone, Parser)]
 pub struct Args {}
 
 impl super::Command for Args {

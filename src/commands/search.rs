@@ -14,7 +14,7 @@ use crate::{
     packages::{is_installed, FromPath, Manifest},
 };
 
-#[derive(Debug, Parser)]
+#[derive(Debug, Clone, Parser)]
 pub struct Args {
     #[clap(help = "The regex pattern to search for, using Rust Regex syntax")]
     pattern: String,

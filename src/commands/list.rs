@@ -20,7 +20,7 @@ struct OutputPackage {
     updated: String,
 }
 
-#[derive(Debug, Parser)]
+#[derive(Debug, Clone, Parser)]
 pub struct Args {
     #[clap(help = "The pattern to search for (can be a regex)")]
     pattern: Option<String>,

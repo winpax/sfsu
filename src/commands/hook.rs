@@ -1,18 +1,9 @@
 use clap::Parser;
 
-#[derive(Debug, Parser)]
+#[derive(Debug, Clone, Parser)]
 pub struct Args {
-    #[clap(long, help = "Disable the `scoop search` hook")]
-    no_search: bool,
-
-    #[clap(long, help = "Disable the `scoop list` hook")]
-    no_list: bool,
-
-    #[clap(long, help = "Disable the `scoop unused-buckets` hook")]
-    no_unused_buckets: bool,
-
-    #[clap(long, help = "Disable the `scoop describe` hook")]
-    no_describe: bool,
+    #[clap(short = 'D', long, help = "The commands to disable")]
+    disabled: Vec<super::Commands>,
 }
 
 // TODO: Add function to generate hooks
