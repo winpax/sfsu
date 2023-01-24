@@ -20,7 +20,7 @@ impl super::Command for Args {
 
             vec![(
                 self.package.clone(),
-                bucket_name.clone(),
+                bucket_name,
                 bucket.get_manifest(&self.package)?,
             )]
         } else {
@@ -45,10 +45,10 @@ impl super::Command for Args {
             println!("  Version: {}", manifest.version);
 
             if let Some(homepage) = manifest.homepage {
-                println!("  Homepage: {}", homepage);
+                println!("  Homepage: {homepage}");
             }
             if let Some(license) = manifest.license {
-                println!("  License: {}", license);
+                println!("  License: {license}");
             }
         }
 

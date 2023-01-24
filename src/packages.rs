@@ -46,13 +46,13 @@ impl<'de> Deserialize<'de> for License {
             Value::Object(license) => {
                 let id = license
                     .get("identifier")
-                    .and_then(|v| v.as_str())
+                    .and_then(serde_json::Value::as_str)
                     .expect("string identifier");
 
                 let url = license
                     .get("url")
-                    .and_then(|v| v.as_str())
-                    .map(|v| v.to_string());
+                    .and_then(serde_json::Value::as_str)
+                    .map(std::string::ToString::to_string);
 
                 Ok(License {
                     identifier: id.to_owned(),

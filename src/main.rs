@@ -12,7 +12,7 @@ use std::path::PathBuf;
 
 use clap::Parser;
 
-use commands::{Command, Commands};
+use commands::Commands;
 
 #[must_use]
 /// Gets the user's scoop path, via either the default path or as provided by the SCOOP env variable

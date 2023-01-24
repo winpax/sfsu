@@ -5,6 +5,7 @@ pub mod search;
 pub mod unused;
 
 use clap::Subcommand;
+use sfsu_derive::RawEnum;
 
 pub trait Command {
     type Error;
@@ -12,7 +13,7 @@ pub trait Command {
     fn run(self) -> Result<(), Self::Error>;
 }
 
-#[derive(Debug, Clone, Subcommand)]
+#[derive(Debug, RawEnum, Clone, Subcommand)]
 pub enum Commands {
     #[command(about = "Search for a package")]
     Search(search::Args),
