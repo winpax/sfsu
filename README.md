@@ -1,6 +1,10 @@
 # *S*tupid *F*ast *S*coop *U*tils
 
-<!-- TODO: Add version numbers for the benchmarks run, and re-run them on latest versions -->
+![GitHub branch checks state](https://img.shields.io/github/checks-status/jewlexx/sfsu/trunk)
+[![dependency status](https://deps.rs/repo/github/jewlexx/sfsu/status.svg)](https://deps.rs/repo/github/jewlexx/sfsu)
+![GitHub all releases](https://img.shields.io/github/downloads/jewlexx/sfsu/total)
+![GitHub](https://img.shields.io/github/license/jewlexx/sfsu)
+![Scoop Version (extras bucket)](https://img.shields.io/scoop/v/sfsu?bucket=extras)
 
 Super fast replacements and additions to scoop commands written in Rust
 
