@@ -104,8 +104,7 @@ impl super::Command for Args {
                 };
 
                 let bucket_contents = read_dir(bucket_path)
-                    .unwrap()
-                    .collect::<Result<Vec<_>, Self::Error>>()
+                    .and_then(Iterator::collect::<Result<Vec<_>, Self::Error>>)
                     .unwrap();
 
                 let matches = bucket_contents

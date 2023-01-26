@@ -5,7 +5,10 @@ use serde_json::Value;
 
 use crate::get_scoop_path;
 
-pub trait FromPath {
+pub trait FromPath
+where
+    Self: Default,
+{
     /// Convert a path into a manifest
     ///
     /// # Errors
@@ -21,7 +24,7 @@ pub trait FromPath {
 
         file.read_to_string(&mut contents)?;
 
-        Ok(serde_json::from_str(contents.trim_start_matches('\u{feff}')).unwrap())
+        Ok(serde_json::from_str(contents.trim_start_matches('\u{feff}')).unwrap_or_default())
     }
 }
 
