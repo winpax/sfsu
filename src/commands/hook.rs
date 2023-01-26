@@ -13,7 +13,7 @@ impl super::Command for Args {
     type Error = anyhow::Error;
 
     fn run(self) -> Result<(), Self::Error> {
-        print!("function scoop {{ ");
+        print!("function scoop {{ switch ($args[0]) {{ ");
 
         let enabled_hooks: Vec<super::CommandsRaw> = super::CommandsRaw::iter()
             .filter(|variant| !self.disable.contains(variant))
@@ -22,11 +22,11 @@ impl super::Command for Args {
         for command in enabled_hooks {
             let command_name: String = command.to_string();
             print!(
-                "if ($args[0] -eq '{command_name}') {{ sfsu.exe {command_name} @($args | Select-Object -Skip 1) }} else"
+                "'{command_name}' {{ return sfsu.exe {command_name} @($args | Select-Object -Skip 1) }} "
             );
         }
 
-        print!(" {{ scoop.ps1 @args }} }}");
+        print!("default {{ scoop.ps1 @args }} }} }}");
 
         Ok(())
     }
