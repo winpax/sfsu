@@ -24,7 +24,14 @@ where
 
         file.read_to_string(&mut contents)?;
 
-        Ok(serde_json::from_str(contents.trim_start_matches('\u{feff}')).unwrap_or_default())
+        Ok(
+            serde_json::from_str(contents.trim_start_matches('\u{feff}')).unwrap_or_else(|err| {
+                println!("Error parsing manifest: {}", path.display());
+                println!("{}", err);
+
+                Default::default()
+            }),
+        )
     }
 }
 
