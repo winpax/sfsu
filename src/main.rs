@@ -37,8 +37,9 @@ fn get_scoop_path() -> PathBuf {
     }
 }
 
+/// Scoop utilities that can replace the slowest parts of Scoop, and run anywhere from 30-100 times faster
 #[derive(Debug, Parser)]
-#[clap(about, author, version)]
+#[clap(about, long_about, author, version)]
 struct Args {
     #[command(subcommand)]
     command: Commands,
