@@ -62,10 +62,11 @@ impl super::Command for Args {
         let (bucket, pattern) = if self.pattern.contains('/') {
             let mut split = self.pattern.splitn(2, '/');
 
-            let bucket = split.next().unwrap();
+            // Bucket flag overrides bucket/package syntax
+            let bucket = self.bucket.unwrap_or(split.next().unwrap().to_string());
             let pattern = split.next().unwrap();
 
-            (Some(bucket.to_string()), pattern.to_string())
+            (Some(bucket), pattern.to_string())
         } else {
             (self.bucket, self.pattern)
         };
