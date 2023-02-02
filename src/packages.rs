@@ -117,16 +117,19 @@ where
 
 impl FromPath for Manifest {}
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Default, Deserialize, Serialize)]
 pub struct InstallManifest {
     /// The bucket the package was installed from
-    pub bucket: String,
+    pub bucket: Option<String>,
+    pub url: Option<String>,
 }
 
-impl Default for InstallManifest {
-    fn default() -> Self {
-        InstallManifest {
-            bucket: "Invalid".to_string(),
+impl InstallManifest {
+    pub fn get_source(&self) -> String {
+        match (&self.bucket, &self.url) {
+            (Some(bucket), None) => bucket.to_string(),
+            (None, Some(url)) => url.to_string(),
+            _ => "Unknown".to_string(),
         }
     }
 }
@@ -147,7 +150,7 @@ pub fn is_installed(manifest_name: impl AsRef<Path>, bucket: Option<impl AsRef<s
     match InstallManifest::from_path(installed_path) {
         Ok(manifest) => {
             if let Some(bucket) = bucket {
-                manifest.bucket == bucket.as_ref()
+                manifest.get_source() == bucket.as_ref()
             } else {
                 false
             }
