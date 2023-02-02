@@ -10,6 +10,7 @@ proc-macro = true
 
 [dependencies]
 heck = "0.4.0"
+proc-macro-crate = "1.3.0"
 proc-macro-error = "1.0.4"
 proc-macro2 = "1.0.50"
 quote = "1.0.23"
