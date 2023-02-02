@@ -85,7 +85,7 @@ impl super::Command for Args {
                 anyhow::Ok(OutputPackage {
                     name: package_name.to_string(),
                     version: manifest.version,
-                    source: install_manifest.bucket,
+                    source: install_manifest.get_source(),
                     updated: date_time.to_rfc3339(),
                 })
             })

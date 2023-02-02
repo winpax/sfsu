@@ -21,10 +21,12 @@ impl super::Command for Args {
             .filter_map(|entry| {
                 let install_path = entry.path().join("current/install.json");
 
-                if let Ok(install_manifest) =
-                    crate::packages::InstallManifest::from_path(install_path)
+                if let Ok(crate::packages::InstallManifest {
+                    bucket: Some(bucket),
+                    url: _,
+                }) = crate::packages::InstallManifest::from_path(install_path)
                 {
-                    Some(install_manifest.bucket)
+                    Some(bucket)
                 } else {
                     None
                 }
