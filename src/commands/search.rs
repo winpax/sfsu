@@ -59,13 +59,24 @@ impl super::Command for Args {
     type Error = std::io::Error;
 
     fn run(self) -> Result<(), Self::Error> {
+        let (bucket, pattern) = if self.pattern.contains('/') {
+            let mut split = self.pattern.splitn(2, '/');
+
+            let bucket = split.next().unwrap();
+            let pattern = split.next().unwrap();
+
+            (Some(bucket.to_string()), pattern.to_string())
+        } else {
+            (self.bucket, self.pattern)
+        };
+
         let scoop_buckets_path = buckets::Bucket::get_buckets_path();
 
         let pattern = {
             Regex::new(&format!(
                 "{}{}",
                 if self.case_sensitive { "" } else { "(?i)" },
-                self.pattern
+                pattern
             ))
             .expect("Invalid Regex provided. See https://docs.rs/regex/latest/regex/ for more info")
         };
@@ -74,7 +85,7 @@ impl super::Command for Args {
             read_dir(scoop_buckets_path)?.collect::<Result<Vec<_>, Self::Error>>()?;
 
         let scoop_buckets = {
-            if let Some(bucket) = self.bucket {
+            if let Some(bucket) = bucket {
                 all_scoop_buckets
                     .into_iter()
                     .filter(|scoop_bucket| {
