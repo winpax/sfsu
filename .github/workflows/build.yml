@@ -85,7 +85,6 @@ jobs:
         with:
           toolchain: stable
           override: true
-          target: ${{ matrix.target }}
 
       - name: Build and Test
-        run: cargo test --target ${{ matrix.target }}
+        run: cargo test
