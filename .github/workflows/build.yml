@@ -63,3 +63,24 @@ jobs:
           vt_api_key: ${{ secrets.VT_API_KEY }}
           files: |
             release/*.7z$
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: [x86_64-pc-windows-gnu, i686-pc-windows-gnu]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install latest stable
+        run: |
+          curl https://sh.rustup.rs -sSf | sh -s -- -y
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Update toolchains
+        run: |
+          rustup target add ${{ matrix.target }}
+
+      - name: Build and Test
+        run: cargo test --target ${{ matrix.target }}
