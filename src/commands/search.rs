@@ -28,9 +28,12 @@ pub struct Args {
 
     #[clap(short, long, help = "The bucket to exclusively search in")]
     bucket: Option<String>,
+
+    #[clap(short, long, help = "Only search installed packages")]
+    installed: bool,
 }
 
-fn parse_output(file: &DirEntry, bucket: impl AsRef<str>) -> String {
+fn parse_output(file: &DirEntry, bucket: impl AsRef<str>, installed_only: bool) -> Option<String> {
     // This may be a bit of a hack, but it works
     let path = file.path().with_extension("");
     let file_name = path.file_name();
@@ -38,20 +41,23 @@ fn parse_output(file: &DirEntry, bucket: impl AsRef<str>) -> String {
 
     match Manifest::from_path(file.path()) {
         Ok(manifest) => {
-            format!(
-                "{} ({}) {}",
-                package,
-                manifest.version,
-                if is_installed(&package, Some(bucket)) {
-                    "[installed]"
+            let is_installed = is_installed(&package, Some(bucket));
+            if installed_only {
+                if is_installed {
+                    Some(format!("{} ({})", package, manifest.version,))
                 } else {
-                    ""
+                    None
                 }
-            )
+            } else {
+                Some(format!(
+                    "{} ({}) {}",
+                    package,
+                    manifest.version,
+                    if is_installed { "[installed]" } else { "" },
+                ))
+            }
         }
-        Err(_) => {
-            format!("{package} - Invalid")
-        }
+        Err(_) => Some(format!("{package} - Invalid")),
     }
 }
 
@@ -131,7 +137,7 @@ impl super::Command for Args {
                         );
 
                         if pattern.is_match(&path) && is_valid_extension {
-                            Some(parse_output(file, bucket.file_name().to_string_lossy()))
+                            parse_output(file, bucket.file_name().to_string_lossy(), self.installed)
                         } else {
                             None
                         }
