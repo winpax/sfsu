@@ -20,24 +20,13 @@ env:
 
 jobs:
   build:
+    name: Build
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v3
-      - uses: Swatinem/rust-cache@v2.2.0
-
-      - name: Install i686 GCC
-        run: sudo apt-get update && sudo apt-get install gcc-mingw-w64 -y
-
-      - name: Install latest stable
-        run: |
-          curl https://sh.rustup.rs -sSf | sh -s -- -y
-          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
-
-      - name: Update toolchains
-        run: |
-          rustup target add x86_64-pc-windows-gnu
-          rustup target add i686-pc-windows-gnu
+      - uses: ./.github/workflows/setup.yml
+        name: Setup workflow
 
       - name: Build and Package
         shell: pwsh
@@ -49,12 +38,6 @@ jobs:
           name: package.zip
           path: release/*
 
-      - name: Upload & Publish
-        uses: softprops/action-gh-release@v0.1.15
-        if: startsWith(github.ref, 'refs/tags/')
-        with:
-          files: release/*.7z*
-
       - name: VirusTotal Scan
         uses: crazy-max/ghaction-virustotal@v3
         if: startsWith(github.ref, 'refs/tags/')
@@ -65,6 +48,7 @@ jobs:
             release/*.7z$
 
   test:
+    name: Test
     runs-on: ubuntu-latest
     strategy:
       matrix:
