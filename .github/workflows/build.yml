@@ -75,15 +75,14 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+      - uses: Swatinem/rust-cache@v2.2.0
 
       - name: Install latest stable
-        run: |
-          curl https://sh.rustup.rs -sSf | sh -s -- -y
-          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
-
-      - name: Update toolchains
-        run: |
-          rustup target add ${{ matrix.target }}
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+          target: ${{ matrix.target }}
 
       - name: Build and Test
         run: cargo test --target ${{ matrix.target }}
