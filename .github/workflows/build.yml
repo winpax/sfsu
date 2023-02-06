@@ -25,6 +25,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - uses: actions/checkout@v3
       - uses: ./.github/workflows/setup.yml
         name: Setup workflow
 
@@ -43,6 +44,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - uses: actions/checkout@v3
       - uses: ./.github/workflows/setup.yml
         name: Setup workflow
 
