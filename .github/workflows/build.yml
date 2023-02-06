@@ -69,9 +69,6 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        target: [x86_64-pc-windows-gnu, i686-pc-windows-gnu]
 
     steps:
       - uses: actions/checkout@v3
