@@ -10,11 +10,6 @@ build TARGET:
 
 release: build-all
     mkdir release
-    mkdir release/64bit
-    mkdir release/32bit
 
-    cp target/x86_64-pc-windows-gnu/release/*.exe release/64bit
-    cp target/i686-pc-windows-gnu/release/*.exe release/32bit
-
-    7z a './release/dl-x86_64.zip' './release/64bit/*.exe'
-    7z a './release/dl-i686.zip' './release/32bit/*.exe'
+    7z a './release/dl-x86_64.zip' './target/x86_64-pc-windows-gnu/release/*.exe'
+    7z a './release/dl-i686.zip' './target/i686-pc-windows-gnu/release/*.exe'
