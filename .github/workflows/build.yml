@@ -102,6 +102,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: Swatinem/rust-cache@v2.2.0
+      - uses: extractions/setup-just@v1
 
       - name: Install i686 gcc
         run: sudo apt-get update --fix-missing && sudo apt-get install gcc-mingw-w64 -y
@@ -113,13 +114,10 @@ jobs:
           override: true
 
       - name: Update toolchains
-        run: |
-          rustup target add x86_64-pc-windows-gnu
-          rustup target add i686-pc-windows-gnu
+        run: just install-targets
 
       - name: Build and Package
-        shell: pwsh
-        run: ./generate-release.ps1
+        run: just release
 
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v3.1.2
