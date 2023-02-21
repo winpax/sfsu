@@ -103,8 +103,6 @@ jobs:
       - uses: actions/checkout@v3
       - uses: Swatinem/rust-cache@v2.2.0
       - uses: extractions/setup-just@v1
-        with:
-          just-version: latest
 
       - name: Install i686 gcc
         run: sudo apt-get update --fix-missing && sudo apt-get install gcc-mingw-w64 -y
