@@ -18,7 +18,4 @@ release: build-all
     just export-hash i686
 
 export-hash TARGET:
-    # set HASH=""
-    # echo "$(sha256sum './release/dl-{{ TARGET }}.7z')"
-    # echo "$HASH"
-    echo "${$(sha256sum './release/dl-{{ TARGET }}.7z'):0:64-0}"
+    python scripts/hash.py './release/dl-{{ TARGET }}.7z'
