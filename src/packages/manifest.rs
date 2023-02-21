@@ -1,4 +1,5 @@
 // Thanks to quicktype.io for saving me a lot of time.
+// The names are a bit weird at times but I'll work on that in future.
 
 use std::collections::HashMap;
 
