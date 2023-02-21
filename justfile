@@ -1,6 +1,10 @@
 check:
     cargo c
 
+install-targets:
+    rustup target add x86_64-pc-windows-gnu
+    rustup target add i686-pc-windows-gnu
+
 build-all:
     just build x86_64-pc-windows-gnu
     just build i686-pc-windows-gnu
