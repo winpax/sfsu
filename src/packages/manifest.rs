@@ -258,6 +258,7 @@ pub enum SourceforgeUnion {
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum HashExtractionOrArrayOfHashExtractions {
+    Url(String),
     HashExtraction(HashExtraction),
     HashExtractionArray(Vec<HashExtraction>),
 }

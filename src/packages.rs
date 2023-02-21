@@ -46,17 +46,12 @@ pub struct InstallManifest {
     #[serde(skip_serializing_if = "Option::is_none")]
     /// The bucket the package was installed from
     pub bucket: Option<String>,
-    #[serde(skip_serializing_if = "is_false")]
-    pub hold: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub hold: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub url: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub architecture: Option<Architecture>,
-}
-
-#[allow(clippy::trivially_copy_pass_by_ref)]
-fn is_false(boolean: &bool) -> bool {
-    !boolean
 }
 
 #[derive(Debug, Default, PartialEq, Eq)]
@@ -144,7 +139,7 @@ mod tests {
 
         let zig_manifest = InstallManifest {
             bucket: Some("main".to_string()),
-            hold: false,
+            hold: Some(false),
             url: None,
             architecture: Some(Architecture::X64),
         };
