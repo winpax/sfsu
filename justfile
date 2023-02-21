@@ -15,11 +15,9 @@ build TARGET:
 release: build-all
     mkdir -p "release"
 
-    rm "./release/dl-x86_64.7z"
     7z a "./release/dl-x86_64" "./target/x86_64-pc-windows-gnu/release/*.exe"
     just export-hash x86_64
 
-    rm "./release/dl-i686.7z"
     7z a "./release/dl-i686" "./target/i686-pc-windows-gnu/release/*.exe"
     just export-hash i686
 
