@@ -41,7 +41,7 @@ where
 
 impl FromPath for Manifest {}
 
-#[derive(Debug, Default, Deserialize, Serialize)]
+#[derive(Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct InstallManifest {
     #[serde(skip_serializing_if = "Option::is_none")]
     /// The bucket the package was installed from
@@ -49,7 +49,46 @@ pub struct InstallManifest {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub url: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub architecture: Option<manifest::Architecture>,
+    pub architecture: Option<Architecture>,
+}
+
+#[derive(Debug, Default, PartialEq, Eq)]
+pub enum Architecture {
+    #[default]
+    Unknown,
+    X86,
+    X64,
+}
+
+impl Serialize for Architecture {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        match self {
+            Architecture::Unknown => serializer.serialize_none(),
+            Architecture::X86 => serializer.serialize_str("32bit"),
+            Architecture::X64 => serializer.serialize_str("64bit"),
+        }
+    }
+}
+
+impl<'de> Deserialize<'de> for Architecture {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let v: Value = Deserialize::deserialize(deserializer)?;
+
+        match v {
+            Value::String(s) => match s.as_str() {
+                "32bit" => Ok(Architecture::X86),
+                "64bit" => Ok(Architecture::X64),
+                _ => Ok(Architecture::Unknown),
+            },
+            _ => Ok(Architecture::Unknown),
+        }
+    }
 }
 
 impl InstallManifest {
@@ -89,7 +128,7 @@ pub fn is_installed(manifest_name: impl AsRef<Path>, bucket: Option<impl AsRef<s
 
 #[cfg(test)]
 mod tests {
-    use super::{manifest::Architecture, InstallManifest, Manifest};
+    use super::{Architecture, InstallManifest, Manifest};
 
     #[test]
     fn test_install_manifest_serde() {
