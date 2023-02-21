@@ -1,0 +1,141 @@
+name: Build & Test
+
+on:
+  pull_request:
+    branches:
+      - 'trunk'
+
+  push:
+    branches:
+      - 'trunk'
+
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  check:
+    name: Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: Swatinem/rust-cache@v2.2.0
+
+      - name: Install latest stable
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - uses: actions-rs/cargo@v1
+        with:
+          command: check
+          args: --all-features
+
+  format:
+    name: Formatting
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: Swatinem/rust-cache@v2.2.0
+
+      - name: Install latest stable
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          components: rustfmt
+
+      - uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all -- --check
+
+  clippy:
+    name: Clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: Swatinem/rust-cache@v2.2.0
+
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          components: clippy
+
+      - uses: actions-rs/cargo@v1
+        with:
+          command: clippy
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: Swatinem/rust-cache@v2.2.0
+
+      - name: Install i686 gcc
+        run: sudo apt-get update && sudo apt-get install gcc-mingw-w64 -y
+
+      - name: Install latest stable
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Build and Test
+        run: cargo test
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: Swatinem/rust-cache@v2.2.0
+      - uses: extractions/setup-just@v1
+
+      - name: Install i686 gcc
+        run: sudo apt-get update --fix-missing && sudo apt-get install gcc-mingw-w64 -y
+
+      - name: Install latest stable
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Update toolchains
+        run: just install-targets
+
+      - name: Build and Package
+        run: just release
+
+      - name: Upload a Build Artifact
+        uses: actions/upload-artifact@v3.1.2
+        with:
+          name: package.zip
+          path: release/*
+
+      - name: Upload & Publish
+        uses: softprops/action-gh-release@v0.1.15
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: release/*.7z*
+
+      - name: VirusTotal Scan
+        uses: crazy-max/ghaction-virustotal@v3
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          update_release_body: true
+          vt_api_key: ${{ secrets.VT_API_KEY }}
+          files: |
+            release/*.7z$
