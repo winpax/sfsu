@@ -23,13 +23,13 @@ impl super::Command for Args {
         if self.nix {
             println!("export SCOOP_EXEC=$(which scoop)");
 
-            println!("scoop () {{\ncase $1 in");
+            println!("scoop () {{\n  case $1 in");
 
             for command in enabled_hooks {
-                println!("   ({command}) sfsu.exe {command} $@ ;;");
+                println!("      ({command}) sfsu.exe {command} $@ ;;");
             }
 
-            println!("  (*) $SCOOP_EXEC $@ ;;");
+            println!("      (*) $SCOOP_EXEC $@ ;;");
             println!("  esac\n}}");
         } else {
             print!("function scoop {{ switch ($args[0]) {{ ");
