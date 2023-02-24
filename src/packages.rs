@@ -139,7 +139,7 @@ mod tests {
 
         let zig_manifest = InstallManifest {
             bucket: Some("main".to_string()),
-            hold: Some(false),
+            hold: None,
             url: None,
             architecture: Some(Architecture::X64),
         };
