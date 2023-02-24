@@ -169,7 +169,7 @@ impl super::Command for Args {
             }
 
             for mtch in matches {
-                println!("{mtch}");
+                println!("  {mtch}");
             }
         }
 
