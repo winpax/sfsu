@@ -5,6 +5,9 @@ use strum::IntoEnumIterator;
 pub struct Args {
     #[clap(short = 'D', long, help = "The commands to disable")]
     disable: Vec<super::CommandsRaw>,
+
+    #[clap(short, long, help = "Print the WSL/MSYS2 version of the hooks")]
+    nix: bool,
 }
 
 // TODO: Add function to generate hooks
@@ -13,20 +16,30 @@ impl super::Command for Args {
     type Error = anyhow::Error;
 
     fn run(self) -> Result<(), Self::Error> {
-        print!("function scoop {{ switch ($args[0]) {{ ");
-
         let enabled_hooks: Vec<super::CommandsRaw> = super::CommandsRaw::iter()
             .filter(|variant| !self.disable.contains(variant))
             .collect();
 
-        for command in enabled_hooks {
-            let command_name: String = command.to_string();
-            print!(
-                "'{command_name}' {{ return sfsu.exe {command_name} @($args | Select-Object -Skip 1) }} "
-            );
-        }
+        if self.nix {
+            println!("export SCOOP_EXEC=$(which scoop)");
 
-        print!("default {{ scoop.ps1 @args }} }} }}");
+            println!("scoop () {{\n  case $1 in");
+
+            for command in enabled_hooks {
+                println!("      ({command}) sfsu.exe {command} $@ ;;");
+            }
+
+            println!("      (*) $SCOOP_EXEC $@ ;;");
+            println!("  esac\n}}");
+        } else {
+            print!("function scoop {{ switch ($args[0]) {{ ");
+
+            for command in enabled_hooks {
+                print!("'{command}' {{ return sfsu.exe $args }} ");
+            }
+
+            print!("default {{ scoop.ps1 @args }} }} }}");
+        }
 
         Ok(())
     }

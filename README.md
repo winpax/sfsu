@@ -32,6 +32,16 @@ You can also optionally disable certain hooks via the `--disable <COMMAND>` flag
 Invoke-Expression (&sfsu hook --disable list)
 ```
 
+It also supports Bash in WSL and MSYS2
+
+Add the following to your .bashrc (or its derivatives, i.e zsh) configuration
+
+```bash
+source <(sfsu.exe hook --nix)
+```
+
+The above disable demonstration also works
+
 ## Benchmarks [^1]
 
 On average, `sfsu search` is **~500** times faster than regular `scoop search` and **~6.5** times faster than [scoop-search](https://github.com/shilangyu/scoop-search).
