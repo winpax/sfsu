@@ -1,6 +1,6 @@
 # *S*tupid *F*ast *S*coop *U*tils
 
-![GitHub branch checks state](https://img.shields.io/github/checks-status/jewlexx/sfsu/trunk)
+![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/jewlexx/sfsu/build.yml)
 [![dependency status](https://deps.rs/repo/github/jewlexx/sfsu/status.svg)](https://deps.rs/repo/github/jewlexx/sfsu)
 ![GitHub all releases](https://img.shields.io/github/downloads/jewlexx/sfsu/total)
 ![GitHub](https://img.shields.io/github/license/jewlexx/sfsu)
