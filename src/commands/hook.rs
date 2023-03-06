@@ -33,6 +33,7 @@ impl super::Command for Args {
             Shell::Powershell => {
                 print!("function scoop {{ switch ($args[0]) {{ ");
 
+                // I would love to make this all one condition, but Powershell doesn't seem to support that elegantly
                 for command in enabled_hooks {
                     print!("'{command}' {{ return sfsu.exe $args }} ");
                 }
