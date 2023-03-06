@@ -1,4 +1,5 @@
 use clap::Parser;
+use itertools::Itertools;
 use strum::IntoEnumIterator;
 
 #[derive(Debug, Clone, Parser)]
@@ -25,9 +26,10 @@ impl super::Command for Args {
 
             println!("scoop () {{\n  case $1 in");
 
-            for command in enabled_hooks {
-                println!("      ({command}) sfsu.exe {command} $@ ;;");
-            }
+            println!(
+                "      ({}) sfsu.exe $@ ;;",
+                enabled_hooks.iter().format(" | ")
+            );
 
             println!("      (*) $SCOOP_EXEC $@ ;;");
             println!("  esac\n}}");
