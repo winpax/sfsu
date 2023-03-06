@@ -1,8 +1,9 @@
 use clap::{Parser, ValueEnum};
 use itertools::Itertools;
-use strum::IntoEnumIterator;
+use strum::{Display, IntoEnumIterator};
 
-#[derive(Debug, Default, ValueEnum, Copy, Clone)]
+#[derive(Debug, Default, ValueEnum, Copy, Clone, Display)]
+#[strum(serialize_all = "snake_case")]
 enum Shell {
     #[default]
     Powershell,
@@ -15,7 +16,7 @@ pub struct Args {
     #[clap(short = 'D', long, help = "The commands to disable")]
     disable: Vec<super::CommandsRaw>,
 
-    #[clap(short, long, help = "Print hooks for the given shell")]
+    #[clap(short, long, help = "Print hooks for the given shell", default_value_t = Shell::Powershell)]
     shell: Shell,
 }
 
