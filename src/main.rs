@@ -56,10 +56,16 @@ fn get_scoop_path() -> PathBuf {
 struct Args {
     #[command(subcommand)]
     command: Commands,
+
+    #[clap(long, global = true, help = "Disable terminal formatting")]
+    no_color: bool,
 }
 
 fn main() -> anyhow::Result<()> {
     let args = Args::parse();
+    if args.no_color {
+        colored::control::set_override(false);
+    }
 
     args.command.run()
 }

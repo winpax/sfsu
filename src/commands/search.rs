@@ -4,6 +4,7 @@ use std::{
     io::Error,
 };
 
+use colored::Colorize;
 use rayon::prelude::*;
 
 use clap::Parser;
@@ -33,7 +34,12 @@ pub struct Args {
     installed: bool,
 }
 
-fn parse_output(file: &DirEntry, bucket: impl AsRef<str>, installed_only: bool) -> Option<String> {
+fn parse_output(
+    file: &DirEntry,
+    bucket: impl AsRef<str>,
+    installed_only: bool,
+    pattern: &str,
+) -> Option<String> {
     // This may be a bit of a hack, but it works
     let path = file.path().with_extension("");
     let file_name = path.file_name();
@@ -51,7 +57,11 @@ fn parse_output(file: &DirEntry, bucket: impl AsRef<str>, installed_only: bool) 
             } else {
                 Some(format!(
                     "{} ({}) {}",
-                    package,
+                    if package == pattern {
+                        package.bold().green().to_string()
+                    } else {
+                        package
+                    },
                     manifest.version,
                     if is_installed { "[installed]" } else { "" },
                 ))
@@ -65,7 +75,7 @@ impl super::Command for Args {
     type Error = std::io::Error;
 
     fn run(self) -> Result<(), Self::Error> {
-        let (bucket, pattern) = if self.pattern.contains('/') {
+        let (bucket, raw_pattern) = if self.pattern.contains('/') {
             let mut split = self.pattern.splitn(2, '/');
 
             // Bucket flag overrides bucket/package syntax
@@ -83,7 +93,7 @@ impl super::Command for Args {
             Regex::new(&format!(
                 "{}{}",
                 if self.case_sensitive { "" } else { "(?i)" },
-                pattern
+                &raw_pattern
             ))
             .expect("Invalid Regex provided. See https://docs.rs/regex/latest/regex/ for more info")
         };
@@ -137,7 +147,12 @@ impl super::Command for Args {
                         );
 
                         if pattern.is_match(&path) && is_valid_extension {
-                            parse_output(file, bucket.file_name().to_string_lossy(), self.installed)
+                            parse_output(
+                                file,
+                                bucket.file_name().to_string_lossy(),
+                                self.installed,
+                                &raw_pattern,
+                            )
                         } else {
                             None
                         }
@@ -168,8 +183,8 @@ impl super::Command for Args {
                 old_bucket = bucket;
             }
 
-            for mtch in matches {
-                println!("  {mtch}");
+            for package in matches {
+                println!("  {package}");
             }
         }
 
