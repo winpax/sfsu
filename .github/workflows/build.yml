@@ -107,9 +107,6 @@ jobs:
           toolchain: stable
           override: true
 
-      - name: Update toolchains
-        run: just install-targets
-
       - name: Build and Package
         run: just release
 
