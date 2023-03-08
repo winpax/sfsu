@@ -58,7 +58,7 @@ fn parse_output(
                 Some(format!(
                     "{} ({}) {}",
                     if package == pattern {
-                        package.bold().green().to_string()
+                        package.bold().to_string()
                     } else {
                         package
                     },
