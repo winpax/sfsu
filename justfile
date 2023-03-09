@@ -12,7 +12,7 @@ build TARGET:
     cargo b -r --target {{ TARGET }}
 
 release: build-all
-    rm -r "release" -Force
+    rm -r "release" -Force -ErrorAction Ignore
     mkdir "release"
 
     7z a "./release/dl-x86_64" "./target/x86_64-pc-windows-msvc/release/*.exe"
