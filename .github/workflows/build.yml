@@ -21,7 +21,7 @@ env:
 jobs:
   check:
     name: Check
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v3
       - uses: Swatinem/rust-cache@v2.2.1
@@ -39,7 +39,7 @@ jobs:
 
   format:
     name: Formatting
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v3
       - uses: Swatinem/rust-cache@v2.2.1
@@ -59,7 +59,7 @@ jobs:
 
   clippy:
     name: Clippy
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v3
       - uses: Swatinem/rust-cache@v2.2.1
@@ -77,14 +77,11 @@ jobs:
 
   test:
     name: Test
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
       - uses: actions/checkout@v3
       - uses: Swatinem/rust-cache@v2.2.1
-
-      - name: Install i686 gcc
-        run: sudo apt-get update && sudo apt-get install gcc-mingw-w64 -y
 
       - name: Install latest stable
         uses: actions-rs/toolchain@v1
@@ -97,24 +94,18 @@ jobs:
 
   build:
     name: Build
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
       - uses: actions/checkout@v3
       - uses: Swatinem/rust-cache@v2.2.1
       - uses: extractions/setup-just@v1
 
-      - name: Install i686 gcc
-        run: sudo apt-get update --fix-missing && sudo apt-get install gcc-mingw-w64 -y
-
       - name: Install latest stable
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           override: true
-
-      - name: Update toolchains
-        run: just install-targets
 
       - name: Build and Package
         run: just release
@@ -125,17 +116,16 @@ jobs:
           name: package.zip
           path: release/*
 
+      - name: VirusTotal Scan
+        uses: crazy-max/ghaction-virustotal@v3
+        with:
+          vt_api_key: ${{ secrets.VT_API_KEY }}
+          files: |
+            release/dl-i686.7z
+            release/dl-x86_64.7z
+
       - name: Upload & Publish
         uses: softprops/action-gh-release@v0.1.15
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: release/*.7z*
-
-      - name: VirusTotal Scan
-        uses: crazy-max/ghaction-virustotal@v3
-        if: startsWith(github.ref, 'refs/tags/')
-        with:
-          update_release_body: true
-          vt_api_key: ${{ secrets.VT_API_KEY }}
-          files: |
-            release/*.7z$
