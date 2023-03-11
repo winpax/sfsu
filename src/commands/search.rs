@@ -21,7 +21,7 @@ pub struct Args {
     pattern: String,
 
     #[clap(
-        short = 'C',
+        short = 'c',
         long,
         help = "Whether or not the pattern should match case-sensitively"
     )]
