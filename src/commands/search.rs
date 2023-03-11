@@ -30,7 +30,7 @@ pub struct Args {
     #[clap(short, long, help = "The bucket to exclusively search in")]
     bucket: Option<String>,
 
-    #[clap(short = 'I', long, help = "Only search installed packages")]
+    #[clap(short = 'i', long, help = "Only search installed packages")]
     installed: bool,
 }
 
