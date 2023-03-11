@@ -40,8 +40,10 @@ fn get_scoop_path() -> PathBuf {
 
     // TODO: Add support for both global and non-global scoop installs
 
-    let scoop_path =
-        var_os("SCOOP").map_or_else(|| dirs::home_dir().expect("user home directory").join("scoop"), PathBuf::from);
+    let scoop_path = var_os("SCOOP").map_or_else(
+        || dirs::home_dir().expect("user home directory").join("scoop"),
+        PathBuf::from,
+    );
 
     if scoop_path.exists() {
         dunce::canonicalize(scoop_path).expect("failed to find real path to scoop")
