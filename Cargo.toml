@@ -12,7 +12,7 @@ codegen-units = 1
 
 [dependencies]
 anyhow = "1.0.70"
-chrono = { version = "0.4.23", features = ["serde", "clock", "std"], default-features = false }
+chrono = { version = "0.4.24", features = ["serde", "clock", "std"], default-features = false }
 clap = { version = "4.2.0", features = ["derive"] }
 colored = "2.0.0"
 dirs = "5.0.0"
