@@ -34,6 +34,72 @@ pub struct Args {
     json: bool,
 }
 
+impl super::Command for Args {
+    type Error = anyhow::Error;
+
+    fn run(self) -> Result<(), Self::Error> {
+        let scoop_apps_path = get_scoop_path().join("apps");
+
+        let read = scoop_apps_path.read_dir()?.collect::<Result<Vec<_>, _>>()?;
+
+        let outputs = read
+            .par_iter()
+            // We cannot search the scoop app as it is built in and hence doesn't contain any manifest
+            .filter(|package| package.path().iter().last() != Some(OsStr::new("scoop")))
+            .map(parse_package)
+            .filter(|package| {
+                if let Ok(pkg) = package {
+                    if let Some(ref bucket) = self.bucket {
+                        return &pkg.source == bucket;
+                    }
+                }
+                // Keep errors so that the following line will return the error
+                true
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+
+        let max_lengths = outputs.iter().fold((0, 0, 0, 0, 0), check_lengths);
+
+        if self.json {
+            let output_json = serde_json::to_string_pretty(&outputs)?;
+
+            println!("{output_json}");
+        } else {
+            println!(
+                "{:nwidth$} | {:vwidth$} | {:swidth$} | {:uwidth$} | {:nowidth$}",
+                "Name",
+                "Version",
+                "Source",
+                "Updated",
+                "Notes",
+                nwidth = max_lengths.0,
+                vwidth = max_lengths.1,
+                swidth = max_lengths.2,
+                uwidth = max_lengths.3,
+                nowidth = max_lengths.4,
+            );
+
+            for pkg in outputs {
+                println!(
+                    "{:nwidth$} | {:vwidth$} | {:swidth$} | {:uwidth$} | {:nowidth$}",
+                    pkg.name,
+                    pkg.version,
+                    pkg.source,
+                    pkg.updated,
+                    pkg.notes,
+                    nwidth = max_lengths.0,
+                    vwidth = max_lengths.1,
+                    swidth = max_lengths.2,
+                    uwidth = max_lengths.3,
+                    nowidth = max_lengths.4,
+                );
+            }
+        }
+
+        Ok(())
+    }
+}
+
 fn offset() -> FixedOffset {
     let now = chrono::Local::now();
 
@@ -105,70 +171,4 @@ fn parse_package(package: &DirEntry) -> anyhow::Result<OutputPackage> {
             String::new()
         },
     })
-}
-
-impl super::Command for Args {
-    type Error = anyhow::Error;
-
-    fn run(self) -> Result<(), Self::Error> {
-        let scoop_apps_path = get_scoop_path().join("apps");
-
-        let read = scoop_apps_path.read_dir()?.collect::<Result<Vec<_>, _>>()?;
-
-        let outputs = read
-            .par_iter()
-            // We cannot search the scoop app as it is built in and hence doesn't contain any manifest
-            .filter(|package| package.path().iter().last() != Some(OsStr::new("scoop")))
-            .map(parse_package)
-            .filter(|package| {
-                if let Ok(pkg) = package {
-                    if let Some(ref bucket) = self.bucket {
-                        return &pkg.source == bucket;
-                    }
-                }
-                // Keep errors so that the following line will return the error
-                true
-            })
-            .collect::<Result<Vec<_>, _>>()?;
-
-        let max_lengths = outputs.iter().fold((0, 0, 0, 0, 0), check_lengths);
-
-        if self.json {
-            let output_json = serde_json::to_string_pretty(&outputs)?;
-
-            println!("{output_json}");
-        } else {
-            println!(
-                "{:nwidth$} | {:vwidth$} | {:swidth$} | {:uwidth$} | {:nowidth$}",
-                "Name",
-                "Version",
-                "Source",
-                "Updated",
-                "Notes",
-                nwidth = max_lengths.0,
-                vwidth = max_lengths.1,
-                swidth = max_lengths.2,
-                uwidth = max_lengths.3,
-                nowidth = max_lengths.4,
-            );
-
-            for pkg in outputs {
-                println!(
-                    "{:nwidth$} | {:vwidth$} | {:swidth$} | {:uwidth$} | {:nowidth$}",
-                    pkg.name,
-                    pkg.version,
-                    pkg.source,
-                    pkg.updated,
-                    pkg.notes,
-                    nwidth = max_lengths.0,
-                    vwidth = max_lengths.1,
-                    swidth = max_lengths.2,
-                    uwidth = max_lengths.3,
-                    nowidth = max_lengths.4,
-                );
-            }
-        }
-
-        Ok(())
-    }
 }
