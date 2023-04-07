@@ -32,10 +32,8 @@ jobs:
           toolchain: stable
           override: true
 
-      - uses: actions-rs/cargo@v1
-        with:
-          command: check
-          args: --all-features
+      - name: Check
+        run: cargo check --all-features
 
   format:
     name: Formatting
@@ -52,10 +50,8 @@ jobs:
           override: true
           components: rustfmt
 
-      - uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --all -- --check
+      - name: Check Formatting
+        run: cargo clippy --all -- --check
 
   clippy:
     name: Clippy
@@ -71,9 +67,8 @@ jobs:
           override: true
           components: clippy
 
-      - uses: actions-rs/cargo@v1
-        with:
-          command: clippy
+      - name: Run Clippy
+        run: cargo clippy
 
   test:
     name: Test
