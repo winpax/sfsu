@@ -23,6 +23,7 @@ struct OutputPackage {
 }
 
 #[derive(Debug, Clone, Parser)]
+/// List all installed packages
 pub struct Args {
     #[clap(short, long, help = "The bucket to exclusively list packages in")]
     bucket: Option<String>,

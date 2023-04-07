@@ -12,6 +12,7 @@ enum Shell {
 }
 
 #[derive(Debug, Clone, Parser)]
+/// Generate hooks for the given shell
 pub struct Args {
     #[clap(short = 'D', long, help = "The commands to disable")]
     disable: Vec<super::CommandsRaw>,
