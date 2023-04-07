@@ -139,14 +139,19 @@ impl super::Command for Args {
                     .par_iter()
                     .filter_map(|file| {
                         let path_raw = file.path();
-                        let path = path_raw.to_string_lossy();
+                        let file_name = {
+                            let no_ext = path_raw.with_extension("");
+                            let name = no_ext.file_name().unwrap();
+
+                            name.to_string_lossy().to_string()
+                        };
 
                         let is_valid_extension = matches!(
                             file.path().extension().and_then(OsStr::to_str),
                             Some("json")
                         );
 
-                        if pattern.is_match(&path) && is_valid_extension {
+                        if pattern.is_match(&file_name) && is_valid_extension {
                             parse_output(
                                 file,
                                 bucket.file_name().to_string_lossy(),
