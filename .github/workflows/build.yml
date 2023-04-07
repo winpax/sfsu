@@ -51,7 +51,7 @@ jobs:
           components: rustfmt
 
       - name: Check Formatting
-        run: cargo clippy --all -- --check
+        run: cargo fmt --all -- --check
 
   clippy:
     name: Clippy
