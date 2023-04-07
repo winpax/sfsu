@@ -23,7 +23,7 @@ impl super::Command for Args {
 
                 if let Ok(crate::packages::InstallManifest {
                     bucket: Some(bucket),
-                    url: _,
+                    ..
                 }) = crate::packages::InstallManifest::from_path(install_path)
                 {
                     Some(bucket)

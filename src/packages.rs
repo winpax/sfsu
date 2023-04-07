@@ -1,9 +1,14 @@
 use std::{fs::File, io::Read, path::Path};
 
-use serde::{Deserialize, Serialize};
-use serde_json::Value;
+use serde::Deserialize;
 
 use crate::get_scoop_path;
+
+pub mod install;
+pub mod manifest;
+
+pub use install::Manifest as InstallManifest;
+pub use manifest::Manifest;
 
 pub trait FromPath
 where
@@ -27,7 +32,7 @@ where
         Ok(
             serde_json::from_str(contents.trim_start_matches('\u{feff}')).unwrap_or_else(|err| {
                 println!("Error parsing manifest: {}", path.display());
-                println!("{}", err);
+                println!("{err}");
 
                 Default::default()
             }),
@@ -35,104 +40,7 @@ where
     }
 }
 
-#[derive(Debug, Serialize)]
-pub struct License {
-    identifier: String,
-    url: Option<String>,
-}
-
-impl<'de> Deserialize<'de> for License {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let v: Value = Deserialize::deserialize(deserializer)?;
-
-        match v {
-            Value::String(identifier) => Ok(License {
-                identifier,
-                url: None,
-            }),
-            Value::Object(license) => {
-                let id = license
-                    .get("identifier")
-                    .and_then(serde_json::Value::as_str)
-                    .expect("string identifier");
-
-                let url = license
-                    .get("url")
-                    .and_then(serde_json::Value::as_str)
-                    .map(std::string::ToString::to_string);
-
-                Ok(License {
-                    identifier: id.to_owned(),
-                    url,
-                })
-            }
-            _ => panic!("Invalid license in manifest"),
-        }
-    }
-}
-
-impl std::fmt::Display for License {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.identifier)?;
-
-        if let Some(url) = &self.url {
-            write!(f, " | {url}")?;
-        }
-
-        writeln!(f)
-    }
-}
-
-#[derive(Debug, Default, Deserialize, Serialize)]
-pub struct Manifest {
-    #[serde(default = "default_version")]
-    /// The version of the package
-    pub version: String,
-    #[serde(default, deserialize_with = "ok_or_default")]
-    /// The description of the package
-    pub description: Option<String>,
-    #[serde(default, deserialize_with = "ok_or_default")]
-    /// The homepage of the package
-    pub homepage: Option<String>,
-    #[serde(default)]
-    /// The license of the package,
-    pub license: Option<License>,
-}
-
-fn default_version() -> String {
-    "Invalid Manifest".to_string()
-}
-
-fn ok_or_default<'a, T, D>(deserializer: D) -> Result<T, D::Error>
-where
-    T: Deserialize<'a> + Default,
-    D: serde::Deserializer<'a>,
-{
-    let v: Value = Deserialize::deserialize(deserializer)?;
-    Ok(T::deserialize(v).unwrap_or_default())
-}
-
 impl FromPath for Manifest {}
-
-#[derive(Debug, Default, Deserialize, Serialize)]
-pub struct InstallManifest {
-    /// The bucket the package was installed from
-    pub bucket: Option<String>,
-    pub url: Option<String>,
-}
-
-impl InstallManifest {
-    pub fn get_source(&self) -> String {
-        match (&self.bucket, &self.url) {
-            (Some(bucket), None) => bucket.to_string(),
-            (None, Some(url)) => url.to_string(),
-            _ => "Unknown".to_string(),
-        }
-    }
-}
 
 impl FromPath for InstallManifest {}
 

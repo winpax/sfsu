@@ -1,6 +1,6 @@
 # *S*tupid *F*ast *S*coop *U*tils
 
-![GitHub branch checks state](https://img.shields.io/github/checks-status/jewlexx/sfsu/trunk)
+![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/jewlexx/sfsu/build.yml)
 [![dependency status](https://deps.rs/repo/github/jewlexx/sfsu/status.svg)](https://deps.rs/repo/github/jewlexx/sfsu)
 ![GitHub all releases](https://img.shields.io/github/downloads/jewlexx/sfsu/total)
 ![GitHub](https://img.shields.io/github/license/jewlexx/sfsu)
@@ -31,6 +31,16 @@ You can also optionally disable certain hooks via the `--disable <COMMAND>` flag
 ```powershell
 Invoke-Expression (&sfsu hook --disable list)
 ```
+
+It also supports Bash in WSL and MSYS2
+
+Add the following to your .bashrc (or its derivatives, i.e zsh) configuration
+
+```bash
+source <(sfsu.exe hook --nix)
+```
+
+The above disable demonstration also works
 
 ## Benchmarks [^1]
 

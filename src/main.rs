@@ -14,6 +14,19 @@ use clap::Parser;
 
 use commands::Commands;
 
+pub trait IsTrue {
+    fn is_true(&self) -> bool;
+}
+
+impl IsTrue for Option<bool> {
+    fn is_true(&self) -> bool {
+        if let Some(true) = self {
+            return true;
+        }
+        false
+    }
+}
+
 #[must_use]
 /// Gets the user's scoop path, via either the default path or as provided by the SCOOP env variable
 ///
@@ -27,8 +40,10 @@ fn get_scoop_path() -> PathBuf {
 
     // TODO: Add support for both global and non-global scoop installs
 
-    let scoop_path =
-        var_os("SCOOP").map_or_else(|| dirs::home_dir().unwrap().join("scoop"), PathBuf::from);
+    let scoop_path = var_os("SCOOP").map_or_else(
+        || dirs::home_dir().expect("user home directory").join("scoop"),
+        PathBuf::from,
+    );
 
     if scoop_path.exists() {
         dunce::canonicalize(scoop_path).expect("failed to find real path to scoop")
@@ -43,10 +58,16 @@ fn get_scoop_path() -> PathBuf {
 struct Args {
     #[command(subcommand)]
     command: Commands,
+
+    #[clap(long, global = true, help = "Disable terminal formatting")]
+    no_color: bool,
 }
 
 fn main() -> anyhow::Result<()> {
     let args = Args::parse();
+    if args.no_color {
+        colored::control::set_override(false);
+    }
 
     args.command.run()
 }

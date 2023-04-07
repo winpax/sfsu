@@ -21,10 +21,10 @@ env:
 jobs:
   check:
     name: Check
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: Swatinem/rust-cache@v2.2.0
+      - uses: Swatinem/rust-cache@v2.2.1
 
       - name: Install latest stable
         uses: actions-rs/toolchain@v1
@@ -39,10 +39,10 @@ jobs:
 
   format:
     name: Formatting
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: Swatinem/rust-cache@v2.2.0
+      - uses: Swatinem/rust-cache@v2.2.1
 
       - name: Install latest stable
         uses: actions-rs/toolchain@v1
@@ -59,10 +59,10 @@ jobs:
 
   clippy:
     name: Clippy
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: Swatinem/rust-cache@v2.2.0
+      - uses: Swatinem/rust-cache@v2.2.1
 
       - uses: actions-rs/toolchain@v1
         with:
@@ -77,14 +77,11 @@ jobs:
 
   test:
     name: Test
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
       - uses: actions/checkout@v3
-      - uses: Swatinem/rust-cache@v2.2.0
-
-      - name: Install i686 gcc
-        run: sudo apt-get update && sudo apt-get install gcc-mingw-w64 -y
+      - uses: Swatinem/rust-cache@v2.2.1
 
       - name: Install latest stable
         uses: actions-rs/toolchain@v1
@@ -97,14 +94,12 @@ jobs:
 
   build:
     name: Build
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
       - uses: actions/checkout@v3
-      - uses: Swatinem/rust-cache@v2.2.0
-
-      - name: Install i686 gcc
-        run: sudo apt-get update --fix-missing && sudo apt-get install gcc-mingw-w64 -y
+      - uses: Swatinem/rust-cache@v2.2.1
+      - uses: extractions/setup-just@v1
 
       - name: Install latest stable
         uses: actions-rs/toolchain@v1
@@ -112,14 +107,8 @@ jobs:
           toolchain: stable
           override: true
 
-      - name: Update toolchains
-        run: |
-          rustup target add x86_64-pc-windows-gnu
-          rustup target add i686-pc-windows-gnu
-
       - name: Build and Package
-        shell: pwsh
-        run: ./generate-release.ps1
+        run: just release
 
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v3.1.2
@@ -127,17 +116,16 @@ jobs:
           name: package.zip
           path: release/*
 
+      - name: VirusTotal Scan
+        uses: crazy-max/ghaction-virustotal@v3
+        with:
+          vt_api_key: ${{ secrets.VT_API_KEY }}
+          files: |
+            release/dl-i686.7z
+            release/dl-x86_64.7z
+
       - name: Upload & Publish
         uses: softprops/action-gh-release@v0.1.15
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: release/*.7z*
-
-      - name: VirusTotal Scan
-        uses: crazy-max/ghaction-virustotal@v3
-        if: startsWith(github.ref, 'refs/tags/')
-        with:
-          update_release_body: true
-          vt_api_key: ${{ secrets.VT_API_KEY }}
-          files: |
-            release/*.7z$

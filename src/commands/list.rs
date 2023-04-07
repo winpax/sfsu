@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     get_scoop_path,
     packages::{FromPath, InstallManifest, Manifest},
+    IsTrue,
 };
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -18,6 +19,7 @@ struct OutputPackage {
     version: String,
     source: String,
     updated: String,
+    notes: String,
 }
 
 #[derive(Debug, Clone, Parser)]
@@ -87,17 +89,23 @@ impl super::Command for Args {
                     version: manifest.version,
                     source: install_manifest.get_source(),
                     updated: date_time.to_rfc3339(),
+                    notes: if install_manifest.hold.is_true() {
+                        String::from("Hold")
+                    } else {
+                        String::new()
+                    },
                 })
             })
             .collect::<Result<Vec<_>, _>>()?;
 
-        let max_lengths = outputs.iter().fold((0, 0, 0, 0), |mut og, pkg| {
+        let max_lengths = outputs.iter().fold((0, 0, 0, 0, 0), |mut og, pkg| {
             use std::cmp;
 
             og.0 = cmp::max(pkg.name.len(), og.0);
             og.1 = cmp::max(pkg.version.len(), og.1);
             og.2 = cmp::max(pkg.source.len(), og.2);
             og.3 = cmp::max(pkg.updated.len(), og.3);
+            og.4 = cmp::max(pkg.notes.len(), og.4);
 
             og
         });
@@ -108,28 +116,32 @@ impl super::Command for Args {
             println!("{output_json}");
         } else {
             println!(
-                "{:nwidth$} | {:vwidth$} | {:swidth$} | {:uwidth$}",
+                "{:nwidth$} | {:vwidth$} | {:swidth$} | {:uwidth$} | {:nowidth$}",
                 "Name",
                 "Version",
                 "Source",
                 "Updated",
+                "Notes",
                 nwidth = max_lengths.0,
                 vwidth = max_lengths.1,
                 swidth = max_lengths.2,
-                uwidth = max_lengths.3
+                uwidth = max_lengths.3,
+                nowidth = max_lengths.4,
             );
 
             for pkg in outputs {
                 println!(
-                    "{:nwidth$} | {:vwidth$} | {:swidth$} | {:uwidth$}",
+                    "{:nwidth$} | {:vwidth$} | {:swidth$} | {:uwidth$} | {:nowidth$}",
                     pkg.name,
                     pkg.version,
                     pkg.source,
                     pkg.updated,
+                    pkg.notes,
                     nwidth = max_lengths.0,
                     vwidth = max_lengths.1,
                     swidth = max_lengths.2,
-                    uwidth = max_lengths.3
+                    uwidth = max_lengths.3,
+                    nowidth = max_lengths.4,
                 );
             }
         }
