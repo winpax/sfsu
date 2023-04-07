@@ -24,10 +24,7 @@ struct OutputPackage {
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
-    #[clap(help = "The pattern to search for (can be a regex)")]
-    pattern: Option<String>,
-
-    #[clap(short, long, help = "The bucket to exclusively search in")]
+    #[clap(short, long, help = "The bucket to exclusively list packages in")]
     bucket: Option<String>,
 
     #[clap(
@@ -95,6 +92,15 @@ impl super::Command for Args {
                         String::new()
                     },
                 })
+            })
+            .filter(|package| {
+                if let Ok(pkg) = package {
+                    if let Some(ref bucket) = self.bucket {
+                        return &pkg.source == bucket;
+                    }
+                }
+                // Keep errors so that the following line will return the error
+                true
             })
             .collect::<Result<Vec<_>, _>>()?;
 
