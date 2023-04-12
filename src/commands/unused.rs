@@ -2,7 +2,7 @@ use std::fs::read_dir;
 
 use clap::Parser;
 
-use crate::packages::FromPath;
+use crate::packages::CreateManifest;
 
 #[derive(Debug, Clone, Parser)]
 /// Find buckets that do not have any installed packages

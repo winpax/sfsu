@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use crate::{
     get_scoop_path,
-    packages::{FromPath, Manifest},
+    packages::{CreateManifest, Manifest},
 };
 
 pub struct Bucket {

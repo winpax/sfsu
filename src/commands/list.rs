@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     get_scoop_path,
-    packages::{FromPath, InstallManifest, Manifest},
+    packages::{CreateManifest, InstallManifest, Manifest},
     IsTrue,
 };
 

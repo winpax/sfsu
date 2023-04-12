@@ -12,7 +12,7 @@ use regex::Regex;
 
 use crate::{
     buckets,
-    packages::{is_installed, FromPath, Manifest},
+    packages::{is_installed, CreateManifest, Manifest},
 };
 
 #[derive(Debug, Clone, Parser)]
