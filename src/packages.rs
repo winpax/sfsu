@@ -26,14 +26,14 @@ where
 
         file.read_to_string(&mut contents)?;
 
-        Self::from_str(contents, path)
+        Self::from_str(contents)
     }
 
-    fn from_str(contents: String, path: &Path) -> std::io::Result<Self> {
+    fn from_str(contents: String) -> std::io::Result<Self> {
         let trimmed = contents.trim_start_matches('\u{feff}');
 
         let parsed = serde_json::from_str(trimmed).unwrap_or_else(|err| {
-            println!("Error parsing manifest: {}", path.display());
+            println!("Error parsing manifest:\n {trimmed}");
             println!("{err}");
 
             Default::default()
@@ -69,6 +69,3 @@ pub fn is_installed(manifest_name: impl AsRef<Path>, bucket: Option<impl AsRef<s
         Err(_) => false,
     }
 }
-
-// #[cfg(test)]
-// mod tests {}
