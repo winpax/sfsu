@@ -11,7 +11,7 @@ members = ["sfsu-derive"]
 codegen-units = 1
 
 [dependencies]
-anyhow = "1.0.70"
+anyhow = "1.0.71"
 chrono = { version = "0.4.24", features = ["serde", "clock", "std"], default-features = false }
 clap = { version = "4.2.5", features = ["derive"] }
 colored = "2.0.0"
