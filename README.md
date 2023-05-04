@@ -132,9 +132,9 @@ The build instructions can be found [in the wiki](https://github.com/jewlexx/sfs
 
 ## Long Term Goals
 
-Currently I am considering creating an entire Scoop alternative that has 100% interoperability with existing Scoop buckets, but way way way faster than Scoop.
+My long term goal is to create a [Scoop](https://scoop.sh) replacement for those who want it, in a similar vein as [Shovel](https://github.com/Ash258/Scoop-Core). This is a fairly large undertaking and will definitely take me a lot of time, so this is a very long term goal, and may never happen. Despite this I never really plan to replace Scoop. It is a great package manager and if anything `sfsu` would just be a command you can run instead of Scoop, but would run on Scoop installations.
 
-In the meantime I will continue working on this independently of Scoop as "seperate" tools that work without an entire package manager.
+In the meantime I will continue working on this independently of Scoop as a collection of seperate tools that work in conjunction with Scoop.
 
 <!-- markdownlint-disable-next-line MD036 -->
 **Made with 💗 by Juliette Cordor**
