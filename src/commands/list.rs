@@ -66,6 +66,10 @@ impl super::Command for Args {
 
             println!("{output_json}");
         } else {
+            if outputs.is_empty() {
+                println!("No packages found.");
+            }
+
             println!(
                 "{:nwidth$} | {:vwidth$} | {:swidth$} | {:uwidth$} | {:nowidth$}",
                 "Name",
