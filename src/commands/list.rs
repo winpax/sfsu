@@ -4,12 +4,12 @@ use rayon::prelude::*;
 
 use chrono::{DateTime, FixedOffset, NaiveDateTime};
 use clap::Parser;
+use quork::traits::truthy::ContainsTruth;
 use serde::{Deserialize, Serialize};
 
 use crate::{
     get_scoop_path,
     packages::{CreateManifest, InstallManifest, Manifest},
-    IsTrue,
 };
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -166,7 +166,7 @@ fn parse_package(package: &DirEntry) -> anyhow::Result<OutputPackage> {
         version: manifest.version,
         source: install_manifest.get_source(),
         updated: date_time.to_rfc3339(),
-        notes: if install_manifest.hold.is_true() {
+        notes: if install_manifest.hold.contains_truth() {
             String::from("Hold")
         } else {
             String::new()

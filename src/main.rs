@@ -14,19 +14,6 @@ use clap::Parser;
 
 use commands::Commands;
 
-pub trait IsTrue {
-    fn is_true(&self) -> bool;
-}
-
-impl IsTrue for Option<bool> {
-    fn is_true(&self) -> bool {
-        if let Some(true) = self {
-            return true;
-        }
-        false
-    }
-}
-
 #[must_use]
 /// Gets the user's scoop path, via either the default path or as provided by the SCOOP env variable
 ///
