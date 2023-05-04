@@ -68,6 +68,7 @@ impl super::Command for Args {
         } else {
             if outputs.is_empty() {
                 println!("No packages found.");
+                return Ok(());
             }
 
             println!(
