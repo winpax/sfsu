@@ -15,6 +15,7 @@ anyhow = "1.0.71"
 chrono = { version = "0.4.24", features = ["serde", "clock", "std"], default-features = false }
 clap = { version = "4.3.0", features = ["derive"] }
 colored = "2.0.0"
+derive_more = "0.99.17"
 dirs = "5.0.1"
 dunce = "1.0.4"
 itertools = "0.10.5"
