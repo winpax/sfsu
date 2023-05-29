@@ -794,6 +794,7 @@ name = "sfsu-derive"
 version = "0.1.0"
 dependencies = [
  "heck",
+ "paste",
  "proc-macro-crate",
  "proc-macro-error",
  "proc-macro2",
