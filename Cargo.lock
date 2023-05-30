@@ -799,6 +799,7 @@ dependencies = [
  "proc-macro-error",
  "proc-macro2",
  "quote",
+ "strum",
  "syn 2.0.18",
 ]
 
