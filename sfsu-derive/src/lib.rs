@@ -5,56 +5,14 @@ use proc_macro_error::{abort_call_site, proc_macro_error};
 use quote::{quote, ToTokens};
 use syn::{parse_macro_input, DeriveInput};
 
+mod inner;
+
 #[proc_macro_derive(IntoInner, attributes(inner_type))]
 #[proc_macro_error]
 pub fn derive_into_inner(input: TokenStream) -> TokenStream {
-    let input = parse_macro_input!(input as DeriveInput);
+    let ast = parse_macro_input!(input as DeriveInput);
 
-    let input_name = &input.ident;
-
-    let data = &input.data;
-    let attrs = &input.attrs;
-
-    let type_ident = {
-        let type_ident = attrs.iter().find(|attr| attr.path().is_ident("inner_type"));
-
-        match type_ident {
-            Some(type_name) => type_name,
-            None => {
-                abort_call_site!("#[derive(IntoInner)] requires the `inner_type` attribute to be specified, with a return type identifier");
-            }
-        }
-    };
-
-    let mut variants = vec![];
-
-    match data {
-        syn::Data::Enum(ref e) => {
-            for v in &e.variants {
-                variants.push(v.ident.clone());
-            }
-        }
-        _ => abort_call_site!("Can only be derived for enums"),
-    };
-
-    let paste = match crate_name("paste").expect("paste is present in `Cargo.toml`") {
-        FoundCrate::Itself => Ident::new("paste", Span::call_site()),
-        FoundCrate::Name(name) => Ident::new(&name, Span::call_site()),
-    };
-
-    quote! {
-        #paste::paste! {
-            impl #input_name {
-                fn into_inner(self) -> #type_ident {
-                    match self {
-                        #(#(Self::#variants) (a) => a)*
-                        _ => panic!("Invalid command name"),
-                    }
-                }
-            }
-        }
-    }
-    .into()
+    inner::into_inner(ast).into()
 }
 
 #[proc_macro_derive(RawEnum)]
