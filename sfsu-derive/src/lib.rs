@@ -52,6 +52,7 @@ pub fn derive_raw_enum(input: TokenStream) -> TokenStream {
 
     quote! {
         #paste::paste! {
+            // TODO: Better way of doing this? or add support for meta in proc macro
             #[derive(Debug, Clone, #strum::Display, #strum::IntoStaticStr, #strum::EnumIter, PartialEq, Eq)]
             #[strum(serialize_all = "kebab-case")]
             pub enum [<#input_name Raw>] {

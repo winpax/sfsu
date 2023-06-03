@@ -6,7 +6,6 @@ pub mod unused;
 
 use clap::Subcommand;
 
-// TODO: Better way of doing this? or add support for meta in proc macro
 use sfsu_derive::{RawEnum, Runnable};
 
 pub trait Command {
