@@ -9,9 +9,7 @@ use crate::packages::CreateManifest;
 pub struct Args {}
 
 impl super::Command for Args {
-    type Error = anyhow::Error;
-
-    fn run(self) -> Result<(), Self::Error> {
+    fn run(self) -> Result<(), anyhow::Error> {
         let scoop_buckets_path = crate::buckets::Bucket::get_buckets_path();
         let scoop_apps_path = crate::get_scoop_path().join("apps");
 

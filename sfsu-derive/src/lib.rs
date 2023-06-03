@@ -5,6 +5,16 @@ use proc_macro_error::{abort_call_site, proc_macro_error};
 use quote::{quote, ToTokens};
 use syn::{parse_macro_input, DeriveInput};
 
+mod inner;
+
+#[proc_macro_derive(Runnable)]
+#[proc_macro_error]
+pub fn derive_into_inner(input: TokenStream) -> TokenStream {
+    let ast = parse_macro_input!(input as DeriveInput);
+
+    inner::into_inner(ast).into()
+}
+
 #[proc_macro_derive(RawEnum)]
 #[proc_macro_error]
 pub fn derive_raw_enum(input: TokenStream) -> TokenStream {
@@ -42,6 +52,7 @@ pub fn derive_raw_enum(input: TokenStream) -> TokenStream {
 
     quote! {
         #paste::paste! {
+            // TODO: Better way of doing this? or add support for meta in proc macro
             #[derive(Debug, Clone, #strum::Display, #strum::IntoStaticStr, #strum::EnumIter, PartialEq, Eq)]
             #[strum(serialize_all = "kebab-case")]
             pub enum [<#input_name Raw>] {

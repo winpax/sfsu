@@ -24,9 +24,7 @@ pub struct Args {
 // TODO: Add function to generate hooks
 
 impl super::Command for Args {
-    type Error = anyhow::Error;
-
-    fn run(self) -> Result<(), Self::Error> {
+    fn run(self) -> Result<(), anyhow::Error> {
         let enabled_hooks: Vec<super::CommandsRaw> = super::CommandsRaw::iter()
             .filter(|variant| !self.disable.contains(variant))
             .collect();

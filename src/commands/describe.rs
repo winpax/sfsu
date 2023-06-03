@@ -13,9 +13,7 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    type Error = anyhow::Error;
-
-    fn run(self) -> Result<(), Self::Error> {
+    fn run(self) -> Result<(), anyhow::Error> {
         let manifests = if let Some(bucket_name) = self.bucket {
             let bucket = Bucket::new(&bucket_name);
 
