@@ -73,9 +73,7 @@ fn parse_output(
 }
 
 impl super::Command for Args {
-    type Error = std::io::Error;
-
-    fn run(self) -> Result<(), Self::Error> {
+    fn run(self) -> Result<(), anyhow::Error> {
         let (bucket, raw_pattern) = if self.pattern.contains('/') {
             let mut split = self.pattern.splitn(2, '/');
 
@@ -99,8 +97,7 @@ impl super::Command for Args {
             .expect("Invalid Regex provided. See https://docs.rs/regex/latest/regex/ for more info")
         };
 
-        let all_scoop_buckets =
-            read_dir(scoop_buckets_path)?.collect::<Result<Vec<_>, Self::Error>>()?;
+        let all_scoop_buckets = read_dir(scoop_buckets_path)?.collect::<Result<Vec<_>, _>>()?;
 
         let scoop_buckets = {
             if let Some(bucket) = bucket {
@@ -133,7 +130,7 @@ impl super::Command for Args {
                 };
 
                 let bucket_contents = read_dir(bucket_path)
-                    .and_then(Iterator::collect::<Result<Vec<_>, Self::Error>>)
+                    .and_then(Iterator::collect::<Result<Vec<_>, _>>)
                     .unwrap();
 
                 let matches = bucket_contents
@@ -171,7 +168,7 @@ impl super::Command for Args {
                     Some(Ok::<_, Error>((bucket.file_name(), matches)))
                 }
             })
-            .collect::<Result<Vec<_>, Self::Error>>()?;
+            .collect::<Result<Vec<_>, _>>()?;
 
         matches.par_sort_by_key(|x| x.0.clone());
 

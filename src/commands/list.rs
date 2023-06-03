@@ -36,9 +36,7 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    type Error = anyhow::Error;
-
-    fn run(self) -> Result<(), Self::Error> {
+    fn run(self) -> Result<(), anyhow::Error> {
         let scoop_apps_path = get_scoop_path().join("apps");
 
         let read = scoop_apps_path.read_dir()?.collect::<Result<Vec<_>, _>>()?;

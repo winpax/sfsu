@@ -1,6 +1,15 @@
-#[derive(sfsu_derive::IntoInner)]
-#[inner(ret = String)]
+struct DummyStruct;
+
+impl DummyStruct {
+    pub fn run(self) -> anyhow::Result<()> {
+        println!("Hello, world!");
+
+        Ok(())
+    }
+}
+
+#[derive(sfsu_derive::Runnable)]
 enum MaybeIntoInner {
-    String(String),
-    Path(String),
+    Test1(DummyStruct),
+    Test2(DummyStruct),
 }

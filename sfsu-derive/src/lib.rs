@@ -7,7 +7,7 @@ use syn::{parse_macro_input, DeriveInput};
 
 mod inner;
 
-#[proc_macro_derive(IntoInner, attributes(inner))]
+#[proc_macro_derive(Runnable)]
 #[proc_macro_error]
 pub fn derive_into_inner(input: TokenStream) -> TokenStream {
     let ast = parse_macro_input!(input as DeriveInput);

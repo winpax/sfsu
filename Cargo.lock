@@ -793,6 +793,7 @@ dependencies = [
 name = "sfsu-derive"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "heck",
  "paste",
  "proc-macro-crate",
