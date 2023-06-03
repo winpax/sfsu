@@ -7,7 +7,7 @@ use clap::Parser;
 use quork::traits::truthy::ContainsTruth;
 use serde::{Deserialize, Serialize};
 
-use crate::{
+use sfsl::{
     get_scoop_path,
     packages::{CreateManifest, InstallManifest, Manifest},
 };
