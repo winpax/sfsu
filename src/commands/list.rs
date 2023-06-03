@@ -104,12 +104,6 @@ impl super::Command for Args {
     }
 }
 
-fn offset() -> FixedOffset {
-    let now = chrono::Local::now();
-
-    *now.offset()
-}
-
 fn check_lengths(
     og: (usize, usize, usize, usize, usize),
     pkg: &OutputPackage,
@@ -139,8 +133,11 @@ fn check_lengths(
 
 fn parse_package(package: &DirEntry) -> anyhow::Result<OutputPackage> {
     let path = dunce::realpath(package.path())?;
-    let updated_sys = path.metadata()?.modified()?;
-    let updated = updated_sys.duration_since(UNIX_EPOCH)?.as_secs();
+    let updated = {
+        let updated_sys = path.metadata()?.modified()?;
+
+        updated_sys.duration_since(UNIX_EPOCH)?.as_secs()
+    };
 
     let package_name = path
         .components()
@@ -155,7 +152,9 @@ fn parse_package(package: &DirEntry) -> anyhow::Result<OutputPackage> {
         NaiveDateTime::from_timestamp_opt(secs, 0).expect("invalid or out-of-range datetime")
     };
 
-    let date_time = DateTime::<FixedOffset>::from_local(naive_time, offset());
+    let offset = *chrono::Local::now().offset();
+
+    let date_time = DateTime::<FixedOffset>::from_local(naive_time, offset);
 
     let app_current = path.join("current");
 
