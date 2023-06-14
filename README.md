@@ -34,10 +34,10 @@ Invoke-Expression (&sfsu hook --disable list)
 
 It also supports Bash in WSL and MSYS2
 
-Add the following to your .bashrc (or its derivatives, i.e zsh) configuration
+Add the following to your .bashrc (or its equivalents, i.e .zshrc) file
 
 ```bash
-source <(sfsu.exe hook --nix)
+source <(sfsu.exe hook --shell bash)
 ```
 
 The above disable demonstration also works
