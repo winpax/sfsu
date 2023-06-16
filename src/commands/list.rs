@@ -110,6 +110,8 @@ fn check_lengths(
 ) -> (usize, usize, usize, usize, usize) {
     let mut new = og;
     // Checks for the largest size out of the previous one, the current one and the section title
+    // TODO: Remove the repeated `.iter().max().unwrap()` code
+    // TODO: Replace `.unwrap()` with `.unwrap_or_else()`, or equivalent with fallback
     new.0 = *["Name".len(), pkg.name.len(), new.0].iter().max().unwrap();
     new.1 = *["Version".len(), pkg.version.len(), new.1]
         .iter()
