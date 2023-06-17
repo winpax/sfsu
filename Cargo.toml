@@ -4,9 +4,6 @@ description = "Stupid Fast Scoop Utils"
 version = "1.4.8"
 edition = "2021"
 
-[lib]
-name = "sfsl"
-
 [workspace]
 members = ["sfsu-derive"]
 

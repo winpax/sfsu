@@ -9,7 +9,7 @@ use clap::Parser;
 
 use commands::Commands;
 
-use sfsl::get_scoop_path;
+use sfsu::get_scoop_path;
 
 /// Scoop utilities that can replace the slowest parts of Scoop, and run anywhere from 30-100 times faster
 #[derive(Debug, Parser)]

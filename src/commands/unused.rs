@@ -2,7 +2,7 @@ use std::fs::read_dir;
 
 use clap::Parser;
 
-use sfsl::packages::{CreateManifest, InstallManifest};
+use sfsu::packages::{CreateManifest, InstallManifest};
 
 #[derive(Debug, Clone, Parser)]
 /// Find buckets that do not have any installed packages
@@ -10,7 +10,7 @@ pub struct Args {}
 
 impl super::Command for Args {
     fn run(self) -> Result<(), anyhow::Error> {
-        let scoop_buckets_path = sfsl::buckets::Bucket::get_buckets_path();
+        let scoop_buckets_path = sfsu::buckets::Bucket::get_buckets_path();
         let scoop_apps_path = crate::get_scoop_path().join("apps");
 
         let apps = read_dir(scoop_apps_path)?.collect::<Result<Vec<_>, _>>()?;

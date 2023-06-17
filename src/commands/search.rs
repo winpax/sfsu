@@ -10,9 +10,9 @@ use rayon::prelude::*;
 use clap::Parser;
 use regex::Regex;
 
-use sfsl::buckets;
+use sfsu::buckets;
 
-use sfsl::packages::{is_installed, CreateManifest, Manifest};
+use sfsu::packages::{is_installed, CreateManifest, Manifest};
 
 #[derive(Debug, Clone, Parser)]
 /// Search for a package
