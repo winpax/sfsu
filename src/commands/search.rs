@@ -10,10 +10,9 @@ use rayon::prelude::*;
 use clap::Parser;
 use regex::Regex;
 
-use crate::{
-    buckets,
-    packages::{is_installed, CreateManifest, Manifest},
-};
+use sfsu::buckets;
+
+use sfsu::packages::{is_installed, CreateManifest, Manifest};
 
 #[derive(Debug, Clone, Parser)]
 /// Search for a package

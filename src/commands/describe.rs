@@ -1,6 +1,6 @@
 use clap::Parser;
 
-use crate::buckets::Bucket;
+use sfsu::buckets::Bucket;
 
 #[derive(Debug, Clone, Parser)]
 /// Describe a package
