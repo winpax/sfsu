@@ -57,8 +57,6 @@ impl super::Command for Args {
             })
             .collect::<Result<Vec<_>, _>>()?;
 
-        let max_lengths = outputs.iter().fold((0, 0, 0, 0, 0), check_lengths);
-
         if self.json {
             let output_json = serde_json::to_string_pretty(&outputs)?;
 
@@ -69,33 +67,19 @@ impl super::Command for Args {
                 return Ok(());
             }
 
+            #[allow(clippy::similar_names)]
+            let [nwidth, vwidth, swidth, uwidth, nowidth] =
+                outputs.iter().fold([0, 0, 0, 0, 0], check_lengths);
+
             println!(
                 "{:nwidth$} | {:vwidth$} | {:swidth$} | {:uwidth$} | {:nowidth$}",
-                "Name",
-                "Version",
-                "Source",
-                "Updated",
-                "Notes",
-                nwidth = max_lengths.0,
-                vwidth = max_lengths.1,
-                swidth = max_lengths.2,
-                uwidth = max_lengths.3,
-                nowidth = max_lengths.4,
+                "Name", "Version", "Source", "Updated", "Notes",
             );
 
             for pkg in outputs {
                 println!(
                     "{:nwidth$} | {:vwidth$} | {:swidth$} | {:uwidth$} | {:nowidth$}",
-                    pkg.name,
-                    pkg.version,
-                    pkg.source,
-                    pkg.updated,
-                    pkg.notes,
-                    nwidth = max_lengths.0,
-                    vwidth = max_lengths.1,
-                    swidth = max_lengths.2,
-                    uwidth = max_lengths.3,
-                    nowidth = max_lengths.4,
+                    pkg.name, pkg.version, pkg.source, pkg.updated, pkg.notes,
                 );
             }
         }
@@ -104,33 +88,17 @@ impl super::Command for Args {
     }
 }
 
-fn check_lengths(
-    og: (usize, usize, usize, usize, usize),
-    pkg: &OutputPackage,
-) -> (usize, usize, usize, usize, usize) {
-    let mut new = og;
+fn check_lengths(og: [usize; 5], pkg: &OutputPackage) -> [usize; 5] {
     // Checks for the largest size out of the previous one, the current one and the section title
-    // TODO: Remove the repeated `.iter().max().unwrap()` code
-    // TODO: Replace `.unwrap()` with `.unwrap_or_else()`, or equivalent with fallback
-    new.0 = *["Name".len(), pkg.name.len(), new.0].iter().max().unwrap();
-    new.1 = *["Version".len(), pkg.version.len(), new.1]
-        .iter()
-        .max()
-        .unwrap();
-    new.2 = *["Source".len(), pkg.source.len(), new.2]
-        .iter()
-        .max()
-        .unwrap();
-    new.3 = *["Updated".len(), pkg.updated.len(), new.3]
-        .iter()
-        .max()
-        .unwrap();
-    new.4 = *["Notes".len(), pkg.notes.len(), new.4]
-        .iter()
-        .max()
-        .unwrap();
+    // Note that all widths use "Updated" as it is the longest section title
+    let default_width = "Updated".len();
 
-    new
+    og.map(|element| {
+        *[default_width, pkg.updated.len(), element]
+            .iter()
+            .max()
+            .unwrap_or(&default_width)
+    })
 }
 
 fn parse_package(package: &DirEntry) -> anyhow::Result<OutputPackage> {
