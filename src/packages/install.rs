@@ -54,6 +54,7 @@ impl<'de> Deserialize<'de> for Architecture {
 }
 
 impl Manifest {
+    #[must_use]
     pub fn get_source(&self) -> String {
         match (&self.bucket, &self.url) {
             (Some(bucket), None) => bucket.to_string(),
