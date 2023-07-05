@@ -14,7 +14,7 @@ codegen-units = 1
 anyhow = "1.0.71"
 chrono = { version = "0.4.26", features = ["serde", "clock", "std"], default-features = false }
 clap = { version = "4.3.11", features = ["derive"] }
-colored = "2.0.3"
+colored = "2.0.4"
 derive_more = "0.99.17"
 dirs = "5.0.1"
 dunce = "1.0.4"
