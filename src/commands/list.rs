@@ -4,6 +4,7 @@ use rayon::prelude::*;
 
 use chrono::{DateTime, FixedOffset, NaiveDateTime};
 use clap::Parser;
+use colored::Colorize;
 use quork::traits::truthy::ContainsTruth;
 use serde::{Deserialize, Serialize};
 
@@ -25,7 +26,9 @@ struct OutputPackage {
 #[derive(Debug, Clone, Parser)]
 /// List all installed packages
 pub struct Args {
-    #[clap(help = "The pattern to search for (can be a regex).")]
+    #[clap(
+        help = format!("The pattern to search for (can be a regex). {}", "DEPRECATED: Use sfsu search --installed".yellow())
+    )]
     pattern: Option<String>,
 
     #[clap(short, long, help = "The bucket to exclusively list packages in")]
