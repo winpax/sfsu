@@ -24,10 +24,7 @@ struct OutputPackage {
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
-    #[clap(help = "The pattern to search for (can be a regex)")]
-    pattern: Option<String>,
-
-    #[clap(short, long, help = "The bucket to exclusively search in")]
+    #[clap(short, long, help = "The bucket to exclusively list in")]
     bucket: Option<String>,
 
     #[clap(
