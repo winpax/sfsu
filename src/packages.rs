@@ -26,20 +26,19 @@ where
 
         file.read_to_string(&mut contents)?;
 
-        Self::from_str(contents)
+        Ok(Self::from_str(contents))
     }
 
-    fn from_str(contents: String) -> std::io::Result<Self> {
+    #[must_use]
+    fn from_str(contents: String) -> Self {
         let trimmed = contents.trim_start_matches('\u{feff}');
 
-        let parsed = serde_json::from_str(trimmed).unwrap_or_else(|err| {
+        serde_json::from_str(trimmed).unwrap_or_else(|err| {
             println!("Error parsing manifest:\n {trimmed}");
             println!("{err}");
 
             Default::default()
-        });
-
-        Ok(parsed)
+        })
     }
 }
 
