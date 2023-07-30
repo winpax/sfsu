@@ -74,17 +74,17 @@ impl super::Command for Args {
             }
 
             #[allow(clippy::similar_names)]
-            let [nwidth, vwidth, swidth, uwidth, nowidth] =
+            let [name_width, version_width, source_width, updated_width, notes_width] =
                 outputs.iter().fold([0, 0, 0, 0, 0], check_lengths);
 
             println!(
-                "{:nwidth$} | {:vwidth$} | {:swidth$} | {:uwidth$} | {:nowidth$}",
+                "{:name_width$} | {:version_width$} | {:source_width$} | {:updated_width$} | {:notes_width$}",
                 "Name", "Version", "Source", "Updated", "Notes",
             );
 
             for pkg in outputs {
                 println!(
-                    "{:nwidth$} | {:vwidth$} | {:swidth$} | {:uwidth$} | {:nowidth$}",
+                    "{:name_width$} | {:version_width$} | {:source_width$} | {:updated_width$} | {:notes_width$}",
                     pkg.name, pkg.version, pkg.source, pkg.updated, pkg.notes,
                 );
             }

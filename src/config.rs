@@ -53,6 +53,9 @@ impl Scoop {
     }
 
     /// Update the last time the scoop was updated
+    ///
+    /// # Panics
+    /// - If the system time is 262,000 years in the future
     pub fn update_last_update_time(&mut self) {
         use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -67,6 +70,9 @@ impl Scoop {
                 .unwrap(),
             0,
         )
+        // Note that this will (should) never actually be None
+        // The nanoseconds are hard-coded to 0, so that case is unreachable
+        // And unless the user sets their date to over 262,000 years in the future, the other case is unreachable
         .expect("invalid or out-of-range datetime");
 
         let date_time =
@@ -79,6 +85,7 @@ impl Scoop {
     ///
     /// # Errors
     /// - The struct could not be serialized to JSON
+    /// - The file could not be written
     pub fn save(&self) -> std::io::Result<()> {
         let config_path = Self::get_path();
 

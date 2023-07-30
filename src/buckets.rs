@@ -17,42 +17,37 @@ impl Bucket {
     }
 
     /// Open the given path as a bucket
-    ///
-    /// # Errors
-    /// - The directory could not be opened as a git repository
     pub fn open() {
         unimplemented!()
     }
 
     /// Update the bucket by pulling any changes
-    ///
-    /// # Errors
     pub fn update(&self) {
         unimplemented!()
     }
 
     /// Get the remote url of the bucket
-    ///
-    /// # Errors
-    /// - The remote "origin" could not be retrieved
-    ///
-    /// # Panics
-    /// - The remote url was missing
     pub fn get_remote(&self) {
         unimplemented!()
     }
 
     /// Get the paths where buckets are stored
+    #[must_use]
     pub fn get_buckets_path() -> PathBuf {
         let scoop_path = get_scoop_path();
 
         scoop_path.join("buckets")
     }
 
+    #[must_use]
     pub fn get_path(&self) -> PathBuf {
         Self::get_buckets_path().join(&self.name)
     }
 
+    /// Gets all buckets
+    ///
+    /// # Errors
+    /// - Was unable to read the bucket directory
     pub fn get_all() -> std::io::Result<Vec<Bucket>> {
         let buckets_path = Self::get_buckets_path();
 
@@ -75,6 +70,9 @@ impl Bucket {
     }
 
     /// Gets the manifest that represents the given package name
+    ///
+    /// # Errors
+    /// - Could not load the manifest from the path
     pub fn get_manifest(&self, name: impl AsRef<str>) -> std::io::Result<Manifest> {
         let buckets_path = self.get_path();
         let manifests_path = buckets_path.join("bucket");
