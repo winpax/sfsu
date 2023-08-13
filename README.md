@@ -50,7 +50,7 @@ That takes you from about 25 seconds on `scoop search` down to `50 milliseconds`
 
 `sfsu list` is **~30** times faster than `scoop list`
 
-`sfsu` and `hok` are pretty comperable in all benchmarks. `sfsu` wins the search benchmark but `hok` wins the list benchmark, both by an insignificant margin.
+`sfsu` and `hok` are pretty comperable in all benchmarks. `sfsu` wins the search and info benchmarks but `hok` wins the list benchmark, all by an insignificant margin.
 
 Done on a *AMD Ryzen 7 2700X @ 4.3GHz* with *16GB* of RAM and 11 scoop buckets listed below
 
