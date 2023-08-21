@@ -20,7 +20,7 @@ dirs = "5.0.1"
 dunce = "1.0.4"
 itertools = "0.11.0"
 paste = "1.0.14"
-quork = "0.3.2"
+quork = "0.4.0"
 rayon = "1.7.0"
 regex = "1.9.3"
 serde = { version = "1.0.183", features = ["derive"] }

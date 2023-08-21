@@ -359,7 +359,7 @@ dependencies = [
  "iana-time-zone-haiku",
  "js-sys",
  "wasm-bindgen",
- "windows",
+ "windows 0.48.0",
 ]
 
 [[package]]
@@ -566,24 +566,25 @@ dependencies = [
 
 [[package]]
 name = "quork"
-version = "0.3.2"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5cbae6983fcd7d51b456ce7528a6a3dea2e5165bbbcaa7331b2feb53c30f35cc"
+checksum = "6267e0f525db217637d4b69c59f924bd963e4ee350384cf2ba81f50ba272a2ae"
 dependencies = [
  "cc",
  "cfg-if",
  "nix",
  "quork-proc",
  "thiserror",
- "windows",
+ "windows 0.51.1",
 ]
 
 [[package]]
 name = "quork-proc"
-version = "0.2.0"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "514564e57cfd6f4b6ca10d4cd03cd3b6dca956c20fd5b9120fc9b52d3ce525bd"
+checksum = "bbcf2f711af5855c26efd2888f1b607f9b0ed81ba044dd79c13e1731e0d57fd1"
 dependencies = [
+ "proc-macro-crate",
  "proc-macro-error",
  "proc-macro2",
  "quote",
@@ -982,6 +983,25 @@ name = "windows"
 version = "0.48.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e686886bc078bc1b0b600cac0147aadb815089b6e4da64016cbd754b6342700f"
+dependencies = [
+ "windows-targets",
+]
+
+[[package]]
+name = "windows"
+version = "0.51.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ca229916c5ee38c2f2bc1e9d8f04df975b4bd93f9955dc69fabb5d91270045c9"
+dependencies = [
+ "windows-core",
+ "windows-targets",
+]
+
+[[package]]
+name = "windows-core"
+version = "0.51.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f1f8cf84f35d2db49a46868f947758c7a1138116f7fac3bc844f43ade1292e64"
 dependencies = [
  "windows-targets",
 ]
