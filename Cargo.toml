@@ -11,19 +11,19 @@ members = ["sfsu-derive"]
 codegen-units = 1
 
 [dependencies]
-anyhow = "1.0.75"
-chrono = { version = "0.4.26", features = ["serde", "clock", "std"], default-features = false }
-clap = { version = "4.4.0", features = ["derive"] }
-colored = "2.0.4"
-derive_more = "0.99.17"
-dirs = "5.0.1"
-dunce = "1.0.4"
-itertools = "0.11.0"
-paste = "1.0.14"
-quork = "0.4.0"
-rayon = "1.7.0"
-regex = "1.9.4"
-serde = { version = "1.0.188", features = ["derive"] }
-serde_json = "1.0.105"
+anyhow = "1.0"
+chrono = { version = "0.4", features = ["serde", "clock", "std"], default-features = false }
+clap = { version = "4.4", features = ["derive"] }
+colored = "2.0"
+derive_more = "0.99"
+dirs = "5.0"
+dunce = "1.0"
+itertools = "0.11"
+paste = "1.0"
+quork = "0.4"
+rayon = "1.7"
+regex = "1.9"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
 sfsu-derive = { path = "./sfsu-derive" }
-strum = { version = "0.25.0", features = ["derive"] }
+strum = { version = "0.25", features = ["derive"] }
