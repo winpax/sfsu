@@ -1,6 +1,8 @@
+name: Scan Release
+
 on:
   release:
-    types: [edited]
+    types: [published, edited]
 
 jobs:
   scan:
