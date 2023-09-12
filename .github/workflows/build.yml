@@ -102,6 +102,9 @@ jobs:
           toolchain: stable
           override: true
 
+      - name: Install cargo-auditable
+        run: cargo install cargo-auditable
+
       - name: Build and Package
         run: just release
 
