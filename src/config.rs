@@ -53,30 +53,8 @@ impl Scoop {
     }
 
     /// Update the last time the scoop was updated
-    ///
-    /// # Panics
-    /// - If the system time is 262,000 years in the future
     pub fn update_last_update_time(&mut self) {
-        use std::time::{SystemTime, UNIX_EPOCH};
-
-        use chrono::{DateTime, FixedOffset, NaiveDateTime};
-        // TODO: Move to using chrono for time serialization
-        let naive_time = NaiveDateTime::from_timestamp_opt(
-            SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .expect("time went backwards")
-                .as_secs()
-                .try_into()
-                .unwrap(),
-            0,
-        )
-        // Note that this will (should) never actually be None
-        // The nanoseconds are hard-coded to 0, so that case is unreachable
-        // And unless the user sets their date to over 262,000 years in the future, the other case is unreachable
-        .expect("invalid or out-of-range datetime");
-
-        let date_time =
-            DateTime::<FixedOffset>::from_local(naive_time, *chrono::Local::now().offset());
+        let date_time = chrono::Local::now();
 
         self.last_update = Some(date_time.to_string());
     }
