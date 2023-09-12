@@ -21,8 +21,6 @@ pub struct Args {
     shell: Shell,
 }
 
-// TODO: Add function to generate hooks
-
 impl super::Command for Args {
     fn run(self) -> Result<(), anyhow::Error> {
         let enabled_hooks: Vec<super::CommandsRaw> = super::CommandsRaw::iter()
