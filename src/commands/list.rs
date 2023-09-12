@@ -2,7 +2,7 @@ use std::{ffi::OsStr, fs::DirEntry, time::UNIX_EPOCH};
 
 use rayon::prelude::*;
 
-use chrono::{DateTime, FixedOffset, NaiveDateTime};
+use chrono::NaiveDateTime;
 use clap::Parser;
 use colored::Colorize;
 use quork::traits::truthy::ContainsTruth;
@@ -109,11 +109,6 @@ fn check_lengths(og: [usize; 5], pkg: &OutputPackage) -> [usize; 5] {
 
 fn parse_package(package: &DirEntry) -> anyhow::Result<OutputPackage> {
     let path = dunce::realpath(package.path())?;
-    let updated = {
-        let updated_sys = path.metadata()?.modified()?;
-
-        updated_sys.duration_since(UNIX_EPOCH)?.as_secs()
-    };
 
     let package_name = path
         .components()
@@ -123,14 +118,15 @@ fn parse_package(package: &DirEntry) -> anyhow::Result<OutputPackage> {
         .to_string_lossy();
 
     let naive_time = {
-        let secs = updated.try_into()?;
+        let updated = {
+            let updated_sys = path.metadata()?.modified()?;
 
-        NaiveDateTime::from_timestamp_opt(secs, 0).expect("invalid or out-of-range datetime")
+            updated_sys.duration_since(UNIX_EPOCH)?.as_secs()
+        };
+
+        NaiveDateTime::from_timestamp_opt(updated.try_into()?, 0)
+            .expect("invalid or out-of-range datetime")
     };
-
-    let offset = *chrono::Local::now().offset();
-
-    let date_time = DateTime::<FixedOffset>::from_local(naive_time, offset);
 
     let app_current = path.join("current");
 
@@ -143,7 +139,7 @@ fn parse_package(package: &DirEntry) -> anyhow::Result<OutputPackage> {
         name: package_name.to_string(),
         version: manifest.version,
         source: install_manifest.get_source(),
-        updated: date_time.to_rfc3339(),
+        updated: naive_time.to_string(),
         notes: if install_manifest.hold.contains_truth() {
             String::from("Hold")
         } else {
