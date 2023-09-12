@@ -1,6 +1,5 @@
 use std::{env, path::PathBuf};
 
-use chrono::Local;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -53,34 +52,11 @@ impl Scoop {
         path
     }
 
-    // TODO: More solid error type here?
     /// Update the last time the scoop was updated
-    ///
-    /// # Errors
-    /// - If the system time is 262,000 years in the future
-    pub fn update_last_update_time(&mut self) -> anyhow::Result<()> {
-        use std::time::{SystemTime, UNIX_EPOCH};
-
-        use chrono::NaiveDateTime;
-        let naive_time = NaiveDateTime::from_timestamp_opt(
-            SystemTime::now()
-                .duration_since(UNIX_EPOCH)?
-                .as_secs()
-                .try_into()?,
-            0,
-        )
-        .ok_or(anyhow::anyhow!(
-            "The system time is more than 262,000 years in the future"
-        ))?;
-
-        let date_time = naive_time
-            .and_local_timezone(Local)
-            .earliest()
-            .ok_or(anyhow::anyhow!("Local time representation was invalid..."))?;
+    pub fn update_last_update_time(&mut self) {
+        let date_time = chrono::Local::now();
 
         self.last_update = Some(date_time.to_string());
-
-        Ok(())
     }
 
     /// Save the modified scoop config
