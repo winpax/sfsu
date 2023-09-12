@@ -1,6 +1,9 @@
 name: Build & Test
 
 on:
+  release:
+    types: [published]
+
   pull_request:
     branches:
       - 'trunk'
@@ -8,9 +11,6 @@ on:
   push:
     branches:
       - 'trunk'
-
-    tags:
-      - 'v*.*.*'
 
 permissions:
   contents: write
@@ -114,6 +114,7 @@ jobs:
       - name: VirusTotal Scan
         uses: crazy-max/ghaction-virustotal@v3
         with:
+          update_release_body: true
           vt_api_key: ${{ secrets.VT_API_KEY }}
           files: |
             release/dl-i686.7z
