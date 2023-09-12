@@ -64,17 +64,14 @@ impl Scoop {
         use chrono::NaiveDateTime;
         let naive_time = NaiveDateTime::from_timestamp_opt(
             SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .expect("time went backwards")
+                .duration_since(UNIX_EPOCH)?
                 .as_secs()
-                .try_into()
-                .unwrap(),
+                .try_into()?,
             0,
         )
-        // Note that this will (should) never actually be None
-        // The nanoseconds are hard-coded to 0, so that case is unreachable
-        // And unless the user sets their date to over 262,000 years in the future, the other case is unreachable
-        .expect("invalid or out-of-range datetime");
+        .ok_or(anyhow::anyhow!(
+            "The system time is more than 262,000 years in the future"
+        ))?;
 
         let date_time = naive_time
             .and_local_timezone(Local)
