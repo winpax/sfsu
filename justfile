@@ -9,7 +9,7 @@ build-all:
     just build i686-pc-windows-msvc
 
 build TARGET:
-    cargo b -r --target {{ TARGET }}
+    cargo auditable b -r --target {{ TARGET }}
 
 release: build-all
     if (Test-Path "release") { rm -r "release" -Force -ErrorAction Ignore }
