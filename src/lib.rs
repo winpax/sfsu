@@ -28,7 +28,10 @@ pub fn get_scoop_path() -> PathBuf {
         {
             path.into()
         } else {
-            dirs::home_dir().expect("user home directory").join("scoop")
+            directories::BaseDirs::new()
+                .expect("user directories")
+                .home_dir()
+                .join("scoop")
         }
     };
 
