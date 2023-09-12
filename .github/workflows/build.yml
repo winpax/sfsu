@@ -112,7 +112,7 @@ jobs:
           path: release/*
 
       - name: VirusTotal Scan
-        uses: crazy-max/ghaction-virustotal@v3
+        uses: crazy-max/ghaction-virustotal@v4
         with:
           update_release_body: true
           vt_api_key: ${{ secrets.VT_API_KEY }}
