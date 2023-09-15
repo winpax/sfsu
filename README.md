@@ -40,6 +40,15 @@ Add the following to your .bashrc (or its equivalents, i.e .zshrc) file
 source <(sfsu.exe hook --shell bash)
 ```
 
+Even Nushell is supported. Run the following command save it to a file.
+```sh
+sfsu hook --shell nu | save -f path/to/some/file.nu
+```
+Then source it in your `config.nu` (situated in path `$nu.config-path`).
+```sh
+source path/to/the/file.nu
+```
+
 The above disable demonstration also works
 
 ## Benchmarks [^1]
