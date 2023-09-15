@@ -9,6 +9,7 @@ enum Shell {
     Powershell,
     Bash,
     Zsh,
+    Nu,
 }
 
 #[derive(Debug, Clone, Parser)]
@@ -50,6 +51,11 @@ impl super::Command for Args {
 
                 println!("      (*) $SCOOP_EXEC $@ ;;");
                 println!("  esac\n}}");
+            },
+            Shell::Nu => {
+                for command in enabled_hooks {
+                    println!("extern-wrapped \"scoop {command}\" [...rest] {{ sfsu {command} $rest }} ")
+                }
             }
         }
 
