@@ -51,10 +51,12 @@ impl super::Command for Args {
 
                 println!("      (*) $SCOOP_EXEC $@ ;;");
                 println!("  esac\n}}");
-            },
+            }
             Shell::Nu => {
                 for command in enabled_hooks {
-                    println!("extern-wrapped \"scoop {command}\" [...rest] {{ sfsu {command} $rest }} ")
+                    println!(
+                        "extern-wrapped \"scoop {command}\" [...rest] {{ sfsu {command} $rest }} "
+                    )
                 }
             }
         }
