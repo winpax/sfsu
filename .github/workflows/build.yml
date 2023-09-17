@@ -119,3 +119,13 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: release/*.7z*
+
+      - name: VirusTotal Scan
+        uses: crazy-max/ghaction-virustotal@v4
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          update_release_body: true
+          vt_api_key: ${{ secrets.VT_API_KEY }}
+          files: |
+            dl-i686.7z
+            dl-x86_64.7z
