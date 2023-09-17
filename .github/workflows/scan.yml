@@ -16,5 +16,5 @@ jobs:
           update_release_body: true
           vt_api_key: ${{ secrets.VT_API_KEY }}
           files: |
-            release/dl-i686.7z
-            release/dl-x86_64.7z
+            dl-i686.7z
+            dl-x86_64.7z
