@@ -20,7 +20,11 @@ pub fn derive_into_inner(input: TokenStream) -> TokenStream {
 pub fn derive_raw_enum(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
 
-    let input_name = &input.ident;
+    let struct_name = {
+        let original_ident = &input.ident;
+        let og_ident_span = original_ident.span();
+        Ident::new(&format!("{}Raw", original_ident), og_ident_span)
+    };
 
     let data = &input.data;
 
@@ -40,31 +44,24 @@ pub fn derive_raw_enum(input: TokenStream) -> TokenStream {
         .map(|variant| heck::AsKebabCase(variant.to_string()).to_string())
         .collect::<Vec<_>>();
 
-    let paste = match crate_name("paste").expect("heck is present in `Cargo.toml`") {
-        FoundCrate::Itself => Ident::new("paste", Span::call_site()),
-        FoundCrate::Name(name) => Ident::new(&name, Span::call_site()),
-    };
-
     let strum = match crate_name("strum").expect("strum is present in `Cargo.toml`") {
         FoundCrate::Itself => Ident::new("strum", Span::call_site()),
         FoundCrate::Name(name) => Ident::new(&name, Span::call_site()),
     };
 
     quote! {
-        #paste::paste! {
-            // TODO: Better way of doing this? or add support for meta in proc macro
-            #[derive(Debug, Clone, #strum::Display, #strum::IntoStaticStr, #strum::EnumIter, PartialEq, Eq)]
-            #[strum(serialize_all = "kebab-case")]
-            pub enum [<#input_name Raw>] {
-                #(#variants),*
-            }
+        // TODO: Better way of doing this? or add support for meta in proc macro
+        #[derive(Debug, Clone, #strum::Display, #strum::IntoStaticStr, #strum::EnumIter, PartialEq, Eq)]
+        #[strum(serialize_all = "kebab-case")]
+        pub enum #struct_name {
+            #(#variants),*
+        }
 
-            impl From<String> for [<#input_name Raw>] {
-                fn from(string: String) -> Self {
-                    match string.as_str() {
-                        #(#command_names => [<#input_name Raw>]::#variants,)*
-                        _ => panic!("Invalid command name: {}", string),
-                    }
+        impl From<String> for #struct_name {
+            fn from(string: String) -> Self {
+                match string.as_str() {
+                    #(#command_names => #struct_name::#variants,)*
+                    _ => panic!("Invalid command name: {}", string),
                 }
             }
         }
