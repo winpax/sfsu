@@ -15,4 +15,4 @@ Prints the hook for the supplied shell, allowing one to use `sfsu` instead of `s
 
   The shell the supply hooks for. Defaults to `powershell`.
 
-  Possible values are: `powershell`, `bash`, `zsh`
+  Possible values are: `powershell`, `bash`, `zsh`, `nu`
