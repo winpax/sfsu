@@ -36,5 +36,6 @@ const MAX_FILENAME_SIZE: usize = 512;
 
 fn main() {
     let command_line: PCWSTR = unsafe { GetCommandLineW() };
+    let file_name = GetModuleFileNameW();
     println!("Hello, world!");
 }
