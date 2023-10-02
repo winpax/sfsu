@@ -5,7 +5,7 @@ version = "1.4.13"
 edition = "2021"
 
 [workspace]
-members = ["sfsu-derive"]
+members = ["sfsu-derive", "shim"]
 
 [profile.release]
 codegen-units = 1

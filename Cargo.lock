@@ -736,6 +736,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "shim"
+version = "0.1.0"
+dependencies = [
+ "windows 0.51.1",
+]
+
+[[package]]
 name = "strsim"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
