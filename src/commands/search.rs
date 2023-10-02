@@ -109,7 +109,7 @@ impl super::Command for Args {
                             None => false,
                         }
                     })
-                    .collect::<Vec<_>>()
+                    .collect()
             } else {
                 all_scoop_buckets
             }
@@ -117,7 +117,13 @@ impl super::Command for Args {
 
         let mut matches = scoop_buckets
             .par_iter()
+            .filter(|bucket| bucket.path().is_dir())
             .filter_map(|bucket| {
+                // Ignore loose files in the buckets dir
+                if !bucket.path().is_dir() {
+                    return None;
+                }
+
                 let bucket_path = {
                     let bk_path = bucket.path().join("bucket");
 
@@ -127,6 +133,8 @@ impl super::Command for Args {
                         bucket.path()
                     }
                 };
+
+                dbg!(&bucket_path);
 
                 let bucket_contents = read_dir(bucket_path)
                     .and_then(Iterator::collect::<Result<Vec<_>, _>>)
