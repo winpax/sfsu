@@ -1,5 +1,5 @@
 use std::{
-    ffi::{OsStr, OsString},
+    ffi::OsStr,
     fs::{read_dir, DirEntry},
     io::Error,
 };
@@ -85,8 +85,6 @@ impl super::Command for Args {
             (self.bucket, self.pattern)
         };
 
-        let scoop_buckets_path = buckets::Bucket::get_buckets_path();
-
         let pattern = {
             Regex::new(&format!(
                 "{}{}",
@@ -96,7 +94,7 @@ impl super::Command for Args {
             .expect("Invalid Regex provided. See https://docs.rs/regex/latest/regex/ for more info")
         };
 
-        let all_scoop_buckets = read_dir(scoop_buckets_path)?.collect::<Result<Vec<_>, _>>()?;
+        let all_scoop_buckets = buckets::Bucket::list_all()?;
 
         let scoop_buckets = {
             if let Some(bucket) = bucket {
@@ -157,12 +155,7 @@ impl super::Command for Args {
                         );
 
                         if pattern.is_match(&file_name) && is_valid_extension {
-                            parse_output(
-                                file,
-                                bucket.file_name().to_string_lossy(),
-                                self.installed,
-                                &raw_pattern,
-                            )
+                            parse_output(file, &bucket.name, self.installed, &raw_pattern)
                         } else {
                             None
                         }
@@ -172,23 +165,23 @@ impl super::Command for Args {
                 if matches.is_empty() {
                     None
                 } else {
-                    Some(Ok::<_, Error>((bucket.file_name(), matches)))
+                    Some(Ok::<_, Error>((bucket.name.clone(), matches)))
                 }
             })
             .collect::<Result<Vec<_>, _>>()?;
 
         matches.par_sort_by_key(|x| x.0.clone());
 
-        let mut old_bucket = OsString::new();
+        let mut old_bucket = String::new();
 
         for (bucket, matches) in matches {
             if bucket != old_bucket {
                 // Do not print the newline on the first bucket
-                if old_bucket != OsString::new() {
+                if !old_bucket.is_empty() {
                     println!();
                 }
 
-                println!("'{}' bucket:", bucket.to_string_lossy());
+                println!("'{bucket}' bucket:");
 
                 old_bucket = bucket;
             }
