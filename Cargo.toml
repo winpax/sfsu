@@ -13,7 +13,9 @@ codegen-units = 1
 [profile.shim-release]
 inherits = "release"
 strip = true
-opt-level = 's'
+opt-level = "z"
+lto = true
+panic = "abort"
 
 [dependencies]
 anyhow = "1.0"
