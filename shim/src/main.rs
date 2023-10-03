@@ -42,9 +42,25 @@ const MAX_FILENAME_SIZE: usize = 512;
 //   }
 // }
 
+struct ExePath {
+    path: PathBuf,
+}
+
+impl ExePath {
+    pub fn new() -> std::io::Result<Self> {
+        Ok(Self {
+            path: std::env::current_exe()?,
+        })
+    }
+
+    pub fn shim_path(&self) -> PathBuf {
+        self.path.with_extension("shim")
+    }
+}
+
 fn main() {
     let command_line: PCWSTR = unsafe { GetCommandLineW() };
-    let file_name = std::env::current_exe().unwrap();
+    let file_path = ExePath::new().expect("valid executable path");
 
     println!("Hello, world!");
 }
