@@ -738,9 +738,6 @@ dependencies = [
 [[package]]
 name = "shim"
 version = "0.1.0"
-dependencies = [
- "windows 0.51.1",
-]
 
 [[package]]
 name = "strsim"

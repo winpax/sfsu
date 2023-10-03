@@ -1,12 +1,4 @@
-use std::{ffi::OsString, fs::File, path::PathBuf};
-
-use windows::{
-    core::PCWSTR,
-    Win32::{
-        Foundation::HMODULE,
-        System::{Environment::GetCommandLineW, LibraryLoader::GetModuleFileNameW},
-    },
-};
+use std::{env, ffi::OsString, fs::File, path::PathBuf};
 
 const MAX_FILENAME_SIZE: usize = 512;
 
@@ -49,7 +41,7 @@ struct ExePath {
 impl ExePath {
     pub fn new() -> std::io::Result<Self> {
         Ok(Self {
-            path: std::env::current_exe()?,
+            path: env::current_exe()?,
         })
     }
 
@@ -59,7 +51,7 @@ impl ExePath {
 }
 
 fn main() {
-    let command_line: PCWSTR = unsafe { GetCommandLineW() };
+    let args = env::args();
     let file_path = ExePath::new().expect("valid executable path");
 
     let shim_file = File::open(file_path.shim_path()).expect("present and readable shim file");
