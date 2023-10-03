@@ -1,4 +1,4 @@
-use std::{ffi::OsString, path::PathBuf};
+use std::{ffi::OsString, fs::File, path::PathBuf};
 
 use windows::{
     core::PCWSTR,
@@ -61,6 +61,8 @@ impl ExePath {
 fn main() {
     let command_line: PCWSTR = unsafe { GetCommandLineW() };
     let file_path = ExePath::new().expect("valid executable path");
+
+    let shim_file = File::open(file_path.shim_path()).expect("present and readable shim file");
 
     println!("Hello, world!");
 }

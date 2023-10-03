@@ -10,6 +10,11 @@ members = ["sfsu-derive", "shim"]
 [profile.release]
 codegen-units = 1
 
+[profile.shim-release]
+inherits = "release"
+strip = true
+opt-level = 's'
+
 [dependencies]
 anyhow = "1.0"
 chrono = { version = "0.4.31", features = ["serde", "clock", "std"], default-features = false }
