@@ -23,7 +23,7 @@ impl super::Command for Args {
                 bucket.get_manifest(&self.package)?,
             )]
         } else {
-            let buckets = Bucket::get_all()?;
+            let buckets = Bucket::list_all()?;
 
             buckets
                 .iter()

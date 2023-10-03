@@ -33,36 +33,37 @@ impl Bucket {
 
     /// Get the paths where buckets are stored
     #[must_use]
-    pub fn get_buckets_path() -> PathBuf {
+    pub fn buckets_path() -> PathBuf {
         let scoop_path = get_scoop_path();
 
         scoop_path.join("buckets")
     }
 
     #[must_use]
-    pub fn get_path(&self) -> PathBuf {
-        Self::get_buckets_path().join(&self.name)
+    pub fn path(&self) -> PathBuf {
+        Self::buckets_path().join(&self.name)
     }
 
     /// Gets all buckets
     ///
     /// # Errors
     /// - Was unable to read the bucket directory
-    pub fn get_all() -> std::io::Result<Vec<Bucket>> {
-        let buckets_path = Self::get_buckets_path();
+    pub fn list_all() -> std::io::Result<Vec<Bucket>> {
+        let buckets_path = Self::buckets_path();
 
         let bucket_dir = std::fs::read_dir(buckets_path)?;
 
-        let buckets = bucket_dir.map(|entry| {
-            let entry = entry?;
-            let name = {
-                let name = entry.file_name();
+        let buckets = bucket_dir
+            .filter(|entry| entry.as_ref().is_ok_and(|entry| entry.path().is_dir()))
+            .map(|entry| {
+                let name = {
+                    let name = entry?.file_name();
 
-                name.to_string_lossy().to_string()
-            };
+                    name.to_string_lossy().to_string()
+                };
 
-            Ok::<Bucket, std::io::Error>(Self { name })
-        });
+                Ok::<Bucket, std::io::Error>(Self { name })
+            });
 
         let buckets = buckets.collect::<Result<Vec<_>, _>>()?;
 
@@ -74,7 +75,7 @@ impl Bucket {
     /// # Errors
     /// - Could not load the manifest from the path
     pub fn get_manifest(&self, name: impl AsRef<str>) -> std::io::Result<Manifest> {
-        let buckets_path = self.get_path();
+        let buckets_path = self.path();
         let manifests_path = buckets_path.join("bucket");
 
         let file_name = format!("{}.json", name.as_ref());

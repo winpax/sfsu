@@ -56,7 +56,7 @@ impl super::Command for Args {
                 for command in enabled_hooks {
                     println!(
                         "extern-wrapped \"scoop {command}\" [...rest] {{ sfsu {command} $rest }} "
-                    )
+                    );
                 }
             }
         }
