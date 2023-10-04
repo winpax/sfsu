@@ -34,6 +34,7 @@ pub struct Manifest {
     pub innosetup: Option<bool>,
     pub installer: Option<Installer>,
     pub license: Option<PackageLicense>,
+    #[deprecated]
     /// Deprecated
     pub msi: Option<StringOrArrayOfStrings>,
     pub notes: Option<StringOrArrayOfStrings>,
