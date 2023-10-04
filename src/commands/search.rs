@@ -132,8 +132,6 @@ impl super::Command for Args {
                     }
                 };
 
-                dbg!(&bucket_path);
-
                 let bucket_contents = read_dir(bucket_path)
                     .and_then(Iterator::collect::<Result<Vec<_>, _>>)
                     .unwrap();
