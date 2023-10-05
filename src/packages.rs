@@ -1,5 +1,6 @@
 use std::{fs::File, io::Read, path::Path};
 
+use regex::Regex;
 use serde::Deserialize;
 
 use crate::get_scoop_path;
@@ -9,6 +10,8 @@ pub mod manifest;
 
 pub use install::Manifest as InstallManifest;
 pub use manifest::Manifest;
+
+use manifest::StringOrArrayOfStringsOrAnArrayOfArrayOfStrings;
 
 pub trait CreateManifest
 where
@@ -66,5 +69,34 @@ pub fn is_installed(manifest_name: impl AsRef<Path>, bucket: Option<impl AsRef<s
             }
         }
         Err(_) => false,
+    }
+}
+
+impl Manifest {
+    #[must_use]
+    pub fn binary_matches(&self, regex: &Regex) -> Option<Vec<String>> {
+        match self.bin {
+            Some(StringOrArrayOfStringsOrAnArrayOfArrayOfStrings::String(ref binary)) => {
+                if regex.is_match(binary) {
+                    Some(vec![binary.clone()])
+                } else {
+                    None
+                }
+            }
+            Some(StringOrArrayOfStringsOrAnArrayOfArrayOfStrings::StringArray(ref binaries)) => {
+                let matched: Vec<_> = binaries
+                    .iter()
+                    .filter(|binary| regex.is_match(binary))
+                    .cloned()
+                    .collect();
+
+                if matched.is_empty() {
+                    None
+                } else {
+                    Some(matched)
+                }
+            }
+            _ => None,
+        }
     }
 }

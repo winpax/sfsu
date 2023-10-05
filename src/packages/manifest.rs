@@ -212,6 +212,7 @@ pub struct Suggest {}
 #[serde(untagged)]
 pub enum StringOrArrayOfStringsOrAnArrayOfArrayOfStrings {
     String(String),
+    StringArray(Vec<String>),
     UnionArray(Vec<StringOrArrayOfStringsElement>),
 }
 
