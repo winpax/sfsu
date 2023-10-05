@@ -5,7 +5,7 @@ use rayon::prelude::*;
 use chrono::NaiveDateTime;
 use clap::Parser;
 use colored::Colorize;
-use quork::traits::truthy::ContainsTruth;
+use quork::{traits::truthy::ContainsTruth, truncate::Truncate};
 use serde::{Deserialize, Serialize};
 
 use sfsu::{
@@ -85,7 +85,7 @@ impl super::Command for Args {
             for pkg in outputs {
                 println!(
                     "{:name_width$} | {:version_width$} | {:source_width$} | {:updated_width$} | {:notes_width$}",
-                    pkg.name, pkg.version, pkg.source, pkg.updated, pkg.notes,
+                    Truncate::new(pkg.name, name_width - 3 /* Account for "..." */).with_suffix("..."), pkg.version, pkg.source, pkg.updated, pkg.notes,
                 );
             }
         }
