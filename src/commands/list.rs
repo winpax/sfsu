@@ -141,7 +141,7 @@ fn parse_package(package: &DirEntry) -> anyhow::Result<OutputPackage> {
         source: install_manifest.get_source(),
         updated: naive_time.to_string(),
         notes: if install_manifest.hold.contains_truth() {
-            String::from("Hold")
+            String::from("Held")
         } else {
             String::new()
         },
