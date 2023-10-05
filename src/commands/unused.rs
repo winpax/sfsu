@@ -5,8 +5,7 @@ use clap::Parser;
 use sfsu::packages::{CreateManifest, InstallManifest};
 
 #[derive(Debug, Clone, Parser)]
-/// Find buckets that do not have any installed packages
-pub struct Args {}
+pub struct Args;
 
 impl super::Command for Args {
     fn run(self) -> Result<(), anyhow::Error> {

@@ -24,7 +24,6 @@ struct OutputPackage {
 }
 
 #[derive(Debug, Clone, Parser)]
-/// List all installed packages
 pub struct Args {
     #[clap(
         help = format!("The pattern to search for (can be a regex). {}", "DEPRECATED: Use sfsu search --installed".yellow())

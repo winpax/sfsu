@@ -3,7 +3,6 @@ use clap::Parser;
 use sfsu::buckets::Bucket;
 
 #[derive(Debug, Clone, Parser)]
-/// Describe a package
 pub struct Args {
     #[clap(help = "The package to describe")]
     package: String,
