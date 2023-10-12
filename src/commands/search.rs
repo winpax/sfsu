@@ -7,12 +7,22 @@ use std::{
 use colored::Colorize;
 use rayon::prelude::*;
 
-use clap::Parser;
+use clap::{Parser, ValueEnum};
 use regex::Regex;
 
 use sfsu::buckets;
 
 use sfsu::packages::{is_installed, CreateManifest, Manifest};
+use strum::Display;
+
+#[derive(Debug, Default, Copy, Clone, ValueEnum, Display, Parser)]
+#[strum(serialize_all = "snake_case")]
+enum SearchMode {
+    Binary,
+    Name,
+    #[default]
+    Both,
+}
 
 #[derive(Debug, Clone, Parser)]
 /// Search for a package
@@ -32,6 +42,9 @@ pub struct Args {
 
     #[clap(short = 'i', long, help = "Only search installed packages")]
     installed: bool,
+
+    #[clap(short = 'S', long, help = "Search mode to use")]
+    mode: SearchMode,
 }
 
 fn parse_output(
