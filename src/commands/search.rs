@@ -86,6 +86,10 @@ fn parse_output(
                 return None;
             }
 
+            // TODO: Implement binary matches
+            // TODO: Refactor to remove pointless binary matching on name-only search mode
+            // TODO: Fix error parsing manifests
+
             let is_installed = is_installed(&package_name, Some(bucket));
             if installed_only {
                 if is_installed {
