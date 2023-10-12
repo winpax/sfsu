@@ -31,7 +31,7 @@ pub struct Args {
     pattern: String,
 
     #[clap(
-        short = 'c',
+        short,
         long,
         help = "Whether or not the pattern should match case-sensitively"
     )]
@@ -40,10 +40,10 @@ pub struct Args {
     #[clap(short, long, help = "The bucket to exclusively search in")]
     bucket: Option<String>,
 
-    #[clap(short = 'i', long, help = "Only search installed packages")]
+    #[clap(short, long, help = "Only search installed packages")]
     installed: bool,
 
-    #[clap(short = 'S', long, help = "Search mode to use")]
+    #[clap(short, long, help = "Search mode to use")]
     mode: SearchMode,
 }
 
