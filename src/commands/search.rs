@@ -6,6 +6,7 @@ use std::{
 };
 
 use colored::Colorize;
+use itertools::Itertools;
 use rayon::prelude::*;
 
 use clap::{Parser, ValueEnum};
@@ -19,10 +20,20 @@ use strum::Display;
 #[derive(Debug, Default, Copy, Clone, ValueEnum, Display, Parser)]
 #[strum(serialize_all = "snake_case")]
 enum SearchMode {
-    Binary,
-    Name,
     #[default]
+    Name,
+    Binary,
     Both,
+}
+
+impl SearchMode {
+    pub fn match_names(&self) -> bool {
+        matches!(self, SearchMode::Name | SearchMode::Both)
+    }
+
+    pub fn match_binaries(&self) -> bool {
+        matches!(self, SearchMode::Binary | SearchMode::Both)
+    }
 }
 
 #[derive(Debug, Clone, Parser)]
@@ -70,6 +81,11 @@ fn parse_output(
         Ok(manifest) => {
             let match_criteria = match_criteria(&package_name, &manifest, mode);
             let match_output = match_criteria(pattern.clone());
+
+            if match_output.is_empty() {
+                return None;
+            }
+
             let is_installed = is_installed(&package_name, Some(bucket));
             if installed_only {
                 if is_installed {
@@ -95,14 +111,14 @@ fn parse_output(
 }
 
 enum MatchOutput {
-    FileName,
+    PackageName,
     BinaryName(String),
 }
 
 impl std::fmt::Display for MatchOutput {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            MatchOutput::FileName => Ok(()),
+            MatchOutput::PackageName => Ok(()),
             MatchOutput::BinaryName(name) => write!(f, "{}", name.bold()),
         }
     }
@@ -125,27 +141,28 @@ fn match_criteria(
     let file_name = file_name.to_string();
 
     move |pattern| {
-        let mut binary_names: Vec<String> = vec![];
-        let mut output = vec![];
-        match mode {
-            SearchMode::Binary => todo!(),
-            SearchMode::Name => todo!(),
-            SearchMode::Both => {
-                if pattern.is_match(&file_name) {
-                    output.push(MatchOutput::FileName);
+        let binary_names = binaries
+            .into_iter()
+            .filter(|binary| pattern.is_match(binary))
+            .filter_map(|b| {
+                if pattern.is_match(&b) {
+                    Some(MatchOutput::BinaryName(b.clone()))
+                } else {
+                    None
                 }
+            })
+            .collect_vec();
 
-                output.extend(binary_names.iter().filter_map(|b| {
-                    if pattern.is_match(b) {
-                        Some(MatchOutput::BinaryName(b.clone()))
-                    } else {
-                        None
-                    }
-                }));
+        let mut output = vec![];
 
-                output
-            }
+        if mode.match_names() && pattern.is_match(&file_name) {
+            output.push(MatchOutput::PackageName);
         }
+        if mode.match_binaries() {
+            output.extend(binary_names);
+        }
+
+        output
     }
 }
 
