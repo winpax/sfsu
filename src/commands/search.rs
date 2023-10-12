@@ -2,6 +2,7 @@ use std::{
     ffi::OsStr,
     fs::{read_dir, DirEntry},
     io::Error,
+    rc::Rc,
 };
 
 use colored::Colorize;
@@ -10,7 +11,7 @@ use rayon::prelude::*;
 use clap::{Parser, ValueEnum};
 use regex::Regex;
 
-use sfsu::buckets;
+use sfsu::{buckets, packages::manifest::StringOrArrayOfStringsOrAnArrayOfArrayOfStrings};
 
 use sfsu::packages::{is_installed, CreateManifest, Manifest};
 use strum::Display;
@@ -51,36 +52,100 @@ fn parse_output(
     file: &DirEntry,
     bucket: impl AsRef<str>,
     installed_only: bool,
-    pattern: &str,
+    pattern: &Regex,
+    mode: SearchMode,
 ) -> Option<String> {
+    let path = file.path();
+
+    let is_valid_extension = matches!(path.extension().and_then(OsStr::to_str), Some("json"));
+
     // This may be a bit of a hack, but it works
-    let path = file.path().with_extension("");
-    let file_name = path.file_name();
-    let package = file_name.unwrap().to_string_lossy().to_string();
+    let file_name = path
+        .with_extension("")
+        .file_name()
+        .map(|osstr| osstr.to_string_lossy().to_string());
+    let package_name = file_name.unwrap();
 
     match Manifest::from_path(file.path()) {
         Ok(manifest) => {
-            let is_installed = is_installed(&package, Some(bucket));
+            let match_criteria = match_criteria(&package_name, &manifest, mode);
+            let match_output = match_criteria(pattern.clone());
+            let is_installed = is_installed(&package_name, Some(bucket));
             if installed_only {
                 if is_installed {
-                    Some(format!("{} ({})", package, manifest.version,))
+                    Some(format!("{} ({})", package_name, manifest.version))
                 } else {
                     None
                 }
             } else {
                 Some(format!(
                     "{} ({}) {}",
-                    if package == pattern {
-                        package.bold().to_string()
+                    if package_name == pattern.to_string() {
+                        package_name.bold().to_string()
                     } else {
-                        package
+                        package_name
                     },
                     manifest.version,
                     if is_installed { "[installed]" } else { "" },
                 ))
             }
         }
-        Err(_) => Some(format!("{package} - Invalid")),
+        Err(_) => Some(format!("{package_name} - Invalid")),
+    }
+}
+
+enum MatchOutput {
+    FileName,
+    BinaryName(String),
+}
+
+impl std::fmt::Display for MatchOutput {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            MatchOutput::FileName => Ok(()),
+            MatchOutput::BinaryName(name) => write!(f, "{}", name.bold()),
+        }
+    }
+}
+
+fn match_criteria(
+    file_name: &str,
+    manifest: &Manifest,
+    mode: SearchMode,
+) -> impl FnOnce(Regex) -> Vec<MatchOutput> {
+    // use std::rc::Rc;
+    // let name = Rc::new(file_name);
+
+    let binaries = manifest
+        .bin
+        .clone()
+        .map(StringOrArrayOfStringsOrAnArrayOfArrayOfStrings::to_vec)
+        .unwrap_or_default();
+
+    let file_name = file_name.to_string();
+
+    move |pattern| {
+        let mut binary_names: Vec<String> = vec![];
+        let mut output = vec![];
+        match mode {
+            SearchMode::Binary => todo!(),
+            SearchMode::Name => todo!(),
+            SearchMode::Both => {
+                if pattern.is_match(&file_name) {
+                    output.push(MatchOutput::FileName);
+                }
+
+                output.extend(binary_names.iter().filter_map(|b| {
+                    if pattern.is_match(b) {
+                        Some(MatchOutput::BinaryName(b.clone()))
+                    } else {
+                        None
+                    }
+                }));
+
+                output
+            }
+        }
     }
 }
 
@@ -151,24 +216,7 @@ impl super::Command for Args {
                 let matches = bucket_contents
                     .par_iter()
                     .filter_map(|file| {
-                        let path_raw = file.path();
-                        let file_name = {
-                            let no_ext = path_raw.with_extension("");
-                            let name = no_ext.file_name().unwrap();
-
-                            name.to_string_lossy().to_string()
-                        };
-
-                        let is_valid_extension = matches!(
-                            file.path().extension().and_then(OsStr::to_str),
-                            Some("json")
-                        );
-
-                        if pattern.is_match(&file_name) && is_valid_extension {
-                            parse_output(file, &bucket.name, self.installed, &raw_pattern)
-                        } else {
-                            None
-                        }
+                        parse_output(file, &bucket.name, self.installed, &pattern, self.mode)
                     })
                     .collect::<Vec<_>>();
 
