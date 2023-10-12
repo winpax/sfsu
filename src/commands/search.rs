@@ -43,7 +43,7 @@ pub struct Args {
     #[clap(short, long, help = "Only search installed packages")]
     installed: bool,
 
-    #[clap(short, long, help = "Search mode to use")]
+    #[clap(short, long, help = "Search mode to use", default_value_t)]
     mode: SearchMode,
 }
 
@@ -128,7 +128,6 @@ impl super::Command for Args {
 
         let mut matches = scoop_buckets
             .par_iter()
-            .filter(|bucket| bucket.path().is_dir())
             .filter_map(|bucket| {
                 // Ignore loose files in the buckets dir
                 if !bucket.path().is_dir() {
