@@ -8,7 +8,7 @@ pub fn hook_enum(input: DeriveInput) -> TokenStream {
     let struct_name = {
         let original_ident = &input.ident;
         let og_ident_span = original_ident.span();
-        Ident::new(&format!("{}Raw", original_ident), og_ident_span)
+        Ident::new(&format!("{}Hooks", original_ident), og_ident_span)
     };
 
     let data = &input.data;
