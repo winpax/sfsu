@@ -19,4 +19,5 @@ pub enum Commands {
     Hook(hook::Args),
     UnusedBuckets(unused::Args),
     Describe(describe::Args),
+    // TODO: Add help command for hooks that prints both sfsu help and scoop help
 }
