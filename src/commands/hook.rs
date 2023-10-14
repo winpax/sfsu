@@ -15,6 +15,8 @@ enum Shell {
 #[derive(Debug, Clone, Parser)]
 /// Generate hooks for the given shell
 pub struct Args {
+    // TODO: Rename CommandsRaw to CommandHooks or something
+    // TODO: Add attribute macro that excludes a variant from the aforementioned enum
     #[clap(short = 'D', long, help = "The commands to disable")]
     disable: Vec<super::CommandsRaw>,
 
