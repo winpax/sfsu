@@ -110,7 +110,7 @@ fn parse_output(
                 ))
             }
         }
-        // TODO: Better formatting for invalid manifests
+        // TODO: Don't output invalid manifests
         Err(_) => Some(format!("{package_name} - Invalid")),
     }
 }
