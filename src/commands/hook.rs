@@ -15,8 +15,10 @@ enum Shell {
 #[derive(Debug, Clone, Parser)]
 /// Generate hooks for the given shell
 pub struct Args {
+    // TODO: Rename CommandsHooks to CommandHooks or something
+    // TODO: Add attribute macro that excludes a variant from the aforementioned enum
     #[clap(short = 'D', long, help = "The commands to disable")]
-    disable: Vec<super::CommandsRaw>,
+    disable: Vec<super::CommandsHooks>,
 
     #[clap(short, long, help = "Print hooks for the given shell", default_value_t = Shell::Powershell)]
     shell: Shell,
@@ -24,7 +26,7 @@ pub struct Args {
 
 impl super::Command for Args {
     fn run(self) -> Result<(), anyhow::Error> {
-        let enabled_hooks: Vec<super::CommandsRaw> = super::CommandsRaw::iter()
+        let enabled_hooks: Vec<super::CommandsHooks> = super::CommandsHooks::iter()
             .filter(|variant| !self.disable.contains(variant))
             .collect();
 

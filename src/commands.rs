@@ -6,13 +6,13 @@ pub mod unused;
 
 use clap::Subcommand;
 
-use sfsu_derive::{RawEnum, Runnable};
+use sfsu_derive::{Hooks, Runnable};
 
 pub trait Command {
     fn run(self) -> Result<(), anyhow::Error>;
 }
 
-#[derive(Debug, RawEnum, Clone, Subcommand, Runnable)]
+#[derive(Debug, Hooks, Clone, Subcommand, Runnable)]
 pub enum Commands {
     Search(search::Args),
     List(list::Args),
