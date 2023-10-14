@@ -2,7 +2,6 @@ use std::{
     ffi::OsStr,
     fs::{read_dir, DirEntry},
     io::Error,
-    rc::Rc,
 };
 
 use colored::Colorize;
@@ -59,62 +58,6 @@ pub struct Args {
     mode: SearchMode,
 }
 
-fn parse_output(
-    file: &DirEntry,
-    bucket: impl AsRef<str>,
-    installed_only: bool,
-    pattern: &Regex,
-    mode: SearchMode,
-) -> Option<String> {
-    let path = file.path();
-
-    let is_valid_extension = matches!(path.extension().and_then(OsStr::to_str), Some("json"));
-
-    // This may be a bit of a hack, but it works
-    let file_name = path
-        .with_extension("")
-        .file_name()
-        .map(|osstr| osstr.to_string_lossy().to_string());
-    let package_name = file_name.unwrap();
-
-    match Manifest::from_path(file.path()) {
-        Ok(manifest) => {
-            let match_criteria = match_criteria(&package_name, &manifest, mode);
-            let match_output = match_criteria(pattern.clone());
-
-            if match_output.is_empty() {
-                return None;
-            }
-
-            // TODO: Implement binary matches
-            // TODO: Refactor to remove pointless binary matching on name-only search mode
-            // TODO: Fix error parsing manifests
-
-            let is_installed = is_installed(&package_name, Some(bucket));
-            if installed_only {
-                if is_installed {
-                    Some(format!("{} ({})", package_name, manifest.version))
-                } else {
-                    None
-                }
-            } else {
-                Some(format!(
-                    "{} ({}) {}",
-                    if package_name == pattern.to_string() {
-                        package_name.bold().to_string()
-                    } else {
-                        package_name
-                    },
-                    manifest.version,
-                    if is_installed { "[installed]" } else { "" },
-                ))
-            }
-        }
-        // TODO: Don't output invalid manifests
-        Err(_) => Some(format!("{package_name} - Invalid")),
-    }
-}
-
 enum MatchOutput {
     PackageName,
     BinaryName(String),
@@ -129,11 +72,13 @@ impl std::fmt::Display for MatchOutput {
     }
 }
 
+struct MatchCriteria(Vec<MatchOutput>);
+
 fn match_criteria(
     file_name: &str,
     manifest: &Manifest,
     mode: SearchMode,
-) -> impl FnOnce(Regex) -> Vec<MatchOutput> {
+) -> impl FnOnce(Regex) -> MatchCriteria {
     // use std::rc::Rc;
     // let name = Rc::new(file_name);
 
@@ -167,7 +112,90 @@ fn match_criteria(
             output.extend(binary_names);
         }
 
-        output
+        MatchCriteria(output)
+    }
+}
+
+impl std::fmt::Display for MatchCriteria {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let bins = self
+            .0
+            .iter()
+            .filter_map(|output| match output {
+                MatchOutput::PackageName => None,
+                MatchOutput::BinaryName(bin) => Some(bin),
+            })
+            .collect_vec();
+
+        if !bins.is_empty() {
+            write!(f, "(")?;
+            for bin in bins {
+                write!(f, "{bin}")?;
+            }
+            write!(f, ")")?;
+        }
+
+        Ok(())
+    }
+}
+
+fn parse_output(
+    file: &DirEntry,
+    bucket: impl AsRef<str>,
+    installed_only: bool,
+    pattern: &Regex,
+    mode: SearchMode,
+) -> Option<String> {
+    let path = file.path();
+
+    let is_valid_extension = matches!(path.extension().and_then(OsStr::to_str), Some("json"));
+
+    // This may be a bit of a hack, but it works
+    let file_name = path
+        .with_extension("")
+        .file_name()
+        .map(|osstr| osstr.to_string_lossy().to_string());
+    let package_name = file_name.unwrap();
+
+    match Manifest::from_path(file.path()) {
+        Ok(manifest) => {
+            let match_criteria = match_criteria(&package_name, &manifest, mode);
+            let match_output = match_criteria(pattern.clone());
+
+            if match_output.0.is_empty() {
+                return None;
+            }
+
+            // TODO: Implement binary matches
+            // TODO: Refactor to remove pointless binary matching on name-only search mode
+            // TODO: Fix error parsing manifests
+
+            let is_installed = is_installed(&package_name, Some(bucket));
+            if installed_only {
+                // TODO: Refactor this into a single format! statement
+                if is_installed {
+                    Some(format!(
+                        "{} ({}) - {match_output}",
+                        package_name, manifest.version
+                    ))
+                } else {
+                    None
+                }
+            } else {
+                Some(format!(
+                    "{} ({}) {} - {match_output}",
+                    if package_name == pattern.to_string() {
+                        package_name.bold().to_string()
+                    } else {
+                        package_name
+                    },
+                    manifest.version,
+                    if is_installed { "[installed]" } else { "" },
+                ))
+            }
+        }
+        // TODO: Don't output invalid manifests
+        Err(_) => Some(format!("{package_name} - Invalid")),
     }
 }
 
