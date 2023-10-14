@@ -51,6 +51,12 @@ impl super::Command for Args {
 
                 println!("      (*) $SCOOP_EXEC $@ ;;");
                 println!("  esac\n}}");
+
+                println!(
+                    "# Add the following to the end of your zshrc \n\
+                    #\tsource <(sfsu.exe hook --shell {})",
+                    self.shell
+                );
             }
             Shell::Nu => {
                 for command in enabled_hooks {
