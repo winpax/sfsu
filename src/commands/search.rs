@@ -128,10 +128,8 @@ impl std::fmt::Display for MatchCriteria {
             .collect_vec();
 
         if !bins.is_empty() {
-            write!(f, "(")?;
-            for bin in bins {
-                write!(f, "{bin}")?;
-            }
+            write!(f, "- (")?;
+            write!(f, "{}", itertools::join(bins, ", "))?;
             write!(f, ")")?;
         }
 
@@ -175,7 +173,7 @@ fn parse_output(
                 // TODO: Refactor this into a single format! statement
                 if is_installed {
                     Some(format!(
-                        "{} ({}) - {match_output}",
+                        "{} ({}) {match_output}",
                         package_name, manifest.version
                     ))
                 } else {
@@ -183,14 +181,14 @@ fn parse_output(
                 }
             } else {
                 Some(format!(
-                    "{} ({}) {} - {match_output}",
+                    "{} ({}) {}{match_output}",
                     if package_name == pattern.to_string() {
                         package_name.bold().to_string()
                     } else {
                         package_name
                     },
                     manifest.version,
-                    if is_installed { "[installed]" } else { "" },
+                    if is_installed { "[installed] " } else { "" },
                 ))
             }
         }
