@@ -728,6 +728,7 @@ dependencies = [
  "serde_json",
  "sfsu-derive",
  "strum",
+ "thiserror",
 ]
 
 [[package]]

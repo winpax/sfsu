@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use crate::{
     get_scoop_path,
-    packages::{CreateManifest, Manifest},
+    packages::{self, CreateManifest, Manifest},
 };
 
 pub struct Bucket {
@@ -74,7 +74,7 @@ impl Bucket {
     ///
     /// # Errors
     /// - Could not load the manifest from the path
-    pub fn get_manifest(&self, name: impl AsRef<str>) -> std::io::Result<Manifest> {
+    pub fn get_manifest(&self, name: impl AsRef<str>) -> packages::Result<Manifest> {
         let buckets_path = self.path();
         let manifests_path = buckets_path.join("bucket");
 
