@@ -28,6 +28,7 @@ impl super::Command for Args {
             .filter(|variant| !self.disable.contains(variant))
             .collect();
 
+        // TODO: Add helper comments for other shells
         match self.shell {
             Shell::Powershell => {
                 print!("function scoop {{ switch ($args[0]) {{ ");
