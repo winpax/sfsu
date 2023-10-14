@@ -1,8 +1,8 @@
 use proc_macro2::{Ident, Span, TokenStream};
 use proc_macro_crate::{crate_name, FoundCrate};
-use proc_macro_error::abort_call_site;
+use proc_macro_error::{abort, abort_call_site};
 use quote::{quote, ToTokens};
-use syn::DeriveInput;
+use syn::{spanned::Spanned, DeriveInput};
 
 pub fn hook_enum(input: DeriveInput) -> TokenStream {
     let struct_name = {
@@ -13,14 +13,24 @@ pub fn hook_enum(input: DeriveInput) -> TokenStream {
 
     let data = &input.data;
 
-    let mut variants = vec![];
-
-    match data {
-        syn::Data::Enum(ref e) => {
-            for v in &e.variants {
-                variants.push(v.ident.to_token_stream());
-            }
-        }
+    let variants = match data {
+        syn::Data::Enum(ref e) => e
+            .variants
+            .iter()
+            .filter_map(|variant| {
+                if variant.attrs.iter().any(|attr| match attr.meta {
+                    syn::Meta::Path(ref p) => p.is_ident("no_hook"),
+                    _ => abort!(
+                        attr.span(),
+                        "Expected path-style (i.e #[no_hook]), found other style attribute macro"
+                    ),
+                }) {
+                    None
+                } else {
+                    Some(variant.ident.to_token_stream())
+                }
+            })
+            .collect::<Vec<_>>(),
         _ => abort_call_site!("Can only be derived for enums"),
     };
 
