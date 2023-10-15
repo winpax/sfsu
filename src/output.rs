@@ -1,4 +1,5 @@
 // TODO: Implement centralized output wrappers
+// TODO: Derive common traits
 
 use std::fmt::Display;
 
@@ -93,11 +94,17 @@ impl<T: Display> Display for Section<T> {
 
 impl<T: Display> Display for Children<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        const WHITESPACE: &str = "     ";
+
+        // Add whitespace if there are children to print
+        if !matches!(self, Children::None) {
+            f.pad(WHITESPACE)?;
+        }
         match self {
             Children::Single(child) => writeln!(f, "{child}"),
             Children::Multiple(children) => {
                 for child in children {
-                    write!(f, "    {child}")?;
+                    write!(f, "{child}")?;
                 }
                 Ok(())
             }
