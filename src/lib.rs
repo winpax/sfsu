@@ -6,6 +6,10 @@ pub mod buckets;
 pub mod config;
 pub mod packages;
 
+// TODO: Make public?
+// Currently this is mostly an internal api
+mod output;
+
 #[must_use]
 /// Gets the user's scoop path, via either the default path or as provided by the SCOOP env variable
 ///
