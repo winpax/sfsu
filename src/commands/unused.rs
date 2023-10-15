@@ -38,7 +38,7 @@ impl super::Command for Args {
                     let dir_name = dir.file_name();
                     let dir_name_str = dir_name.to_string_lossy().to_string();
 
-                    if used_buckets.contains(&dir_name_str) {
+                    if !dir.path().is_dir() || used_buckets.contains(&dir_name_str) {
                         None
                     } else {
                         Some(dir_name_str)
