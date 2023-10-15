@@ -144,7 +144,6 @@ fn parse_output(
     pattern: &Regex,
     mode: SearchMode,
 ) -> Option<String> {
-    // TODO: Better display of output
     let path = file.path();
 
     if !matches!(path.extension().and_then(OsStr::to_str), Some("json")) {
@@ -158,6 +157,7 @@ fn parse_output(
         .map(|osstr| osstr.to_string_lossy().to_string());
     let package_name = file_name.unwrap();
 
+    // TODO: Better display of output
     match Manifest::from_path(file.path()) {
         Ok(manifest) => {
             let match_criteria = match_criteria(&package_name, &manifest, mode);
