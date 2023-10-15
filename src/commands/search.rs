@@ -221,10 +221,7 @@ fn parse_output(
 
             Some(package)
         }
-        // TODO: Don't output invalid manifests
-        Err(_) => {
-            Some(Section::new(Children::None).with_title(format!("{package_name} - Invalid")))
-        }
+        Err(_) => None,
     }
 }
 
