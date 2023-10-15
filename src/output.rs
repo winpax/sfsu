@@ -96,15 +96,11 @@ impl<T: Display> Display for Children<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         const WHITESPACE: &str = "     ";
 
-        // Add whitespace if there are children to print
-        if !matches!(self, Children::None) {
-            f.pad(WHITESPACE)?;
-        }
         match self {
-            Children::Single(child) => writeln!(f, "{child}"),
+            Children::Single(child) => writeln!(f, "{WHITESPACE}{child}"),
             Children::Multiple(children) => {
                 for child in children {
-                    write!(f, "{child}")?;
+                    write!(f, "{WHITESPACE}{child}")?;
                 }
                 Ok(())
             }
