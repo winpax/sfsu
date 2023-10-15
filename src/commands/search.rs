@@ -26,11 +26,11 @@ enum SearchMode {
 }
 
 impl SearchMode {
-    pub fn match_names(&self) -> bool {
+    pub fn match_names(self) -> bool {
         matches!(self, SearchMode::Name | SearchMode::Both)
     }
 
-    pub fn match_binaries(&self) -> bool {
+    pub fn match_binaries(self) -> bool {
         matches!(self, SearchMode::Binary | SearchMode::Both)
     }
 }
