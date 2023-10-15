@@ -22,7 +22,10 @@ impl<T: Display> SectionData for Text<T> {}
 
 impl<T: Display> Display for Sections<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let (last, sections) = self.0.split_last().expect("non-empty array");
+        let Some((last, sections)) = self.0.split_last() else {
+            // Ignore empty vectors
+            return writeln!(f, "No results found");
+        };
         for section in sections {
             writeln!(f, "{section}")?;
         }

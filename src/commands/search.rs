@@ -127,27 +127,6 @@ fn match_criteria(
     }
 }
 
-impl std::fmt::Display for MatchCriteria {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let bins = self
-            .0
-            .iter()
-            .filter_map(|output| match output {
-                MatchOutput::BinaryName(bin) => Some(bin.bold().italic()),
-                MatchOutput::PackageName => None,
-            })
-            .collect_vec();
-
-        if !bins.is_empty() {
-            write!(f, "({}: {{ ", "Binaries".bold())?;
-            write!(f, "{}", itertools::join(bins, ", "))?;
-            write!(f, " }})")?;
-        }
-
-        Ok(())
-    }
-}
-
 fn parse_output(
     file: &DirEntry,
     bucket: impl AsRef<str>,
@@ -208,7 +187,7 @@ fn parse_output(
                     .0
                     .iter()
                     .filter_map(|output| match output {
-                        MatchOutput::BinaryName(bin) => Some(Text::new(bin.bold().italic())),
+                        MatchOutput::BinaryName(bin) => Some(Text::new(bin.bold())),
                         MatchOutput::PackageName => None,
                     })
                     .collect_vec();
