@@ -91,24 +91,23 @@ fn match_criteria(
     let file_name = file_name.to_string();
 
     move |pattern| {
-        let binary_names = binaries
-            .into_iter()
-            .filter(|binary| pattern.is_match(binary))
-            .filter_map(|b| {
-                if pattern.is_match(&b) {
-                    Some(MatchOutput::BinaryName(b.clone()))
-                } else {
-                    None
-                }
-            })
-            .collect_vec();
-
         let mut output = vec![];
 
         if mode.match_names() && pattern.is_match(&file_name) {
             output.push(MatchOutput::PackageName);
         }
         if mode.match_binaries() {
+            let binary_names = binaries
+                .into_iter()
+                .filter(|binary| pattern.is_match(binary))
+                .filter_map(|b| {
+                    if pattern.is_match(&b) {
+                        Some(MatchOutput::BinaryName(b.clone()))
+                    } else {
+                        None
+                    }
+                });
+
             output.extend(binary_names);
         }
 
