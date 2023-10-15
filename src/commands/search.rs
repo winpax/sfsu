@@ -167,33 +167,31 @@ fn parse_output(
                 return None;
             }
 
-            // TODO: Implement binary matches
             // TODO: Refactor to remove pointless binary matching on name-only search mode
             // TODO: Fix error parsing manifests
 
             let is_installed = is_installed(&package_name, Some(bucket));
-            if installed_only {
-                // TODO: Refactor this into a single format! statement
-                if is_installed {
-                    Some(format!(
-                        "{} ({}) {match_output}",
-                        package_name, manifest.version
-                    ))
-                } else {
-                    None
-                }
-            } else {
-                Some(format!(
-                    "{} ({}) {}{match_output}",
-                    if package_name == pattern.to_string() {
-                        package_name.bold().to_string()
-                    } else {
-                        package_name
-                    },
-                    manifest.version,
-                    if is_installed { "[installed] " } else { "" },
-                ))
+            if installed_only && !is_installed {
+                return None;
             }
+
+            let styled_package_name = if package_name == pattern.to_string() {
+                package_name.bold().to_string()
+            } else {
+                package_name
+            };
+
+            let installed_text = if is_installed && !installed_only {
+                "[installed] "
+            } else {
+                ""
+            };
+
+            Some(format!(
+                "{styled_package_name} ({}) {installed_text}\n\
+                {match_output}",
+                manifest.version,
+            ))
         }
         // TODO: Don't output invalid manifests
         Err(_) => Some(format!("{package_name} - Invalid")),
