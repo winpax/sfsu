@@ -1,7 +1,7 @@
 ---
 name: Bug report
 about: Create a report to help us improve
-title: ''
+title: '<COMMAND:> Brief issue description'
 labels: bug
 assignees: jewlexx
 
