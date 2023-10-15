@@ -304,7 +304,8 @@ impl super::Command for Args {
                 } else {
                     Some(Ok::<_, Error>(
                         Section::new(Children::Multiple(matches))
-                            .with_title(format!("{}:", bucket.name.bold())),
+                            // TODO: Remove quotes and bold bucket name
+                            .with_title(format!("'{}' bucket:", bucket.name)),
                     ))
                 }
             })
@@ -312,27 +313,7 @@ impl super::Command for Args {
 
         matches.par_sort_by_key(|x| x.title.clone());
 
-        let mut old_bucket = String::new();
-
         println!("{}", Sections::from_vec(matches));
-
-        // for bucket in matches {
-        //     println!("{bucket}");
-        //     if bucket != old_bucket {
-        //         // Do not print the newline on the first bucket
-        //         if !old_bucket.is_empty() {
-        //             println!();
-        //         }
-
-        //         println!("'{bucket}' bucket:");
-
-        //         old_bucket = bucket;
-        //     }
-
-        //     for package in packages {
-        //         println!("  {package}");
-        //     }
-        // }
 
         Ok(())
     }

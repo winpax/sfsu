@@ -100,6 +100,7 @@ impl<T: Display> Display for Children<T> {
             Children::Single(child) => writeln!(f, "{WHITESPACE}{child}"),
             Children::Multiple(children) => {
                 for child in children {
+                    // TODO: Maybe make the binaries all show on one line
                     write!(f, "{WHITESPACE}{child}")?;
                 }
                 Ok(())
