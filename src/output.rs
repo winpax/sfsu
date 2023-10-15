@@ -2,8 +2,15 @@
 
 use std::fmt::Display;
 
+pub trait SectionData: Display {}
+
 /// Multiple sections
 pub struct Sections<T>(Vec<Section<T>>);
+
+impl<T: Display> SectionData for Sections<T> {}
+impl<T: Display> SectionData for Section<T> {}
+impl<T: Display> SectionData for Children<T> {}
+impl<T: Display> SectionData for Text<T> {}
 
 impl<T: Display> Display for Sections<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -17,31 +24,66 @@ impl<T: Display> Display for Sections<T> {
 
 /// Sectioned data (i.e buckets)
 pub struct Section<T> {
-    title: Option<String>,
-    child: ChildOrChildren<T>,
+    pub title: Option<String>,
+    pub child: Children<T>,
 }
 
-pub enum ChildOrChildren<T> {
-    Child(T),
-    Children(Vec<T>),
+impl<T> Section<T> {
+    #[must_use]
+    pub fn new(child: Children<T>) -> Self {
+        Self { title: None, child }
+    }
+
+    #[must_use]
+    pub fn with_title(mut self, title: String) -> Self {
+        self.title = Some(title);
+
+        self
+    }
+
+    #[must_use]
+    pub fn from_vec(vec: Vec<T>) -> Self {
+        Self {
+            title: None,
+            child: Children::Multiple(vec),
+        }
+    }
+}
+
+pub enum Children<T> {
+    Single(T),
+    Multiple(Vec<T>),
     None,
 }
 
-pub struct Text(String);
+pub struct Text<T>(T);
 
-impl Text {
-    pub fn as_section(&self) -> Section<&str> {
+impl<T: Display> Text<T> {
+    #[must_use]
+    pub fn new(text: T) -> Self {
+        Self(text)
+    }
+
+    #[must_use]
+    pub fn as_section(&self) -> Section<&T> {
         Section {
             title: None,
-            child: ChildOrChildren::Child(&self.0),
+            child: Children::Single(&self.0),
         }
+    }
+}
+
+impl<T: Display> Display for Text<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        // This conversion is maybe unnecessary,
+        write!(f, "{}", self.as_section())
     }
 }
 
 impl<T: Display> Display for Section<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if let Some(ref title) = self.title {
-            writeln!(f, "{title}:")?;
+            writeln!(f, "{title}")?;
         }
 
         write!(f, "{}", self.child)?;
@@ -50,17 +92,17 @@ impl<T: Display> Display for Section<T> {
     }
 }
 
-impl<T: Display> Display for ChildOrChildren<T> {
+impl<T: Display> Display for Children<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ChildOrChildren::Child(child) => writeln!(f, "{child}"),
-            ChildOrChildren::Children(children) => {
+            Children::Single(child) => writeln!(f, "{child}"),
+            Children::Multiple(children) => {
                 for child in children {
                     writeln!(f, "\t{child}")?;
                 }
                 Ok(())
             }
-            ChildOrChildren::None => Ok(()),
+            Children::None => Ok(()),
         }
     }
 }

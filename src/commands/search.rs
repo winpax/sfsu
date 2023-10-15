@@ -4,14 +4,18 @@ use std::{
     io::Error,
 };
 
-use colored::Colorize;
+use colored::{ColoredString, Colorize};
 use itertools::Itertools;
 use rayon::prelude::*;
 
 use clap::{Parser, ValueEnum};
 use regex::Regex;
 
-use sfsu::{buckets, packages::manifest::StringOrArrayOfStringsOrAnArrayOfArrayOfStrings};
+use sfsu::{
+    buckets,
+    output::{Children, Section, Text},
+    packages::manifest::StringOrArrayOfStringsOrAnArrayOfArrayOfStrings,
+};
 
 use sfsu::packages::{is_installed, CreateManifest, Manifest};
 use strum::Display;
@@ -73,6 +77,14 @@ impl std::fmt::Display for MatchOutput {
 }
 
 struct MatchCriteria(Vec<MatchOutput>);
+
+impl MatchCriteria {
+    pub fn has_bin(&self) -> bool {
+        self.0
+            .iter()
+            .any(|m| matches!(m, MatchOutput::BinaryName(_)))
+    }
+}
 
 fn match_criteria(
     file_name: &str,
@@ -142,7 +154,7 @@ fn parse_output(
     installed_only: bool,
     pattern: &Regex,
     mode: SearchMode,
-) -> Option<String> {
+) -> Option<sfsu::output::Section<Text<ColoredString>>> {
     let path = file.path();
 
     if !matches!(path.extension().and_then(OsStr::to_str), Some("json")) {
@@ -186,14 +198,33 @@ fn parse_output(
                 ""
             };
 
-            Some(format!(
-                "{styled_package_name} ({}) {installed_text}\n\
-                {match_output}",
-                manifest.version,
-            ))
+            let title = format!(
+                "{styled_package_name} ({}) {installed_text}",
+                manifest.version
+            );
+
+            let package = if match_output.has_bin() {
+                let bins = match_output
+                    .0
+                    .iter()
+                    .filter_map(|output| match output {
+                        MatchOutput::BinaryName(bin) => Some(Text::new(bin.bold().italic())),
+                        MatchOutput::PackageName => None,
+                    })
+                    .collect_vec();
+
+                Section::new(Children::Multiple(bins))
+            } else {
+                Section::new(Children::None)
+            }
+            .with_title(title);
+
+            Some(package)
         }
         // TODO: Don't output invalid manifests
-        Err(_) => Some(format!("{package_name} - Invalid")),
+        Err(_) => {
+            Some(Section::new(Children::None).with_title(format!("{package_name} - Invalid")))
+        }
     }
 }
 
@@ -271,31 +302,35 @@ impl super::Command for Args {
                 if matches.is_empty() {
                     None
                 } else {
-                    Some(Ok::<_, Error>((bucket.name.clone(), matches)))
+                    Some(Ok::<_, Error>(
+                        Section::new(Children::Multiple(matches)).with_title(bucket.name.clone()),
+                    ))
                 }
             })
             .collect::<Result<Vec<_>, _>>()?;
 
-        matches.par_sort_by_key(|x| x.0.clone());
+        matches.par_sort_by_key(|x| x.title.clone());
 
         let mut old_bucket = String::new();
 
-        for (bucket, matches) in matches {
-            if bucket != old_bucket {
-                // Do not print the newline on the first bucket
-                if !old_bucket.is_empty() {
-                    println!();
-                }
+        println!("{}", Section::from_vec(matches));
 
-                println!("'{bucket}' bucket:");
+        // for packages in matches {
+        //     if bucket != old_bucket {
+        //         // Do not print the newline on the first bucket
+        //         if !old_bucket.is_empty() {
+        //             println!();
+        //         }
 
-                old_bucket = bucket;
-            }
+        //         println!("'{bucket}' bucket:");
 
-            for package in matches {
-                println!("  {package}");
-            }
-        }
+        //         old_bucket = bucket;
+        //     }
+
+        //     for package in packages {
+        //         println!("  {package}");
+        //     }
+        // }
 
         Ok(())
     }
