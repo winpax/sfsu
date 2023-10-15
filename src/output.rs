@@ -41,7 +41,7 @@ impl Text {
 impl<T: Display> Display for Section<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if let Some(ref title) = self.title {
-            write!(f, "{title}: \n\t")?;
+            writeln!(f, "{title}:")?;
         }
 
         write!(f, "{}", self.child)?;
@@ -56,7 +56,7 @@ impl<T: Display> Display for ChildOrChildren<T> {
             ChildOrChildren::Child(child) => writeln!(f, "{child}"),
             ChildOrChildren::Children(children) => {
                 for child in children {
-                    writeln!(f, "{child}")?;
+                    writeln!(f, "\t{child}")?;
                 }
                 Ok(())
             }
