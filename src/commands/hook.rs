@@ -30,6 +30,7 @@ impl super::Command for Args {
             .filter(|variant| !self.disable.contains(variant))
             .collect();
 
+        // TODO: Add helper comments for other shells
         match self.shell {
             Shell::Powershell => {
                 print!("function scoop {{ switch ($args[0]) {{ ");
@@ -53,6 +54,12 @@ impl super::Command for Args {
 
                 println!("      (*) $SCOOP_EXEC $@ ;;");
                 println!("  esac\n}}");
+
+                println!(
+                    "# Add the following to the end of your zshrc \n\
+                    #\tsource <(sfsu.exe hook --shell {})",
+                    self.shell
+                );
             }
             Shell::Nu => {
                 for command in enabled_hooks {

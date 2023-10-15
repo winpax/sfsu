@@ -208,11 +208,39 @@ pub struct Psmodule {
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Suggest {}
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum StringOrArrayOfStringsOrAnArrayOfArrayOfStrings {
     String(String),
+    StringArray(Vec<String>),
     UnionArray(Vec<StringOrArrayOfStringsElement>),
+}
+
+impl StringOrArrayOfStrings {
+    #[must_use]
+    pub fn to_vec(self) -> Vec<String> {
+        match self {
+            StringOrArrayOfStrings::String(s) => vec![s],
+            StringOrArrayOfStrings::StringArray(string_array) => string_array,
+        }
+    }
+}
+
+impl StringOrArrayOfStringsOrAnArrayOfArrayOfStrings {
+    #[must_use]
+    pub fn to_vec(self) -> Vec<String> {
+        match self {
+            StringOrArrayOfStringsOrAnArrayOfArrayOfStrings::String(s) => vec![s],
+            StringOrArrayOfStringsOrAnArrayOfArrayOfStrings::StringArray(s) => s,
+            StringOrArrayOfStringsOrAnArrayOfArrayOfStrings::UnionArray(s) => s
+                .into_iter()
+                .flat_map(|s| match s {
+                    StringOrArrayOfStringsElement::String(s) => vec![s],
+                    StringOrArrayOfStringsElement::StringArray(s) => s,
+                })
+                .collect(),
+        }
+    }
 }
 
 /// A comment.
@@ -222,7 +250,7 @@ pub enum StringOrArrayOfStringsOrAnArrayOfArrayOfStrings {
 /// Custom `PowerShell` script to retrieve application version using more complex approach.
 ///
 /// Deprecated
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum StringOrArrayOfStringsElement {
     String(String),
@@ -243,7 +271,7 @@ pub enum Checkver {
 /// Custom `PowerShell` script to retrieve application version using more complex approach.
 ///
 /// Deprecated
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum StringOrArrayOfStrings {
     String(String),
