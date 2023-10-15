@@ -13,7 +13,7 @@ use regex::Regex;
 
 use sfsu::{
     buckets,
-    output::{Children, Section, Text},
+    output::{Children, Section, Sections, Text},
     packages::manifest::StringOrArrayOfStringsOrAnArrayOfArrayOfStrings,
 };
 
@@ -303,7 +303,8 @@ impl super::Command for Args {
                     None
                 } else {
                     Some(Ok::<_, Error>(
-                        Section::new(Children::Multiple(matches)).with_title(bucket.name.clone()),
+                        Section::new(Children::Multiple(matches))
+                            .with_title(format!("{}:", bucket.name.bold())),
                     ))
                 }
             })
@@ -313,9 +314,10 @@ impl super::Command for Args {
 
         let mut old_bucket = String::new();
 
-        println!("{}", Section::from_vec(matches));
+        println!("{}", Sections::from_vec(matches));
 
-        // for packages in matches {
+        // for bucket in matches {
+        //     println!("{bucket}");
         //     if bucket != old_bucket {
         //         // Do not print the newline on the first bucket
         //         if !old_bucket.is_empty() {

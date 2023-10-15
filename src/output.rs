@@ -7,6 +7,13 @@ pub trait SectionData: Display {}
 /// Multiple sections
 pub struct Sections<T>(Vec<Section<T>>);
 
+impl<T> Sections<T> {
+    #[must_use]
+    pub fn from_vec(vec: Vec<Section<T>>) -> Self {
+        Self(vec)
+    }
+}
+
 impl<T: Display> SectionData for Sections<T> {}
 impl<T: Display> SectionData for Section<T> {}
 impl<T: Display> SectionData for Children<T> {}
@@ -15,7 +22,7 @@ impl<T: Display> SectionData for Text<T> {}
 impl<T: Display> Display for Sections<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for section in &self.0 {
-            write!(f, "{section}")?;
+            writeln!(f, "{section}")?;
         }
 
         Ok(())
@@ -39,14 +46,6 @@ impl<T> Section<T> {
         self.title = Some(title);
 
         self
-    }
-
-    #[must_use]
-    pub fn from_vec(vec: Vec<T>) -> Self {
-        Self {
-            title: None,
-            child: Children::Multiple(vec),
-        }
     }
 }
 
@@ -98,7 +97,7 @@ impl<T: Display> Display for Children<T> {
             Children::Single(child) => writeln!(f, "{child}"),
             Children::Multiple(children) => {
                 for child in children {
-                    writeln!(f, "\t{child}")?;
+                    write!(f, "    {child}")?;
                 }
                 Ok(())
             }
