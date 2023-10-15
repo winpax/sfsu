@@ -310,7 +310,7 @@ impl super::Command for Args {
 
         matches.par_sort_by_key(|x| x.title.clone());
 
-        println!("{}", Sections::from_vec(matches));
+        print!("{}", Sections::from_vec(matches));
 
         Ok(())
     }

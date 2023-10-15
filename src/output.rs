@@ -22,11 +22,12 @@ impl<T: Display> SectionData for Text<T> {}
 
 impl<T: Display> Display for Sections<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        for section in &self.0 {
+        let (last, sections) = self.0.split_last().expect("non-empty array");
+        for section in sections {
             writeln!(f, "{section}")?;
         }
 
-        Ok(())
+        write!(f, "{last}")
     }
 }
 
