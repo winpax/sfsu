@@ -2,6 +2,19 @@
 
 use std::fmt::Display;
 
+/// Multiple sections
+pub struct Sections<T>(Vec<Section<T>>);
+
+impl<T: Display> Display for Sections<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for section in &self.0 {
+            write!(f, "{section}")?;
+        }
+
+        Ok(())
+    }
+}
+
 /// Sectioned data (i.e buckets)
 pub struct Section<T> {
     title: Option<String>,
@@ -28,7 +41,7 @@ impl Text {
 impl<T: Display> Display for Section<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if let Some(ref title) = self.title {
-            write!(f, "{title}\n\t")?;
+            write!(f, "{title}: \n\t")?;
         }
 
         write!(f, "{}", self.child)?;
