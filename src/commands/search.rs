@@ -122,15 +122,15 @@ impl std::fmt::Display for MatchCriteria {
             .0
             .iter()
             .filter_map(|output| match output {
+                MatchOutput::BinaryName(bin) => Some(bin.bold().italic()),
                 MatchOutput::PackageName => None,
-                MatchOutput::BinaryName(bin) => Some(bin),
             })
             .collect_vec();
 
         if !bins.is_empty() {
-            write!(f, "- (")?;
+            write!(f, "({}: {{ ", "Binaries".bold())?;
             write!(f, "{}", itertools::join(bins, ", "))?;
-            write!(f, ")")?;
+            write!(f, " }})")?;
         }
 
         Ok(())
@@ -144,9 +144,12 @@ fn parse_output(
     pattern: &Regex,
     mode: SearchMode,
 ) -> Option<String> {
+    // TODO: Better display of output
     let path = file.path();
 
-    let is_valid_extension = matches!(path.extension().and_then(OsStr::to_str), Some("json"));
+    if !matches!(path.extension().and_then(OsStr::to_str), Some("json")) {
+        return None;
+    }
 
     // This may be a bit of a hack, but it works
     let file_name = path
