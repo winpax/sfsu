@@ -66,6 +66,18 @@ pub enum Children<T> {
     None,
 }
 
+impl<A> FromIterator<A> for Children<A> {
+    fn from_iter<T: IntoIterator<Item = A>>(iter: T) -> Self {
+        let v: Vec<_> = iter.into_iter().collect();
+
+        match v {
+            v if v.is_empty() => Children::None,
+            mut v if v.len() == 1 => Children::Single(v.remove(0)),
+            v => Children::Multiple(v),
+        }
+    }
+}
+
 pub struct Text<T>(T);
 
 impl<T> From<T> for Text<T> {

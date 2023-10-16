@@ -2,7 +2,10 @@ use std::fs::read_dir;
 
 use clap::Parser;
 
-use sfsu::packages::{CreateManifest, InstallManifest};
+use sfsu::{
+    output::sectioned::{Children, Section},
+    packages::{CreateManifest, InstallManifest},
+};
 
 #[derive(Debug, Clone, Parser)]
 /// Find buckets that do not have any installed packages
@@ -41,18 +44,18 @@ impl super::Command for Args {
                     if used_buckets.contains(&dir_name_str) {
                         None
                     } else {
-                        Some(dir_name_str)
+                        Some(dir_name_str + "\n")
                     }
                 } else {
                     None
                 }
             })
-            .collect::<Vec<_>>();
+            .collect::<Children<_>>();
 
-        println!("The following buckets are unused: ");
-        for bucket in unused_buckets {
-            println!("  {bucket}");
-        }
+        let unused = Section::new(unused_buckets)
+            .with_title("The following buckets are unused:".to_string());
+
+        println!("{unused}");
 
         Ok(())
     }
