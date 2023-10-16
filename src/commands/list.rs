@@ -82,7 +82,7 @@ impl super::Command for Args {
             let outputs =
                 Structured::new(&["Name", "Version", "Source", "Updated", "Notes"], &values);
 
-            println!("{outputs}");
+            print!("{outputs}");
 
             // #[allow(clippy::similar_names)]
             // let [name_width, version_width, source_width, updated_width, notes_width] =
