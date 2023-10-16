@@ -134,8 +134,6 @@ impl<'a> Display for Structured<'a> {
                     .collect()
             });
 
-        dbg!(&access_lengths);
-
         for (i, header) in self.headers.iter().enumerate() {
             let header_size = access_lengths[i];
 
