@@ -4,7 +4,7 @@ use std::{
     io::Error,
 };
 
-use colored::{ColoredString, Colorize};
+use colored::Colorize;
 use itertools::Itertools;
 use rayon::prelude::*;
 
@@ -133,7 +133,7 @@ fn parse_output(
     installed_only: bool,
     pattern: &Regex,
     mode: SearchMode,
-) -> Option<Section<Text<ColoredString>>> {
+) -> Option<Section<Text<String>>> {
     let path = file.path();
 
     if !matches!(path.extension().and_then(OsStr::to_str), Some("json")) {
@@ -187,7 +187,11 @@ fn parse_output(
                     .0
                     .iter()
                     .filter_map(|output| match output {
-                        MatchOutput::BinaryName(bin) => Some(Text::new(bin.bold())),
+                        MatchOutput::BinaryName(bin) => Some(Text::new(format!(
+                            "{}{}",
+                            sfsu::output::sectioned::WHITESPACE,
+                            bin.bold()
+                        ))),
                         MatchOutput::PackageName => None,
                     })
                     .collect_vec();

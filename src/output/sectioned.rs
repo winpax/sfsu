@@ -3,6 +3,8 @@
 
 use std::fmt::Display;
 
+pub const WHITESPACE: &str = "  ";
+
 pub trait SectionData: Display {}
 
 /// Multiple sections
@@ -121,11 +123,9 @@ impl<T: Display> Display for Section<T> {
 
 impl<T: Display> Display for Children<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        const WHITESPACE: &str = "  ";
-
         match self {
-            // TODO: Remove newline here and put it in each usage
-            Children::Single(child) => writeln!(f, "{WHITESPACE}{child}"),
+            // TODO: Indent children based on how nested they are
+            Children::Single(child) => write!(f, "{WHITESPACE}{child}"),
             Children::Multiple(children) => {
                 for child in children {
                     write!(f, "{WHITESPACE}{child}")?;
