@@ -48,25 +48,44 @@ impl<'a> Display for Structured<'a> {
                 .collect::<Vec<_>>()
         };
 
-        let access_lengths = headers
-            .iter()
-            .fold(vec![0; headers.len()], |base, current| {
-                // Checks for the largest size out of the previous one, the current one and the section title
-                // Note that all widths use "Updated" as it is the longest section title
-                // TODO: Make this dynamic
-                let default_width = "Updated".len();
+        let contestants = {
+            // TODO: Make this dynamic largest header
+            let default_width = "Updated".len();
 
-                base.iter()
+            let mut v = vec![default_width];
+            v.extend(headers.iter().map(|h| h.len()));
+
+            v
+        };
+
+        // TODO: Imeplement max length with truncation
+        let access_lengths: Vec<usize> =
+            data.iter().fold(vec![0; headers.len()], |base, current| {
+                // TODO: Simultaneous iterators
+                current
+                    .values()
                     .map(|element| {
-                        *[default_width, current.len(), *element]
-                            .iter()
-                            .max()
-                            .unwrap_or(&default_width)
+                        let mut contestants = contestants.clone();
+                        contestants.push(element.to_string().len());
+
+                        *contestants.iter().max().unwrap()
                     })
                     .collect()
             });
 
-        let rows = data.iter().map(|row| {});
+        dbg!(&access_lengths);
+
+        for (i, header) in headers.iter().enumerate() {
+            let header_size = access_lengths[i];
+            write!(f, "{header:header_size$}")?;
+        }
+
+        for row in &data {
+            for (i, element) in row.values().enumerate() {
+                let value_size = access_lengths[i];
+                write!(f, "{element:value_size$}")?;
+            }
+        }
 
         todo!()
     }
