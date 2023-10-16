@@ -8,6 +8,12 @@ pub trait SectionData: Display {}
 /// Multiple sections
 pub struct Sections<T>(Vec<Section<T>>);
 
+impl<A> FromIterator<Section<A>> for Sections<A> {
+    fn from_iter<T: IntoIterator<Item = Section<A>>>(iter: T) -> Self {
+        Self(iter.into_iter().collect())
+    }
+}
+
 impl<T> Sections<T> {
     #[must_use]
     pub fn from_vec(vec: Vec<Section<T>>) -> Self {

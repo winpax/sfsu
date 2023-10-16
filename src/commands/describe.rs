@@ -1,6 +1,9 @@
 use clap::Parser;
 
-use sfsu::buckets::Bucket;
+use sfsu::{
+    buckets::Bucket,
+    output::sectioned::{Children, Section, Sections, Text},
+};
 
 #[derive(Debug, Clone, Parser)]
 /// Describe a package
@@ -34,22 +37,51 @@ impl super::Command for Args {
                 .collect()
         };
 
-        for (package, bucket, manifest) in manifests {
-            println!("{package} in \"{bucket}\":");
+        let sectioned = manifests
+            .iter()
+            .map(|(package, bucket, manifest)| {
+                use std::fmt::Write;
+                const WHITESPACE: &str = "  ";
+                let title = format!("{package} in \"{bucket}\":");
 
-            if let Some(description) = manifest.description {
-                println!("  {description}");
-            }
+                let mut description = String::new();
 
-            println!("  Version: {}", manifest.version);
+                if let Some(ref pkg_description) = manifest.description {
+                    writeln!(description, "{WHITESPACE}{pkg_description}");
+                }
 
-            if let Some(homepage) = manifest.homepage {
-                println!("  Homepage: {homepage}");
-            }
-            if let Some(license) = manifest.license {
-                println!("  License: {license}");
-            }
-        }
+                writeln!(description, "{WHITESPACE}Version: {}", manifest.version);
+
+                if let Some(ref homepage) = manifest.homepage {
+                    writeln!(description, "{WHITESPACE}Homepage: {homepage}");
+                }
+                if let Some(ref license) = manifest.license {
+                    writeln!(description, "{WHITESPACE}License: {license}");
+                }
+
+                // TODO: Maybe multiple children?
+                Section::new(Children::Single(Text::new(description))).with_title(title)
+            })
+            .collect::<Sections<_>>();
+
+        print!("{sectioned}");
+
+        // for (package, bucket, manifest) in manifests {
+        //     println!("{package} in \"{bucket}\":");
+
+        //     if let Some(description) = manifest.description {
+        //         println!("  {description}");
+        //     }
+
+        //     println!("  Version: {}", manifest.version);
+
+        //     if let Some(homepage) = manifest.homepage {
+        //         println!("  Homepage: {homepage}");
+        //     }
+        //     if let Some(license) = manifest.license {
+        //         println!("  License: {license}");
+        //     }
+        // }
 
         Ok(())
     }
