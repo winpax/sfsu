@@ -80,7 +80,8 @@ impl super::Command for Args {
                 .collect::<Result<Vec<_>, _>>()?;
 
             let outputs =
-                Structured::new(&["Name", "Version", "Source", "Updated", "Notes"], &values);
+                Structured::new(&["Name", "Version", "Source", "Updated", "Notes"], &values)
+                    .with_max_length(10);
 
             print!("{outputs}");
 

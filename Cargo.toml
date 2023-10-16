@@ -23,7 +23,7 @@ derive_more = "0.99"
 directories = "5.0"
 dunce = "1.0"
 itertools = "0.11"
-quork = "0.5.0"
+quork = "0.6"
 rayon = "1.8"
 regex = "1.9"
 serde = { version = "1.0", features = ["derive"] }
