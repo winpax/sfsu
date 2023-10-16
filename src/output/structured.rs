@@ -30,7 +30,7 @@ impl<'a> Display for Structured<'a> {
 
         // Headers are the display headers, with the first letter capitalised
         // Access is the name used to access the value on the object
-        let (headers, access): (Vec<String>, Vec<String>) = {
+        let headers = {
             // TODO: Do not panic here
             let first = data.first().expect("non-empty data");
             first
@@ -41,31 +41,30 @@ impl<'a> Display for Structured<'a> {
                     match chars.next() {
                         // Should be unreachable
                         // TODO: Handle this case better
-                        None => (String::new(), v.clone()),
-                        Some(f) => (
-                            f.to_uppercase().collect::<String>() + chars.as_str(),
-                            v.clone(),
-                        ),
+                        None => String::new(),
+                        Some(f) => f.to_uppercase().collect::<String>() + chars.as_str(),
                     }
                 })
-                .unzip()
+                .collect::<Vec<_>>()
         };
 
-        let access_lengths = access.iter().fold(vec![0; access.len()], |base, current| {
-            // Checks for the largest size out of the previous one, the current one and the section title
-            // Note that all widths use "Updated" as it is the longest section title
-            // TODO: Make this dynamic
-            let default_width = "Updated".len();
+        let access_lengths = headers
+            .iter()
+            .fold(vec![0; headers.len()], |base, current| {
+                // Checks for the largest size out of the previous one, the current one and the section title
+                // Note that all widths use "Updated" as it is the longest section title
+                // TODO: Make this dynamic
+                let default_width = "Updated".len();
 
-            base.iter()
-                .map(|element| {
-                    *[default_width, current.len(), *element]
-                        .iter()
-                        .max()
-                        .unwrap_or(&default_width)
-                })
-                .collect()
-        });
+                base.iter()
+                    .map(|element| {
+                        *[default_width, current.len(), *element]
+                            .iter()
+                            .max()
+                            .unwrap_or(&default_width)
+                    })
+                    .collect()
+            });
 
         let rows = data.iter().map(|row| {});
 
