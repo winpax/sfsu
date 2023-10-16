@@ -5,7 +5,7 @@ use rayon::prelude::*;
 use chrono::NaiveDateTime;
 use clap::Parser;
 use colored::Colorize;
-use quork::{traits::truthy::ContainsTruth, truncate::Truncate};
+use quork::traits::truthy::ContainsTruth;
 use serde::{Deserialize, Serialize};
 
 use sfsu::{
@@ -103,19 +103,6 @@ impl super::Command for Args {
 
         Ok(())
     }
-}
-
-fn check_lengths(og: [usize; 5], pkg: &OutputPackage) -> [usize; 5] {
-    // Checks for the largest size out of the previous one, the current one and the section title
-    // Note that all widths use "Updated" as it is the longest section title
-    let default_width = "Updated".len();
-
-    og.map(|element| {
-        *[default_width, pkg.updated.len(), element]
-            .iter()
-            .max()
-            .unwrap_or(&default_width)
-    })
 }
 
 fn parse_package(package: &DirEntry) -> anyhow::Result<OutputPackage> {
