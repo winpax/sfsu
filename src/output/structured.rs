@@ -28,6 +28,8 @@ impl<'a> Display for Structured<'a> {
             data
         };
 
+        // Headers are the display headers, with the first letter capitalised
+        // Access is the name used to access the value on the object
         let (headers, access): (Vec<String>, Vec<String>) = {
             // TODO: Do not panic here
             let first = data.first().expect("non-empty data");
