@@ -52,10 +52,13 @@ impl super::Command for Args {
             })
             .collect::<Children<_>>();
 
-        let unused = Section::new(unused_buckets)
-            .with_title("The following buckets are unused:".to_string());
-
-        println!("{unused}");
+        if let Children::None = unused_buckets {
+            println!("No unused buckets");
+        } else {
+            let unused = Section::new(unused_buckets)
+                .with_title("The following buckets are unused:".to_string());
+            println!("{unused}");
+        };
 
         Ok(())
     }
