@@ -188,7 +188,7 @@ fn parse_output(
                     .iter()
                     .filter_map(|output| match output {
                         MatchOutput::BinaryName(bin) => Some(Text::new(format!(
-                            "{}{}",
+                            "{}{}\n",
                             sfsu::output::sectioned::WHITESPACE,
                             bin.bold()
                         ))),
