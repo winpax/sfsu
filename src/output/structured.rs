@@ -75,21 +75,26 @@ impl<'a> Display for Structured<'a> {
 
         // TODO: Imeplement max length with truncation
         let access_lengths: Vec<usize> =
-            data.iter()
-                .fold(vec![0; self.headers.len()], |base, current| {
-                    // TODO: Simultaneous iterators
-                    current
-                        .values()
-                        .enumerate()
-                        .map(|(i, element)| {
-                            let mut contestants = contestants.clone();
-                            contestants.push(base[i]);
-                            contestants.push(element.to_string().len());
+            data.iter().fold(vec![0; self.headers.len()], |base, row| {
+                // TODO: Simultaneous iterators
 
-                            *contestants.iter().max().unwrap()
-                        })
-                        .collect()
-                });
+                self.headers
+                    .iter()
+                    .enumerate()
+                    .map(|(i, header)| {
+                        let element = row
+                            .get(*header)
+                            .and_then(|v| v.as_str())
+                            .unwrap_or_default();
+
+                        let mut contestants = contestants.clone();
+                        contestants.push(base[i]);
+                        contestants.push(element.to_string().len());
+
+                        *contestants.iter().max().unwrap()
+                    })
+                    .collect()
+            });
 
         dbg!(&access_lengths);
 
