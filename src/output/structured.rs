@@ -43,26 +43,6 @@ impl<'a> Display for Structured<'a> {
             data
         };
 
-        // Headers are the display headers, with the first letter capitalised
-        // Access is the name used to access the value on the object
-        // let headers = {
-        //     // TODO: Do not panic here
-        //     let first = data.first().expect("non-empty data");
-        //     first
-        //         .keys()
-        //         .map(|v| {
-        //             let mut chars = v.chars();
-
-        //             match chars.next() {
-        //                 // Should be unreachable
-        //                 // TODO: Handle this case better
-        //                 None => String::new(),
-        //                 Some(f) => f.to_uppercase().collect::<String>() + chars.as_str(),
-        //             }
-        //         })
-        //         .collect::<Vec<_>>()
-        // };
-
         let contestants = {
             // TODO: Make this dynamic largest header
             let default_width = "Updated".len();
