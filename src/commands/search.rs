@@ -13,7 +13,7 @@ use regex::Regex;
 
 use sfsu::{
     buckets,
-    output::{Children, Section, Sections, Text},
+    output::sectioned::{Children, Section, Sections, Text},
     packages::manifest::StringOrArrayOfStringsOrAnArrayOfArrayOfStrings,
 };
 
@@ -133,7 +133,7 @@ fn parse_output(
     installed_only: bool,
     pattern: &Regex,
     mode: SearchMode,
-) -> Option<sfsu::output::Section<Text<ColoredString>>> {
+) -> Option<Section<Text<ColoredString>>> {
     let path = file.path();
 
     if !matches!(path.extension().and_then(OsStr::to_str), Some("json")) {
