@@ -90,41 +90,40 @@ fn match_criteria(
     file_name: &str,
     manifest: &Manifest,
     mode: SearchMode,
-) -> impl FnOnce(Regex) -> MatchCriteria {
+    pattern: &Regex,
+) -> MatchCriteria {
     // use std::rc::Rc;
     // let name = Rc::new(file_name);
 
-    let binaries = manifest
-        .bin
-        .clone()
-        .map(StringOrArrayOfStringsOrAnArrayOfArrayOfStrings::to_vec)
-        .unwrap_or_default();
-
     let file_name = file_name.to_string();
 
-    move |pattern| {
-        let mut output = vec![];
+    let mut output = vec![];
 
-        if mode.match_names() && pattern.is_match(&file_name) {
-            output.push(MatchOutput::PackageName);
-        }
-        if mode.match_binaries() {
-            let binary_names = binaries
-                .into_iter()
-                .filter(|binary| pattern.is_match(binary))
-                .filter_map(|b| {
-                    if pattern.is_match(&b) {
-                        Some(MatchOutput::BinaryName(b.clone()))
-                    } else {
-                        None
-                    }
-                });
-
-            output.extend(binary_names);
-        }
-
-        MatchCriteria(output)
+    if mode.match_names() && pattern.is_match(&file_name) {
+        output.push(MatchOutput::PackageName);
     }
+    if mode.match_binaries() {
+        let binaries = manifest
+            .bin
+            .clone()
+            .map(StringOrArrayOfStringsOrAnArrayOfArrayOfStrings::to_vec)
+            .unwrap_or_default();
+
+        let binary_names = binaries
+            .into_iter()
+            .filter(|binary| pattern.is_match(binary))
+            .filter_map(|b| {
+                if pattern.is_match(&b) {
+                    Some(MatchOutput::BinaryName(b.clone()))
+                } else {
+                    None
+                }
+            });
+
+        output.extend(binary_names);
+    }
+
+    MatchCriteria(output)
 }
 
 fn parse_output(
@@ -150,8 +149,7 @@ fn parse_output(
     // TODO: Better display of output
     match Manifest::from_path(file.path()) {
         Ok(manifest) => {
-            let match_criteria = match_criteria(&package_name, &manifest, mode);
-            let match_output = match_criteria(pattern.clone());
+            let match_output = match_criteria(&package_name, &manifest, mode, pattern);
 
             if match_output.0.is_empty() {
                 return None;
