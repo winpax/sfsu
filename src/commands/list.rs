@@ -84,22 +84,6 @@ impl super::Command for Args {
                     .with_max_length(10);
 
             print!("{outputs}");
-
-            // #[allow(clippy::similar_names)]
-            // let [name_width, version_width, source_width, updated_width, notes_width] =
-            //     outputs.iter().fold([0, 0, 0, 0, 0], check_lengths);
-
-            // println!(
-            //     "{:name_width$} | {:version_width$} | {:source_width$} | {:updated_width$} | {:notes_width$}",
-            //     "Name", "Version", "Source", "Updated", "Notes",
-            // );
-
-            // for pkg in outputs {
-            //     println!(
-            //         "{:name_width$} | {:version_width$} | {:source_width$} | {:updated_width$} | {:notes_width$}",
-            //         Truncate::new(pkg.name, name_width - 3 /* Account for "..." */).with_suffix("..."), pkg.version, pkg.source, pkg.updated, pkg.notes,
-            //     );
-            // }
         }
 
         Ok(())
