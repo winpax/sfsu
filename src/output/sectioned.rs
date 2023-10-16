@@ -91,8 +91,7 @@ impl<T: Display> Text<T> {
 
 impl<T: Display> Display for Text<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        // This conversion is maybe unnecessary,
-        write!(f, "{}", self.as_section())
+        write!(f, "{}", self.0)
     }
 }
 
@@ -113,10 +112,10 @@ impl<T: Display> Display for Children<T> {
         const WHITESPACE: &str = "  ";
 
         match self {
+            // TODO: Remove newline here and put it in each usage
             Children::Single(child) => writeln!(f, "{WHITESPACE}{child}"),
             Children::Multiple(children) => {
                 for child in children {
-                    // TODO: Maybe make the binaries all show on one line
                     write!(f, "{WHITESPACE}{child}")?;
                 }
                 Ok(())

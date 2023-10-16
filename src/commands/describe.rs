@@ -45,16 +45,16 @@ impl super::Command for Args {
                 let mut description: Vec<Text<String>> = vec![];
 
                 if let Some(ref pkg_description) = manifest.description {
-                    description.push(pkg_description.to_string().into());
+                    description.push(format!("{pkg_description}\n").into());
                 }
 
-                description.push(format!("Version: {}", manifest.version).into());
+                description.push(format!("Version: {}\n", manifest.version).into());
 
                 if let Some(ref homepage) = manifest.homepage {
-                    description.push(format!("Homepage: {homepage}").into());
+                    description.push(format!("Homepage: {homepage}\n").into());
                 }
                 if let Some(ref license) = manifest.license {
-                    description.push(format!("License: {license}").into());
+                    description.push(format!("License: {license}\n").into());
                 }
 
                 // TODO: Maybe multiple children?
