@@ -104,7 +104,7 @@ impl<T: Display> Display for Section<T> {
 
 impl<T: Display> Display for Children<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        const WHITESPACE: &str = "     ";
+        const WHITESPACE: &str = "  ";
 
         match self {
             Children::Single(child) => writeln!(f, "{WHITESPACE}{child}"),
