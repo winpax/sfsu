@@ -4,14 +4,18 @@ use std::{
     io::Error,
 };
 
-use colored::Colorize;
+use colored::{ColoredString, Colorize};
 use itertools::Itertools;
 use rayon::prelude::*;
 
 use clap::{Parser, ValueEnum};
 use regex::Regex;
 
-use sfsu::{buckets, packages::manifest::StringOrArrayOfStringsOrAnArrayOfArrayOfStrings};
+use sfsu::{
+    buckets,
+    output::sectioned::{Children, Section, Sections, Text},
+    packages::manifest::StringOrArrayOfStringsOrAnArrayOfArrayOfStrings,
+};
 
 use sfsu::packages::{is_installed, CreateManifest, Manifest};
 use strum::Display;
@@ -26,11 +30,11 @@ enum SearchMode {
 }
 
 impl SearchMode {
-    pub fn match_names(&self) -> bool {
+    pub fn match_names(self) -> bool {
         matches!(self, SearchMode::Name | SearchMode::Both)
     }
 
-    pub fn match_binaries(&self) -> bool {
+    pub fn match_binaries(self) -> bool {
         matches!(self, SearchMode::Binary | SearchMode::Both)
     }
 }
@@ -74,6 +78,14 @@ impl std::fmt::Display for MatchOutput {
 
 struct MatchCriteria(Vec<MatchOutput>);
 
+impl MatchCriteria {
+    pub fn has_bin(&self) -> bool {
+        self.0
+            .iter()
+            .any(|m| matches!(m, MatchOutput::BinaryName(_)))
+    }
+}
+
 fn match_criteria(
     file_name: &str,
     manifest: &Manifest,
@@ -91,49 +103,27 @@ fn match_criteria(
     let file_name = file_name.to_string();
 
     move |pattern| {
-        let binary_names = binaries
-            .into_iter()
-            .filter(|binary| pattern.is_match(binary))
-            .filter_map(|b| {
-                if pattern.is_match(&b) {
-                    Some(MatchOutput::BinaryName(b.clone()))
-                } else {
-                    None
-                }
-            })
-            .collect_vec();
-
         let mut output = vec![];
 
         if mode.match_names() && pattern.is_match(&file_name) {
             output.push(MatchOutput::PackageName);
         }
         if mode.match_binaries() {
+            let binary_names = binaries
+                .into_iter()
+                .filter(|binary| pattern.is_match(binary))
+                .filter_map(|b| {
+                    if pattern.is_match(&b) {
+                        Some(MatchOutput::BinaryName(b.clone()))
+                    } else {
+                        None
+                    }
+                });
+
             output.extend(binary_names);
         }
 
         MatchCriteria(output)
-    }
-}
-
-impl std::fmt::Display for MatchCriteria {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let bins = self
-            .0
-            .iter()
-            .filter_map(|output| match output {
-                MatchOutput::BinaryName(bin) => Some(bin.bold().italic()),
-                MatchOutput::PackageName => None,
-            })
-            .collect_vec();
-
-        if !bins.is_empty() {
-            write!(f, "({}: {{ ", "Binaries".bold())?;
-            write!(f, "{}", itertools::join(bins, ", "))?;
-            write!(f, " }})")?;
-        }
-
-        Ok(())
     }
 }
 
@@ -143,8 +133,7 @@ fn parse_output(
     installed_only: bool,
     pattern: &Regex,
     mode: SearchMode,
-) -> Option<String> {
-    // TODO: Better display of output
+) -> Option<Section<Text<ColoredString>>> {
     let path = file.path();
 
     if !matches!(path.extension().and_then(OsStr::to_str), Some("json")) {
@@ -158,6 +147,7 @@ fn parse_output(
         .map(|osstr| osstr.to_string_lossy().to_string());
     let package_name = file_name.unwrap();
 
+    // TODO: Better display of output
     match Manifest::from_path(file.path()) {
         Ok(manifest) => {
             let match_criteria = match_criteria(&package_name, &manifest, mode);
@@ -167,36 +157,50 @@ fn parse_output(
                 return None;
             }
 
-            // TODO: Implement binary matches
             // TODO: Refactor to remove pointless binary matching on name-only search mode
             // TODO: Fix error parsing manifests
 
             let is_installed = is_installed(&package_name, Some(bucket));
-            if installed_only {
-                // TODO: Refactor this into a single format! statement
-                if is_installed {
-                    Some(format!(
-                        "{} ({}) {match_output}",
-                        package_name, manifest.version
-                    ))
-                } else {
-                    None
-                }
-            } else {
-                Some(format!(
-                    "{} ({}) {}{match_output}",
-                    if package_name == pattern.to_string() {
-                        package_name.bold().to_string()
-                    } else {
-                        package_name
-                    },
-                    manifest.version,
-                    if is_installed { "[installed] " } else { "" },
-                ))
+            if installed_only && !is_installed {
+                return None;
             }
+
+            let styled_package_name = if package_name == pattern.to_string() {
+                package_name.bold().to_string()
+            } else {
+                package_name
+            };
+
+            let installed_text = if is_installed && !installed_only {
+                "[installed] "
+            } else {
+                ""
+            };
+
+            let title = format!(
+                "{styled_package_name} ({}) {installed_text}",
+                manifest.version
+            );
+
+            let package = if match_output.has_bin() {
+                let bins = match_output
+                    .0
+                    .iter()
+                    .filter_map(|output| match output {
+                        MatchOutput::BinaryName(bin) => Some(Text::new(bin.bold())),
+                        MatchOutput::PackageName => None,
+                    })
+                    .collect_vec();
+
+                Section::new(Children::Multiple(bins))
+            } else {
+                Section::new(Children::None)
+            }
+            .with_title(title);
+
+            Some(package)
         }
-        // TODO: Don't output invalid manifests
-        Err(_) => Some(format!("{package_name} - Invalid")),
+        Err(_) => None,
     }
 }
 
@@ -274,31 +278,18 @@ impl super::Command for Args {
                 if matches.is_empty() {
                     None
                 } else {
-                    Some(Ok::<_, Error>((bucket.name.clone(), matches)))
+                    Some(Ok::<_, Error>(
+                        Section::new(Children::Multiple(matches))
+                            // TODO: Remove quotes and bold bucket name
+                            .with_title(format!("'{}' bucket:", bucket.name)),
+                    ))
                 }
             })
             .collect::<Result<Vec<_>, _>>()?;
 
-        matches.par_sort_by_key(|x| x.0.clone());
+        matches.par_sort_by_key(|x| x.title.clone());
 
-        let mut old_bucket = String::new();
-
-        for (bucket, matches) in matches {
-            if bucket != old_bucket {
-                // Do not print the newline on the first bucket
-                if !old_bucket.is_empty() {
-                    println!();
-                }
-
-                println!("'{bucket}' bucket:");
-
-                old_bucket = bucket;
-            }
-
-            for package in matches {
-                println!("  {package}");
-            }
-        }
+        print!("{}", Sections::from_vec(matches));
 
         Ok(())
     }

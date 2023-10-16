@@ -1,6 +1,9 @@
 use clap::Parser;
 
-use sfsu::buckets::Bucket;
+use sfsu::{
+    buckets::Bucket,
+    output::sectioned::{Children, Section, Sections, Text},
+};
 
 #[derive(Debug, Clone, Parser)]
 /// Describe a package
@@ -34,22 +37,32 @@ impl super::Command for Args {
                 .collect()
         };
 
-        for (package, bucket, manifest) in manifests {
-            println!("{package} in \"{bucket}\":");
+        let sectioned = manifests
+            .iter()
+            .map(|(package, bucket, manifest)| {
+                let title = format!("{package} in \"{bucket}\":");
 
-            if let Some(description) = manifest.description {
-                println!("  {description}");
-            }
+                let mut description: Vec<Text<String>> = vec![];
 
-            println!("  Version: {}", manifest.version);
+                if let Some(ref pkg_description) = manifest.description {
+                    description.push(format!("{pkg_description}\n").into());
+                }
 
-            if let Some(homepage) = manifest.homepage {
-                println!("  Homepage: {homepage}");
-            }
-            if let Some(license) = manifest.license {
-                println!("  License: {license}");
-            }
-        }
+                description.push(format!("Version: {}\n", manifest.version).into());
+
+                if let Some(ref homepage) = manifest.homepage {
+                    description.push(format!("Homepage: {homepage}\n").into());
+                }
+                if let Some(ref license) = manifest.license {
+                    description.push(format!("License: {license}\n").into());
+                }
+
+                // TODO: Maybe multiple children?
+                Section::new(Children::Multiple(description)).with_title(title)
+            })
+            .collect::<Sections<_>>();
+
+        print!("{sectioned}");
 
         Ok(())
     }
