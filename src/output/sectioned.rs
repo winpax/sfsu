@@ -68,6 +68,12 @@ pub enum Children<T> {
 
 pub struct Text<T>(T);
 
+impl<T> From<T> for Text<T> {
+    fn from(value: T) -> Self {
+        Self(value)
+    }
+}
+
 impl<T: Display> Text<T> {
     #[must_use]
     pub fn new(text: T) -> Self {

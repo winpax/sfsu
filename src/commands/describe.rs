@@ -40,27 +40,25 @@ impl super::Command for Args {
         let sectioned = manifests
             .iter()
             .map(|(package, bucket, manifest)| {
-                use std::fmt::Write;
-                const WHITESPACE: &str = "  ";
                 let title = format!("{package} in \"{bucket}\":");
 
-                let mut description = String::new();
+                let mut description: Vec<Text<String>> = vec![];
 
                 if let Some(ref pkg_description) = manifest.description {
-                    writeln!(description, "{WHITESPACE}{pkg_description}");
+                    description.push(pkg_description.to_string().into());
                 }
 
-                writeln!(description, "{WHITESPACE}Version: {}", manifest.version);
+                description.push(format!("Version: {}", manifest.version).into());
 
                 if let Some(ref homepage) = manifest.homepage {
-                    writeln!(description, "{WHITESPACE}Homepage: {homepage}");
+                    description.push(format!("Homepage: {homepage}").into());
                 }
                 if let Some(ref license) = manifest.license {
-                    writeln!(description, "{WHITESPACE}License: {license}");
+                    description.push(format!("License: {license}").into());
                 }
 
                 // TODO: Maybe multiple children?
-                Section::new(Children::Single(Text::new(description))).with_title(title)
+                Section::new(Children::Multiple(description)).with_title(title)
             })
             .collect::<Sections<_>>();
 
