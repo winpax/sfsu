@@ -508,9 +508,9 @@ dependencies = [
 
 [[package]]
 name = "quork"
-version = "0.6.1"
+version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "303aa1301791d4fc1523cd65b58559622403f820a5691222fce6c0855c3533b9"
+checksum = "1015eb796ce468e7b5434f9d1b309036a80f1afbadfa224b27f423762c8e5893"
 dependencies = [
  "cc",
  "cfg-if",
