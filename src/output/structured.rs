@@ -8,7 +8,7 @@ use serde_json::Value;
 pub struct OptionalTruncate<T> {
     data: T,
     length: Option<usize>,
-    suffix: Option<String>,
+    suffix: Option<&'static str>,
 }
 
 impl<T> OptionalTruncate<T> {
@@ -29,6 +29,12 @@ impl<T> OptionalTruncate<T> {
 
         self
     }
+
+    pub fn with_suffix(mut self, suffix: Option<&'static str>) -> Self {
+        self.suffix = suffix;
+
+        self
+    }
 }
 
 impl<T: Display> Display for OptionalTruncate<T> {
@@ -39,7 +45,7 @@ impl<T: Display> Display for OptionalTruncate<T> {
             let mut truncation = Truncate::new(&self.data, length);
 
             if let Some(ref suffix) = self.suffix {
-                truncation = truncation.with_suffix(suffix.clone());
+                truncation = truncation.with_suffix(suffix);
             }
 
             truncation.fmt(f)
@@ -127,7 +133,14 @@ impl<'a> Display for Structured<'a> {
 
                         let mut contestants = contestants.clone();
                         contestants.push(base[i]);
-                        contestants.push(element.to_string().len());
+                        contestants.push(
+                            OptionalTruncate::new(element)
+                                .with_length(self.max_length)
+                                // TODO: Fix suffix
+                                .with_suffix(Some("..."))
+                                .to_string()
+                                .len(),
+                        );
 
                         *contestants.iter().max().unwrap()
                     })

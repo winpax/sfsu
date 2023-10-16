@@ -81,7 +81,7 @@ impl super::Command for Args {
 
             let outputs =
                 Structured::new(&["Name", "Version", "Source", "Updated", "Notes"], &values)
-                    .with_max_length(10);
+                    .with_max_length(30);
 
             print!("{outputs}");
         }
