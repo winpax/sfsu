@@ -3,6 +3,52 @@ use std::fmt::Display;
 use rayon::prelude::*;
 use serde_json::Value;
 
+#[derive(Debug)]
+#[must_use = "OptionalTruncate is lazy, and only takes effect when used in formatting"]
+pub struct OptionalTruncate<T> {
+    data: T,
+    length: Option<usize>,
+    suffix: Option<String>,
+}
+
+impl<T> OptionalTruncate<T> {
+    /// Construct a new [`OptionalTruncate`] from the provided data
+    pub fn new(data: T) -> Self {
+        Self {
+            data,
+            length: None,
+            suffix: None,
+        }
+    }
+
+    // Generally length would not be passed as an option,
+    // but given we are just forwarding what is passed to `Structured`,
+    // it works better here
+    pub fn with_length(mut self, length: Option<usize>) -> Self {
+        self.length = length;
+
+        self
+    }
+}
+
+impl<T: Display> Display for OptionalTruncate<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if let Some(length) = self.length {
+            use quork::truncate::Truncate;
+
+            let mut truncation = Truncate::new(&self.data, length);
+
+            if let Some(ref suffix) = self.suffix {
+                truncation = truncation.with_suffix(suffix.clone());
+            }
+
+            truncation.fmt(f)
+        } else {
+            self.data.fmt(f)
+        }
+    }
+}
+
 #[must_use = "Structured is lazy, and only takes effect when used in formatting"]
 /// A table of data
 ///
@@ -11,6 +57,7 @@ use serde_json::Value;
 pub struct Structured<'a> {
     headers: &'a [&'a str],
     values: &'a [Value],
+    max_length: Option<usize>,
 }
 
 impl<'a> Structured<'a> {
@@ -26,7 +73,18 @@ impl<'a> Structured<'a> {
             values[0].as_object().unwrap().keys().len(),
             "The number of column headers must match quantity data for said columns"
         );
-        Structured { headers, values }
+        Structured {
+            headers,
+            values,
+            max_length: None,
+        }
+    }
+
+    /// Add a max length to the [`Structured`] formatter
+    pub fn with_max_length(mut self, max: usize) -> Self {
+        self.max_length = Some(max);
+
+        self
     }
 }
 
@@ -80,7 +138,9 @@ impl<'a> Display for Structured<'a> {
 
         for (i, header) in self.headers.iter().enumerate() {
             let header_size = access_lengths[i];
-            write!(f, "{header:header_size$} | ")?;
+
+            let truncated = OptionalTruncate::new(header).with_length(self.max_length);
+            write!(f, "{truncated:header_size$} | ")?;
         }
 
         // Enter new row
@@ -94,7 +154,9 @@ impl<'a> Display for Structured<'a> {
                     .and_then(|v| v.as_str())
                     .unwrap_or_default();
 
-                write!(f, "{element:value_size$} | ")?;
+                let truncated = OptionalTruncate::new(element).with_length(self.max_length);
+
+                write!(f, "{truncated:value_size$} | ")?;
             }
 
             // Enter new row
