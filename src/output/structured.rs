@@ -51,6 +51,22 @@ impl<'a> Display for Structured<'a> {
                 .unzip()
         };
 
+        let access_lengths = access.iter().fold(vec![0; access.len()], |base, current| {
+            // Checks for the largest size out of the previous one, the current one and the section title
+            // Note that all widths use "Updated" as it is the longest section title
+            // TODO: Make this dynamic
+            let default_width = "Updated".len();
+
+            base.iter()
+                .map(|element| {
+                    *[default_width, current.len(), *element]
+                        .iter()
+                        .max()
+                        .unwrap_or(&default_width)
+                })
+                .collect()
+        });
+
         let rows = data.iter().map(|row| {});
 
         todo!()
