@@ -64,23 +64,6 @@ impl super::Command for Args {
 
         print!("{sectioned}");
 
-        // for (package, bucket, manifest) in manifests {
-        //     println!("{package} in \"{bucket}\":");
-
-        //     if let Some(description) = manifest.description {
-        //         println!("  {description}");
-        //     }
-
-        //     println!("  Version: {}", manifest.version);
-
-        //     if let Some(homepage) = manifest.homepage {
-        //         println!("  Homepage: {homepage}");
-        //     }
-        //     if let Some(license) = manifest.license {
-        //         println!("  License: {license}");
-        //     }
-        // }
-
         Ok(())
     }
 }
