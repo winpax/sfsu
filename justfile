@@ -16,8 +16,8 @@ release: build-all
     mkdir "release"
 
     7z a "./release/dl-x86_64" "./target/x86_64-pc-windows-msvc/release/sfsu.exe"
-    just export-hash x86_64
     cp "./target/x86_64-pc-windows-msvc/release/sfsu.exe" "./release/sfsu-x86_64.exe"
+    just export-hash x86_64
 
     7z a "./release/dl-i686" "./target/i686-pc-windows-msvc/release/sfsu.exe"
     cp "./target/i686-pc-windows-msvc/release/sfsu.exe" "./release/sfsu-i686.exe"
