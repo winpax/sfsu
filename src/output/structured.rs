@@ -24,16 +24,15 @@ impl<T> OptionalTruncate<T> {
     // Generally length would not be passed as an option,
     // but given we are just forwarding what is passed to `Structured`,
     // it works better here
-    pub fn with_length(mut self, length: Option<usize>) -> Self {
-        self.length = length;
-
-        self
+    pub fn with_length(self, length: Option<usize>) -> Self {
+        Self { length, ..self }
     }
 
-    pub fn with_suffix(mut self, suffix: Option<&'static str>) -> Self {
-        self.suffix = suffix;
-
-        self
+    pub fn with_suffix(self, suffix: &'static str) -> Self {
+        Self {
+            suffix: Some(suffix),
+            ..self
+        }
     }
 }
 
@@ -47,6 +46,8 @@ impl<T: Display> Display for OptionalTruncate<T> {
             if let Some(ref suffix) = self.suffix {
                 truncation = truncation.with_suffix(suffix);
             }
+
+            truncation.to_string();
 
             truncation.fmt(f)
         } else {
@@ -137,7 +138,7 @@ impl<'a> Display for Structured<'a> {
                             OptionalTruncate::new(element)
                                 .with_length(self.max_length)
                                 // TODO: Fix suffix
-                                .with_suffix(Some("..."))
+                                .with_suffix("...")
                                 .to_string()
                                 .len(),
                         );
