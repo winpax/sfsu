@@ -15,11 +15,14 @@ release: build-all
     if (Test-Path "release") { rm -r "release" -Force -ErrorAction Ignore }
     mkdir "release"
 
-    7z a "./release/dl-x86_64" "./target/x86_64-pc-windows-msvc/release/*.exe"
+    cp "./target/x86_64-pc-windows-msvc/release/sfsu.exe" "./release/sfsu-x86_64.exe"
+    7z a "./release/dl-x86_64" "./release/sfsu-x86_64.exe"
     just export-hash x86_64
 
-    7z a "./release/dl-i686" "./target/i686-pc-windows-msvc/release/*.exe"
+    cp "./target/i686-pc-windows-msvc/release/sfsu.exe" "./release/sfsu-i686.exe"
+    7z a "./release/dl-i686" "./release/sfsu-i686.exe"
     just export-hash i686
 
 export-hash TARGET:
     python scripts/hash.py './release/dl-{{ TARGET }}.7z'
+    python scripts/hash.py './release/sfsu-{{ TARGET }}.exe'
