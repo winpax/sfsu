@@ -43,6 +43,8 @@ where
             .map_err(|e| PackageError::ParsingManifest(path.display().to_string(), e))
     }
 
+    /// # Errors
+    /// - The contents are not a valid manifest
     fn from_str(contents: String) -> serde_json::Result<Self> {
         let trimmed = contents.trim_start_matches('\u{feff}');
 
