@@ -166,9 +166,16 @@ impl<'a> Display for Structured<'a> {
                     .and_then(|v| v.as_str())
                     .unwrap_or_default();
 
-                let truncated = OptionalTruncate::new(element).with_length(self.max_length);
+                let with_suffix = if element.len() > value_size {
+                    let base = &element[0..value_size - 3];
+                    format!("{base}...")
+                } else if element.len() < value_size {
+                    format!("{element:value_size$}")
+                } else {
+                    element.to_string()
+                };
 
-                write!(f, "{truncated:value_size$} | ")?;
+                write!(f, "{with_suffix} | ")?;
             }
 
             // Enter new row
