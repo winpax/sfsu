@@ -14,6 +14,7 @@ pub enum Commands {
 }
 
 #[derive(Debug, Clone, Parser)]
+/// Commands for managing buckets
 pub struct Args {
     #[command(subcommand)]
     command: Commands,
