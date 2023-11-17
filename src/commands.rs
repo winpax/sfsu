@@ -1,8 +1,8 @@
+pub mod buckets;
 pub mod describe;
 pub mod hook;
 pub mod list;
 pub mod search;
-pub mod unused;
 
 use clap::Subcommand;
 
@@ -14,9 +14,9 @@ pub trait Command {
 
 #[derive(Debug, Hooks, Clone, Subcommand, Runnable)]
 pub enum Commands {
+    Buckets(buckets::Args),
     Search(search::Args),
     List(list::Args),
     Hook(hook::Args),
-    UnusedBuckets(unused::Args),
     Describe(describe::Args),
 }
