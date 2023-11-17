@@ -1,6 +1,7 @@
 pub mod describe;
 pub mod hook;
 pub mod list;
+pub mod outdated;
 pub mod search;
 pub mod unused;
 
@@ -19,4 +20,5 @@ pub enum Commands {
     Hook(hook::Args),
     UnusedBuckets(unused::Args),
     Describe(describe::Args),
+    Outdated(outdated::Args),
 }
