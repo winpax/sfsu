@@ -701,7 +701,7 @@ dependencies = [
 
 [[package]]
 name = "sfsu"
-version = "1.4.15"
+version = "1.5.0"
 dependencies = [
  "anyhow",
  "chrono",
