@@ -5,14 +5,39 @@ use std::{
 };
 
 use colored::Colorize;
+use itertools::Itertools;
 use rayon::prelude::*;
 
-use clap::Parser;
+use clap::{Parser, ValueEnum};
 use regex::Regex;
 
-use sfsu::buckets;
+use sfsu::{
+    buckets,
+    output::sectioned::{Children, Section, Sections, Text},
+    packages::manifest::StringOrArrayOfStringsOrAnArrayOfArrayOfStrings,
+};
 
 use sfsu::packages::{is_installed, CreateManifest, Manifest};
+use strum::Display;
+
+#[derive(Debug, Default, Copy, Clone, ValueEnum, Display, Parser)]
+#[strum(serialize_all = "snake_case")]
+enum SearchMode {
+    #[default]
+    Name,
+    Binary,
+    Both,
+}
+
+impl SearchMode {
+    pub fn match_names(self) -> bool {
+        matches!(self, SearchMode::Name | SearchMode::Both)
+    }
+
+    pub fn match_binaries(self) -> bool {
+        matches!(self, SearchMode::Binary | SearchMode::Both)
+    }
+}
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
@@ -20,7 +45,7 @@ pub struct Args {
     pattern: String,
 
     #[clap(
-        short = 'c',
+        short,
         long,
         help = "Whether or not the pattern should match case-sensitively"
     )]
@@ -29,44 +54,154 @@ pub struct Args {
     #[clap(short, long, help = "The bucket to exclusively search in")]
     bucket: Option<String>,
 
-    #[clap(short = 'i', long, help = "Only search installed packages")]
+    #[clap(short, long, help = "Only search installed packages")]
     installed: bool,
+
+    #[clap(short, long, help = "Search mode to use", default_value_t)]
+    mode: SearchMode,
+}
+
+enum MatchOutput {
+    PackageName,
+    BinaryName(String),
+}
+
+impl std::fmt::Display for MatchOutput {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            MatchOutput::PackageName => Ok(()),
+            MatchOutput::BinaryName(name) => write!(f, "{}", name.bold()),
+        }
+    }
+}
+
+struct MatchCriteria(Vec<MatchOutput>);
+
+impl MatchCriteria {
+    pub fn has_bin(&self) -> bool {
+        self.0
+            .iter()
+            .any(|m| matches!(m, MatchOutput::BinaryName(_)))
+    }
+}
+
+fn match_criteria(
+    file_name: &str,
+    manifest: &Manifest,
+    mode: SearchMode,
+    pattern: &Regex,
+) -> MatchCriteria {
+    // use std::rc::Rc;
+    // let name = Rc::new(file_name);
+
+    let file_name = file_name.to_string();
+
+    let mut output = vec![];
+
+    if mode.match_names() && pattern.is_match(&file_name) {
+        output.push(MatchOutput::PackageName);
+    }
+    if mode.match_binaries() {
+        let binaries = manifest
+            .bin
+            .clone()
+            .map(StringOrArrayOfStringsOrAnArrayOfArrayOfStrings::to_vec)
+            .unwrap_or_default();
+
+        let binary_names = binaries
+            .into_iter()
+            .filter(|binary| pattern.is_match(binary))
+            .filter_map(|b| {
+                if pattern.is_match(&b) {
+                    Some(MatchOutput::BinaryName(b.clone()))
+                } else {
+                    None
+                }
+            });
+
+        output.extend(binary_names);
+    }
+
+    MatchCriteria(output)
 }
 
 fn parse_output(
     file: &DirEntry,
     bucket: impl AsRef<str>,
     installed_only: bool,
-    pattern: &str,
-) -> Option<String> {
-    // This may be a bit of a hack, but it works
-    let path = file.path().with_extension("");
-    let file_name = path.file_name();
-    let package = file_name.unwrap().to_string_lossy().to_string();
+    pattern: &Regex,
+    mode: SearchMode,
+) -> Option<Section<Text<String>>> {
+    let path = file.path();
 
+    if !matches!(path.extension().and_then(OsStr::to_str), Some("json")) {
+        return None;
+    }
+
+    // This may be a bit of a hack, but it works
+    let file_name = path
+        .with_extension("")
+        .file_name()
+        .map(|osstr| osstr.to_string_lossy().to_string());
+    let package_name = file_name.unwrap();
+
+    // TODO: Better display of output
     match Manifest::from_path(file.path()) {
         Ok(manifest) => {
-            let is_installed = is_installed(&package, Some(bucket));
-            if installed_only {
-                if is_installed {
-                    Some(format!("{} ({})", package, manifest.version,))
-                } else {
-                    None
-                }
-            } else {
-                Some(format!(
-                    "{} ({}) {}",
-                    if package == pattern {
-                        package.bold().to_string()
-                    } else {
-                        package
-                    },
-                    manifest.version,
-                    if is_installed { "[installed]" } else { "" },
-                ))
+            let match_output = match_criteria(&package_name, &manifest, mode, pattern);
+
+            if match_output.0.is_empty() {
+                return None;
             }
+
+            // TODO: Refactor to remove pointless binary matching on name-only search mode
+            // TODO: Fix error parsing manifests
+
+            let is_installed = is_installed(&package_name, Some(bucket));
+            if installed_only && !is_installed {
+                return None;
+            }
+
+            let styled_package_name = if package_name == pattern.to_string() {
+                package_name.bold().to_string()
+            } else {
+                package_name
+            };
+
+            let installed_text = if is_installed && !installed_only {
+                "[installed] "
+            } else {
+                ""
+            };
+
+            let title = format!(
+                "{styled_package_name} ({}) {installed_text}",
+                manifest.version
+            );
+
+            let package = if match_output.has_bin() {
+                let bins = match_output
+                    .0
+                    .iter()
+                    .filter_map(|output| match output {
+                        MatchOutput::BinaryName(bin) => Some(Text::new(format!(
+                            "{}{}\n",
+                            sfsu::output::sectioned::WHITESPACE,
+                            bin.bold()
+                        ))),
+                        MatchOutput::PackageName => None,
+                    })
+                    .collect_vec();
+
+                Section::new(Children::Multiple(bins))
+            } else {
+                Section::new(Children::None)
+            }
+            .with_title(title);
+
+            Some(package)
         }
-        Err(_) => Some(format!("{package} - Invalid")),
+        Err(_) => None,
     }
 }
 
@@ -114,7 +249,6 @@ impl super::Command for Args {
 
         let mut matches = scoop_buckets
             .par_iter()
-            .filter(|bucket| bucket.path().is_dir())
             .filter_map(|bucket| {
                 // Ignore loose files in the buckets dir
                 if !bucket.path().is_dir() {
@@ -131,8 +265,6 @@ impl super::Command for Args {
                     }
                 };
 
-                dbg!(&bucket_path);
-
                 let bucket_contents = read_dir(bucket_path)
                     .and_then(Iterator::collect::<Result<Vec<_>, _>>)
                     .unwrap();
@@ -140,55 +272,25 @@ impl super::Command for Args {
                 let matches = bucket_contents
                     .par_iter()
                     .filter_map(|file| {
-                        let path_raw = file.path();
-                        let file_name = {
-                            let no_ext = path_raw.with_extension("");
-                            let name = no_ext.file_name().unwrap();
-
-                            name.to_string_lossy().to_string()
-                        };
-
-                        let is_valid_extension = matches!(
-                            file.path().extension().and_then(OsStr::to_str),
-                            Some("json")
-                        );
-
-                        if pattern.is_match(&file_name) && is_valid_extension {
-                            parse_output(file, &bucket.name, self.installed, &raw_pattern)
-                        } else {
-                            None
-                        }
+                        parse_output(file, &bucket.name, self.installed, &pattern, self.mode)
                     })
                     .collect::<Vec<_>>();
 
                 if matches.is_empty() {
                     None
                 } else {
-                    Some(Ok::<_, Error>((bucket.name.clone(), matches)))
+                    Some(Ok::<_, Error>(
+                        Section::new(Children::Multiple(matches))
+                            // TODO: Remove quotes and bold bucket name
+                            .with_title(format!("'{}' bucket:", bucket.name)),
+                    ))
                 }
             })
             .collect::<Result<Vec<_>, _>>()?;
 
-        matches.par_sort_by_key(|x| x.0.clone());
+        matches.par_sort_by_key(|x| x.title.clone());
 
-        let mut old_bucket = String::new();
-
-        for (bucket, matches) in matches {
-            if bucket != old_bucket {
-                // Do not print the newline on the first bucket
-                if !old_bucket.is_empty() {
-                    println!();
-                }
-
-                println!("'{bucket}' bucket:");
-
-                old_bucket = bucket;
-            }
-
-            for package in matches {
-                println!("  {package}");
-            }
-        }
+        print!("{}", Sections::from_vec(matches));
 
         Ok(())
     }

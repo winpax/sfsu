@@ -10,6 +10,7 @@ use serde::{Deserialize, Serialize};
 
 use sfsu::{
     get_scoop_path,
+    output::structured::Structured,
     packages::{CreateManifest, InstallManifest, Manifest},
 };
 
@@ -72,38 +73,20 @@ impl super::Command for Args {
                 return Ok(());
             }
 
-            #[allow(clippy::similar_names)]
-            let [name_width, version_width, source_width, updated_width, notes_width] =
-                outputs.iter().fold([0, 0, 0, 0, 0], check_lengths);
+            let values = outputs
+                .into_iter()
+                .map(serde_json::to_value)
+                .collect::<Result<Vec<_>, _>>()?;
 
-            println!(
-                "{:name_width$} | {:version_width$} | {:source_width$} | {:updated_width$} | {:notes_width$}",
-                "Name", "Version", "Source", "Updated", "Notes",
-            );
+            let outputs =
+                Structured::new(&["Name", "Version", "Source", "Updated", "Notes"], &values)
+                    .with_max_length(30);
 
-            for pkg in outputs {
-                println!(
-                    "{:name_width$} | {:version_width$} | {:source_width$} | {:updated_width$} | {:notes_width$}",
-                    pkg.name, pkg.version, pkg.source, pkg.updated, pkg.notes,
-                );
-            }
+            print!("{outputs}");
         }
 
         Ok(())
     }
-}
-
-fn check_lengths(og: [usize; 5], pkg: &OutputPackage) -> [usize; 5] {
-    // Checks for the largest size out of the previous one, the current one and the section title
-    // Note that all widths use "Updated" as it is the longest section title
-    let default_width = "Updated".len();
-
-    og.map(|element| {
-        *[default_width, pkg.updated.len(), element]
-            .iter()
-            .max()
-            .unwrap_or(&default_width)
-    })
 }
 
 fn parse_package(package: &DirEntry) -> anyhow::Result<OutputPackage> {
@@ -140,7 +123,7 @@ fn parse_package(package: &DirEntry) -> anyhow::Result<OutputPackage> {
         source: install_manifest.get_source(),
         updated: naive_time.to_string(),
         notes: if install_manifest.hold.contains_truth() {
-            String::from("Hold")
+            String::from("Held")
         } else {
             String::new()
         },

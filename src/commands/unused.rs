@@ -2,7 +2,10 @@ use std::fs::read_dir;
 
 use clap::Parser;
 
-use sfsu::packages::{CreateManifest, InstallManifest};
+use sfsu::{
+    output::sectioned::{Children, Section},
+    packages::{CreateManifest, InstallManifest},
+};
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args;
@@ -37,21 +40,24 @@ impl super::Command for Args {
                     let dir_name = dir.file_name();
                     let dir_name_str = dir_name.to_string_lossy().to_string();
 
-                    if used_buckets.contains(&dir_name_str) {
+                    if !dir.path().is_dir() || used_buckets.contains(&dir_name_str) {
                         None
                     } else {
-                        Some(dir_name_str)
+                        Some(dir_name_str + "\n")
                     }
                 } else {
                     None
                 }
             })
-            .collect::<Vec<_>>();
+            .collect::<Children<_>>();
 
-        println!("The following buckets are unused: ");
-        for bucket in unused_buckets {
-            println!("  {bucket}");
-        }
+        if let Children::None = unused_buckets {
+            println!("No unused buckets");
+        } else {
+            let unused = Section::new(unused_buckets)
+                .with_title("The following buckets are unused:".to_string());
+            println!("{unused}");
+        };
 
         Ok(())
     }
