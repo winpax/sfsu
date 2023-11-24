@@ -8,6 +8,7 @@ pub mod buckets;
 pub mod config;
 pub mod packages;
 
+mod opt;
 /// Currently this is mostly an internal api
 pub mod output;
 

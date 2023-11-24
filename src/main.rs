@@ -4,16 +4,13 @@
 
 mod commands;
 mod logging;
+mod opt;
 
 use clap::Parser;
 
 use commands::Commands;
 
 use sfsu::get_scoop_path;
-
-pub(crate) trait ResultIntoOption<T> {
-    fn into_option(self) -> Option<T>;
-}
 
 impl<T, E> ResultIntoOption<T> for Result<T, E> {
     fn into_option(self) -> Option<T> {
