@@ -17,21 +17,21 @@ impl super::Command for Args {
 
         let buckets = sfsu::buckets::Bucket::list_all()?;
 
-        let mut outdated: Vec<OutdatedPackage> = vec![];
-
-        for app in &apps {
-            for bucket in &buckets {
-                if let Ok(manifest) = bucket.get_manifest(&app.name) {
-                    if manifest.version != app.version {
-                        outdated.push(OutdatedPackage {
+        let outdated: Vec<OutdatedPackage> = apps
+            .par_iter()
+            .flat_map(|app| {
+                buckets
+                    .par_iter()
+                    .filter_map(|bucket| match bucket.get_manifest(&app.name) {
+                        Ok(manifest) if manifest.version != app.version => Some(OutdatedPackage {
                             name: app.name.clone(),
                             current: app.version.clone(),
                             available: manifest.version.clone(),
-                        });
-                    }
-                }
-            }
-        }
+                        }),
+                        _ => None,
+                    })
+            })
+            .collect();
 
         todo!()
     }
