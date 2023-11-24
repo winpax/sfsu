@@ -3,16 +3,14 @@
 // TODO: Replace regex with glob
 
 mod commands;
+mod logging;
+mod opt;
 
 use clap::Parser;
 
 use commands::Commands;
 
 use sfsu::get_scoop_path;
-
-pub(crate) trait ResultIntoOption<T> {
-    fn into_option(self) -> Option<T>;
-}
 
 impl<T, E> ResultIntoOption<T> for Result<T, E> {
     fn into_option(self) -> Option<T> {
@@ -35,6 +33,8 @@ struct Args {
 }
 
 fn main() -> anyhow::Result<()> {
+    logging::panics::handle();
+
     let args = Args::parse();
     if args.no_color {
         colored::control::set_override(false);
