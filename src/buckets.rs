@@ -30,23 +30,9 @@ impl Bucket {
     ///
     /// # Errors
     /// - The bucket could not be opened as a repository
+    #[inline]
     pub fn open_repo(&self) -> Result<BucketRepo, git2::Error> {
-        let repo = Repository::open(self.path())?;
-
-        Ok(BucketRepo {
-            bucket: self.clone(),
-            repo,
-        })
-    }
-
-    /// Update the bucket by pulling any changes
-    pub fn update(&self) {
-        unimplemented!()
-    }
-
-    /// Get the remote url of the bucket
-    pub fn get_remote(&self) {
-        unimplemented!()
+        BucketRepo::from_bucket(self)
     }
 
     /// Gets the bucket's name (the final component of the path)
@@ -126,4 +112,26 @@ pub struct BucketRepo {
     repo: Repository,
 }
 
-impl BucketRepo {}
+impl BucketRepo {
+    /// Open the repository from the bucket path
+    ///
+    /// # Errors
+    /// - The bucket could not be opened as a repository
+    pub fn from_bucket(bucket: &Bucket) -> Result<Self, git2::Error> {
+        let bucket = bucket.clone();
+
+        let repo = Repository::open(bucket.path())?;
+
+        Ok(Self { bucket, repo })
+    }
+
+    /// Update the bucket by pulling any changes
+    pub fn update(&self) {
+        unimplemented!()
+    }
+
+    /// Get the remote url of the bucket
+    pub fn get_remote(&self) {
+        unimplemented!()
+    }
+}
