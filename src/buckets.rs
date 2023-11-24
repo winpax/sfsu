@@ -31,7 +31,7 @@ impl Bucket {
     /// # Errors
     /// - The bucket could not be opened as a repository
     #[inline]
-    pub fn open_repo(&self) -> Result<BucketRepo, git2::Error> {
+    pub fn open_repo(&self) -> RepoResult<BucketRepo> {
         BucketRepo::from_bucket(self)
     }
 
@@ -107,6 +107,17 @@ impl Bucket {
     }
 }
 
+#[derive(Debug, thiserror::Error)]
+pub enum RepoError {
+    #[error("Could not find the active branch (HEAD)")]
+    NoActiveBranch,
+
+    #[error("Git error: {0}")]
+    Git2(#[from] git2::Error),
+}
+
+pub type RepoResult<T> = std::result::Result<T, RepoError>;
+
 pub struct BucketRepo {
     bucket: Bucket,
     repo: Repository,
@@ -117,12 +128,17 @@ impl BucketRepo {
     ///
     /// # Errors
     /// - The bucket could not be opened as a repository
-    pub fn from_bucket(bucket: &Bucket) -> Result<Self, git2::Error> {
+    pub fn from_bucket(bucket: &Bucket) -> RepoResult<Self> {
         let bucket = bucket.clone();
 
         let repo = Repository::open(bucket.path())?;
 
         Ok(Self { bucket, repo })
+    }
+
+    /// Checks if the bucket is outdated
+    pub fn is_outdated(&self) -> RepoResult<bool> {
+        unimplemented!()
     }
 
     /// Update the bucket by pulling any changes
