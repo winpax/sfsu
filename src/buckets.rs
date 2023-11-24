@@ -12,9 +12,7 @@ pub struct Bucket {
 impl Bucket {
     #[must_use]
     pub fn new(name: impl AsRef<Path>) -> Self {
-        Self {
-            bucket_path: Self::buckets_path().join(name),
-        }
+        Self::open(Self::buckets_path().join(name))
     }
 
     /// Open the given path as a bucket
