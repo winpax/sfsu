@@ -40,7 +40,6 @@ impl SearchMode {
 }
 
 #[derive(Debug, Clone, Parser)]
-/// Search for a package
 pub struct Args {
     #[clap(help = "The regex pattern to search for, using Rust Regex syntax")]
     pattern: String,
@@ -262,7 +261,7 @@ impl super::Command for Args {
                     if bk_path.exists() {
                         bk_path
                     } else {
-                        bucket.path()
+                        bucket.path().to_owned()
                     }
                 };
 
@@ -273,7 +272,7 @@ impl super::Command for Args {
                 let matches = bucket_contents
                     .par_iter()
                     .filter_map(|file| {
-                        parse_output(file, &bucket.name, self.installed, &pattern, self.mode)
+                        parse_output(file, bucket.name(), self.installed, &pattern, self.mode)
                     })
                     .collect::<Vec<_>>();
 
@@ -283,7 +282,7 @@ impl super::Command for Args {
                     Some(Ok::<_, Error>(
                         Section::new(Children::Multiple(matches))
                             // TODO: Remove quotes and bold bucket name
-                            .with_title(format!("'{}' bucket:", bucket.name)),
+                            .with_title(format!("'{}' bucket:", bucket.name())),
                     ))
                 }
             })

@@ -3,7 +3,7 @@ use std::{fs::File, io::Read, path::Path};
 use regex::Regex;
 use serde::Deserialize;
 
-use crate::get_scoop_path;
+use crate::{buckets::Bucket, get_scoop_path};
 
 pub mod install;
 pub mod manifest;
@@ -19,6 +19,12 @@ pub enum PackageError {
     IO(#[from] std::io::Error),
     #[error("Could not parse manifest \"{0}\". Failed with error: {1}")]
     ParsingManifest(String, serde_json::Error),
+}
+
+#[derive(Debug, Clone)]
+pub enum PackageReference {
+    BucketNamePair { bucket: String, name: String },
+    Name(String),
 }
 
 pub type Result<T> = std::result::Result<T, PackageError>;
@@ -52,7 +58,41 @@ where
     }
 }
 
-impl CreateManifest for Manifest {}
+impl CreateManifest for Manifest {
+    /// Convert a path into a manifest
+    ///
+    /// # Errors
+    /// - The file does not exist
+    /// - The file was not valid UTF-8
+    fn from_path(path: impl AsRef<Path>) -> Result<Self> {
+        let path = path.as_ref();
+        let mut file = File::open(path)?;
+        let mut contents = String::new();
+
+        file.read_to_string(&mut contents)?;
+
+        Self::from_str(contents)
+            .map(|mut manifest| {
+                let bucket_path = path
+                    .parent()
+                    .and_then(|parent| parent.parent())
+                    .expect("manifest to be contained in bucket directory");
+
+                let bucket = Bucket::open(bucket_path);
+                manifest.bucket = bucket.name().to_string();
+                manifest.name = path
+                    .with_extension("")
+                    .file_name()
+                    .expect("manifest path to have file name")
+                    .to_str()
+                    .expect("manifest file name to be valid utf8")
+                    .to_string();
+
+                manifest
+            })
+            .map_err(|e| PackageError::ParsingManifest(path.display().to_string(), e))
+    }
+}
 
 impl CreateManifest for InstallManifest {}
 
@@ -80,6 +120,14 @@ pub fn is_installed(manifest_name: impl AsRef<Path>, bucket: Option<impl AsRef<s
 }
 
 impl Manifest {
+    /// Gets the manifest from a bucket and manifest name
+    ///
+    /// # Errors
+    /// If the manifest doesn't exist or bucket is invalid
+    pub fn from_reference((bucket, name): (String, String)) -> Result<Self> {
+        Bucket::new(bucket).get_manifest(name)
+    }
+
     #[must_use]
     pub fn binary_matches(&self, regex: &Regex) -> Option<Vec<String>> {
         match self.bin {
