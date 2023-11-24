@@ -7,9 +7,9 @@ use crate::{
     packages::{self, CreateManifest, Manifest},
 };
 
+#[derive(Debug, Clone)]
 pub struct Bucket {
     bucket_path: PathBuf,
-    repo: Option<Repository>,
 }
 
 impl Bucket {
@@ -21,11 +21,22 @@ impl Bucket {
     /// Open the given path as a bucket
     pub fn open(path: impl AsRef<Path>) -> Self {
         // TODO: Verify that the bucket exists and is valid
-        let repo = Repository::open(path.as_ref());
         Self {
             bucket_path: path.as_ref().to_path_buf(),
-            repo,
         }
+    }
+
+    /// Open the repository from the bucket path
+    ///
+    /// # Errors
+    /// - The bucket could not be opened as a repository
+    pub fn open_repo(&self) -> Result<BucketRepo, git2::Error> {
+        let repo = Repository::open(self.path())?;
+
+        Ok(BucketRepo {
+            bucket: self.clone(),
+            repo,
+        })
     }
 
     /// Update the bucket by pulling any changes
@@ -109,3 +120,10 @@ impl Bucket {
         Manifest::from_path(manifest_path)
     }
 }
+
+pub struct BucketRepo {
+    bucket: Bucket,
+    repo: Repository,
+}
+
+impl BucketRepo {}

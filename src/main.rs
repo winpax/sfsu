@@ -12,14 +12,7 @@ use commands::Commands;
 
 use sfsu::get_scoop_path;
 
-impl<T, E> ResultIntoOption<T> for Result<T, E> {
-    fn into_option(self) -> Option<T> {
-        match self {
-            Ok(v) => Some(v),
-            Err(_) => None,
-        }
-    }
-}
+
 
 /// Scoop utilities that can replace the slowest parts of Scoop, and run anywhere from 30-100 times faster
 #[derive(Debug, Parser)]
