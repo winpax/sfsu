@@ -1,8 +1,8 @@
 use proc_macro2::{Ident, Span, TokenStream};
 use proc_macro_crate::{crate_name, FoundCrate};
-use proc_macro_error::{abort, abort_call_site};
+use proc_macro_error::abort_call_site;
 use quote::{quote, ToTokens};
-use syn::{spanned::Spanned, DeriveInput};
+use syn::DeriveInput;
 
 pub fn hook_enum(input: DeriveInput) -> TokenStream {
     let struct_name = {
@@ -20,10 +20,7 @@ pub fn hook_enum(input: DeriveInput) -> TokenStream {
             .filter_map(|variant| {
                 if variant.attrs.iter().any(|attr| match attr.meta {
                     syn::Meta::Path(ref p) => p.is_ident("no_hook"),
-                    _ => abort!(
-                        attr.span(),
-                        "Expected path-style (i.e #[no_hook]), found other style attribute macro"
-                    ),
+                    _ => false,
                 }) {
                     None
                 } else {

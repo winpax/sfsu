@@ -6,7 +6,6 @@ use sfsu::{
 };
 
 #[derive(Debug, Clone, Parser)]
-/// Describe a package
 pub struct Args {
     #[clap(help = "The package to describe")]
     package: String,
@@ -31,7 +30,9 @@ impl super::Command for Args {
             buckets
                 .iter()
                 .filter_map(|bucket| match bucket.get_manifest(&self.package) {
-                    Ok(manifest) => Some((self.package.clone(), bucket.name.clone(), manifest)),
+                    Ok(manifest) => {
+                        Some((self.package.clone(), bucket.name().to_string(), manifest))
+                    }
                     Err(_) => None,
                 })
                 .collect()

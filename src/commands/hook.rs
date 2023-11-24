@@ -13,7 +13,6 @@ enum Shell {
 }
 
 #[derive(Debug, Clone, Parser)]
-/// Generate hooks for the given shell
 pub struct Args {
     // TODO: Rename CommandsHooks to CommandHooks or something
     // TODO: Add attribute macro that excludes a variant from the aforementioned enum

@@ -7,6 +7,12 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Manifest {
+    /// This must be manually set
+    #[serde(skip)]
+    pub bucket: String,
+    /// This must be manually set
+    #[serde(skip)]
+    pub name: String,
     /// A comment.
     #[serde(rename = "##")]
     pub empty: Option<StringOrArrayOfStrings>,

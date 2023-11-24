@@ -22,7 +22,7 @@ impl super::Command for Args {
                 match InstallManifest::from_path(&path)
                     .context(format!("{} failed", path.display()))
                 {
-                    Ok(v) => (
+                    Ok(v) => Ok((
                         app_path
                             .components()
                             .last()
@@ -31,7 +31,7 @@ impl super::Command for Args {
                             .to_string_lossy()
                             .to_string(),
                         v,
-                    ),
+                    )),
                     Err(e) => Err(e),
                 }
             })
@@ -45,8 +45,8 @@ impl super::Command for Args {
 
         let apps = buckets
             .into_par_iter()
-            .map(|bucket| for app in install_manifests {})
-            .collect::<Result<Vec<_>, _>>()?;
+            .map(|bucket| for app in install_manifests {});
+        // .collect::<Result<Vec<_>, _>>()?;
 
         todo!()
     }

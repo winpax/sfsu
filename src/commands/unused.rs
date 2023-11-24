@@ -8,7 +8,6 @@ use sfsu::{
 };
 
 #[derive(Debug, Clone, Parser)]
-/// Find buckets that do not have any installed packages
 pub struct Args;
 
 impl super::Command for Args {

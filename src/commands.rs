@@ -15,10 +15,15 @@ pub trait Command {
 
 #[derive(Debug, Hooks, Clone, Subcommand, Runnable)]
 pub enum Commands {
+    /// Search for a package
     Search(search::Args),
+    /// List all installed packages
     List(list::Args),
+    /// Generate hooks for the given shell
     Hook(hook::Args),
+    /// Find buckets that do not have any installed packages
     UnusedBuckets(unused::Args),
+    /// Describe a package
     Describe(describe::Args),
     Outdated(outdated::Args),
 }
