@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use crate::{
     get_scoop_path,
@@ -6,19 +6,23 @@ use crate::{
 };
 
 pub struct Bucket {
-    pub name: String,
+    bucket_path: PathBuf,
 }
 
 impl Bucket {
-    pub fn new(name: impl AsRef<str>) -> Self {
+    #[must_use]
+    pub fn new(name: impl AsRef<Path>) -> Self {
         Self {
-            name: name.as_ref().to_owned(),
+            bucket_path: Self::buckets_path().join(name),
         }
     }
 
     /// Open the given path as a bucket
-    pub fn open() {
-        unimplemented!()
+    pub fn open(path: impl AsRef<Path>) -> Self {
+        // TODO: Verify that the bucket exists and is valid
+        Self {
+            bucket_path: path.as_ref().to_path_buf(),
+        }
     }
 
     /// Update the bucket by pulling any changes
@@ -31,17 +35,29 @@ impl Bucket {
         unimplemented!()
     }
 
+    /// Gets the bucket's name (the final component of the path)
+    ///
+    /// # Panics
+    /// If the `file_name` function returns `None`, or a non-utf8 string.
+    #[must_use]
+    pub fn name(&self) -> &str {
+        self.path()
+            .file_name()
+            .and_then(|name| name.to_str())
+            .expect("bucket to have a valid utf8 name")
+    }
+
+    #[must_use]
+    pub fn path(&self) -> &Path {
+        &self.bucket_path
+    }
+
     /// Get the paths where buckets are stored
     #[must_use]
     pub fn buckets_path() -> PathBuf {
         let scoop_path = get_scoop_path();
 
         scoop_path.join("buckets")
-    }
-
-    #[must_use]
-    pub fn path(&self) -> PathBuf {
-        Self::buckets_path().join(&self.name)
     }
 
     /// Gets all buckets
@@ -55,19 +71,24 @@ impl Bucket {
 
         let buckets = bucket_dir
             .filter(|entry| entry.as_ref().is_ok_and(|entry| entry.path().is_dir()))
-            .map(|entry| {
-                let name = {
-                    let name = entry?.file_name();
-
-                    name.to_string_lossy().to_string()
-                };
-
-                Ok::<Bucket, std::io::Error>(Self { name })
-            });
+            .map(|entry| Ok::<Bucket, std::io::Error>(Self::new(entry?.path())));
 
         let buckets = buckets.collect::<Result<Vec<_>, _>>()?;
 
         Ok(buckets)
+    }
+
+    /// List all packages contained within this bucket
+    ///
+    /// # Errors
+    /// - The bucket is invalid
+    /// - The package has an invalid path or invalid contents
+    /// - See more at [`packages::PackageError`]
+    pub fn list_packages(&self) -> packages::Result<Vec<Manifest>> {
+        let dir = std::fs::read_dir(self.path().join("bucket"))?;
+
+        dir.map(|manifest| Manifest::from_path(manifest?.path()))
+            .collect()
     }
 
     /// Gets the manifest that represents the given package name
