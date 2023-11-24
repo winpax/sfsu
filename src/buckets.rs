@@ -1,5 +1,7 @@
 use std::path::{Path, PathBuf};
 
+use git2::Repository;
+
 use crate::{
     get_scoop_path,
     packages::{self, CreateManifest, Manifest},
@@ -7,6 +9,7 @@ use crate::{
 
 pub struct Bucket {
     bucket_path: PathBuf,
+    repo: Option<Repository>,
 }
 
 impl Bucket {
@@ -18,8 +21,10 @@ impl Bucket {
     /// Open the given path as a bucket
     pub fn open(path: impl AsRef<Path>) -> Self {
         // TODO: Verify that the bucket exists and is valid
+        let repo = Repository::open(path.as_ref());
         Self {
             bucket_path: path.as_ref().to_path_buf(),
+            repo,
         }
     }
 
