@@ -1,4 +1,4 @@
-use std::{fs::File, io::Read, path::Path};
+use std::{fs::File, io::Read, path::Path, str::FromStr};
 
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use regex::Regex;
@@ -96,31 +96,8 @@ impl InstallManifest {
     pub fn list_all() -> Result<Vec<Self>> {
         crate::list_scoop_apps()?
             .par_iter()
-            .map(Self::from_path)
+            .map(|path| Self::from_path(path.join("current/install.json")))
             .collect::<Result<Vec<_>>>()
-    }
-}
-
-/// Check if the manifest path is installed, and optionally confirm the bucket
-///
-/// # Panics
-/// - The file was not valid UTF-8
-pub fn is_installed(manifest_name: impl AsRef<Path>, bucket: Option<impl AsRef<str>>) -> bool {
-    let scoop_path = get_scoop_path();
-    let installed_path = scoop_path
-        .join("apps")
-        .join(manifest_name)
-        .join("current/install.json");
-
-    match InstallManifest::from_path(installed_path) {
-        Ok(manifest) => {
-            if let Some(bucket) = bucket {
-                manifest.get_source() == bucket.as_ref()
-            } else {
-                false
-            }
-        }
-        Err(_) => false,
     }
 }
 
@@ -158,5 +135,35 @@ impl Manifest {
             }
             _ => None,
         }
+    }
+
+    pub fn list_installed() -> Result<Vec<Self>> {
+        crate::list_scoop_apps()?
+            .par_iter()
+            .map(|path| Self::from_path(path.join("current/manifest.json")))
+            .collect::<Result<Vec<_>>>()
+    }
+}
+
+/// Check if the manifest path is installed, and optionally confirm the bucket
+///
+/// # Panics
+/// - The file was not valid UTF-8
+pub fn is_installed(manifest_name: impl AsRef<Path>, bucket: Option<impl AsRef<str>>) -> bool {
+    let scoop_path = get_scoop_path();
+    let installed_path = scoop_path
+        .join("apps")
+        .join(manifest_name)
+        .join("current/install.json");
+
+    match InstallManifest::from_path(installed_path) {
+        Ok(manifest) => {
+            if let Some(bucket) = bucket {
+                manifest.get_source() == bucket.as_ref()
+            } else {
+                false
+            }
+        }
+        Err(_) => false,
     }
 }

@@ -13,15 +13,33 @@ pub struct Args;
 
 impl super::Command for Args {
     fn run(self) -> anyhow::Result<()> {
-        let apps = InstallManifest::list_all()?;
+        let apps = Manifest::list_installed()?;
 
         let buckets = sfsu::buckets::Bucket::list_all()?;
 
-        let apps = buckets
-            .into_par_iter()
-            .map(|bucket| for app in install_manifests {})
-            .collect::<Result<Vec<_>, _>>()?;
+        let mut outdated: Vec<OutdatedPackage> = vec![];
+
+        for app in &apps {
+            for bucket in &buckets {
+                if let Ok(manifest) = bucket.get_manifest(&app.name) {
+                    if manifest.version != app.version {
+                        outdated.push(OutdatedPackage {
+                            name: app.name.clone(),
+                            current: app.version.clone(),
+                            available: manifest.version.clone(),
+                        });
+                    }
+                }
+            }
+        }
 
         todo!()
     }
+}
+
+#[derive(Debug, Clone)]
+pub struct OutdatedPackage {
+    name: String,
+    current: String,
+    available: String,
 }
