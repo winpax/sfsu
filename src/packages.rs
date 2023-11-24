@@ -1,4 +1,4 @@
-use std::{fs::File, io::Read, path::Path, str::FromStr};
+use std::{fs::File, io::Read, path::Path};
 
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use regex::Regex;
@@ -93,6 +93,11 @@ impl CreateManifest for InstallManifest {
 }
 
 impl InstallManifest {
+    /// List all install manifests
+    ///
+    /// # Errors
+    /// - Invalid install manifest
+    /// - Reading directories fails
     pub fn list_all() -> Result<Vec<Self>> {
         crate::list_scoop_apps()?
             .par_iter()
@@ -105,7 +110,7 @@ impl Manifest {
     /// Gets the manifest from a bucket and manifest name
     ///
     /// # Errors
-    /// If the manifest doesn't exist or bucket is invalid
+    /// - If the manifest doesn't exist or bucket is invalid
     pub fn from_reference((bucket, name): (String, String)) -> Result<Self> {
         Bucket::new(bucket).get_manifest(name)
     }
@@ -137,6 +142,14 @@ impl Manifest {
         }
     }
 
+    /// List all installed app manifests
+    ///
+    /// # Errors
+    /// - Invalid install manifest
+    /// - Reading directories fails
+    ///
+    /// # Panics
+    /// - If the file name is invalid
     pub fn list_installed() -> Result<Vec<Self>> {
         crate::list_scoop_apps()?
             .par_iter()

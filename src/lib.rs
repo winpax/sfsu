@@ -47,15 +47,18 @@ pub fn get_scoop_path() -> PathBuf {
     }
 }
 
+/// List all scoop apps and return their paths
+///
+/// # Errors
+/// - Reading dir fails
 pub fn list_scoop_apps() -> std::io::Result<Vec<PathBuf>> {
     let scoop_apps_path = get_scoop_path().join("apps");
 
     let read = scoop_apps_path.read_dir()?.collect::<Result<Vec<_>, _>>()?;
 
-    Ok(read
-        .par_iter()
+    read.par_iter()
         // We cannot search the scoop app as it is built in and hence doesn't contain any manifest
         .filter(|package| package.path().iter().last() != Some(OsStr::new("scoop")))
         .map(|dir| dunce::realpath(dir.path()))
-        .collect::<Result<_, _>>()?)
+        .collect::<Result<_, _>>()
 }
