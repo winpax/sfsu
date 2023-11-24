@@ -140,7 +140,13 @@ impl Manifest {
     pub fn list_installed() -> Result<Vec<Self>> {
         crate::list_scoop_apps()?
             .par_iter()
-            .map(|path| Self::from_path(path.join("current/manifest.json")))
+            .map(|path| {
+                Self::from_path(path.join("current/manifest.json")).map(|mut manifest| {
+                    manifest.name = path.file_name().unwrap().to_str().unwrap().to_string();
+
+                    manifest
+                })
+            })
             .collect::<Result<Vec<_>>>()
     }
 }
