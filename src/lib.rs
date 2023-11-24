@@ -1,6 +1,8 @@
 #![warn(clippy::all, clippy::pedantic, rust_2018_idioms)]
 
-use std::path::PathBuf;
+use std::{ffi::OsStr, path::PathBuf};
+
+use rayon::prelude::*;
 
 pub mod buckets;
 pub mod config;
@@ -43,4 +45,17 @@ pub fn get_scoop_path() -> PathBuf {
     } else {
         panic!("Scoop path does not exist");
     }
+}
+
+pub fn list_scoop_apps() -> anyhow::Result<Vec<PathBuf>> {
+    let scoop_apps_path = get_scoop_path().join("apps");
+
+    let read = scoop_apps_path.read_dir()?.collect::<Result<Vec<_>, _>>()?;
+
+    Ok(read
+        .par_iter()
+        // We cannot search the scoop app as it is built in and hence doesn't contain any manifest
+        .filter(|package| package.path().iter().last() != Some(OsStr::new("scoop")))
+        .map(|dir| dunce::realpath(dir.path()))
+        .collect::<Result<_, _>>()?)
 }

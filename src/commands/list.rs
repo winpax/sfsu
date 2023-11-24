@@ -1,4 +1,4 @@
-use std::{ffi::OsStr, fs::DirEntry, time::UNIX_EPOCH};
+use std::{path::Path, time::UNIX_EPOCH};
 
 use rayon::prelude::*;
 
@@ -9,7 +9,6 @@ use quork::traits::truthy::ContainsTruth;
 use serde::{Deserialize, Serialize};
 
 use sfsu::{
-    get_scoop_path,
     output::structured::Structured,
     packages::{CreateManifest, InstallManifest, Manifest},
 };
@@ -44,14 +43,10 @@ pub struct Args {
 
 impl super::Command for Args {
     fn run(self) -> Result<(), anyhow::Error> {
-        let scoop_apps_path = get_scoop_path().join("apps");
+        let apps = sfsu::list_scoop_apps()?;
 
-        let read = scoop_apps_path.read_dir()?.collect::<Result<Vec<_>, _>>()?;
-
-        let outputs = read
+        let outputs = apps
             .par_iter()
-            // We cannot search the scoop app as it is built in and hence doesn't contain any manifest
-            .filter(|package| package.path().iter().last() != Some(OsStr::new("scoop")))
             .map(parse_package)
             .filter(|package| {
                 if let Ok(pkg) = package {
@@ -90,8 +85,8 @@ impl super::Command for Args {
     }
 }
 
-fn parse_package(package: &DirEntry) -> anyhow::Result<OutputPackage> {
-    let path = dunce::realpath(package.path())?;
+fn parse_package(path: impl AsRef<Path>) -> anyhow::Result<OutputPackage> {
+    let path = path.as_ref();
 
     let package_name = path
         .components()
