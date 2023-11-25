@@ -1,11 +1,19 @@
 use std::path::{Path, PathBuf};
 
-use git2::Repository;
+use git2::{Remote, Repository};
 
 use crate::{
     get_scoop_path,
     packages::{self, CreateManifest, Manifest},
 };
+
+#[derive(Debug, thiserror::Error)]
+pub enum BucketError {
+    #[error("Interacting with repo: {0}")]
+    RepoError(#[from] RepoError),
+}
+
+pub type Result<T> = std::result::Result<T, BucketError>;
 
 #[derive(Debug, Clone)]
 pub struct Bucket {
@@ -31,8 +39,8 @@ impl Bucket {
     /// # Errors
     /// - The bucket could not be opened as a repository
     #[inline]
-    pub fn open_repo(&self) -> RepoResult<BucketRepo> {
-        BucketRepo::from_bucket(self)
+    pub fn open_repo(&self) -> Result<BucketRepo> {
+        Ok(BucketRepo::from_bucket(self)?)
     }
 
     /// Gets the bucket's name (the final component of the path)
@@ -73,7 +81,7 @@ impl Bucket {
             .filter(|entry| entry.as_ref().is_ok_and(|entry| entry.path().is_dir()))
             .map(|entry| Ok::<Bucket, std::io::Error>(Self::new(entry?.path())));
 
-        let buckets = buckets.collect::<Result<Vec<_>, _>>()?;
+        let buckets = buckets.collect::<std::result::Result<Vec<_>, _>>()?;
 
         Ok(buckets)
     }
@@ -136,8 +144,23 @@ impl BucketRepo {
         Ok(Self { bucket, repo })
     }
 
+    /// Get the current remote branch
+    ///
+    /// # Errors
+    /// - Missing head
+    ///
+    /// # Panics
+    /// - Non-utf8 branch name
+    pub fn main_remote(&self) -> RepoResult<Remote<'_>> {
+        Ok(self
+            .repo
+            .find_remote(self.repo.head()?.name().expect("utf8 branch name"))?)
+    }
+
     /// Checks if the bucket is outdated
     pub fn is_outdated(&self) -> RepoResult<bool> {
+        // let main_remote = self.main_remote()?;
+        // self.repo.diff_tree_to_workdir(main_remote, None);
         unimplemented!()
     }
 
