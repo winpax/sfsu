@@ -1,4 +1,7 @@
-use std::path::{Path, PathBuf};
+use std::{
+    borrow::Cow,
+    path::{Path, PathBuf},
+};
 
 use git2::{Remote, Repository};
 
@@ -48,11 +51,11 @@ impl Bucket {
     /// # Panics
     /// If the `file_name` function returns `None`, or a non-utf8 string.
     #[must_use]
-    pub fn name(&self) -> &str {
+    pub fn name(&self) -> Cow<'_, str> {
         self.path()
             .file_name()
-            .and_then(std::ffi::OsStr::to_str)
-            .expect("bucket to have a valid utf8 name")
+            .map(|f| f.to_string_lossy())
+            .expect("File to have file name")
     }
 
     #[must_use]
