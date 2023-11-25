@@ -12,7 +12,7 @@ codegen-units = 1
 
 [dependencies]
 anyhow = "1.0"
-chrono = { version = "0.4.20", features = [
+chrono = { version = "0.4.31", features = [
     "serde",
     "clock",
     "std",
