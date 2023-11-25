@@ -43,7 +43,7 @@ impl Bucket {
     pub fn name(&self) -> &str {
         self.path()
             .file_name()
-            .and_then(|name| name.to_str())
+            .and_then(std::ffi::OsStr::to_str)
             .expect("bucket to have a valid utf8 name")
     }
 
