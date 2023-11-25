@@ -126,6 +126,8 @@ pub enum RepoError {
 
 pub type RepoResult<T> = std::result::Result<T, RepoError>;
 
+mod git;
+
 pub struct BucketRepo {
     bucket: Bucket,
     repo: Repository,
