@@ -1,10 +1,21 @@
 use std::path::{Path, PathBuf};
 
+use git2::{Remote, Repository};
+
 use crate::{
     get_scoop_path,
     packages::{self, CreateManifest, Manifest},
 };
 
+#[derive(Debug, thiserror::Error)]
+pub enum BucketError {
+    #[error("Interacting with repo: {0}")]
+    RepoError(#[from] RepoError),
+}
+
+pub type Result<T> = std::result::Result<T, BucketError>;
+
+#[derive(Debug, Clone)]
 pub struct Bucket {
     bucket_path: PathBuf,
 }
@@ -12,9 +23,7 @@ pub struct Bucket {
 impl Bucket {
     #[must_use]
     pub fn new(name: impl AsRef<Path>) -> Self {
-        Self {
-            bucket_path: Self::buckets_path().join(name),
-        }
+        Self::open(Self::buckets_path().join(name))
     }
 
     /// Open the given path as a bucket
@@ -25,14 +34,13 @@ impl Bucket {
         }
     }
 
-    /// Update the bucket by pulling any changes
-    pub fn update(&self) {
-        unimplemented!()
-    }
-
-    /// Get the remote url of the bucket
-    pub fn get_remote(&self) {
-        unimplemented!()
+    /// Open the repository from the bucket path
+    ///
+    /// # Errors
+    /// - The bucket could not be opened as a repository
+    #[inline]
+    pub fn open_repo(&self) -> Result<BucketRepo> {
+        Ok(BucketRepo::from_bucket(self)?)
     }
 
     /// Gets the bucket's name (the final component of the path)
@@ -43,7 +51,7 @@ impl Bucket {
     pub fn name(&self) -> &str {
         self.path()
             .file_name()
-            .and_then(|name| name.to_str())
+            .and_then(std::ffi::OsStr::to_str)
             .expect("bucket to have a valid utf8 name")
     }
 
@@ -73,7 +81,7 @@ impl Bucket {
             .filter(|entry| entry.as_ref().is_ok_and(|entry| entry.path().is_dir()))
             .map(|entry| Ok::<Bucket, std::io::Error>(Self::new(entry?.path())));
 
-        let buckets = buckets.collect::<Result<Vec<_>, _>>()?;
+        let buckets = buckets.collect::<std::result::Result<Vec<_>, _>>()?;
 
         Ok(buckets)
     }
@@ -104,5 +112,65 @@ impl Bucket {
         let manifest_path = manifests_path.join(file_name);
 
         Manifest::from_path(manifest_path)
+    }
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum RepoError {
+    #[error("Could not find the active branch (HEAD)")]
+    NoActiveBranch,
+
+    #[error("Git error: {0}")]
+    Git2(#[from] git2::Error),
+}
+
+pub type RepoResult<T> = std::result::Result<T, RepoError>;
+
+pub struct BucketRepo {
+    bucket: Bucket,
+    repo: Repository,
+}
+
+impl BucketRepo {
+    /// Open the repository from the bucket path
+    ///
+    /// # Errors
+    /// - The bucket could not be opened as a repository
+    pub fn from_bucket(bucket: &Bucket) -> RepoResult<Self> {
+        let bucket = bucket.clone();
+
+        let repo = Repository::open(bucket.path())?;
+
+        Ok(Self { bucket, repo })
+    }
+
+    /// Get the current remote branch
+    ///
+    /// # Errors
+    /// - Missing head
+    ///
+    /// # Panics
+    /// - Non-utf8 branch name
+    pub fn main_remote(&self) -> RepoResult<Remote<'_>> {
+        Ok(self
+            .repo
+            .find_remote(self.repo.head()?.name().expect("utf8 branch name"))?)
+    }
+
+    /// Checks if the bucket is outdated
+    pub fn is_outdated(&self) -> RepoResult<bool> {
+        // let main_remote = self.main_remote()?;
+        // self.repo.diff_tree_to_workdir(main_remote, None);
+        unimplemented!()
+    }
+
+    /// Update the bucket by pulling any changes
+    pub fn update(&self) {
+        unimplemented!()
+    }
+
+    /// Get the remote url of the bucket
+    pub fn get_remote(&self) {
+        unimplemented!()
     }
 }
