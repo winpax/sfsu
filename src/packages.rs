@@ -16,6 +16,10 @@ use manifest::StringOrArrayOfStringsOrAnArrayOfArrayOfStrings;
 
 #[derive(Debug, thiserror::Error)]
 pub enum PackageError {
+    #[error("Invalid utf8 found. This is not supported by sfsu")]
+    NonUtf8,
+    #[error("Missing file name. The path terminated in '..'")]
+    MissingFileName,
     #[error("{0}")]
     IO(#[from] std::io::Error),
     #[error("Could not parse manifest \"{0}\". Failed with error: {1}")]
@@ -69,9 +73,8 @@ impl CreateManifest for Manifest {
         self.name = path
             .with_extension("")
             .file_name()
-            .expect("manifest path to have file name")
-            .to_str()
-            .expect("manifest file name to be valid utf8")
+            .map(|f| f.to_string_lossy())
+            .expect("File to have file name")
             .to_string();
 
         self
@@ -83,9 +86,8 @@ impl CreateManifest for InstallManifest {
         self.name = path
             .with_extension("")
             .file_name()
-            .expect("manifest path to have file name")
-            .to_str()
-            .expect("manifest file name to be valid utf8")
+            .map(|f| f.to_string_lossy())
+            .expect("File to have name")
             .to_string();
 
         self
@@ -154,10 +156,13 @@ impl Manifest {
         crate::list_scoop_apps()?
             .par_iter()
             .map(|path| {
-                Self::from_path(path.join("current/manifest.json")).map(|mut manifest| {
-                    manifest.name = path.file_name().unwrap().to_str().unwrap().to_string();
+                Self::from_path(path.join("current/manifest.json")).and_then(|mut manifest| {
+                    manifest.name = path
+                        .file_name()
+                        .map(|f| f.to_string_lossy().to_string())
+                        .ok_or(PackageError::MissingFileName)?;
 
-                    manifest
+                    Ok(manifest)
                 })
             })
             .collect::<Result<Vec<_>>>()

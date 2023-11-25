@@ -88,11 +88,9 @@ fn parse_package(path: impl AsRef<Path>) -> anyhow::Result<OutputPackage> {
     let path = path.as_ref();
 
     let package_name = path
-        .components()
-        .last()
-        .unwrap()
-        .as_os_str()
-        .to_string_lossy();
+        .file_name()
+        .map(|f| f.to_string_lossy())
+        .ok_or(anyhow::anyhow!("Missing or invalid file name"))?;
 
     let naive_time = {
         let updated = {
