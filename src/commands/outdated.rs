@@ -1,7 +1,10 @@
 use clap::Parser;
 use rayon::prelude::*;
 use serde::Serialize;
-use sfsu::{output::structured::Structured, packages::Manifest};
+use sfsu::{
+    output::structured::Structured,
+    packages::{Manifest, Result as PackageResult},
+};
 
 #[derive(Debug, Clone, Parser)]
 /// List outdated packages
@@ -9,7 +12,10 @@ pub struct Args;
 
 impl super::Command for Args {
     fn run(self) -> anyhow::Result<()> {
-        let apps = Manifest::list_installed()?;
+        let apps = Manifest::list_installed()?
+            .into_iter()
+            .filter(|app| app.is_ok())
+            .collect::<PackageResult<Vec<_>>>()?;
 
         let buckets = sfsu::buckets::Bucket::list_all()?;
 
