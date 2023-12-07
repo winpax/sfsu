@@ -16,6 +16,7 @@ impl super::Command for Args {
         let outdated: Vec<Outdated> = apps
             .par_iter()
             .flat_map(|app| {
+                // TODO: Add the option to check all buckets and find the highest version (will require semver to order versions)
                 buckets
                     .par_iter()
                     .filter_map(|bucket| match bucket.get_manifest(&app.name) {
