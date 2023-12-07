@@ -14,14 +14,15 @@ impl super::Command for Args {
     fn run(self) -> anyhow::Result<()> {
         let apps = Manifest::list_installed()?
             .into_iter()
-            .filter(|app| app.is_ok())
+            .filter(std::result::Result::is_ok)
             .collect::<PackageResult<Vec<_>>>()?;
 
         let buckets = sfsu::buckets::Bucket::list_all()?;
 
-        let outdated: Vec<Outdated> = apps
+        let mut outdated: Vec<Outdated> = apps
             .par_iter()
             .flat_map(|app| {
+                // TODO: Test performance of deduplication vs a for loop
                 buckets
                     .par_iter()
                     .filter_map(|bucket| match bucket.get_manifest(&app.name) {
@@ -38,6 +39,7 @@ impl super::Command for Args {
         if outdated.is_empty() {
             println!("No outdated packages.");
         } else {
+            outdated.dedup();
             let values = outdated
                 .par_iter()
                 .map(serde_json::to_value)
@@ -53,7 +55,7 @@ impl super::Command for Args {
     }
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "PascalCase")]
 pub struct Outdated {
     name: String,
