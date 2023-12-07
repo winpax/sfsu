@@ -21,6 +21,7 @@ impl super::Command for Args {
         let mut outdated: Vec<Outdated> = apps
             .par_iter()
             .flat_map(|app| {
+                // TODO: Add the option to check all buckets and find the highest version (will require semver to order versions)
                 let bucket = Bucket::new(&app.bucket);
                 match bucket.get_manifest(&app.name) {
                     Ok(manifest) if manifest.version != app.version => Some(Outdated {
