@@ -152,8 +152,8 @@ impl Manifest {
     ///
     /// # Panics
     /// - If the file name is invalid
-    pub fn list_installed() -> Result<Vec<Self>> {
-        crate::list_scoop_apps()?
+    pub fn list_installed() -> Result<Vec<Result<Self>>> {
+        Ok(crate::list_scoop_apps()?
             .par_iter()
             .map(|path| {
                 Self::from_path(path.join("current/manifest.json")).and_then(|mut manifest| {
@@ -165,7 +165,7 @@ impl Manifest {
                     Ok(manifest)
                 })
             })
-            .collect::<Result<Vec<_>>>()
+            .collect::<Vec<_>>())
     }
 }
 
