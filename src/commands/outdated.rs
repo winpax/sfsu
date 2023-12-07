@@ -2,6 +2,7 @@ use clap::Parser;
 use rayon::prelude::*;
 use serde::Serialize;
 use sfsu::{
+    buckets::Bucket,
     output::structured::Structured,
     packages::{Manifest, Result as PackageResult},
 };
@@ -17,22 +18,18 @@ impl super::Command for Args {
             .filter(std::result::Result::is_ok)
             .collect::<PackageResult<Vec<_>>>()?;
 
-        let buckets = sfsu::buckets::Bucket::list_all()?;
-
         let mut outdated: Vec<Outdated> = apps
             .par_iter()
             .flat_map(|app| {
-                // TODO: Test performance of deduplication vs a for loop
-                buckets
-                    .par_iter()
-                    .filter_map(|bucket| match bucket.get_manifest(&app.name) {
-                        Ok(manifest) if manifest.version != app.version => Some(Outdated {
-                            name: app.name.clone(),
-                            current: app.version.clone(),
-                            available: manifest.version.clone(),
-                        }),
-                        _ => None,
-                    })
+                let bucket = Bucket::new(&app.bucket);
+                match bucket.get_manifest(&app.name) {
+                    Ok(manifest) if manifest.version != app.version => Some(Outdated {
+                        name: app.name.clone(),
+                        current: app.version.clone(),
+                        available: manifest.version.clone(),
+                    }),
+                    _ => None,
+                }
             })
             .collect();
 
