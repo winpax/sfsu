@@ -41,13 +41,6 @@ fn criterion_benchmark(c: &mut Criterion) {
                 BatchSize::SmallInput,
             )
         }
-        // b.iter_batched(|| {
-        //     black_box(Bucket::list_all().unwrap())
-        //         .par_iter()
-        //         .filter_map(|bucket| bucket.matches(&pattern, black_box(SearchMode::Name)))
-        //         .collect::<Result<Vec<_>, _>>()
-        //         .unwrap();
-        // })
     });
 
     c.bench_function("listing packages unchecked", |b| {
