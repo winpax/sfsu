@@ -15,7 +15,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         b.iter(|| {
             black_box(Bucket::list_all().unwrap())
                 .par_iter()
-                .filter_map(|bucket| bucket.matches(&pattern, SearchMode::Name))
+                .filter_map(|bucket| bucket.matches(&pattern, black_box(SearchMode::Name)))
                 .collect::<Result<Vec<_>, _>>()
                 .unwrap();
         })
