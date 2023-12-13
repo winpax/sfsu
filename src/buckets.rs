@@ -1,11 +1,9 @@
 use std::{
     borrow::Cow,
-    io::Error,
     path::{Path, PathBuf},
 };
 
 use git2::{Remote, Repository};
-use itertools::Itertools;
 use rayon::prelude::*;
 use regex::Regex;
 
