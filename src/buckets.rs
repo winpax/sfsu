@@ -4,16 +4,22 @@ use std::{
 };
 
 use git2::{Remote, Repository};
+use rayon::prelude::*;
+use regex::Regex;
 
 use crate::{
     get_scoop_path,
-    packages::{self, CreateManifest, Manifest},
+    output::sectioned::{Children, Section, Text},
+    packages::{self, CreateManifest, Manifest, SearchMode},
 };
 
 #[derive(Debug, thiserror::Error)]
 pub enum BucketError {
     #[error("Interacting with repo: {0}")]
     RepoError(#[from] RepoError),
+
+    #[error("The bucket \"{0}\" does not exist")]
+    InvalidBucket(PathBuf),
 }
 
 pub type Result<T> = std::result::Result<T, BucketError>;
@@ -24,16 +30,26 @@ pub struct Bucket {
 }
 
 impl Bucket {
-    #[must_use]
-    pub fn new(name: impl AsRef<Path>) -> Self {
+    /// Open a bucket from its name
+    ///
+    /// # Errors
+    /// - Bucket does not exist
+    pub fn new(name: impl AsRef<Path>) -> Result<Self> {
         Self::open(Self::buckets_path().join(name))
     }
 
-    /// Open the given path as a bucket
-    pub fn open(path: impl AsRef<Path>) -> Self {
+    /// Open given path as a bucket
+    ///
+    /// # Errors
+    /// - Bucket does not exist
+    pub fn open(path: impl AsRef<Path>) -> Result<Self> {
         // TODO: Verify that the bucket exists and is valid
-        Self {
-            bucket_path: path.as_ref().to_path_buf(),
+        let bucket_path = path.as_ref().to_path_buf();
+
+        if bucket_path.exists() {
+            Ok(Self { bucket_path })
+        } else {
+            Err(BucketError::InvalidBucket(path.as_ref().to_path_buf()))
         }
     }
 
@@ -75,6 +91,9 @@ impl Bucket {
     ///
     /// # Errors
     /// - Was unable to read the bucket directory
+    ///
+    /// # Panics
+    /// - Any listed bucket is invalid
     pub fn list_all() -> std::io::Result<Vec<Bucket>> {
         let buckets_path = Self::buckets_path();
 
@@ -82,7 +101,12 @@ impl Bucket {
 
         let buckets = bucket_dir
             .filter(|entry| entry.as_ref().is_ok_and(|entry| entry.path().is_dir()))
-            .map(|entry| Ok::<Bucket, std::io::Error>(Self::new(entry?.path())));
+            .map(|entry| {
+                Ok::<Bucket, std::io::Error>(
+                    Self::new(entry?.path())
+                        .expect("somehow the bucket we found that definitely exists doesn't exist"),
+                )
+            });
 
         let buckets = buckets.collect::<std::result::Result<Vec<_>, _>>()?;
 
@@ -93,13 +117,54 @@ impl Bucket {
     ///
     /// # Errors
     /// - The bucket is invalid
-    /// - The package has an invalid path or invalid contents
+    /// - Any package has an invalid path or invalid contents
     /// - See more at [`packages::PackageError`]
     pub fn list_packages(&self) -> packages::Result<Vec<Manifest>> {
         let dir = std::fs::read_dir(self.path().join("bucket"))?;
 
         dir.map(|manifest| Manifest::from_path(manifest?.path()))
             .collect()
+    }
+
+    /// List all packages contained within this bucket, ignoring errors
+    ///
+    /// # Errors
+    /// - The bucket is invalid
+    /// - See more at [`packages::PackageError`]
+    pub fn list_packages_unchecked(&self) -> packages::Result<Vec<Manifest>> {
+        let dir = std::fs::read_dir(self.path().join("bucket"))?;
+
+        Ok(dir
+            .map(|manifest| Manifest::from_path(manifest?.path()))
+            .filter_map(|result| match result {
+                Ok(v) => Some(v),
+                Err(_) => None,
+            })
+            .collect())
+    }
+
+    /// List all packages contained within this bucket, returning their names
+    ///
+    /// # Errors
+    /// - The bucket is invalid
+    /// - See more at [`packages::PackageError`]
+    pub fn list_package_names(&self) -> packages::Result<Vec<String>> {
+        let dir = std::fs::read_dir(self.path().join("bucket"))?;
+
+        Ok(dir
+            .map(|entry| {
+                entry.map(|file| {
+                    file.path()
+                        .with_extension("")
+                        .file_name()
+                        .map(|file_name| file_name.to_string_lossy().to_string())
+                })
+            })
+            .filter_map(|file_name| match file_name {
+                Ok(Some(file_name)) => Some(file_name),
+                _ => None,
+            })
+            .collect())
     }
 
     /// Gets the manifest that represents the given package name
@@ -115,6 +180,51 @@ impl Bucket {
         let manifest_path = manifests_path.join(file_name);
 
         Manifest::from_path(manifest_path)
+    }
+
+    #[must_use]
+    pub fn matches(
+        &self,
+        search_regex: &Regex,
+        search_mode: SearchMode,
+    ) -> Option<Result<Section<Section<Text<String>>>>> {
+        // Ignore loose files in the buckets dir
+        if !self.path().is_dir() {
+            // return None;
+        }
+
+        let bucket_contents = self.list_package_names().unwrap();
+
+        let matches = bucket_contents
+            .par_iter()
+            .filter_map(|manifest_name| {
+                // Ignore non-matching manifests
+                if search_mode.match_names()
+                    && !search_mode.match_binaries()
+                    && !search_regex.is_match(manifest_name)
+                {
+                    return None;
+                }
+
+                // TODO: Remove this panic
+                match self.get_manifest(manifest_name) {
+                    Ok(manifest) => {
+                        manifest.parse_output(self.name(), false, search_regex, search_mode)
+                    }
+                    Err(_) => None,
+                }
+            })
+            .collect::<Vec<_>>();
+
+        if matches.is_empty() {
+            None
+        } else {
+            Some(Ok::<_, BucketError>(
+                Section::new(Children::Multiple(matches))
+                    // TODO: Remove quotes and bold bucket name
+                    .with_title(format!("'{}' bucket:", self.name())),
+            ))
+        }
     }
 }
 
