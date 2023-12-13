@@ -63,9 +63,17 @@ impl super::Command for Args {
             Shell::Nu => {
                 for command in enabled_hooks {
                     println!(
-                        "extern-wrapped \"scoop {command}\" [...rest] {{ sfsu {command} $rest }} "
+                        "def --wrapped \"scoop {command}\" [...rest] {{ sfsu {command} $rest }} "
                     );
                 }
+
+                println!(
+                        "# To add this to your config, run `sfsu hook --shell {} | save ~/.cache/sfsu.nu`",
+                        self.shell
+                    );
+
+                println!("# And then in your main config add the following line to the end:");
+                println!("#\tsource ~/.cache/sfsu.nu");
             }
         }
 
