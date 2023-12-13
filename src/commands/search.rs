@@ -68,31 +68,7 @@ impl super::Command for Args {
 
         let mut matches = matching_buckets
             .par_iter()
-            .filter_map(|bucket| {
-                // Ignore loose files in the buckets dir
-                if !bucket.path().is_dir() {
-                    return None;
-                }
-
-                let bucket_contents = bucket.list_packages_unchecked().unwrap();
-
-                let matches = bucket_contents
-                    .par_iter()
-                    .filter_map(|file| {
-                        file.parse_output(bucket.name(), self.installed, &pattern, self.mode)
-                    })
-                    .collect::<Vec<_>>();
-
-                if matches.is_empty() {
-                    None
-                } else {
-                    Some(Ok::<_, Error>(
-                        Section::new(Children::Multiple(matches))
-                            // TODO: Remove quotes and bold bucket name
-                            .with_title(format!("'{}' bucket:", bucket.name())),
-                    ))
-                }
-            })
+            .filter_map(|bucket| bucket.matches(&pattern, self.mode))
             .collect::<Result<Vec<_>, _>>()?;
 
         matches.par_sort_by_key(|x| x.title.clone());

@@ -1,13 +1,17 @@
 use std::{
     borrow::Cow,
+    io::Error,
     path::{Path, PathBuf},
 };
 
 use git2::{Remote, Repository};
+use rayon::prelude::*;
+use regex::Regex;
 
 use crate::{
     get_scoop_path,
-    packages::{self, CreateManifest, Manifest},
+    output::sectioned::{Children, Section, Text},
+    packages::{self, CreateManifest, Manifest, SearchMode},
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -153,6 +157,37 @@ impl Bucket {
         let manifest_path = manifests_path.join(file_name);
 
         Manifest::from_path(manifest_path)
+    }
+
+    #[must_use]
+    pub fn matches(
+        &self,
+        search_regex: &Regex,
+        search_mode: SearchMode,
+    ) -> Option<Result<Section<Section<Text<String>>>>> {
+        // Ignore loose files in the buckets dir
+        if !self.path().is_dir() {
+            // return None;
+        }
+
+        let bucket_contents = self.list_packages_unchecked().unwrap();
+
+        let matches = bucket_contents
+            .par_iter()
+            .filter_map(|manifest| {
+                manifest.parse_output(self.name(), false, search_regex, search_mode)
+            })
+            .collect::<Vec<_>>();
+
+        if matches.is_empty() {
+            None
+        } else {
+            Some(Ok::<_, BucketError>(
+                Section::new(Children::Multiple(matches))
+                    // TODO: Remove quotes and bold bucket name
+                    .with_title(format!("'{}' bucket:", self.name())),
+            ))
+        }
     }
 }
 

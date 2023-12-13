@@ -13,7 +13,7 @@ use sfsu::{
 fn criterion_benchmark(c: &mut Criterion) {
     // let all_buckets = Bucket::list_all().unwrap();
 
-    let search_regex = Regex::new("(?i)google").unwrap();
+    let pattern = Regex::new("(?i)google").unwrap();
 
     c.bench_function("list buckets", |b| b.iter(|| Bucket::list_all().unwrap()));
 
@@ -21,36 +21,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         b.iter(|| {
             black_box(Bucket::list_all().unwrap())
                 .par_iter()
-                .filter_map(|bucket| {
-                    // Ignore loose files in the buckets dir
-                    if !bucket.path().is_dir() {
-                        return None;
-                    }
-
-                    let bucket_contents = bucket.list_packages_unchecked().unwrap();
-
-                    let matches = bucket_contents
-                        .par_iter()
-                        .filter_map(|manifest| {
-                            manifest.parse_output(
-                                bucket.name(),
-                                false,
-                                &search_regex,
-                                SearchMode::Name,
-                            )
-                        })
-                        .collect::<Vec<_>>();
-
-                    if matches.is_empty() {
-                        None
-                    } else {
-                        Some(Ok::<_, Error>(
-                            Section::new(Children::Multiple(matches))
-                                // TODO: Remove quotes and bold bucket name
-                                .with_title(format!("'{}' bucket:", bucket.name())),
-                        ))
-                    }
-                })
+                .filter_map(|bucket| bucket.matches(&pattern, SearchMode::Name))
                 .collect::<Result<Vec<_>, _>>()
                 .unwrap();
         })
