@@ -1,8 +1,4 @@
-use std::{
-    ffi::OsStr,
-    fs::{read_dir, DirEntry},
-    io::Error,
-};
+use std::io::Error;
 
 use colored::Colorize;
 use itertools::Itertools;
@@ -17,7 +13,7 @@ use sfsu::{
     packages::manifest::StringOrArrayOfStringsOrAnArrayOfArrayOfStrings,
 };
 
-use sfsu::packages::{is_installed, CreateManifest, Manifest};
+use sfsu::packages::{is_installed, Manifest};
 use strum::Display;
 
 #[derive(Debug, Default, Copy, Clone, ValueEnum, Display, Parser)]
@@ -116,93 +112,78 @@ impl MatchCriteria {
 }
 
 fn parse_output(
-    file: &DirEntry,
+    manifest: &Manifest,
     bucket: impl AsRef<str>,
     installed_only: bool,
     pattern: &Regex,
     mode: SearchMode,
 ) -> Option<Section<Text<String>>> {
-    let path = file.path();
+    // TODO: Better display of output
 
-    if !matches!(path.extension().and_then(OsStr::to_str), Some("json")) {
+    // This may be a bit of a hack, but it works
+
+    let match_output = MatchCriteria::matches(
+        &manifest.name,
+        if mode.match_binaries() {
+            Some(manifest)
+        } else {
+            None
+        },
+        mode,
+        pattern,
+    );
+
+    if !match_output.name && match_output.bins.is_none() {
         return None;
     }
 
-    // TODO: Better display of output
-    match Manifest::from_path(&path) {
-        Ok(manifest) => {
-            // This may be a bit of a hack, but it works
-            let file_name = path
-                .with_extension("")
-                .file_name()
-                .map(|osstr| osstr.to_string_lossy().to_string());
-            let package_name = file_name.unwrap();
+    // TODO: Refactor to remove pointless binary matching on name-only search mode
+    // TODO: Fix error parsing manifests
 
-            let match_output = MatchCriteria::matches(
-                &package_name,
-                if mode.match_binaries() {
-                    Some(&manifest)
-                } else {
-                    None
-                },
-                mode,
-                pattern,
-            );
-
-            if !match_output.name && match_output.bins.is_none() {
-                return None;
-            }
-
-            // TODO: Refactor to remove pointless binary matching on name-only search mode
-            // TODO: Fix error parsing manifests
-
-            let is_installed = is_installed(&package_name, Some(bucket));
-            if installed_only && !is_installed {
-                return None;
-            }
-
-            let styled_package_name = if package_name == pattern.to_string() {
-                package_name.bold().to_string()
-            } else {
-                package_name
-            };
-
-            let installed_text = if is_installed && !installed_only {
-                "[installed] "
-            } else {
-                ""
-            };
-
-            let title = format!(
-                "{styled_package_name} ({}) {installed_text}",
-                manifest.version
-            );
-
-            let package = if mode.match_binaries() {
-                let bins = if let Some(bins) = match_output.bins {
-                    bins.iter()
-                        .map(|output| {
-                            Text::new(format!(
-                                "{}{}\n",
-                                sfsu::output::sectioned::WHITESPACE,
-                                output.bold()
-                            ))
-                        })
-                        .collect_vec()
-                } else {
-                    vec![]
-                };
-
-                Section::new(Children::Multiple(bins))
-            } else {
-                Section::new(Children::None)
-            }
-            .with_title(title);
-
-            Some(package)
-        }
-        Err(_) => None,
+    let is_installed = is_installed(&manifest.name, Some(bucket));
+    if installed_only && !is_installed {
+        return None;
     }
+
+    let styled_package_name = if manifest.name == pattern.to_string() {
+        manifest.name.bold().to_string()
+    } else {
+        manifest.name.clone()
+    };
+
+    let installed_text = if is_installed && !installed_only {
+        "[installed] "
+    } else {
+        ""
+    };
+
+    let title = format!(
+        "{styled_package_name} ({}) {installed_text}",
+        manifest.version
+    );
+
+    let package = if mode.match_binaries() {
+        let bins = if let Some(bins) = match_output.bins {
+            bins.iter()
+                .map(|output| {
+                    Text::new(format!(
+                        "{}{}\n",
+                        sfsu::output::sectioned::WHITESPACE,
+                        output.bold()
+                    ))
+                })
+                .collect_vec()
+        } else {
+            vec![]
+        };
+
+        Section::new(Children::Multiple(bins))
+    } else {
+        Section::new(Children::None)
+    }
+    .with_title(title);
+
+    Some(package)
 }
 
 impl super::Command for Args {
@@ -241,19 +222,7 @@ impl super::Command for Args {
                     return None;
                 }
 
-                let bucket_path = {
-                    let bk_path = bucket.path().join("bucket");
-
-                    if bk_path.exists() {
-                        bk_path
-                    } else {
-                        bucket.path().to_owned()
-                    }
-                };
-
-                let bucket_contents = read_dir(bucket_path)
-                    .and_then(Iterator::collect::<Result<Vec<_>, _>>)
-                    .unwrap();
+                let bucket_contents = bucket.list_packages().unwrap();
 
                 let matches = bucket_contents
                     .par_iter()
