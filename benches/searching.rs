@@ -24,10 +24,8 @@ fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("parsing output", |b| {
         for bucket in Bucket::list_all().unwrap() {
             b.iter_batched(
-                || bucket.clone(),
-                |ref bucket| {
-                    let bucket_contents = black_box(bucket).list_packages_unchecked().unwrap();
-
+                || bucket.list_packages_unchecked().unwrap(),
+                |ref bucket_contents| {
                     bucket_contents
                         .par_iter()
                         .filter_map(|manifest| {
@@ -50,6 +48,26 @@ fn criterion_benchmark(c: &mut Criterion) {
         //         .collect::<Result<Vec<_>, _>>()
         //         .unwrap();
         // })
+    });
+
+    c.bench_function("listing packages unchecked", |b| {
+        for bucket in Bucket::list_all().unwrap() {
+            b.iter_batched(
+                || bucket.clone(),
+                |ref bucket| bucket.list_packages_unchecked(),
+                BatchSize::SmallInput,
+            )
+        }
+    });
+
+    c.bench_function("listing packages", |b| {
+        for bucket in Bucket::list_all().unwrap() {
+            b.iter_batched(
+                || bucket.clone(),
+                |ref bucket| bucket.list_packages(),
+                BatchSize::SmallInput,
+            )
+        }
     });
 }
 
