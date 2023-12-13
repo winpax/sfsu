@@ -45,10 +45,7 @@ where
     /// - The file was not valid UTF-8
     fn from_path(path: impl AsRef<Path>) -> Result<Self> {
         let path = path.as_ref();
-        let mut file = File::open(path)?;
-        let mut contents = String::new();
-
-        file.read_to_string(&mut contents)?;
+        let contents = std::fs::read_to_string(path)?;
 
         Self::from_str(contents)
             // TODO: Maybe figure out a better approach to this, but it works for now

@@ -74,10 +74,6 @@ impl MatchCriteria {
             bins: None,
         }
     }
-
-    pub fn has_bin(&self) -> bool {
-        self.bins.is_some()
-    }
 }
 
 fn match_criteria(
@@ -184,7 +180,7 @@ fn parse_output(
                 manifest.version
             );
 
-            let package = if match_output.has_bin() {
+            let package = if mode.match_binaries() {
                 let bins = if let Some(bins) = match_output.bins {
                     bins.iter()
                         .map(|output| {
