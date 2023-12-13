@@ -2,7 +2,6 @@ use std::{
     ffi::OsStr,
     fs::{read_dir, DirEntry},
     io::Error,
-    rc::Rc,
 };
 
 use colored::Colorize;
@@ -13,7 +12,7 @@ use clap::{Parser, ValueEnum};
 use regex::Regex;
 
 use sfsu::{
-    buckets::{self, Bucket},
+    buckets::Bucket,
     output::sectioned::{Children, Section, Sections, Text},
     packages::manifest::StringOrArrayOfStringsOrAnArrayOfArrayOfStrings,
 };
@@ -75,45 +74,45 @@ impl MatchCriteria {
             bins: None,
         }
     }
-}
 
-fn match_criteria(
-    file_name: &str,
-    manifest: Option<&Manifest>,
-    mode: SearchMode,
-    pattern: &Regex,
-) -> MatchCriteria {
-    let file_name = file_name.to_string();
+    pub fn matches(
+        file_name: &str,
+        manifest: Option<&Manifest>,
+        mode: SearchMode,
+        pattern: &Regex,
+    ) -> Self {
+        let file_name = file_name.to_string();
 
-    let mut output = MatchCriteria::new();
+        let mut output = MatchCriteria::new();
 
-    if mode.match_names() && pattern.is_match(&file_name) {
-        output.name = true;
+        if mode.match_names() && pattern.is_match(&file_name) {
+            output.name = true;
+        }
+
+        if let Some(manifest) = manifest {
+            let binaries = manifest
+                .bin
+                .clone()
+                .map(StringOrArrayOfStringsOrAnArrayOfArrayOfStrings::to_vec)
+                .unwrap_or_default();
+
+            let binary_matches = binaries
+                .into_iter()
+                .filter(|binary| pattern.is_match(binary))
+                .filter_map(|b| {
+                    if pattern.is_match(&b) {
+                        Some(b.clone())
+                    } else {
+                        None
+                    }
+                })
+                .collect_vec();
+
+            output.bins = Some(binary_matches);
+        }
+
+        output
     }
-
-    if let Some(manifest) = manifest {
-        let binaries = manifest
-            .bin
-            .clone()
-            .map(StringOrArrayOfStringsOrAnArrayOfArrayOfStrings::to_vec)
-            .unwrap_or_default();
-
-        let binary_matches = binaries
-            .into_iter()
-            .filter(|binary| pattern.is_match(binary))
-            .filter_map(|b| {
-                if pattern.is_match(&b) {
-                    Some(b.clone())
-                } else {
-                    None
-                }
-            })
-            .collect_vec();
-
-        output.bins = Some(binary_matches);
-    }
-
-    output
 }
 
 fn parse_output(
@@ -139,7 +138,7 @@ fn parse_output(
     // TODO: Better display of output
     match Manifest::from_path(file.path()) {
         Ok(manifest) => {
-            let match_output = match_criteria(
+            let match_output = MatchCriteria::matches(
                 &package_name,
                 if mode.match_binaries() {
                     Some(&manifest)
