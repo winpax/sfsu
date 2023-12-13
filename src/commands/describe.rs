@@ -17,7 +17,7 @@ pub struct Args {
 impl super::Command for Args {
     fn run(self) -> Result<(), anyhow::Error> {
         let manifests = if let Some(bucket_name) = self.bucket {
-            let bucket = Bucket::new(&bucket_name);
+            let bucket = Bucket::new(&bucket_name)?;
 
             vec![(
                 self.package.clone(),

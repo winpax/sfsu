@@ -4,7 +4,10 @@ use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use regex::Regex;
 use serde::Deserialize;
 
-use crate::{buckets::Bucket, get_scoop_path};
+use crate::{
+    buckets::{self, Bucket},
+    get_scoop_path,
+};
 
 pub mod install;
 pub mod manifest;
@@ -24,6 +27,8 @@ pub enum PackageError {
     IO(#[from] std::io::Error),
     #[error("Could not parse manifest \"{0}\". Failed with error: {1}")]
     ParsingManifest(String, serde_json::Error),
+    #[error("Interacting with buckets: {0}")]
+    BucketError(#[from] buckets::BucketError),
 }
 
 #[derive(Debug, Clone)]
@@ -111,7 +116,7 @@ impl Manifest {
     /// # Errors
     /// - If the manifest doesn't exist or bucket is invalid
     pub fn from_reference((bucket, name): (String, String)) -> Result<Self> {
-        Bucket::new(bucket).get_manifest(name)
+        Bucket::new(bucket)?.get_manifest(name)
     }
 
     #[must_use]

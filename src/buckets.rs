@@ -14,6 +14,9 @@ use crate::{
 pub enum BucketError {
     #[error("Interacting with repo: {0}")]
     RepoError(#[from] RepoError),
+
+    #[error("The bucket \"{0}\" does not exist")]
+    InvalidBucket(PathBuf),
 }
 
 pub type Result<T> = std::result::Result<T, BucketError>;
@@ -25,15 +28,19 @@ pub struct Bucket {
 
 impl Bucket {
     #[must_use]
-    pub fn new(name: impl AsRef<Path>) -> Self {
+    pub fn new(name: impl AsRef<Path>) -> Result<Self> {
         Self::open(Self::buckets_path().join(name))
     }
 
     /// Open the given path as a bucket
-    pub fn open(path: impl AsRef<Path>) -> Self {
+    pub fn open(path: impl AsRef<Path>) -> Result<Self> {
         // TODO: Verify that the bucket exists and is valid
-        Self {
-            bucket_path: path.as_ref().to_path_buf(),
+        let bucket_path = path.as_ref().to_path_buf();
+
+        if bucket_path.exists() {
+            Ok(Self { bucket_path })
+        } else {
+            Err(BucketError::InvalidBucket(path.as_ref().to_path_buf()))
         }
     }
 
@@ -82,7 +89,12 @@ impl Bucket {
 
         let buckets = bucket_dir
             .filter(|entry| entry.as_ref().is_ok_and(|entry| entry.path().is_dir()))
-            .map(|entry| Ok::<Bucket, std::io::Error>(Self::new(entry?.path())));
+            .map(|entry| {
+                Ok::<Bucket, std::io::Error>(
+                    Self::new(entry?.path())
+                        .expect("somehow the bucket we found that definitely exists doesn't exist"),
+                )
+            });
 
         let buckets = buckets.collect::<std::result::Result<Vec<_>, _>>()?;
 

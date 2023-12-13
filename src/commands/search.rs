@@ -12,7 +12,7 @@ use clap::{Parser, ValueEnum};
 use regex::Regex;
 
 use sfsu::{
-    buckets,
+    buckets::{self, Bucket},
     output::sectioned::{Children, Section, Sections, Text},
     packages::manifest::StringOrArrayOfStringsOrAnArrayOfArrayOfStrings,
 };
@@ -230,24 +230,12 @@ impl super::Command for Args {
             .expect("Invalid Regex provided. See https://docs.rs/regex/latest/regex/ for more info")
         };
 
-        let all_scoop_buckets = buckets::Bucket::list_all()?;
-
-        let scoop_buckets = {
-            if let Some(bucket) = bucket {
-                all_scoop_buckets
-                    .into_iter()
-                    .filter(|scoop_bucket| {
-                        let path = scoop_bucket.path();
-                        match path.components().last() {
-                            Some(x) => x.as_os_str() == bucket.as_str(),
-                            None => false,
-                        }
-                    })
-                    .collect()
+        let scoop_buckets: &[Bucket] =
+            if let Some(Ok(bucket)) = bucket.map(|bucket| Bucket::new(bucket)) {
+                &[bucket]
             } else {
-                all_scoop_buckets
-            }
-        };
+                &Bucket::list_all()?
+            };
 
         let mut matches = scoop_buckets
             .par_iter()
