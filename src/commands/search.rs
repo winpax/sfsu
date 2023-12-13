@@ -82,7 +82,7 @@ impl MatchCriteria {
 
 fn match_criteria(
     file_name: &str,
-    manifest: &Manifest,
+    manifest: Option<&Manifest>,
     mode: SearchMode,
     pattern: &Regex,
 ) -> MatchCriteria {
@@ -94,7 +94,7 @@ fn match_criteria(
         output.name = true;
     }
 
-    if mode.match_binaries() {
+    if let Some(manifest) = manifest {
         let binaries = manifest
             .bin
             .clone()
@@ -139,10 +139,21 @@ fn parse_output(
         .map(|osstr| osstr.to_string_lossy().to_string());
     let package_name = file_name.unwrap();
 
+    // TODO: Check name first and do not parse manifest if not asking for bins
+
     // TODO: Better display of output
     match Manifest::from_path(file.path()) {
         Ok(manifest) => {
-            let match_output = match_criteria(&package_name, &manifest, mode, pattern);
+            let match_output = match_criteria(
+                &package_name,
+                if mode.match_binaries() {
+                    Some(&manifest)
+                } else {
+                    None
+                },
+                mode,
+                pattern,
+            );
 
             if !match_output.name && match_output.bins.is_none() {
                 return None;
