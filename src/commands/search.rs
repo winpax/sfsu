@@ -86,9 +86,6 @@ fn match_criteria(
     mode: SearchMode,
     pattern: &Regex,
 ) -> MatchCriteria {
-    // use std::rc::Rc;
-    // let name = Rc::new(file_name);
-
     let file_name = file_name.to_string();
 
     let mut output = MatchCriteria::new();
