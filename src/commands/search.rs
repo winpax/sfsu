@@ -61,27 +61,22 @@ pub struct Args {
     mode: SearchMode,
 }
 
-enum MatchOutput {
-    PackageName,
-    BinaryName(String),
+#[derive(Debug, Clone)]
+struct MatchCriteria {
+    name: bool,
+    bins: Option<Vec<String>>,
 }
-
-impl std::fmt::Display for MatchOutput {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            MatchOutput::PackageName => Ok(()),
-            MatchOutput::BinaryName(name) => write!(f, "{}", name.bold()),
-        }
-    }
-}
-
-struct MatchCriteria(Vec<MatchOutput>);
 
 impl MatchCriteria {
+    pub const fn new() -> Self {
+        Self {
+            name: false,
+            bins: None,
+        }
+    }
+
     pub fn has_bin(&self) -> bool {
-        self.0
-            .iter()
-            .any(|m| matches!(m, MatchOutput::BinaryName(_)))
+        self.bins.is_some()
     }
 }
 
@@ -96,11 +91,12 @@ fn match_criteria(
 
     let file_name = file_name.to_string();
 
-    let mut output = vec![];
+    let mut output = MatchCriteria::new();
 
     if mode.match_names() && pattern.is_match(&file_name) {
-        output.push(MatchOutput::PackageName);
+        output.name = true;
     }
+
     if mode.match_binaries() {
         let binaries = manifest
             .bin
@@ -108,21 +104,22 @@ fn match_criteria(
             .map(StringOrArrayOfStringsOrAnArrayOfArrayOfStrings::to_vec)
             .unwrap_or_default();
 
-        let binary_names = binaries
+        let binary_matches = binaries
             .into_iter()
             .filter(|binary| pattern.is_match(binary))
             .filter_map(|b| {
                 if pattern.is_match(&b) {
-                    Some(MatchOutput::BinaryName(b.clone()))
+                    Some(b.clone())
                 } else {
                     None
                 }
-            });
+            })
+            .collect_vec();
 
-        output.extend(binary_names);
+        output.bins = Some(binary_matches);
     }
 
-    MatchCriteria(output)
+    output
 }
 
 fn parse_output(
@@ -150,7 +147,7 @@ fn parse_output(
         Ok(manifest) => {
             let match_output = match_criteria(&package_name, &manifest, mode, pattern);
 
-            if match_output.0.is_empty() {
+            if !match_output.name && match_output.bins.is_none() {
                 return None;
             }
 
@@ -180,18 +177,19 @@ fn parse_output(
             );
 
             let package = if match_output.has_bin() {
-                let bins = match_output
-                    .0
-                    .iter()
-                    .filter_map(|output| match output {
-                        MatchOutput::BinaryName(bin) => Some(Text::new(format!(
-                            "{}{}\n",
-                            sfsu::output::sectioned::WHITESPACE,
-                            bin.bold()
-                        ))),
-                        MatchOutput::PackageName => None,
-                    })
-                    .collect_vec();
+                let bins = if let Some(bins) = match_output.bins {
+                    bins.iter()
+                        .map(|output| {
+                            Text::new(format!(
+                                "{}{}\n",
+                                sfsu::output::sectioned::WHITESPACE,
+                                output.bold()
+                            ))
+                        })
+                        .collect_vec()
+                } else {
+                    vec![]
+                };
 
                 Section::new(Children::Multiple(bins))
             } else {
