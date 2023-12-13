@@ -128,16 +128,16 @@ fn parse_output(
         return None;
     }
 
-    // This may be a bit of a hack, but it works
-    let file_name = path
-        .with_extension("")
-        .file_name()
-        .map(|osstr| osstr.to_string_lossy().to_string());
-    let package_name = file_name.unwrap();
-
     // TODO: Better display of output
-    match Manifest::from_path(file.path()) {
+    match Manifest::from_path(&path) {
         Ok(manifest) => {
+            // This may be a bit of a hack, but it works
+            let file_name = path
+                .with_extension("")
+                .file_name()
+                .map(|osstr| osstr.to_string_lossy().to_string());
+            let package_name = file_name.unwrap();
+
             let match_output = MatchCriteria::matches(
                 &package_name,
                 if mode.match_binaries() {
