@@ -224,9 +224,8 @@ impl super::Command for Args {
 
         let pattern = {
             Regex::new(&format!(
-                "{}{}",
+                "{}{raw_pattern}",
                 if self.case_sensitive { "" } else { "(?i)" },
-                &raw_pattern
             ))
             .expect("Invalid Regex provided. See https://docs.rs/regex/latest/regex/ for more info")
         };
