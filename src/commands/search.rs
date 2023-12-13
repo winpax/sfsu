@@ -222,7 +222,7 @@ impl super::Command for Args {
                     return None;
                 }
 
-                let bucket_contents = bucket.list_packages().unwrap();
+                let bucket_contents = bucket.list_packages_unchecked().unwrap();
 
                 let matches = bucket_contents
                     .par_iter()

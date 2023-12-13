@@ -27,12 +27,18 @@ pub struct Bucket {
 }
 
 impl Bucket {
-    #[must_use]
+    /// Open a bucket from its name
+    ///
+    /// # Errors
+    /// - Bucket does not exist
     pub fn new(name: impl AsRef<Path>) -> Result<Self> {
         Self::open(Self::buckets_path().join(name))
     }
 
-    /// Open the given path as a bucket
+    /// Open given path as a bucket
+    ///
+    /// # Errors
+    /// - Bucket does not exist
     pub fn open(path: impl AsRef<Path>) -> Result<Self> {
         // TODO: Verify that the bucket exists and is valid
         let bucket_path = path.as_ref().to_path_buf();
@@ -82,6 +88,9 @@ impl Bucket {
     ///
     /// # Errors
     /// - Was unable to read the bucket directory
+    ///
+    /// # Panics
+    /// - Any listed bucket is invalid
     pub fn list_all() -> std::io::Result<Vec<Bucket>> {
         let buckets_path = Self::buckets_path();
 
@@ -105,13 +114,30 @@ impl Bucket {
     ///
     /// # Errors
     /// - The bucket is invalid
-    /// - The package has an invalid path or invalid contents
+    /// - Any package has an invalid path or invalid contents
     /// - See more at [`packages::PackageError`]
     pub fn list_packages(&self) -> packages::Result<Vec<Manifest>> {
         let dir = std::fs::read_dir(self.path().join("bucket"))?;
 
         dir.map(|manifest| Manifest::from_path(manifest?.path()))
             .collect()
+    }
+
+    /// List all packages contained within this bucket, ignoring errors
+    ///
+    /// # Errors
+    /// - The bucket is invalid
+    /// - See more at [`packages::PackageError`]
+    pub fn list_packages_unchecked(&self) -> packages::Result<Vec<Manifest>> {
+        let dir = std::fs::read_dir(self.path().join("bucket"))?;
+
+        Ok(dir
+            .map(|manifest| Manifest::from_path(manifest?.path()))
+            .filter_map(|result| match result {
+                Ok(v) => Some(v),
+                Err(_) => None,
+            })
+            .collect())
     }
 
     /// Gets the manifest that represents the given package name

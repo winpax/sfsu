@@ -1,4 +1,4 @@
-use std::{fs::File, io::Read, path::Path};
+use std::path::Path;
 
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use regex::Regex;
