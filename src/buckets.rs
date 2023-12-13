@@ -144,6 +144,30 @@ impl Bucket {
             .collect())
     }
 
+    /// List all packages contained within this bucket, returning their names
+    ///
+    /// # Errors
+    /// - The bucket is invalid
+    /// - See more at [`packages::PackageError`]
+    pub fn list_package_names(&self) -> packages::Result<Vec<String>> {
+        let dir = std::fs::read_dir(self.path().join("bucket"))?;
+
+        Ok(dir
+            .map(|entry| {
+                entry.map(|file| {
+                    file.path()
+                        .with_extension("")
+                        .file_name()
+                        .map(|file_name| file_name.to_string_lossy().to_string())
+                })
+            })
+            .filter_map(|file_name| match file_name {
+                Ok(Some(file_name)) => Some(file_name),
+                _ => None,
+            })
+            .collect())
+    }
+
     /// Gets the manifest that represents the given package name
     ///
     /// # Errors
@@ -170,12 +194,23 @@ impl Bucket {
             // return None;
         }
 
-        let bucket_contents = self.list_packages_unchecked().unwrap();
+        let bucket_contents = self.list_package_names().unwrap();
 
         let matches = bucket_contents
             .par_iter()
-            .filter_map(|manifest| {
-                manifest.parse_output(self.name(), false, search_regex, search_mode)
+            .filter_map(|manifest_name| {
+                // Ignore non-matching manifests
+                if search_mode.match_names()
+                    && !search_mode.match_binaries()
+                    && !search_regex.is_match(manifest_name)
+                {
+                    return None;
+                }
+
+                // TODO: Remove this panic
+                self.get_manifest(manifest_name)
+                    .expect("manifest to exist")
+                    .parse_output(self.name(), false, search_regex, search_mode)
             })
             .collect::<Vec<_>>();
 
