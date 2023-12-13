@@ -1,12 +1,17 @@
 use std::path::Path;
 
+use clap::{Parser, ValueEnum};
+use colored::Colorize as _;
+use itertools::Itertools as _;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use regex::Regex;
 use serde::Deserialize;
+use strum::Display;
 
 use crate::{
     buckets::{self, Bucket},
     get_scoop_path,
+    output::sectioned::{Children, Section, Text},
 };
 
 pub mod install;
@@ -29,6 +34,79 @@ pub enum PackageError {
     ParsingManifest(String, serde_json::Error),
     #[error("Interacting with buckets: {0}")]
     BucketError(#[from] buckets::BucketError),
+}
+
+#[derive(Debug, Default, Copy, Clone, ValueEnum, Display, Parser)]
+#[strum(serialize_all = "snake_case")]
+pub enum SearchMode {
+    #[default]
+    Name,
+    Binary,
+    Both,
+}
+
+impl SearchMode {
+    pub fn match_names(self) -> bool {
+        matches!(self, SearchMode::Name | SearchMode::Both)
+    }
+
+    pub fn match_binaries(self) -> bool {
+        matches!(self, SearchMode::Binary | SearchMode::Both)
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct MatchCriteria {
+    name: bool,
+    bins: Option<Vec<String>>,
+}
+
+impl MatchCriteria {
+    pub const fn new() -> Self {
+        Self {
+            name: false,
+            bins: None,
+        }
+    }
+
+    pub fn matches(
+        file_name: &str,
+        manifest: Option<&Manifest>,
+        mode: SearchMode,
+        pattern: &Regex,
+    ) -> Self {
+        let file_name = file_name.to_string();
+
+        let mut output = MatchCriteria::new();
+
+        if mode.match_names() && pattern.is_match(&file_name) {
+            output.name = true;
+        }
+
+        if let Some(manifest) = manifest {
+            let binaries = manifest
+                .bin
+                .clone()
+                .map(StringOrArrayOfStringsOrAnArrayOfArrayOfStrings::to_vec)
+                .unwrap_or_default();
+
+            let binary_matches = binaries
+                .into_iter()
+                .filter(|binary| pattern.is_match(binary))
+                .filter_map(|b| {
+                    if pattern.is_match(&b) {
+                        Some(b.clone())
+                    } else {
+                        None
+                    }
+                })
+                .collect_vec();
+
+            output.bins = Some(binary_matches);
+        }
+
+        output
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -168,6 +246,78 @@ impl Manifest {
                 })
             })
             .collect::<Vec<_>>())
+    }
+
+    pub fn parse_output(
+        &self,
+        bucket: impl AsRef<str>,
+        installed_only: bool,
+        pattern: &Regex,
+        mode: SearchMode,
+    ) -> Option<Section<Text<String>>> {
+        // TODO: Better display of output
+
+        // This may be a bit of a hack, but it works
+
+        let match_output = MatchCriteria::matches(
+            &self.name,
+            if mode.match_binaries() {
+                Some(self)
+            } else {
+                None
+            },
+            mode,
+            pattern,
+        );
+
+        if !match_output.name && match_output.bins.is_none() {
+            return None;
+        }
+
+        // TODO: Refactor to remove pointless binary matching on name-only search mode
+        // TODO: Fix error parsing manifests
+
+        let is_installed = is_installed(&self.name, Some(bucket));
+        if installed_only && !is_installed {
+            return None;
+        }
+
+        let styled_package_name = if self.name == pattern.to_string() {
+            self.name.bold().to_string()
+        } else {
+            self.name.clone()
+        };
+
+        let installed_text = if is_installed && !installed_only {
+            "[installed] "
+        } else {
+            ""
+        };
+
+        let title = format!("{styled_package_name} ({}) {installed_text}", self.version);
+
+        let package = if mode.match_binaries() {
+            let bins = if let Some(bins) = match_output.bins {
+                bins.iter()
+                    .map(|output| {
+                        Text::new(format!(
+                            "{}{}\n",
+                            crate::output::sectioned::WHITESPACE,
+                            output.bold()
+                        ))
+                    })
+                    .collect_vec()
+            } else {
+                vec![]
+            };
+
+            Section::new(Children::Multiple(bins))
+        } else {
+            Section::new(Children::None)
+        }
+        .with_title(title);
+
+        Some(package)
     }
 }
 
