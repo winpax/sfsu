@@ -2,6 +2,7 @@ use std::{
     ffi::OsStr,
     fs::{read_dir, DirEntry},
     io::Error,
+    rc::Rc,
 };
 
 use colored::Colorize;
@@ -230,14 +231,13 @@ impl super::Command for Args {
             .expect("Invalid Regex provided. See https://docs.rs/regex/latest/regex/ for more info")
         };
 
-        let scoop_buckets: &[Bucket] =
-            if let Some(Ok(bucket)) = bucket.map(|bucket| Bucket::new(bucket)) {
-                &[bucket]
-            } else {
-                &Bucket::list_all()?
-            };
+        let matching_buckets: Vec<Bucket> = if let Some(Ok(bucket)) = bucket.map(Bucket::new) {
+            vec![bucket]
+        } else {
+            Bucket::list_all()?
+        };
 
-        let mut matches = scoop_buckets
+        let mut matches = matching_buckets
             .par_iter()
             .filter_map(|bucket| {
                 // Ignore loose files in the buckets dir
