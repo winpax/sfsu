@@ -5,6 +5,7 @@ use std::{
 };
 
 use git2::{Remote, Repository};
+use itertools::Itertools;
 use rayon::prelude::*;
 use regex::Regex;
 
@@ -208,9 +209,12 @@ impl Bucket {
                 }
 
                 // TODO: Remove this panic
-                self.get_manifest(manifest_name)
-                    .expect("manifest to exist")
-                    .parse_output(self.name(), false, search_regex, search_mode)
+                match self.get_manifest(manifest_name) {
+                    Ok(manifest) => {
+                        manifest.parse_output(self.name(), false, search_regex, search_mode)
+                    }
+                    Err(_) => None,
+                }
             })
             .collect::<Vec<_>>();
 
