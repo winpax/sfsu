@@ -1,14 +1,8 @@
-use std::io::Error;
-
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 
 use rayon::prelude::*;
 use regex::Regex;
-use sfsu::{
-    buckets::Bucket,
-    output::sectioned::{Children, Section},
-    packages::SearchMode,
-};
+use sfsu::{buckets::Bucket, packages::SearchMode};
 
 fn criterion_benchmark(c: &mut Criterion) {
     // let all_buckets = Bucket::list_all().unwrap();

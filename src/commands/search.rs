@@ -1,20 +1,9 @@
-use std::io::Error;
-
-use colored::Colorize;
-use itertools::Itertools;
 use rayon::prelude::*;
 
-use clap::{Parser, ValueEnum};
+use clap::Parser;
 use regex::Regex;
 
-use sfsu::{
-    buckets::Bucket,
-    output::sectioned::{Children, Section, Sections, Text},
-    packages::{manifest::StringOrArrayOfStringsOrAnArrayOfArrayOfStrings, SearchMode},
-};
-
-use sfsu::packages::{is_installed, Manifest};
-use strum::Display;
+use sfsu::{buckets::Bucket, output::sectioned::Sections, packages::SearchMode};
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
