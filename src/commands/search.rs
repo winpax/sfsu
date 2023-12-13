@@ -136,8 +136,6 @@ fn parse_output(
         .map(|osstr| osstr.to_string_lossy().to_string());
     let package_name = file_name.unwrap();
 
-    // TODO: Check name first and do not parse manifest if not asking for bins
-
     // TODO: Better display of output
     match Manifest::from_path(file.path()) {
         Ok(manifest) => {
