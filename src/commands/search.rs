@@ -59,7 +59,7 @@ impl super::Command for Args {
             .filter_map(|bucket| bucket.matches(&pattern, self.mode))
             .collect::<Result<Vec<_>, _>>()?;
 
-        matches.par_sort_by_key(|x| x.title.clone());
+        matches.par_sort_by(|a, b| a.title.cmp(&b.title));
 
         print!("{}", Sections::from_vec(matches));
 
