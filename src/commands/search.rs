@@ -32,9 +32,10 @@ impl super::Command for Args {
         let (bucket, raw_pattern) =
             if let Some((bucket, raw_pattern)) = self.pattern.split_once('/') {
                 // Bucket flag overrides bucket/package syntax
-                let bucket = self.bucket.unwrap_or(bucket.to_string());
-
-                (Some(bucket), raw_pattern.to_string())
+                (
+                    Some(self.bucket.unwrap_or(bucket.to_string())),
+                    raw_pattern.to_string(),
+                )
             } else {
                 (self.bucket, self.pattern)
             };
