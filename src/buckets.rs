@@ -190,7 +190,7 @@ impl Bucket {
     ) -> Option<Result<Section<Section<Text<String>>>>> {
         // Ignore loose files in the buckets dir
         if !self.path().is_dir() {
-            // return None;
+            return None;
         }
 
         let bucket_contents = self.list_package_names().unwrap();
