@@ -29,17 +29,16 @@ pub struct Args {
 
 impl super::Command for Args {
     fn run(self) -> Result<(), anyhow::Error> {
-        let (bucket, raw_pattern) = if self.pattern.contains('/') {
-            let mut split = self.pattern.splitn(2, '/');
-
-            // Bucket flag overrides bucket/package syntax
-            let bucket = self.bucket.unwrap_or(split.next().unwrap().to_string());
-            let pattern = split.next().unwrap();
-
-            (Some(bucket), pattern.to_string())
-        } else {
-            (self.bucket, self.pattern)
-        };
+        let (bucket, raw_pattern) =
+            if let Some((bucket, raw_pattern)) = self.pattern.split_once('/') {
+                // Bucket flag overrides bucket/package syntax
+                (
+                    Some(self.bucket.unwrap_or(bucket.to_string())),
+                    raw_pattern.to_string(),
+                )
+            } else {
+                (self.bucket, self.pattern)
+            };
 
         let pattern = {
             Regex::new(&format!(
@@ -55,14 +54,17 @@ impl super::Command for Args {
             Bucket::list_all()?
         };
 
-        let mut matches = matching_buckets
+        let mut matches: Sections<_> = matching_buckets
             .par_iter()
-            .filter_map(|bucket| bucket.matches(&pattern, self.mode))
-            .collect::<Result<Vec<_>, _>>()?;
+            .filter_map(|bucket| match bucket.matches(&pattern, self.mode) {
+                Ok(Some(section)) => Some(section),
+                _ => None,
+            })
+            .collect();
 
-        matches.par_sort_by_key(|x| x.title.clone());
+        matches.par_sort();
 
-        print!("{}", Sections::from_vec(matches));
+        print!("{matches}");
 
         Ok(())
     }

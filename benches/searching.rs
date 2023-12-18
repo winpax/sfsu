@@ -15,9 +15,13 @@ fn criterion_benchmark(c: &mut Criterion) {
         b.iter(|| {
             black_box(Bucket::list_all().unwrap())
                 .par_iter()
-                .filter_map(|bucket| bucket.matches(&pattern, black_box(SearchMode::Name)))
-                .collect::<Result<Vec<_>, _>>()
-                .unwrap()
+                .filter_map(
+                    |bucket| match bucket.matches(&pattern, black_box(SearchMode::Name)) {
+                        Ok(Some(section)) => Some(section),
+                        _ => None,
+                    },
+                )
+                .collect::<Vec<_>>();
         })
     });
 

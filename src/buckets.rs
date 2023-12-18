@@ -182,18 +182,21 @@ impl Bucket {
         Manifest::from_path(manifest_path)
     }
 
-    #[must_use]
+    /// List all matches for the given pattern
+    ///
+    /// # Errors
+    /// - Could not load the manifest from the path
     pub fn matches(
         &self,
         search_regex: &Regex,
         search_mode: SearchMode,
-    ) -> Option<Result<Section<Section<Text<String>>>>> {
+    ) -> packages::Result<Option<Section<Section<Text<String>>>>> {
         // Ignore loose files in the buckets dir
         if !self.path().is_dir() {
-            // return None;
+            return Ok(None);
         }
 
-        let bucket_contents = self.list_package_names().unwrap();
+        let bucket_contents = self.list_package_names()?;
 
         let matches = bucket_contents
             .par_iter()
@@ -217,9 +220,9 @@ impl Bucket {
             .collect::<Vec<_>>();
 
         if matches.is_empty() {
-            None
+            Ok(None)
         } else {
-            Some(Ok::<_, BucketError>(
+            Ok(Some(
                 Section::new(Children::Multiple(matches))
                     // TODO: Remove quotes and bold bucket name
                     .with_title(format!("'{}' bucket:", self.name())),

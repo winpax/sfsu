@@ -46,10 +46,12 @@ pub enum SearchMode {
 }
 
 impl SearchMode {
+    #[must_use]
     pub fn match_names(self) -> bool {
         matches!(self, SearchMode::Name | SearchMode::Both)
     }
 
+    #[must_use]
     pub fn match_binaries(self) -> bool {
         matches!(self, SearchMode::Binary | SearchMode::Both)
     }
@@ -62,6 +64,7 @@ pub struct MatchCriteria {
 }
 
 impl MatchCriteria {
+    #[must_use]
     pub const fn new() -> Self {
         Self {
             name: false,
