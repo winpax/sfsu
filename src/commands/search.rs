@@ -56,8 +56,11 @@ impl super::Command for Args {
 
         let mut matches = matching_buckets
             .par_iter()
-            .filter_map(|bucket| bucket.matches(&pattern, self.mode))
-            .collect::<Result<Vec<_>, _>>()?;
+            .filter_map(|bucket| match bucket.matches(&pattern, self.mode) {
+                Ok(Some(section)) => Some(section),
+                _ => None,
+            })
+            .collect::<Vec<_>>();
 
         matches.par_sort_by(|a, b| a.title.cmp(&b.title));
 
