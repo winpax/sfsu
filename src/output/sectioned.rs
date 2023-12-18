@@ -10,6 +10,7 @@ pub const WHITESPACE: &str = "  ";
 pub trait SectionData: Display {}
 
 /// Multiple sections
+#[must_use = "does nothing unless printed"]
 pub struct Sections<T>(Vec<Section<T>>);
 
 impl<A> FromIterator<Section<A>> for Sections<A> {
@@ -25,7 +26,6 @@ impl<A: Send> FromParallelIterator<Section<A>> for Sections<A> {
 }
 
 impl<T> Sections<T> {
-    #[must_use]
     pub fn from_vec(vec: Vec<Section<T>>) -> Self {
         Self(vec)
     }
@@ -62,18 +62,17 @@ impl<T: Display> Display for Sections<T> {
 }
 
 /// Sectioned data (i.e buckets)
+#[must_use = "does nothing unless printed"]
 pub struct Section<T> {
     pub title: Option<String>,
     pub child: Children<T>,
 }
 
 impl<T> Section<T> {
-    #[must_use]
     pub fn new(child: Children<T>) -> Self {
         Self { title: None, child }
     }
 
-    #[must_use]
     pub fn with_title(mut self, title: String) -> Self {
         self.title = Some(title);
 
@@ -81,6 +80,7 @@ impl<T> Section<T> {
     }
 }
 
+#[must_use = "does nothing unless printed"]
 pub enum Children<T> {
     Single(T),
     Multiple(Vec<T>),
@@ -113,7 +113,6 @@ impl<T: Display> Text<T> {
         Self(text)
     }
 
-    #[must_use]
     pub fn as_section(&self) -> Section<&T> {
         Section {
             title: None,
