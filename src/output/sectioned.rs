@@ -3,6 +3,8 @@
 
 use std::fmt::Display;
 
+use rayon::prelude::*;
+
 pub const WHITESPACE: &str = "  ";
 
 pub trait SectionData: Display {}
@@ -16,10 +18,27 @@ impl<A> FromIterator<Section<A>> for Sections<A> {
     }
 }
 
+impl<A: Send> FromParallelIterator<Section<A>> for Sections<A> {
+    fn from_par_iter<T: IntoParallelIterator<Item = Section<A>>>(iter: T) -> Self {
+        Self(iter.into_par_iter().collect())
+    }
+}
+
 impl<T> Sections<T> {
     #[must_use]
     pub fn from_vec(vec: Vec<Section<T>>) -> Self {
         Self(vec)
+    }
+
+    pub fn sort(&mut self) {
+        self.0.sort_by(|a, b| a.title.cmp(&b.title));
+    }
+
+    pub fn par_sort(&mut self)
+    where
+        T: Send,
+    {
+        self.0.par_sort_by(|a, b| a.title.cmp(&b.title));
     }
 }
 
