@@ -87,11 +87,7 @@ impl MatchCriteria {
         }
 
         if let Some(manifest) = manifest {
-            let binaries = manifest
-                .bin
-                .clone()
-                .map(StringOrArrayOfStringsOrAnArrayOfArrayOfStrings::to_vec)
-                .unwrap_or_default();
+            let binaries = manifest.bin.clone().map(|b| b.to_vec()).unwrap_or_default();
 
             let binary_matches = binaries
                 .into_iter()
@@ -184,7 +180,7 @@ impl InstallManifest {
     /// - Invalid install manifest
     /// - Reading directories fails
     pub fn list_all() -> Result<Vec<Self>> {
-        crate::list_scoop_apps()?
+        crate::list_installed_scoop_apps()?
             .par_iter()
             .map(|path| Self::from_path(path.join("current/install.json")))
             .collect::<Result<Vec<_>>>()
@@ -236,7 +232,7 @@ impl Manifest {
     /// # Panics
     /// - If the file name is invalid
     pub fn list_installed() -> Result<Vec<Result<Self>>> {
-        Ok(crate::list_scoop_apps()?
+        Ok(crate::list_installed_scoop_apps()?
             .par_iter()
             .map(|path| {
                 Self::from_path(path.join("current/manifest.json")).and_then(|mut manifest| {

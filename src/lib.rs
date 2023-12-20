@@ -52,7 +52,7 @@ pub fn get_scoop_path() -> PathBuf {
 ///
 /// # Errors
 /// - Reading dir fails
-pub fn list_scoop_apps() -> std::io::Result<Vec<PathBuf>> {
+pub fn list_installed_scoop_apps() -> std::io::Result<Vec<PathBuf>> {
     let scoop_apps_path = get_scoop_path().join("apps");
 
     let read = scoop_apps_path.read_dir()?.collect::<Result<Vec<_>, _>>()?;

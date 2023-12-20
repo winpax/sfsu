@@ -1,5 +1,6 @@
 use std::fmt::Display;
 
+use itertools::Itertools;
 use rayon::prelude::*;
 
 #[derive(Debug)]
@@ -62,19 +63,19 @@ pub trait Value: Display + Send + Sync {}
 ///
 /// Takes a single named lifetime, given that this is intended
 /// to be constructed and used within the same function.
-pub struct VTable<'a> {
-    headers: &'a [&'a str],
-    values: &'a [&'a dyn Value],
+pub struct VTable<'a, H, V> {
+    headers: &'a [H],
+    values: &'a [V],
     max_length: Option<usize>,
 }
 
-impl<'a> VTable<'a> {
+impl<'a, H: Display, V: Value> VTable<'a, H, V> {
     /// Construct a new [`VTable`] formatter
     ///
     /// # Panics
     /// - If the length of headers is not equal to the length of values
     /// - If the values provided are not objects
-    pub fn new(headers: &'a [&'a str], values: &'a [&'a dyn Value]) -> Self {
+    pub fn new(headers: &'a [H], values: &'a [V]) -> Self {
         assert_eq!(
             headers.len(),
             // TODO: Do not panic here
@@ -96,14 +97,14 @@ impl<'a> VTable<'a> {
     }
 }
 
-impl<'a> Display for VTable<'a> {
+impl<'a, H: Display, V: Value> Display for VTable<'a, H, V> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let contestants = {
             // TODO: Make this dynamic largest header
             let default_width = "Updated".len();
 
             let mut v = vec![default_width];
-            v.extend(self.headers.iter().map(|s| s.len()));
+            v.extend(self.headers.iter().map(|s| s.to_string().len()));
 
             v
         };
@@ -121,7 +122,7 @@ impl<'a> Display for VTable<'a> {
                         .map(|(i, header)| {
                             let mut contestants = contestants.clone();
                             contestants.push(base[i]);
-                            contestants.push(header.len());
+                            contestants.push(header.to_string().len());
                             contestants.push(
                                 OptionalTruncate::new(element)
                                     .with_length(self.max_length)

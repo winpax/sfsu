@@ -42,7 +42,7 @@ pub struct Args {
 
 impl super::Command for Args {
     fn run(self) -> Result<(), anyhow::Error> {
-        let apps = sfsu::list_scoop_apps()?;
+        let apps = sfsu::list_installed_scoop_apps()?;
 
         let outputs = apps
             .par_iter()

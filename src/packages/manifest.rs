@@ -1,8 +1,9 @@
 // Thanks to quicktype.io for saving me a lot of time.
 // The names are a bit weird at times but I'll work on that in future.
 
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt::Display};
 
+use itertools::Itertools as _;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
@@ -195,7 +196,7 @@ pub struct AutoupdateInstaller {
     pub file: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct License {
     pub identifier: String,
     pub url: Option<String>,
@@ -224,28 +225,34 @@ pub enum StringOrArrayOfStringsOrAnArrayOfArrayOfStrings {
 
 impl StringOrArrayOfStrings {
     #[must_use]
-    pub fn to_vec(self) -> Vec<String> {
+    pub fn to_vec(&self) -> Vec<String> {
         match self {
-            StringOrArrayOfStrings::String(s) => vec![s],
-            StringOrArrayOfStrings::StringArray(string_array) => string_array,
+            StringOrArrayOfStrings::String(s) => vec![s.clone()],
+            StringOrArrayOfStrings::StringArray(string_array) => string_array.clone(),
         }
     }
 }
 
 impl StringOrArrayOfStringsOrAnArrayOfArrayOfStrings {
     #[must_use]
-    pub fn to_vec(self) -> Vec<String> {
+    pub fn to_vec(&self) -> Vec<String> {
         match self {
-            StringOrArrayOfStringsOrAnArrayOfArrayOfStrings::String(s) => vec![s],
-            StringOrArrayOfStringsOrAnArrayOfArrayOfStrings::StringArray(s) => s,
+            StringOrArrayOfStringsOrAnArrayOfArrayOfStrings::String(s) => vec![s.clone()],
+            StringOrArrayOfStringsOrAnArrayOfArrayOfStrings::StringArray(s) => s.clone(),
             StringOrArrayOfStringsOrAnArrayOfArrayOfStrings::UnionArray(s) => s
-                .into_iter()
+                .iter()
                 .flat_map(|s| match s {
-                    StringOrArrayOfStringsElement::String(s) => vec![s],
-                    StringOrArrayOfStringsElement::StringArray(s) => s,
+                    StringOrArrayOfStringsElement::String(s) => vec![s.clone()],
+                    StringOrArrayOfStringsElement::StringArray(s) => s.clone(),
                 })
                 .collect(),
         }
+    }
+}
+
+impl Display for StringOrArrayOfStringsOrAnArrayOfArrayOfStrings {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.to_vec().iter().format(", ").fmt(f)
     }
 }
 
@@ -284,6 +291,12 @@ pub enum StringOrArrayOfStrings {
     StringArray(Vec<String>),
 }
 
+impl Display for StringOrArrayOfStrings {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.to_vec().iter().format(", ").fmt(f)
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum SourceforgeUnion {
@@ -306,7 +319,7 @@ pub enum AutoupdateLicense {
     String(String),
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum PackageLicense {
     License(License),
