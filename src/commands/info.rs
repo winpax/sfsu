@@ -5,7 +5,10 @@ use clap::Parser;
 use itertools::Itertools as _;
 use sfsu::{
     buckets::Bucket,
-    output::{structured::vertical::VTable, wrappers::bool::NicerBool},
+    output::{
+        structured::vertical::VTable,
+        wrappers::bool::{wrap_bool, NicerBool},
+    },
     packages::manifest::PackageLicense,
 };
 
@@ -103,7 +106,7 @@ impl super::Command for Args {
             license: manifest.license.clone(),
             binaries: manifest.bin.map(|b| b.to_vec().join(",")),
             notes: manifest.notes.map(|notes| notes.to_string()),
-            installed: NicerBool::new(install_path.is_some()),
+            installed: wrap_bool!(install_path.is_some()),
             updated_at,
             updated_by,
         };
