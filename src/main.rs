@@ -41,6 +41,7 @@ fn main() -> anyhow::Result<()> {
 ///
 /// # Panics
 /// - Owner's name isn't valid utf8
+#[deprecated(note = "Doesn't work properly, and I have no current plans to fix it ")]
 pub fn file_owner(path: impl AsRef<Path>) -> std::io::Result<String> {
     use std::{fs::File, os::windows::io::AsRawHandle};
     use windows::{
@@ -54,7 +55,7 @@ pub fn file_owner(path: impl AsRef<Path>) -> std::io::Result<String> {
         },
     };
 
-    let file = File::open(path.as_ref())?;
+    let file = File::open(path.as_ref().join("current/install.json"))?;
     let handle = HANDLE(file.as_raw_handle() as isize);
 
     let owner_psid: MaybeUninit<PSID> = MaybeUninit::uninit();

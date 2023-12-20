@@ -95,12 +95,9 @@ impl super::Command for Args {
 
             let (updated_at, updated_by) = if let Some(ref install_path) = install_path {
                 let updated_at = install_path.metadata()?.modified()?;
-                let updated_by = match crate::file_owner(install_path) {
-                    Ok(owner) => Some(owner),
-                    Err(_) => None,
-                };
 
-                (Some(updated_at.into()), updated_by)
+                // TODO: Implement updated_by
+                (Some(updated_at.into()), None)
             } else {
                 (None, None)
             };
