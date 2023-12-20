@@ -5,7 +5,7 @@ use clap::Parser;
 use itertools::Itertools as _;
 use sfsu::{
     buckets::Bucket,
-    output::{structured::vertical::VTable, NicerBool},
+    output::{structured::vertical::VTable, wrappers::bool::NicerBool},
     packages::manifest::PackageLicense,
 };
 
