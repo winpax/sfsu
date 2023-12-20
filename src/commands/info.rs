@@ -1,3 +1,4 @@
+use anyhow::Context;
 use clap::Parser;
 use itertools::Itertools as _;
 use serde::Serialize;
@@ -24,9 +25,9 @@ struct PackageInfo {
     website: Option<String>,
     license: Option<PackageLicense>,
     #[serde(rename = "Updated at")]
-    updated_at: Option<NicerTime>,
-    #[serde(rename = "Updated by")]
-    updated_by: Option<String>,
+    updated_at: NicerTime,
+    // #[serde(rename = "Updated by")]
+    // updated_by: Option<String>,
     installed: NicerBool,
     binaries: Option<String>,
     notes: Option<String>,
@@ -93,14 +94,15 @@ impl super::Command for Args {
                 install_path.cloned()
             };
 
-            let (updated_at, updated_by) = if let Some(ref install_path) = install_path {
-                let updated_at = install_path.metadata()?.modified()?;
+            let updated_at = install_path
+                .context("pp")
+                .map(|install_path| -> anyhow::Result<NicerTime> {
+                    let updated_at = install_path.metadata()?.modified()?;
 
-                // TODO: Implement updated_by
-                (Some(updated_at.into()), None)
-            } else {
-                (None, None)
-            };
+                    // TODO: Implement updated_by?
+                    Ok(updated_at.into())
+                })
+                .flatten()?;
 
             let pkg_info = PackageInfo {
                 name: name.clone(),
@@ -113,7 +115,6 @@ impl super::Command for Args {
                 notes: manifest.notes.map(|notes| notes.to_string()),
                 installed: wrap_bool!(install_path.is_some()),
                 updated_at,
-                updated_by,
             };
 
             let value = serde_json::to_value(pkg_info).unwrap();
