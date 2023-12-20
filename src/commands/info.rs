@@ -115,6 +115,7 @@ impl super::Command for Args {
                 updated_at,
                 updated_by,
             };
+
             let value = serde_json::to_value(pkg_info).unwrap();
             let obj = value.as_object().expect("valid object");
 
