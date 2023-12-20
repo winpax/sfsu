@@ -46,82 +46,90 @@ pub struct Args {
 impl super::Command for Args {
     fn run(self) -> Result<(), anyhow::Error> {
         // TODO: Not sure why this works
-        let pkg_info = {
+        let packages = {
             if let Some(bucket_name) = self.bucket {
                 let bucket = Bucket::new(&bucket_name)?;
 
-                Some((
+                vec![(
                     self.package.clone(),
                     bucket_name,
                     bucket.get_manifest(&self.package)?,
-                ))
+                )]
             } else {
                 let buckets = Bucket::list_all()?;
                 buckets
                     .iter()
-                    .find_map(|bucket| match bucket.get_manifest(&self.package) {
+                    .filter_map(|bucket| match bucket.get_manifest(&self.package) {
                         Ok(manifest) => {
                             Some((self.package.clone(), bucket.name().to_string(), manifest))
                         }
                         Err(_) => None,
                     })
+                    .collect_vec()
             }
         };
 
-        let Some((name, bucket, manifest)) = pkg_info.clone() else {
+        if packages.is_empty() {
             println!("No package found with the name \"{}\"", self.package);
             std::process::exit(1);
-        };
+        }
 
-        let install_path = {
-            let apps = sfsu::list_installed_scoop_apps()?;
+        // TODO: Fix execution time
+        // Once here it is quick asf
 
-            let install_path = apps.iter().find(|app| {
-                app.with_extension("").file_name() == Some(&std::ffi::OsString::from(&name))
-            });
+        if packages.len() > 1 {
+            println!("Found {} packages:", packages.len());
+        }
 
-            install_path.cloned()
-        };
+        let apps = sfsu::list_installed_scoop_apps()?;
 
-        let (updated_at, updated_by) = if let Some(ref install_path) = install_path {
-            let updated_at = install_path.metadata()?.modified()?;
-            let updated_by = match crate::file_owner(install_path) {
-                Ok(owner) => Some(owner),
-                Err(_) => None,
+        for (name, bucket, manifest) in packages {
+            let install_path = {
+                let install_path = apps.iter().find(|app| {
+                    app.with_extension("").file_name() == Some(&std::ffi::OsString::from(&name))
+                });
+
+                install_path.cloned()
             };
 
-            (Some(updated_at.into()), updated_by)
-        } else {
-            (None, None)
-        };
+            let (updated_at, updated_by) = if let Some(ref install_path) = install_path {
+                let updated_at = install_path.metadata()?.modified()?;
+                let updated_by = match crate::file_owner(install_path) {
+                    Ok(owner) => Some(owner),
+                    Err(_) => None,
+                };
 
-        // TODO: New output that follows the scoop info format
-        let pkg_info = PackageInfo {
-            name: name.clone(),
-            bucket: bucket.clone(),
-            description: manifest.description.clone(),
-            version: manifest.version.clone(),
-            website: manifest.homepage.clone(),
-            license: manifest.license.clone(),
-            binaries: manifest.bin.map(|b| b.to_vec().join(",")),
-            notes: manifest.notes.map(|notes| notes.to_string()),
-            installed: wrap_bool!(install_path.is_some()),
-            updated_at,
-            updated_by,
-        };
-        let value = serde_json::to_value(pkg_info)?;
-        let obj = value.as_object().expect("valid object");
+                (Some(updated_at.into()), updated_by)
+            } else {
+                (None, None)
+            };
 
-        let keys = obj.keys().cloned().collect_vec();
-        let values = obj
-            .values()
-            .cloned()
-            .map(|v| v.to_string().trim_matches('"').to_string())
-            .collect_vec();
+            let pkg_info = PackageInfo {
+                name: name.clone(),
+                bucket: bucket.clone(),
+                description: manifest.description.clone(),
+                version: manifest.version.clone(),
+                website: manifest.homepage.clone(),
+                license: manifest.license.clone(),
+                binaries: manifest.bin.map(|b| b.to_vec().join(",")),
+                notes: manifest.notes.map(|notes| notes.to_string()),
+                installed: wrap_bool!(install_path.is_some()),
+                updated_at,
+                updated_by,
+            };
+            let value = serde_json::to_value(pkg_info).unwrap();
+            let obj = value.as_object().expect("valid object");
 
-        let table = VTable::new(&keys, &values);
+            let keys = obj.keys().cloned().collect_vec();
+            let values = obj
+                .values()
+                .cloned()
+                .map(|v| v.to_string().trim_matches('"').to_string())
+                .collect_vec();
 
-        println!("{table}");
+            let table = VTable::new(&keys, &values);
+            println!("{table}");
+        }
 
         Ok(())
     }
