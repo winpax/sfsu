@@ -88,3 +88,23 @@ impl Scoop {
             .collect())
     }
 }
+
+#[deprecated(note = "Use `sfsu::deprecate` instead")]
+pub trait Deprecateable {
+    fn is_deprecated() -> bool;
+
+    #[must_use]
+    fn deprecation_message() -> Option<String> {
+        None
+    }
+
+    fn print_deprecation_message() {
+        if Self::is_deprecated() {
+            eprint!("WARNING: This command is deprecated");
+            if let Some(message) = Self::deprecation_message() {
+                eprint!(": {message}");
+            }
+            eprintln!();
+        }
+    }
+}
