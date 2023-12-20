@@ -12,6 +12,16 @@ mod opt;
 /// Currently this is mostly an internal api
 pub mod output;
 
+pub struct SimIter<A, B>(A, B);
+
+impl<A: Iterator<Item = AI>, AI, B: Iterator<Item = BI>, BI> Iterator for SimIter<A, B> {
+    type Item = (AI, BI);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        Some((self.0.next()?, self.1.next()?))
+    }
+}
+
 #[must_use]
 /// Gets the user's scoop path, via either the default path or as provided by the SCOOP env variable
 ///

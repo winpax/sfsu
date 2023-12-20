@@ -3,6 +3,8 @@ use std::fmt::Display;
 use itertools::Itertools;
 use rayon::prelude::*;
 
+use crate::SimIter;
+
 #[derive(Debug)]
 #[must_use = "OptionalTruncate is lazy, and only takes effect when used in formatting"]
 pub struct OptionalTruncate<T> {
@@ -107,9 +109,8 @@ impl<'a, H: Display, V: Display + Send + Sync> Display for VTable<'a, H, V> {
             v
         };
 
-        // TODO: Imeplement max length with truncation
-        let access_lengths: Vec<usize> =
-            self.values
+        let header_lengths: Vec<usize> =
+            self.headers
                 .iter()
                 .fold(vec![0; self.headers.len()], |base, element| {
                     // TODO: Simultaneous iterators
@@ -117,10 +118,9 @@ impl<'a, H: Display, V: Display + Send + Sync> Display for VTable<'a, H, V> {
                     self.headers
                         .iter()
                         .enumerate()
-                        .map(|(i, header)| {
+                        .map(|(i, _)| {
                             let mut contestants = contestants.clone();
                             contestants.push(base[i]);
-                            contestants.push(header.to_string().len());
                             contestants.push(
                                 OptionalTruncate::new(element)
                                     .with_length(self.max_length)
@@ -135,30 +135,16 @@ impl<'a, H: Display, V: Display + Send + Sync> Display for VTable<'a, H, V> {
                         .collect()
                 });
 
-        for (i, header) in self.headers.iter().enumerate() {
-            let header_size = access_lengths[i];
+        let iters = SimIter(self.headers.iter(), self.values.iter()).enumerate();
+
+        for (i, (header, element)) in iters {
+            let header_size = header_lengths[i];
 
             let truncated = OptionalTruncate::new(header).with_length(self.max_length);
-            write!(f, "{truncated:header_size$} | ")?;
-        }
 
-        // Enter new row
-        writeln!(f)?;
-
-        for (i, element) in self.values.iter().enumerate() {
-            let value_size = access_lengths[i];
             let element = element.to_string();
 
-            let with_suffix = match element.len().cmp(&value_size) {
-                std::cmp::Ordering::Greater => format!("{}...", &element[0..value_size - 3]),
-                std::cmp::Ordering::Equal => element.to_string(),
-                std::cmp::Ordering::Less => format!("{element:value_size$}"),
-            };
-
-            write!(f, "{with_suffix} | ")?;
-
-            // Enter new row
-            writeln!(f)?;
+            writeln!(f, "{truncated:header_size$}: {element}")?;
         }
 
         Ok(())
