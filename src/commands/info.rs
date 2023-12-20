@@ -11,6 +11,7 @@ use sfsu::{
         },
     },
     packages::manifest::PackageLicense,
+    Scoop,
 };
 
 #[derive(Debug, Clone, Serialize)]
@@ -81,7 +82,7 @@ impl super::Command for Args {
             println!("Found {} packages:", packages.len());
         }
 
-        let apps = sfsu::list_installed_scoop_apps()?;
+        let apps = Scoop::list_installed_scoop_apps()?;
 
         for (name, bucket, manifest) in packages {
             let install_path = {

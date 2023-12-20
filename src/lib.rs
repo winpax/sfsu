@@ -22,65 +22,69 @@ impl<A: Iterator<Item = AI>, AI, B: Iterator<Item = BI>, BI> Iterator for SimIte
     }
 }
 
-#[must_use]
-/// Gets the user's scoop path, via either the default path or as provided by the SCOOP env variable
-///
-/// Will ignore the global scoop path
-///
-/// # Panics
-/// - There is no home folder
-/// - The discovered scoop path does not exist
-pub fn get_scoop_path() -> PathBuf {
-    use std::env::var_os;
+pub struct Scoop;
 
-    // TODO: Add support for both global and non-global scoop installs
+impl Scoop {
+    #[must_use]
+    /// Gets the user's scoop path, via either the default path or as provided by the SCOOP env variable
+    ///
+    /// Will ignore the global scoop path
+    ///
+    /// # Panics
+    /// - There is no home folder
+    /// - The discovered scoop path does not exist
+    pub fn get_scoop_path() -> PathBuf {
+        use std::env::var_os;
 
-    let scoop_path = {
-        if let Some(path) = var_os("SCOOP") {
-            path.into()
-        } else if let Some(path) = config::Scoop::load()
-            .expect("scoop config loaded correctly")
-            .root_path
-        {
-            path.into()
-        } else {
-            directories::BaseDirs::new()
-                .expect("user directories")
-                .home_dir()
-                .join("scoop")
-        }
-    };
+        // TODO: Add support for both global and non-global scoop installs
 
-    if scoop_path.exists() {
-        dunce::canonicalize(scoop_path).expect("failed to find real path to scoop")
-    } else {
-        panic!("Scoop path does not exist");
-    }
-}
-
-/// List all scoop apps and return their paths
-///
-/// # Errors
-/// - Reading dir fails
-///
-/// # Panics
-/// - Reading dir fails
-pub fn list_installed_scoop_apps() -> std::io::Result<Vec<PathBuf>> {
-    let scoop_apps_path = get_scoop_path().join("apps");
-
-    let read = scoop_apps_path.read_dir()?;
-
-    Ok(read
-        .par_bridge()
-        .filter_map(|package| {
-            let path = package.expect("valid path").path();
-
-            // We cannot search the scoop app as it is built in and hence doesn't contain any manifest
-            if path.file_name() == Some(OsStr::new("scoop")) {
-                None
+        let scoop_path = {
+            if let Some(path) = var_os("SCOOP") {
+                path.into()
+            } else if let Some(path) = config::Scoop::load()
+                .expect("scoop config loaded correctly")
+                .root_path
+            {
+                path.into()
             } else {
-                Some(path)
+                directories::BaseDirs::new()
+                    .expect("user directories")
+                    .home_dir()
+                    .join("scoop")
             }
-        })
-        .collect())
+        };
+
+        if scoop_path.exists() {
+            dunce::canonicalize(scoop_path).expect("failed to find real path to scoop")
+        } else {
+            panic!("Scoop path does not exist");
+        }
+    }
+
+    /// List all scoop apps and return their paths
+    ///
+    /// # Errors
+    /// - Reading dir fails
+    ///
+    /// # Panics
+    /// - Reading dir fails
+    pub fn list_installed_scoop_apps() -> std::io::Result<Vec<PathBuf>> {
+        let scoop_apps_path = Self::get_scoop_path().join("apps");
+
+        let read = scoop_apps_path.read_dir()?;
+
+        Ok(read
+            .par_bridge()
+            .filter_map(|package| {
+                let path = package.expect("valid path").path();
+
+                // We cannot search the scoop app as it is built in and hence doesn't contain any manifest
+                if path.file_name() == Some(OsStr::new("scoop")) {
+                    None
+                } else {
+                    Some(path)
+                }
+            })
+            .collect())
+    }
 }

@@ -8,9 +8,9 @@ use rayon::prelude::*;
 use regex::Regex;
 
 use crate::{
-    get_scoop_path,
     output::sectioned::{Children, Section, Text},
     packages::{self, CreateManifest, Manifest, SearchMode},
+    Scoop,
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -82,7 +82,7 @@ impl Bucket {
     /// Get the paths where buckets are stored
     #[must_use]
     pub fn buckets_path() -> PathBuf {
-        let scoop_path = get_scoop_path();
+        let scoop_path = Scoop::get_scoop_path();
 
         scoop_path.join("buckets")
     }

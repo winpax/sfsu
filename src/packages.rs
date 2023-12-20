@@ -10,8 +10,8 @@ use strum::Display;
 
 use crate::{
     buckets::{self, Bucket},
-    get_scoop_path,
     output::sectioned::{Children, Section, Text},
+    Scoop,
 };
 
 pub mod install;
@@ -180,7 +180,7 @@ impl InstallManifest {
     /// - Invalid install manifest
     /// - Reading directories fails
     pub fn list_all() -> Result<Vec<Self>> {
-        crate::list_installed_scoop_apps()?
+        Scoop::list_installed_scoop_apps()?
             .par_iter()
             .map(|path| Self::from_path(path.join("current/install.json")))
             .collect::<Result<Vec<_>>>()
@@ -232,7 +232,7 @@ impl Manifest {
     /// # Panics
     /// - If the file name is invalid
     pub fn list_installed() -> Result<Vec<Result<Self>>> {
-        Ok(crate::list_installed_scoop_apps()?
+        Ok(Scoop::list_installed_scoop_apps()?
             .par_iter()
             .map(|path| {
                 Self::from_path(path.join("current/manifest.json")).and_then(|mut manifest| {
@@ -325,7 +325,7 @@ impl Manifest {
 /// # Panics
 /// - The file was not valid UTF-8
 pub fn is_installed(manifest_name: impl AsRef<Path>, bucket: Option<impl AsRef<str>>) -> bool {
-    let scoop_path = get_scoop_path();
+    let scoop_path = Scoop::get_scoop_path();
     let installed_path = scoop_path
         .join("apps")
         .join(manifest_name)
