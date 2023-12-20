@@ -58,13 +58,13 @@ impl SearchMode {
 }
 
 #[derive(Debug, Clone)]
+#[must_use = "MatchCriteria has no side effects"]
 pub struct MatchCriteria {
     name: bool,
     bins: Option<Vec<String>>,
 }
 
 impl MatchCriteria {
-    #[must_use]
     pub const fn new() -> Self {
         Self {
             name: false,

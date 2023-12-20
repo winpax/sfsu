@@ -5,11 +5,7 @@ use clap::Parser;
 use itertools::Itertools as _;
 use sfsu::{
     buckets::Bucket,
-    output::{
-        sectioned::{Children, Section, Text},
-        structured::vertical::VTable,
-        NicerBool,
-    },
+    output::{structured::vertical::VTable, NicerBool},
     packages::manifest::PackageLicense,
 };
 
@@ -17,7 +13,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
-pub struct PackageInfo {
+struct PackageInfo {
     name: String,
     description: Option<String>,
     version: String,
@@ -124,27 +120,6 @@ impl super::Command for Args {
         let table = VTable::new(&keys, &values);
 
         println!("{table}");
-
-        // let title = format!("{name} in \"{bucket}\":");
-        // let mut description: Vec<Text<String>> = vec![];
-
-        // if let Some(ref pkg_description) = manifest.description {
-        //     description.push(format!("{pkg_description}\n").into());
-        // }
-
-        // description.push(format!("Version: {}\n", manifest.version).into());
-
-        // if let Some(ref homepage) = manifest.homepage {
-        //     description.push(format!("Homepage: {homepage}\n").into());
-        // }
-        // if let Some(ref license) = manifest.license {
-        //     description.push(format!("License: {license}\n").into());
-        // }
-
-        // // TODO: Maybe multiple children?
-        // let section = Section::new(Children::Multiple(description)).with_title(title);
-
-        // print!("{section}");
 
         Ok(())
     }
