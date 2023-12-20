@@ -6,7 +6,7 @@ use std::{collections::HashMap, fmt::Display};
 use itertools::Itertools as _;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Manifest {
     /// This must be manually set
     #[serde(skip)]
@@ -58,7 +58,7 @@ pub struct Manifest {
     pub version: String,
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Architecture {
     #[serde(rename = "32bit")]
     pub the_32_bit: Option<The32BitClass>,
@@ -67,7 +67,7 @@ pub struct Architecture {
     pub arm64: Option<The32BitClass>,
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct The32BitClass {
     pub bin: Option<StringOrArrayOfStringsOrAnArrayOfArrayOfStrings>,
     pub checkver: Option<Checkver>,
@@ -87,7 +87,7 @@ pub struct The32BitClass {
     pub url: Option<StringOrArrayOfStrings>,
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct CheckverClass {
     pub github: Option<String>,
     /// Same as 'jsonpath'
@@ -108,13 +108,13 @@ pub struct CheckverClass {
     pub xpath: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct SourceforgeClass {
     pub path: Option<String>,
     pub project: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Installer {
     /// Undocumented: only used in scoop-extras/oraclejdk* and scoop-extras/appengine-go
     #[serde(rename = "_comment")]
@@ -125,14 +125,14 @@ pub struct Installer {
     pub script: Option<StringOrArrayOfStrings>,
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Uninstaller {
     pub args: Option<StringOrArrayOfStrings>,
     pub file: Option<String>,
     pub script: Option<StringOrArrayOfStrings>,
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Autoupdate {
     pub architecture: Option<AutoupdateArchitecture>,
     pub bin: Option<StringOrArrayOfStringsOrAnArrayOfArrayOfStrings>,
@@ -149,7 +149,7 @@ pub struct Autoupdate {
     pub url: Option<StringOrArrayOfStrings>,
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct AutoupdateArchitecture {
     #[serde(rename = "32bit")]
     pub the_32_bit: Option<AutoupdateArch>,
@@ -158,7 +158,7 @@ pub struct AutoupdateArchitecture {
     pub arm64: Option<AutoupdateArch>,
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct AutoupdateArch {
     pub bin: Option<StringOrArrayOfStringsOrAnArrayOfArrayOfStrings>,
     pub env_add_path: Option<StringOrArrayOfStrings>,
@@ -170,7 +170,7 @@ pub struct AutoupdateArch {
     pub url: Option<StringOrArrayOfStrings>,
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct HashExtraction {
     /// Same as 'regex'
     pub find: Option<String>,
@@ -186,12 +186,12 @@ pub struct HashExtraction {
     pub xpath: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct PurpleInstaller {
     pub file: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct AutoupdateInstaller {
     pub file: Option<String>,
 }
@@ -202,17 +202,17 @@ pub struct License {
     pub url: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct AutoupdatePsmodule {
     pub name: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Psmodule {
     pub name: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Suggest {}
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -270,7 +270,7 @@ pub enum StringOrArrayOfStringsElement {
     StringArray(Vec<String>),
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum Checkver {
     CheckverClass(Box<CheckverClass>),
@@ -297,14 +297,14 @@ impl Display for StringOrArrayOfStrings {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum SourceforgeUnion {
     SourceforgeClass(SourceforgeClass),
     String(String),
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum HashExtractionOrArrayOfHashExtractions {
     Url(String),
@@ -312,7 +312,7 @@ pub enum HashExtractionOrArrayOfHashExtractions {
     HashExtractionArray(Vec<HashExtraction>),
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum AutoupdateLicense {
     License(License),
@@ -343,7 +343,7 @@ impl std::fmt::Display for PackageLicense {
 }
 
 /// Deprecated, hash type is determined automatically
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum Type {
     #[serde(rename = "md5")]
     Md5,
@@ -355,7 +355,7 @@ pub enum Type {
     Sha512,
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum Mode {
     #[serde(rename = "download")]
     Download,
