@@ -141,7 +141,7 @@ impl<'a, H: Display, V: Display + Send + Sync> Display for VTable<'a, H, V> {
 
             let element = element.to_string();
 
-            writeln!(f, "{truncated:header_size$}: {element}")?;
+            writeln!(f, "{truncated:header_size$} : {element}")?;
         }
 
         Ok(())

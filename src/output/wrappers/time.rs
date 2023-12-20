@@ -1,8 +1,11 @@
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::{
+    fmt::Display,
+    time::{SystemTime, UNIX_EPOCH},
+};
 
 use chrono::{DateTime, Local, LocalResult, TimeZone};
 use derive_more::{AsMut, AsRef, Deref, DerefMut};
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 
 fn system_time_to_date_time(time: SystemTime) -> LocalResult<DateTime<Local>> {
     let (secs, nano_secs) = time
@@ -30,17 +33,14 @@ impl From<SystemTime> for NicerTime {
     }
 }
 
-impl Serialize for NicerTime {
-    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        self.0.serialize(serializer)
+impl Display for NicerTime {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.format("%Y-%m-%d %H:%M:%S").fmt(f)
     }
 }
 
-impl<'de> Deserialize<'de> for NicerTime {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        DateTime::deserialize(deserializer).map(Self)
+impl Serialize for NicerTime {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        self.to_string().serialize(serializer)
     }
 }

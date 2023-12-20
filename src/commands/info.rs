@@ -1,5 +1,6 @@
 use clap::Parser;
 use itertools::Itertools as _;
+use serde::Serialize;
 use sfsu::{
     buckets::Bucket,
     output::{
@@ -12,9 +13,7 @@ use sfsu::{
     packages::manifest::PackageLicense,
 };
 
-use serde::{Deserialize, Serialize};
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "PascalCase")]
 struct PackageInfo {
     name: String,
