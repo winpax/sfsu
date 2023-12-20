@@ -1,9 +1,6 @@
 use std::fmt::Display;
 
 use rayon::prelude::*;
-use serde_json::Value;
-
-pub mod vertical;
 
 #[derive(Debug)]
 #[must_use = "OptionalTruncate is lazy, and only takes effect when used in formatting"]
@@ -24,7 +21,7 @@ impl<T> OptionalTruncate<T> {
     }
 
     // Generally length would not be passed as an option,
-    // but given we are just forwarding what is passed to `Structured`,
+    // but given we are just forwarding what is passed to `VTable`,
     // it works better here
     pub fn with_length(self, length: Option<usize>) -> Self {
         Self { length, ..self }
@@ -58,38 +55,40 @@ impl<T: Display> Display for OptionalTruncate<T> {
     }
 }
 
-#[must_use = "Structured is lazy, and only takes effect when used in formatting"]
+pub trait Value: Display + Send + Sync {}
+
+#[must_use = "VTable is lazy, and only takes effect when used in formatting"]
 /// A table of data
 ///
 /// Takes a single named lifetime, given that this is intended
 /// to be constructed and used within the same function.
-pub struct Structured<'a> {
+pub struct VTable<'a> {
     headers: &'a [&'a str],
-    values: &'a [Value],
+    values: &'a [&'a dyn Value],
     max_length: Option<usize>,
 }
 
-impl<'a> Structured<'a> {
-    /// Construct a new [`Structured`] formatter
+impl<'a> VTable<'a> {
+    /// Construct a new [`VTable`] formatter
     ///
     /// # Panics
     /// - If the length of headers is not equal to the length of values
     /// - If the values provided are not objects
-    pub fn new(headers: &'a [&'a str], values: &'a [Value]) -> Self {
+    pub fn new(headers: &'a [&'a str], values: &'a [&'a dyn Value]) -> Self {
         assert_eq!(
             headers.len(),
             // TODO: Do not panic here
-            values[0].as_object().unwrap().keys().len(),
+            values.len(),
             "The number of column headers must match quantity data for said columns"
         );
-        Structured {
+        VTable {
             headers,
             values,
             max_length: None,
         }
     }
 
-    /// Add a max length to the [`Structured`] formatter
+    /// Add a max length to the [`VTable`] formatter
     pub fn with_max_length(mut self, max: usize) -> Self {
         self.max_length = Some(max);
 
@@ -97,19 +96,8 @@ impl<'a> Structured<'a> {
     }
 }
 
-impl<'a> Display for Structured<'a> {
+impl<'a> Display for VTable<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let data = {
-            let mut data = vec![];
-            self.values
-                .par_iter()
-                // TODO: Do not panic here
-                .map(|row| row.as_object().expect("object"))
-                .collect_into_vec(&mut data);
-
-            data
-        };
-
         let contestants = {
             // TODO: Make this dynamic largest header
             let default_width = "Updated".len();
@@ -122,33 +110,31 @@ impl<'a> Display for Structured<'a> {
 
         // TODO: Imeplement max length with truncation
         let access_lengths: Vec<usize> =
-            data.iter().fold(vec![0; self.headers.len()], |base, row| {
-                // TODO: Simultaneous iterators
+            self.values
+                .iter()
+                .fold(vec![0; self.headers.len()], |base, element| {
+                    // TODO: Simultaneous iterators
 
-                self.headers
-                    .iter()
-                    .enumerate()
-                    .map(|(i, header)| {
-                        let element = row
-                            .get(*header)
-                            .and_then(|v| v.as_str())
-                            .unwrap_or_default();
+                    self.headers
+                        .iter()
+                        .enumerate()
+                        .map(|(i, header)| {
+                            let mut contestants = contestants.clone();
+                            contestants.push(base[i]);
+                            contestants.push(header.len());
+                            contestants.push(
+                                OptionalTruncate::new(element)
+                                    .with_length(self.max_length)
+                                    // TODO: Fix suffix
+                                    .with_suffix("...")
+                                    .to_string()
+                                    .len(),
+                            );
 
-                        let mut contestants = contestants.clone();
-                        contestants.push(base[i]);
-                        contestants.push(
-                            OptionalTruncate::new(element)
-                                .with_length(self.max_length)
-                                // TODO: Fix suffix
-                                .with_suffix("...")
-                                .to_string()
-                                .len(),
-                        );
-
-                        *contestants.iter().max().unwrap()
-                    })
-                    .collect()
-            });
+                            *contestants.iter().max().unwrap()
+                        })
+                        .collect()
+                });
 
         for (i, header) in self.headers.iter().enumerate() {
             let header_size = access_lengths[i];
@@ -160,22 +146,17 @@ impl<'a> Display for Structured<'a> {
         // Enter new row
         writeln!(f)?;
 
-        for row in &data {
-            for (i, header) in self.headers.iter().enumerate() {
-                let value_size = access_lengths[i];
-                let element = row
-                    .get(*header)
-                    .and_then(|v| v.as_str())
-                    .unwrap_or_default();
+        for (i, element) in self.values.iter().enumerate() {
+            let value_size = access_lengths[i];
+            let element = element.to_string();
 
-                let with_suffix = match element.len().cmp(&value_size) {
-                    std::cmp::Ordering::Greater => format!("{}...", &element[0..value_size - 3]),
-                    std::cmp::Ordering::Equal => element.to_string(),
-                    std::cmp::Ordering::Less => format!("{element:value_size$}"),
-                };
+            let with_suffix = match element.len().cmp(&value_size) {
+                std::cmp::Ordering::Greater => format!("{}...", &element[0..value_size - 3]),
+                std::cmp::Ordering::Equal => element.to_string(),
+                std::cmp::Ordering::Less => format!("{element:value_size$}"),
+            };
 
-                write!(f, "{with_suffix} | ")?;
-            }
+            write!(f, "{with_suffix} | ")?;
 
             // Enter new row
             writeln!(f)?;
