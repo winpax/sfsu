@@ -1,5 +1,6 @@
 pub mod describe;
 pub mod hook;
+pub mod info;
 pub mod list;
 pub mod outdated;
 pub mod search;
@@ -25,5 +26,8 @@ pub enum Commands {
     UnusedBuckets(unused::Args),
     /// Describe a package
     Describe(describe::Args),
+    /// Display information about a package
+    Info(info::Args),
+    /// List outdated packages
     Outdated(outdated::Args),
 }

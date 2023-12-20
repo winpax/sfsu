@@ -11,6 +11,7 @@ use serde::{Deserialize, Serialize};
 use sfsu::{
     output::structured::Structured,
     packages::{CreateManifest, InstallManifest, Manifest},
+    Scoop,
 };
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -42,7 +43,7 @@ pub struct Args {
 
 impl super::Command for Args {
     fn run(self) -> Result<(), anyhow::Error> {
-        let apps = sfsu::list_scoop_apps()?;
+        let apps = Scoop::list_installed_scoop_apps()?;
 
         let outputs = apps
             .par_iter()
