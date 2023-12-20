@@ -1,4 +1,3 @@
-use anyhow::Context;
 use clap::Parser;
 use itertools::Itertools as _;
 use serde::Serialize;
@@ -25,7 +24,7 @@ struct PackageInfo {
     website: Option<String>,
     license: Option<PackageLicense>,
     #[serde(rename = "Updated at")]
-    updated_at: NicerTime,
+    updated_at: Option<NicerTime>,
     // #[serde(rename = "Updated by")]
     // updated_by: Option<String>,
     installed: NicerBool,
@@ -94,15 +93,15 @@ impl super::Command for Args {
                 install_path.cloned()
             };
 
-            let updated_at = install_path
-                .context("pp")
-                .map(|install_path| -> anyhow::Result<NicerTime> {
+            let updated_at = match install_path {
+                Some(ref install_path) => {
                     let updated_at = install_path.metadata()?.modified()?;
 
                     // TODO: Implement updated_by?
-                    Ok(updated_at.into())
-                })
-                .flatten()?;
+                    Some(updated_at.into())
+                }
+                _ => None,
+            };
 
             let pkg_info = PackageInfo {
                 name: name.clone(),
