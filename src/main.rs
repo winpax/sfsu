@@ -1,4 +1,3 @@
-#![feature(result_flattening)]
 #![warn(clippy::all, clippy::pedantic, rust_2018_idioms)]
 
 // TODO: Replace regex with glob
