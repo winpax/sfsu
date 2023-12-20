@@ -56,8 +56,6 @@ impl<T: Display> Display for OptionalTruncate<T> {
     }
 }
 
-pub trait Value: Display + Send + Sync {}
-
 #[must_use = "VTable is lazy, and only takes effect when used in formatting"]
 /// A table of data
 ///
@@ -69,7 +67,7 @@ pub struct VTable<'a, H, V> {
     max_length: Option<usize>,
 }
 
-impl<'a, H: Display, V: Value> VTable<'a, H, V> {
+impl<'a, H: Display, V: Display + Send + Sync> VTable<'a, H, V> {
     /// Construct a new [`VTable`] formatter
     ///
     /// # Panics
@@ -97,7 +95,7 @@ impl<'a, H: Display, V: Value> VTable<'a, H, V> {
     }
 }
 
-impl<'a, H: Display, V: Value> Display for VTable<'a, H, V> {
+impl<'a, H: Display, V: Display + Send + Sync> Display for VTable<'a, H, V> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let contestants = {
             // TODO: Make this dynamic largest header

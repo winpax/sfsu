@@ -7,6 +7,7 @@ use sfsu::{
     buckets::Bucket,
     output::{
         sectioned::{Children, Section, Text},
+        structured::vertical::VTable,
         NicerBool,
     },
     packages::manifest::PackageLicense,
@@ -58,14 +59,14 @@ impl super::Command for Args {
                 ))
             } else {
                 let buckets = Bucket::list_all()?;
-                let bucket = buckets.first().expect("first bucket");
-
-                match bucket.get_manifest(&self.package) {
-                    Ok(manifest) => {
-                        Some((self.package.clone(), bucket.name().to_string(), manifest))
-                    }
-                    Err(_) => None,
-                }
+                buckets
+                    .iter()
+                    .find_map(|bucket| match bucket.get_manifest(&self.package) {
+                        Ok(manifest) => {
+                            Some((self.package.clone(), bucket.name().to_string(), manifest))
+                        }
+                        Err(_) => None,
+                    })
             }
         };
 
@@ -113,8 +114,16 @@ impl super::Command for Args {
         let value = serde_json::to_value(pkg_info)?;
         let obj = value.as_object().expect("valid object");
 
-        let keys = obj.keys().collect_vec();
-        let values = obj.values().collect_vec();
+        let keys = obj.keys().cloned().collect_vec();
+        let values = obj
+            .values()
+            .cloned()
+            .map(|v| v.to_string().trim_matches('"').to_string())
+            .collect_vec();
+
+        let table = VTable::new(&keys, &values);
+
+        println!("{table}");
 
         // let title = format!("{name} in \"{bucket}\":");
         // let mut description: Vec<Text<String>> = vec![];
