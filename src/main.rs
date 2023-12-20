@@ -36,6 +36,11 @@ fn main() -> anyhow::Result<()> {
     args.command.run()
 }
 
+/// Get the owner of a file path
+///
+/// # Errors
+/// Interacting with system I/O
+///
 /// # Panics
 /// Owner's name isn't valid utf8
 pub fn file_owner(path: impl AsRef<Path>) -> std::io::Result<String> {

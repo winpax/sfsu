@@ -1,8 +1,5 @@
 use std::fmt::Display;
 
-use itertools::Itertools;
-use rayon::prelude::*;
-
 use crate::SimIter;
 
 #[derive(Debug)]
