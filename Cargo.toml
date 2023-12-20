@@ -16,7 +16,11 @@ codegen-units = 1
 
 [dependencies]
 anyhow = "1.0"
-chrono = { version = "0.4.20", features = ["serde", "clock", "std"], default-features = false }
+chrono = { version = "0.4.20", features = [
+    "serde",
+    "clock",
+    "std",
+], default-features = false }
 clap = { version = "4.4", features = ["derive"] }
 colored = "2.1"
 derive_more = "0.99"
@@ -34,7 +38,10 @@ serde_json = { version = "1.0", features = ["preserve_order"] }
 sfsu-derive = { path = "./sfsu-derive" }
 strum = { version = "0.25", features = ["derive"] }
 thiserror = "1.0"
-windows = { version = "0.52.0", features = ["Win32_Foundation", "Win32_Security_Authorization"] }
+windows = { version = "0.52.0", features = [
+    "Win32_Foundation",
+    "Win32_Security_Authorization",
+] }
 
 [dev-dependencies]
 criterion = { version = "0.5", features = ["html_reports"] }
