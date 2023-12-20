@@ -37,10 +37,10 @@ fn main() -> anyhow::Result<()> {
 /// Get the owner of a file path
 ///
 /// # Errors
-/// Interacting with system I/O
+/// - Interacting with system I/O
 ///
 /// # Panics
-/// Owner's name isn't valid utf8
+/// - Owner's name isn't valid utf8
 pub fn file_owner(path: impl AsRef<Path>) -> std::io::Result<String> {
     use std::{fs::File, os::windows::io::AsRawHandle};
     use windows::{
