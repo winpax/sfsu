@@ -27,7 +27,7 @@ struct OutputPackage {
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
     #[clap(
-        help = format!("The pattern to search for (can be a regex). {}", "DEPRECATED: Use sfsu search --installed".yellow())
+        help = format!("The pattern to search for (can be a regex). {}", "DEPRECATED: Use sfsu search --installed. Will be removed in v2".yellow())
     )]
     pattern: Option<String>,
 

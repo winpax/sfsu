@@ -16,6 +16,8 @@ pub struct Args {
 
 impl super::Command for Args {
     fn run(self) -> Result<(), anyhow::Error> {
+        sfsu::deprecate("Use `sfsu info` instead. Will be removed in v2");
+
         let manifests = if let Some(bucket_name) = self.bucket {
             let bucket = Bucket::new(&bucket_name)?;
 
