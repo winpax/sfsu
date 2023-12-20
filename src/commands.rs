@@ -14,7 +14,7 @@ pub trait Command {
     fn run(self) -> Result<(), anyhow::Error>;
 }
 
-#[derive(Debug, Hooks, Clone, Subcommand, Runnable)]
+#[derive(Debug, Clone, Subcommand, Hooks, Runnable)]
 pub enum Commands {
     /// Search for a package
     Search(search::Args),
