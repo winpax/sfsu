@@ -76,7 +76,6 @@ impl super::Command for Args {
         }
 
         // TODO: Fix execution time
-        // Once here it is quick asf
 
         if packages.len() > 1 {
             println!("Found {} packages:", packages.len());
