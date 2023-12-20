@@ -1,13 +1,13 @@
-use std::time::SystemTime;
-
 use clap::Parser;
-
 use itertools::Itertools as _;
 use sfsu::{
     buckets::Bucket,
     output::{
         structured::vertical::VTable,
-        wrappers::bool::{wrap_bool, NicerBool},
+        wrappers::{
+            bool::{wrap_bool, NicerBool},
+            time::NicerTime,
+        },
     },
     packages::manifest::PackageLicense,
 };
@@ -24,7 +24,7 @@ struct PackageInfo {
     website: Option<String>,
     license: Option<PackageLicense>,
     #[serde(rename = "Updated at")]
-    updated_at: Option<SystemTime>,
+    updated_at: Option<NicerTime>,
     #[serde(rename = "Updated by")]
     updated_by: Option<String>,
     installed: NicerBool,
@@ -91,7 +91,7 @@ impl super::Command for Args {
                 Err(_) => None,
             };
 
-            (Some(updated_at), updated_by)
+            (Some(updated_at.into()), updated_by)
         } else {
             (None, None)
         };

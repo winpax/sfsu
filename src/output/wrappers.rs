@@ -4,3 +4,4 @@
 #![allow(clippy::module_name_repetitions)]
 
 pub mod bool;
+pub mod time;
