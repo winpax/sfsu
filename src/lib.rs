@@ -1,7 +1,8 @@
 #![warn(clippy::all, clippy::pedantic, rust_2018_idioms)]
 
-use std::{ffi::OsStr, path::PathBuf};
+use std::{ffi::OsStr, fmt::Display, path::PathBuf};
 
+use colored::Colorize;
 use rayon::prelude::*;
 
 pub mod buckets;
@@ -87,4 +88,31 @@ impl Scoop {
             })
             .collect())
     }
+}
+
+#[deprecated(note = "Use `sfsu::deprecate` instead")]
+pub trait Deprecateable {
+    fn is_deprecated() -> bool;
+
+    #[must_use]
+    fn deprecation_message() -> Option<String> {
+        None
+    }
+
+    fn print_deprecation_message() {
+        if Self::is_deprecated() {
+            eprint!("WARNING: This command is deprecated");
+            if let Some(message) = Self::deprecation_message() {
+                eprint!(": {message}");
+            }
+            eprintln!();
+        }
+    }
+}
+
+pub fn deprecate(message: impl Display) {
+    eprintln!(
+        "{}",
+        format!("WARNING: This command is deprecated: {message}").yellow()
+    );
 }
