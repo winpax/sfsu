@@ -1,7 +1,8 @@
 #![warn(clippy::all, clippy::pedantic, rust_2018_idioms)]
 
-use std::{ffi::OsStr, path::PathBuf};
+use std::{ffi::OsStr, fmt::Display, path::PathBuf};
 
+use colored::Colorize;
 use rayon::prelude::*;
 
 pub mod buckets;
@@ -107,4 +108,11 @@ pub trait Deprecateable {
             eprintln!();
         }
     }
+}
+
+pub fn deprecate(message: impl Display) {
+    eprintln!(
+        "{}",
+        format!("WARNING: This command is deprecated: {message}").yellow()
+    );
 }
