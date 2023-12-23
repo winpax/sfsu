@@ -36,7 +36,7 @@ pub enum PackageError {
     BucketError(#[from] buckets::BucketError),
 }
 
-#[derive(Debug, Default, Copy, Clone, ValueEnum, Display, Parser)]
+#[derive(Debug, Default, Copy, Clone, ValueEnum, Display, Parser, PartialEq, Eq)]
 #[strum(serialize_all = "snake_case")]
 pub enum SearchMode {
     #[default]
@@ -52,8 +52,18 @@ impl SearchMode {
     }
 
     #[must_use]
+    pub fn only_match_names(self) -> bool {
+        self == SearchMode::Name
+    }
+
+    #[must_use]
     pub fn match_binaries(self) -> bool {
         matches!(self, SearchMode::Binary | SearchMode::Both)
+    }
+
+    #[must_use]
+    pub fn only_match_binaries(self) -> bool {
+        self == SearchMode::Binary
     }
 }
 
