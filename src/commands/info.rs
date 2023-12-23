@@ -106,6 +106,7 @@ impl super::Command for Args {
                 updated_at,
             };
 
+            // TODO: Add custom derive macro that allows this without serde_json
             let value = serde_json::to_value(pkg_info).unwrap();
             let obj = value.as_object().expect("valid object");
 
