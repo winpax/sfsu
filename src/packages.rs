@@ -36,7 +36,7 @@ pub enum PackageError {
     BucketError(#[from] buckets::BucketError),
 }
 
-#[derive(Debug, Default, Copy, Clone, ValueEnum, Display, Parser)]
+#[derive(Debug, Default, Copy, Clone, ValueEnum, Display, Parser, PartialEq, Eq)]
 #[strum(serialize_all = "snake_case")]
 pub enum SearchMode {
     #[default]
@@ -52,8 +52,30 @@ impl SearchMode {
     }
 
     #[must_use]
+    pub fn only_match_names(self) -> bool {
+        self == SearchMode::Name
+    }
+
+    #[must_use]
     pub fn match_binaries(self) -> bool {
         matches!(self, SearchMode::Binary | SearchMode::Both)
+    }
+
+    #[must_use]
+    pub fn only_match_binaries(self) -> bool {
+        self == SearchMode::Binary
+    }
+
+    #[must_use]
+    pub fn eager_name_matches(self, manifest_name: &str, search_regex: &Regex) -> bool {
+        if self.only_match_names() && search_regex.is_match(manifest_name) {
+            return true;
+        }
+        if self.match_binaries() {
+            return true;
+        }
+
+        false
     }
 }
 
@@ -61,14 +83,14 @@ impl SearchMode {
 #[must_use = "MatchCriteria has no side effects"]
 pub struct MatchCriteria {
     name: bool,
-    bins: Option<Vec<String>>,
+    bins: Vec<String>,
 }
 
 impl MatchCriteria {
     pub const fn new() -> Self {
         Self {
             name: false,
-            bins: None,
+            bins: vec![],
         }
     }
 
@@ -98,10 +120,9 @@ impl MatchCriteria {
                     } else {
                         None
                     }
-                })
-                .collect_vec();
+                });
 
-            output.bins = Some(binary_matches);
+            output.bins.extend(binary_matches);
         }
 
         output
@@ -269,7 +290,7 @@ impl Manifest {
             pattern,
         );
 
-        if !match_output.name && match_output.bins.is_none() {
+        if !match_output.name && match_output.bins.is_empty() {
             return None;
         }
 
@@ -296,19 +317,17 @@ impl Manifest {
         let title = format!("{styled_package_name} ({}) {installed_text}", self.version);
 
         let package = if mode.match_binaries() {
-            let bins = if let Some(bins) = match_output.bins {
-                bins.iter()
-                    .map(|output| {
-                        Text::new(format!(
-                            "{}{}\n",
-                            crate::output::sectioned::WHITESPACE,
-                            output.bold()
-                        ))
-                    })
-                    .collect_vec()
-            } else {
-                vec![]
-            };
+            let bins = match_output
+                .bins
+                .iter()
+                .map(|output| {
+                    Text::new(format!(
+                        "{}{}\n",
+                        crate::output::sectioned::WHITESPACE,
+                        output.bold()
+                    ))
+                })
+                .collect_vec();
 
             Section::new(Children::Multiple(bins))
         } else {

@@ -202,19 +202,16 @@ impl Bucket {
             .par_iter()
             .filter_map(|manifest_name| {
                 // Ignore non-matching manifests
-                if search_mode.match_names()
-                    && !search_mode.match_binaries()
-                    && !search_regex.is_match(manifest_name)
-                {
-                    return None;
-                }
-
-                // TODO: Remove this panic
-                match self.get_manifest(manifest_name) {
-                    Ok(manifest) => {
-                        manifest.parse_output(self.name(), false, search_regex, search_mode)
+                if search_mode.eager_name_matches(manifest_name, search_regex) {
+                    // TODO: Remove this panic
+                    match self.get_manifest(manifest_name) {
+                        Ok(manifest) => {
+                            manifest.parse_output(self.name(), false, search_regex, search_mode)
+                        }
+                        Err(_) => None,
                     }
-                    Err(_) => None,
+                } else {
+                    None
                 }
             })
             .collect::<Vec<_>>();
