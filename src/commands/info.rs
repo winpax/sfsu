@@ -1,5 +1,4 @@
 use clap::Parser;
-use itertools::Itertools as _;
 use serde::Serialize;
 use sfsu::{
     buckets::Bucket,
@@ -11,10 +10,10 @@ use sfsu::{
         },
     },
     packages::{manifest::PackageLicense, Manifest},
-    Scoop,
+    KeyValue, Scoop,
 };
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, sfsu_derive::KeyValue)]
 #[serde(rename_all = "PascalCase")]
 struct PackageInfo {
     name: String,
@@ -107,15 +106,7 @@ impl super::Command for Args {
             };
 
             // TODO: Add custom derive macro that allows this without serde_json
-            let value = serde_json::to_value(pkg_info).unwrap();
-            let obj = value.as_object().expect("valid object");
-
-            let keys = obj.keys().cloned().collect_vec();
-            let values = obj
-                .values()
-                .cloned()
-                .map(|v| v.to_string().trim_matches('"').to_string())
-                .collect_vec();
+            let (keys, values) = pkg_info.into_pairs();
 
             let table = VTable::new(&keys, &values);
             println!("{table}");

@@ -23,7 +23,16 @@ impl<A: Iterator<Item = AI>, AI, B: Iterator<Item = BI>, BI> Iterator for SimIte
     }
 }
 
+pub trait KeyValue {
+    fn into_pairs(self) -> (Vec<&'static str>, Vec<String>);
+}
+
 pub struct Scoop;
+
+/// This is a workaround for type equality constraints <https://github.com/rust-lang/rust/issues/20041>
+pub(crate) trait TyEq {}
+
+impl<T> TyEq for (T, T) {}
 
 impl Scoop {
     #[must_use]

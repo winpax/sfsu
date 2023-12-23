@@ -79,7 +79,7 @@ impl<'a, H: Display, V: Display + Send + Sync> VTable<'a, H, V> {
             values.len(),
             "The number of column headers must match quantity data for said columns"
         );
-        VTable {
+        Self {
             headers,
             values,
             max_length: None,
