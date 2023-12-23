@@ -10,7 +10,7 @@ use sfsu::{
             time::NicerTime,
         },
     },
-    packages::manifest::PackageLicense,
+    packages::{manifest::PackageLicense, Manifest},
     Scoop,
 };
 
@@ -47,45 +47,36 @@ pub struct Args {
 impl super::Command for Args {
     fn run(self) -> Result<(), anyhow::Error> {
         // TODO: Not sure why this works
-        let packages = {
-            if let Some(bucket_name) = self.bucket {
-                let bucket = Bucket::new(&bucket_name)?;
+        let buckets = Bucket::one_or_all(self.bucket)?;
 
-                vec![(
-                    self.package.clone(),
-                    bucket_name,
-                    bucket.get_manifest(&self.package)?,
-                )]
-            } else {
-                let buckets = Bucket::list_all()?;
-                buckets
-                    .iter()
-                    .filter_map(|bucket| match bucket.get_manifest(&self.package) {
-                        Ok(manifest) => {
-                            Some((self.package.clone(), bucket.name().to_string(), manifest))
-                        }
-                        Err(_) => None,
-                    })
-                    .collect_vec()
-            }
-        };
+        let manifests: Vec<(String, String, Manifest)> = buckets
+            .iter()
+            .filter_map(|bucket| match bucket.get_manifest(&self.package) {
+                Ok(manifest) => Some((self.package.clone(), bucket.name().to_string(), manifest)),
+                Err(_) => None,
+            })
+            .collect();
 
-        if packages.is_empty() {
+        if manifests.is_empty() {
             println!("No package found with the name \"{}\"", self.package);
             std::process::exit(1);
         }
 
         // TODO: Fix execution time
 
-        if packages.len() > 1 {
-            println!("Found {} packages:", packages.len());
+        if manifests.len() > 1 {
+            println!(
+                "Found {} packages, matching \"{}\":",
+                manifests.len(),
+                self.package
+            );
         }
 
-        let apps = Scoop::list_installed_scoop_apps()?;
+        let installed_apps = Scoop::list_installed_scoop_apps()?;
 
-        for (name, bucket, manifest) in packages {
+        for (name, bucket, manifest) in manifests {
             let install_path = {
-                let install_path = apps.iter().find(|app| {
+                let install_path = installed_apps.iter().find(|app| {
                     app.with_extension("").file_name() == Some(&std::ffi::OsString::from(&name))
                 });
 
@@ -103,12 +94,12 @@ impl super::Command for Args {
             };
 
             let pkg_info = PackageInfo {
-                name: name.clone(),
-                bucket: bucket.clone(),
-                description: manifest.description.clone(),
-                version: manifest.version.clone(),
-                website: manifest.homepage.clone(),
-                license: manifest.license.clone(),
+                name,
+                bucket,
+                description: manifest.description,
+                version: manifest.version,
+                website: manifest.homepage,
+                license: manifest.license,
                 binaries: manifest.bin.map(|b| b.to_vec().join(",")),
                 notes: manifest.notes.map(|notes| notes.to_string()),
                 installed: wrap_bool!(install_path.is_some()),
