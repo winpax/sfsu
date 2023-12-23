@@ -38,11 +38,39 @@ pub struct MinInfo {
 }
 
 impl MinInfo {
+    /// Parse minmal package info for every installed app
+    ///
+    /// # Errors
+    /// - Invalid file names
+    /// - File metadata errors
+    /// - Invalid time
+    pub fn list_installed(bucket: Option<&String>) -> Result<Vec<Self>> {
+        let apps = Scoop::list_installed_scoop_apps()?;
+
+        apps.par_iter()
+            .map(Self::from_path)
+            .filter(|package| {
+                if let Ok(pkg) = package {
+                    if let Some(bucket) = bucket {
+                        return &pkg.source == bucket;
+                    }
+                }
+                // Keep errors so that the following line will return the error
+                true
+            })
+            .collect()
+    }
+
     /// Parse minimal package into from a given path
+    ///
+    /// # Errors
+    /// - Invalid file names
+    /// - File metadata errors
+    /// - Invalid time
     ///
     /// # Panics
     /// - Date time invalid or out of range
-    pub fn from_path(path: impl AsRef<Path>) -> Result<MinInfo> {
+    pub fn from_path(path: impl AsRef<Path>) -> Result<Self> {
         let path = path.as_ref();
 
         let package_name = path
@@ -69,7 +97,7 @@ impl MinInfo {
         let install_manifest =
             InstallManifest::from_path(app_current.join("install.json")).unwrap_or_default();
 
-        Ok(MinInfo {
+        Ok(Self {
             name: package_name.to_string(),
             version: manifest.version,
             source: install_manifest.get_source(),

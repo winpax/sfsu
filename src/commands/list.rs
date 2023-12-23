@@ -1,8 +1,7 @@
 use clap::Parser;
 use colored::Colorize;
-use rayon::prelude::*;
 
-use sfsu::{output::structured::Structured, packages::MinInfo, Scoop};
+use sfsu::{output::structured::Structured, packages::MinInfo};
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
@@ -23,21 +22,7 @@ pub struct Args {
 
 impl super::Command for Args {
     fn run(self) -> Result<(), anyhow::Error> {
-        let apps = Scoop::list_installed_scoop_apps()?;
-
-        let outputs = apps
-            .par_iter()
-            .map(MinInfo::from_path)
-            .filter(|package| {
-                if let Ok(pkg) = package {
-                    if let Some(ref bucket) = self.bucket {
-                        return &pkg.source == bucket;
-                    }
-                }
-                // Keep errors so that the following line will return the error
-                true
-            })
-            .collect::<Result<Vec<_>, _>>()?;
+        let outputs = MinInfo::list_installed(self.bucket.as_ref())?;
 
         if self.json {
             let output_json = serde_json::to_string_pretty(&outputs)?;
