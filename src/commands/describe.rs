@@ -3,6 +3,7 @@ use clap::Parser;
 use sfsu::{
     buckets::Bucket,
     output::sectioned::{Children, Section, Sections, Text},
+    packages::Manifest,
 };
 
 #[derive(Debug, Clone, Parser)]
@@ -18,27 +19,15 @@ impl super::Command for Args {
     fn run(self) -> Result<(), anyhow::Error> {
         sfsu::deprecate("Use `sfsu info` instead. Will be removed in v2");
 
-        let manifests = if let Some(bucket_name) = self.bucket {
-            let bucket = Bucket::new(&bucket_name)?;
+        let buckets = Bucket::one_or_all(self.bucket)?;
 
-            vec![(
-                self.package.clone(),
-                bucket_name,
-                bucket.get_manifest(&self.package)?,
-            )]
-        } else {
-            let buckets = Bucket::list_all()?;
-
-            buckets
-                .iter()
-                .filter_map(|bucket| match bucket.get_manifest(&self.package) {
-                    Ok(manifest) => {
-                        Some((self.package.clone(), bucket.name().to_string(), manifest))
-                    }
-                    Err(_) => None,
-                })
-                .collect()
-        };
+        let manifests: Vec<(String, String, Manifest)> = buckets
+            .iter()
+            .filter_map(|bucket| match bucket.get_manifest(&self.package) {
+                Ok(manifest) => Some((self.package.clone(), bucket.name().to_string(), manifest)),
+                Err(_) => None,
+            })
+            .collect();
 
         let sectioned = manifests
             .iter()
@@ -60,7 +49,6 @@ impl super::Command for Args {
                     description.push(format!("License: {license}\n").into());
                 }
 
-                // TODO: Maybe multiple children?
                 Section::new(Children::Multiple(description)).with_title(title)
             })
             .collect::<Sections<_>>();

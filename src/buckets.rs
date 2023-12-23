@@ -18,6 +18,9 @@ pub enum BucketError {
     #[error("Interacting with repo: {0}")]
     RepoError(#[from] RepoError),
 
+    #[error("IO Error: {0}")]
+    IOError(#[from] std::io::Error),
+
     #[error("The bucket \"{0}\" does not exist")]
     InvalidBucket(PathBuf),
 }
@@ -50,6 +53,19 @@ impl Bucket {
             Ok(Self { bucket_path })
         } else {
             Err(BucketError::InvalidBucket(path.as_ref().to_path_buf()))
+        }
+    }
+
+    /// Open a single bucket, or return all available buckets
+    ///
+    /// # Errors
+    /// - Any listed or provided bucket is invalid
+    /// - Unable to read the bucket directory
+    pub fn one_or_all(name: Option<impl AsRef<Path>>) -> Result<Vec<Self>> {
+        if let Some(name) = name {
+            Ok(vec![Bucket::new(name)?])
+        } else {
+            Bucket::list_all()
         }
     }
 
@@ -91,26 +107,14 @@ impl Bucket {
     ///
     /// # Errors
     /// - Was unable to read the bucket directory
-    ///
-    /// # Panics
     /// - Any listed bucket is invalid
-    pub fn list_all() -> std::io::Result<Vec<Bucket>> {
-        let buckets_path = Self::buckets_path();
+    pub fn list_all() -> Result<Vec<Bucket>> {
+        let bucket_dir = std::fs::read_dir(Self::buckets_path())?;
 
-        let bucket_dir = std::fs::read_dir(buckets_path)?;
-
-        let buckets = bucket_dir
+        bucket_dir
             .filter(|entry| entry.as_ref().is_ok_and(|entry| entry.path().is_dir()))
-            .map(|entry| {
-                Ok::<Bucket, std::io::Error>(
-                    Self::new(entry?.path())
-                        .expect("somehow the bucket we found that definitely exists doesn't exist"),
-                )
-            });
-
-        let buckets = buckets.collect::<std::result::Result<Vec<_>, _>>()?;
-
-        Ok(buckets)
+            .map(|entry| Self::new(entry?.path()))
+            .collect()
     }
 
     /// List all packages contained within this bucket
@@ -271,7 +275,7 @@ impl BucketRepo {
     }
 
     /// Checks if the bucket is outdated
-    pub fn is_outdated(&self) -> RepoResult<bool> {
+    pub fn outdated(&self) -> RepoResult<bool> {
         // let main_remote = self.main_remote()?;
         // self.repo.diff_tree_to_workdir(main_remote, None);
         unimplemented!()
