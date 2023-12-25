@@ -9,15 +9,14 @@ use sfsu::{
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
-    // TODO: Add json option
-    // #[clap(from_global)]
-    // json: bool,
+    #[clap(from_global)]
+    json: bool,
 }
 
 impl super::Command for Args {
     fn runner(self) -> Result<(), anyhow::Error> {
         // TODO: Refactor
-        let used_buckets = InstallManifest::list_all()?
+        let used_buckets = InstallManifest::list_all_unchecked()?
             .par_iter()
             .filter_map(|entry| entry.bucket.clone())
             .collect::<Vec<_>>();
@@ -26,20 +25,26 @@ impl super::Command for Args {
             .par_iter()
             .filter_map(|bucket| {
                 if used_buckets.contains(&bucket.name().to_string()) {
-                    Some((bucket.name() + "\n").to_string())
-                } else {
                     None
+                } else {
+                    Some((bucket.name()).to_string())
                 }
             })
-            .collect::<Children<_>>();
+            .collect::<Vec<_>>();
 
-        if let Children::None = unused_buckets {
-            println!("No unused buckets");
+        if self.json {
+            let output = serde_json::to_string_pretty(&unused_buckets)?;
+            println!("{output}");
         } else {
-            let unused = Section::new(unused_buckets)
-                .with_title("The following buckets are unused:".to_string());
-            println!("{unused}");
-        };
+            let unused_buckets = Children::from(unused_buckets);
+            if let Children::None = unused_buckets {
+                println!("No unused buckets");
+            } else {
+                let unused =
+                    Section::new(unused_buckets).with_title("The following buckets are unused:");
+                println!("{unused}");
+            };
+        }
 
         Ok(())
     }

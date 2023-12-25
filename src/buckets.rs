@@ -1,5 +1,6 @@
 use std::{
     borrow::Cow,
+    collections::HashSet,
     path::{Path, PathBuf},
 };
 
@@ -9,7 +10,7 @@ use regex::Regex;
 
 use crate::{
     output::sectioned::{Children, Section, Text},
-    packages::{self, CreateManifest, Manifest, SearchMode},
+    packages::{self, CreateManifest, InstallManifest, Manifest, SearchMode},
     Scoop,
 };
 
@@ -221,6 +222,28 @@ impl Bucket {
                     .with_title(format!("'{}' bucket:", self.name())),
             ))
         }
+    }
+
+    /// List all used buckets
+    ///
+    /// # Errors
+    /// Invalid install manifest
+    /// Reading directories fails
+    pub fn used() -> packages::Result<HashSet<String>> {
+        Ok(InstallManifest::list_all()?
+            .par_iter()
+            .filter_map(|entry| entry.bucket.clone())
+            .collect())
+    }
+
+    // TODO: Check if calling this for every single bucket is slow
+    /// Check if the current bucket is used
+    ///
+    /// # Errors
+    /// Invalid install manifest
+    /// Reading directories fails
+    pub fn is_used(&self) -> packages::Result<bool> {
+        Ok(Self::used()?.contains(&self.name().to_string()))
     }
 }
 

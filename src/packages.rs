@@ -297,6 +297,22 @@ impl InstallManifest {
             .map(|path| Self::from_path(path.join("current/install.json")))
             .collect::<Result<Vec<_>>>()
     }
+
+    /// List all install manifests, ignoring errors
+    ///
+    /// # Errors
+    /// - Reading directories fails
+    pub fn list_all_unchecked() -> Result<Vec<Self>> {
+        Ok(Scoop::installed_apps()?
+            .par_iter()
+            .filter_map(
+                |path| match Self::from_path(path.join("current/install.json")) {
+                    Ok(v) => Some(v),
+                    Err(_) => None,
+                },
+            )
+            .collect::<Vec<_>>())
+    }
 }
 
 impl Manifest {

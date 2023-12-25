@@ -90,6 +90,16 @@ pub enum Children<T> {
     None,
 }
 
+impl<T> From<Vec<T>> for Children<T> {
+    fn from(value: Vec<T>) -> Self {
+        match value {
+            v if v.is_empty() => Children::None,
+            mut v if v.len() == 1 => Children::Single(v.remove(0)),
+            v => Children::Multiple(v),
+        }
+    }
+}
+
 impl<T: Send> FromParallelIterator<T> for Children<T> {
     fn from_par_iter<I>(par_iter: I) -> Self
     where
