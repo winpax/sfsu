@@ -47,7 +47,7 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    fn run(self) -> Result<(), anyhow::Error> {
+    fn runner(self) -> Result<(), anyhow::Error> {
         // TODO: Not sure why this works
         let buckets = Bucket::one_or_all(self.bucket)?;
 

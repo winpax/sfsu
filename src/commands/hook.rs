@@ -24,7 +24,7 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    fn run(self) -> Result<(), anyhow::Error> {
+    fn runner(self) -> Result<(), anyhow::Error> {
         let shell = self.shell;
         let enabled_hooks: Vec<super::CommandsHooks> = super::CommandsHooks::iter()
             .filter(|variant| !self.disable.contains(variant))

@@ -14,7 +14,7 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    fn run(self) -> anyhow::Result<()> {
+    fn runner(self) -> anyhow::Result<()> {
         let apps = Manifest::list_installed()?
             .into_iter()
             .filter(std::result::Result::is_ok)

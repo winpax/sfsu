@@ -16,7 +16,7 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    fn run(self) -> Result<(), anyhow::Error> {
+    fn runner(self) -> Result<(), anyhow::Error> {
         let scoop_buckets_path = sfsu::buckets::Bucket::buckets_path();
         let scoop_apps_path = Scoop::get_scoop_path().join("apps");
 

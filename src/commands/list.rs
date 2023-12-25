@@ -18,7 +18,7 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    fn run(self) -> Result<(), anyhow::Error> {
+    fn runner(self) -> Result<(), anyhow::Error> {
         let outputs = MinInfo::list_installed(self.bucket.as_ref())?;
 
         if self.json {

@@ -16,9 +16,11 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    fn run(self) -> Result<(), anyhow::Error> {
-        sfsu::deprecate("Use `sfsu info` instead. Will be removed in v2");
+    fn deprecated() -> Option<&'static str> {
+        Some("Use `sfsu info` instead. Will be removed in v2")
+    }
 
+    fn runner(self) -> Result<(), anyhow::Error> {
         let buckets = Bucket::one_or_all(self.bucket)?;
 
         let manifests: Vec<(String, String, Manifest)> = buckets
