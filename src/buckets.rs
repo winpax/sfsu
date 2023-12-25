@@ -297,12 +297,12 @@ impl BucketRepo {
         unimplemented!()
     }
 
-    pub fn branch(&self) -> RepoResult<String> {
+    pub fn branch(&self, name: Option<&str>) -> RepoResult<String> {
         let branches = self.repo.branches(None)?;
 
         for branch in branches {
             match branch {
-                Ok((branch, _)) if branch.is_head() => {
+                Ok((branch, _)) if branch.name()? == name || branch.is_head() => {
                     return Ok(branch
                         .name()?
                         .ok_or(RepoError::MissingBranchName)?

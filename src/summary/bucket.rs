@@ -1,5 +1,4 @@
-use anyhow::Context;
-use chrono::{DateTime, Local, NaiveDate, NaiveDateTime};
+use chrono::{DateTime, Local, NaiveDateTime};
 use serde::{Deserialize, Serialize};
 use url::Url;
 
@@ -50,7 +49,7 @@ impl Summary {
         };
 
         let commit_time = {
-            let commit_obj = repo.repo.revparse_single(&repo.branch()?)?;
+            let commit_obj = repo.repo.revparse_single(&repo.branch(None)?)?;
             let commit = commit_obj.peel_to_commit()?;
 
             let epoch = commit.time().seconds();
