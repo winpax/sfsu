@@ -2,7 +2,7 @@ use std::{env, path::PathBuf};
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Scoop {
     /// The timestamp of the last scoop update
     pub last_update: Option<String>,

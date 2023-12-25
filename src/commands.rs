@@ -1,4 +1,5 @@
 pub mod describe;
+pub mod export;
 pub mod hook;
 pub mod info;
 pub mod list;
@@ -30,4 +31,6 @@ pub enum Commands {
     Info(info::Args),
     /// List outdated packages
     Outdated(outdated::Args),
+    /// Exports installed apps, buckets (and optionally configs) in JSON format
+    Export(export::Args),
 }

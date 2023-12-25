@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::packages::{CreateManifest as _, InstallManifest, Manifest};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct Summary {
     pub name: String,

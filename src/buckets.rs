@@ -3,7 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use git2::{Remote, Repository};
+use git2::{Reference, Remote, Repository};
 use rayon::prelude::*;
 use regex::Regex;
 
@@ -244,13 +244,16 @@ pub enum RepoError {
 
     #[error("Git error: {0}")]
     Git2(#[from] git2::Error),
+
+    #[error("Branch was its name")]
+    MissingBranchName,
 }
 
 pub type RepoResult<T> = std::result::Result<T, RepoError>;
 
 pub struct BucketRepo {
-    bucket: Bucket,
-    repo: Repository,
+    pub bucket: Bucket,
+    pub repo: Repository,
 }
 
 impl BucketRepo {
@@ -274,9 +277,7 @@ impl BucketRepo {
     /// # Panics
     /// - Non-utf8 branch name
     pub fn main_remote(&self) -> RepoResult<Remote<'_>> {
-        Ok(self
-            .repo
-            .find_remote(self.repo.head()?.name().expect("utf8 branch name"))?)
+        Ok(self.repo.find_remote("origin")?)
     }
 
     /// Checks if the bucket is outdated
@@ -294,5 +295,23 @@ impl BucketRepo {
     /// Get the remote url of the bucket
     pub fn get_remote(&self) {
         unimplemented!()
+    }
+
+    pub fn branch(&self) -> RepoResult<String> {
+        let branches = self.repo.branches(None)?;
+
+        for branch in branches {
+            match branch {
+                Ok((branch, _)) if branch.is_head() => {
+                    return Ok(branch
+                        .name()?
+                        .ok_or(RepoError::MissingBranchName)?
+                        .to_string())
+                }
+                _ => {}
+            }
+        }
+
+        Err(RepoError::NoActiveBranch)
     }
 }
