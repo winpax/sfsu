@@ -167,6 +167,15 @@ impl Bucket {
             .collect())
     }
 
+    /// Get the number of manifests in the given bucket
+    ///
+    /// # Errors
+    /// - The bucket is invalid
+    /// - See more at [`packages::PackageError`]
+    pub fn manifest_count(&self) -> packages::Result<usize> {
+        Ok(self.list_package_names()?.len())
+    }
+
     /// Gets the manifest that represents the given package name
     ///
     /// # Errors
