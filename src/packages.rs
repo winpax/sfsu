@@ -45,7 +45,7 @@ impl MinInfo {
     /// - File metadata errors
     /// - Invalid time
     pub fn list_installed(bucket: Option<&String>) -> Result<Vec<Self>> {
-        let apps = Scoop::list_installed_scoop_apps()?;
+        let apps = Scoop::installed_apps()?;
 
         apps.par_iter()
             .map(Self::from_path)
@@ -292,7 +292,7 @@ impl InstallManifest {
     /// - Invalid install manifest
     /// - Reading directories fails
     pub fn list_all() -> Result<Vec<Self>> {
-        Scoop::list_installed_scoop_apps()?
+        Scoop::installed_apps()?
             .par_iter()
             .map(|path| Self::from_path(path.join("current/install.json")))
             .collect::<Result<Vec<_>>>()
@@ -344,7 +344,7 @@ impl Manifest {
     /// # Panics
     /// - If the file name is invalid
     pub fn list_installed() -> Result<Vec<Result<Self>>> {
-        Ok(Scoop::list_installed_scoop_apps()?
+        Ok(Scoop::installed_apps()?
             .par_iter()
             .map(|path| {
                 Self::from_path(path.join("current/manifest.json")).and_then(|mut manifest| {
@@ -435,13 +435,11 @@ impl Manifest {
 /// # Panics
 /// - The file was not valid UTF-8
 pub fn is_installed(manifest_name: impl AsRef<Path>, bucket: Option<impl AsRef<str>>) -> bool {
-    let scoop_path = Scoop::get_scoop_path();
-    let installed_path = scoop_path
-        .join("apps")
+    let install_path = Scoop::apps_path()
         .join(manifest_name)
         .join("current/install.json");
 
-    match InstallManifest::from_path(installed_path) {
+    match InstallManifest::from_path(install_path) {
         Ok(manifest) => {
             if let Some(bucket) = bucket {
                 manifest.get_source() == bucket.as_ref()

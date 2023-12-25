@@ -74,7 +74,7 @@ impl super::Command for Args {
             );
         }
 
-        let installed_apps = Scoop::list_installed_scoop_apps()?;
+        let installed_apps = Scoop::installed_apps()?;
 
         for (name, bucket, manifest) in manifests {
             let install_path = {

@@ -17,11 +17,12 @@ pub struct Args {
 
 impl super::Command for Args {
     fn runner(self) -> Result<(), anyhow::Error> {
-        let scoop_buckets_path = sfsu::buckets::Bucket::buckets_path();
-        let scoop_apps_path = Scoop::get_scoop_path().join("apps");
+        let buckets_path = Scoop::buckets_path();
+        let apps_path = Scoop::apps_path();
 
-        let apps = read_dir(scoop_apps_path)?.collect::<Result<Vec<_>, _>>()?;
+        let apps = read_dir(apps_path)?.collect::<Result<Vec<_>, _>>()?;
 
+        // TODO: Refactor
         let used_buckets = apps
             .iter()
             .filter_map(|entry| {
@@ -39,7 +40,7 @@ impl super::Command for Args {
             })
             .collect::<Vec<_>>();
 
-        let unused_buckets = read_dir(scoop_buckets_path)?
+        let unused_buckets = read_dir(buckets_path)?
             .filter_map(|dir| {
                 if let Ok(dir) = dir {
                     let dir_name = dir.file_name();

@@ -38,7 +38,7 @@ impl Bucket {
     /// # Errors
     /// - Bucket does not exist
     pub fn new(name: impl AsRef<Path>) -> Result<Self> {
-        Self::open(Self::buckets_path().join(name))
+        Self::open(Scoop::buckets_path().join(name))
     }
 
     /// Open given path as a bucket
@@ -95,21 +95,13 @@ impl Bucket {
         &self.bucket_path
     }
 
-    /// Get the paths where buckets are stored
-    #[must_use]
-    pub fn buckets_path() -> PathBuf {
-        let scoop_path = Scoop::get_scoop_path();
-
-        scoop_path.join("buckets")
-    }
-
     /// Gets all buckets
     ///
     /// # Errors
     /// - Was unable to read the bucket directory
     /// - Any listed bucket is invalid
     pub fn list_all() -> Result<Vec<Bucket>> {
-        let bucket_dir = std::fs::read_dir(Self::buckets_path())?;
+        let bucket_dir = std::fs::read_dir(Scoop::buckets_path())?;
 
         bucket_dir
             .filter(|entry| entry.as_ref().is_ok_and(|entry| entry.path().is_dir()))
