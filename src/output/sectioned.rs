@@ -13,15 +13,18 @@ pub trait SectionData: Display {}
 #[must_use = "does nothing unless printed"]
 pub struct Sections<T>(Vec<Section<T>>);
 
-impl<A> FromIterator<Section<A>> for Sections<A> {
-    fn from_iter<T: IntoIterator<Item = Section<A>>>(iter: T) -> Self {
-        Self(iter.into_iter().collect())
+impl<T: Send> FromParallelIterator<Section<T>> for Sections<T> {
+    fn from_par_iter<I>(par_iter: I) -> Self
+    where
+        I: IntoParallelIterator<Item = Section<T>>,
+    {
+        Self(par_iter.into_par_iter().collect())
     }
 }
 
-impl<A: Send> FromParallelIterator<Section<A>> for Sections<A> {
-    fn from_par_iter<T: IntoParallelIterator<Item = Section<A>>>(iter: T) -> Self {
-        Self(iter.into_par_iter().collect())
+impl<T> FromIterator<Section<T>> for Sections<T> {
+    fn from_iter<I: IntoIterator<Item = Section<T>>>(iter: I) -> Self {
+        Self(iter.into_iter().collect())
     }
 }
 
@@ -73,8 +76,8 @@ impl<T> Section<T> {
         Self { title: None, child }
     }
 
-    pub fn with_title(mut self, title: String) -> Self {
-        self.title = Some(title);
+    pub fn with_title(mut self, title: impl Display) -> Self {
+        self.title = Some(title.to_string());
 
         self
     }
@@ -87,11 +90,26 @@ pub enum Children<T> {
     None,
 }
 
-impl<A> FromIterator<A> for Children<A> {
-    fn from_iter<T: IntoIterator<Item = A>>(iter: T) -> Self {
-        let v: Vec<_> = iter.into_iter().collect();
+impl<T: Send> FromParallelIterator<T> for Children<T> {
+    fn from_par_iter<I>(par_iter: I) -> Self
+    where
+        I: IntoParallelIterator<Item = T>,
+    {
+        let children: Vec<_> = par_iter.into_par_iter().collect();
 
-        match v {
+        match children {
+            v if v.is_empty() => Children::None,
+            mut v if v.len() == 1 => Children::Single(v.remove(0)),
+            v => Children::Multiple(v),
+        }
+    }
+}
+
+impl<T> FromIterator<T> for Children<T> {
+    fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
+        let children: Vec<_> = iter.into_iter().collect();
+
+        match children {
             v if v.is_empty() => Children::None,
             mut v if v.len() == 1 => Children::Single(v.remove(0)),
             v => Children::Multiple(v),

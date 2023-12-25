@@ -1,11 +1,10 @@
-use std::fs::read_dir;
-
 use clap::Parser;
 
+use rayon::prelude::*;
 use sfsu::{
+    buckets::Bucket,
     output::sectioned::{Children, Section},
-    packages::{CreateManifest, InstallManifest},
-    Scoop,
+    packages::InstallManifest,
 };
 
 #[derive(Debug, Clone, Parser)]
@@ -17,40 +16,17 @@ pub struct Args {
 
 impl super::Command for Args {
     fn runner(self) -> Result<(), anyhow::Error> {
-        let buckets_path = Scoop::buckets_path();
-        let apps_path = Scoop::apps_path();
-
-        let apps = read_dir(apps_path)?.collect::<Result<Vec<_>, _>>()?;
-
         // TODO: Refactor
-        let used_buckets = apps
-            .iter()
-            .filter_map(|entry| {
-                let install_path = entry.path().join("current/install.json");
-
-                if let Ok(InstallManifest {
-                    bucket: Some(bucket),
-                    ..
-                }) = InstallManifest::from_path(install_path)
-                {
-                    Some(bucket)
-                } else {
-                    None
-                }
-            })
+        let used_buckets = InstallManifest::list_all()?
+            .par_iter()
+            .filter_map(|entry| entry.bucket.clone())
             .collect::<Vec<_>>();
 
-        let unused_buckets = read_dir(buckets_path)?
-            .filter_map(|dir| {
-                if let Ok(dir) = dir {
-                    let dir_name = dir.file_name();
-                    let dir_name_str = dir_name.to_string_lossy().to_string();
-
-                    if !dir.path().is_dir() || used_buckets.contains(&dir_name_str) {
-                        None
-                    } else {
-                        Some(dir_name_str + "\n")
-                    }
+        let unused_buckets = Bucket::list_all()?
+            .par_iter()
+            .filter_map(|bucket| {
+                if used_buckets.contains(&bucket.name().to_string()) {
+                    Some((bucket.name() + "\n").to_string())
                 } else {
                     None
                 }
