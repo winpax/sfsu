@@ -119,6 +119,7 @@ pub trait Deprecateable {
     }
 }
 
+#[deprecated(note = "Use the `Command` trait function instead")]
 pub fn deprecate(message: impl Display) {
     eprintln!(
         "{}",
