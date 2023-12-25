@@ -39,16 +39,16 @@ impl super::Command for Args {
                 let mut description: Vec<Text<String>> = vec![];
 
                 if let Some(ref pkg_description) = manifest.description {
-                    description.push(format!("{pkg_description}\n").into());
+                    description.push(pkg_description.clone().into());
                 }
 
-                description.push(format!("Version: {}\n", manifest.version).into());
+                description.push(format!("Version: {}", manifest.version).into());
 
                 if let Some(ref homepage) = manifest.homepage {
-                    description.push(format!("Homepage: {homepage}\n").into());
+                    description.push(format!("Homepage: {homepage}").into());
                 }
                 if let Some(ref license) = manifest.license {
-                    description.push(format!("License: {license}\n").into());
+                    description.push(format!("License: {license}").into());
                 }
 
                 Section::new(Children::Multiple(description)).with_title(title)
