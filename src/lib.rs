@@ -1,8 +1,7 @@
 #![warn(clippy::all, clippy::pedantic, rust_2018_idioms)]
 
-use std::{ffi::OsStr, fmt::Display, path::PathBuf};
+use std::{ffi::OsStr, path::PathBuf};
 
-use colored::Colorize;
 use rayon::prelude::*;
 
 pub mod buckets;
@@ -28,11 +27,6 @@ pub trait KeyValue {
 }
 
 pub struct Scoop;
-
-/// This is a workaround for type equality constraints <https://github.com/rust-lang/rust/issues/20041>
-pub(crate) trait TyEq {}
-
-impl<T> TyEq for (T, T) {}
 
 impl Scoop {
     #[must_use]
@@ -97,32 +91,4 @@ impl Scoop {
             })
             .collect())
     }
-}
-
-#[deprecated(note = "Use `sfsu::deprecate` instead")]
-pub trait Deprecateable {
-    fn is_deprecated() -> bool;
-
-    #[must_use]
-    fn deprecation_message() -> Option<String> {
-        None
-    }
-
-    fn print_deprecation_message() {
-        if Self::is_deprecated() {
-            eprint!("WARNING: This command is deprecated");
-            if let Some(message) = Self::deprecation_message() {
-                eprint!(": {message}");
-            }
-            eprintln!();
-        }
-    }
-}
-
-#[deprecated(note = "Use the `Command` trait function instead")]
-pub fn deprecate(message: impl Display) {
-    eprintln!(
-        "{}",
-        format!("WARNING: This command is deprecated: {message}").yellow()
-    );
 }
