@@ -10,6 +10,7 @@ use clap::Subcommand;
 
 use sfsu_derive::{Hooks, Runnable};
 
+// TODO: Run command could return `impl Display` and print that itself
 pub trait Command {
     fn run(self) -> Result<(), anyhow::Error>;
 }

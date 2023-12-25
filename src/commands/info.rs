@@ -41,6 +41,9 @@ pub struct Args {
 
     #[clap(long, help = "Display more information about the package")]
     verbose: bool,
+
+    #[clap(from_global)]
+    json: bool,
 }
 
 impl super::Command for Args {
@@ -105,11 +108,17 @@ impl super::Command for Args {
                 updated_at,
             };
 
-            // TODO: Add custom derive macro that allows this without serde_json
-            let (keys, values) = pkg_info.into_pairs();
+            if self.json {
+                let output = serde_json::to_string_pretty(&pkg_info)?;
 
-            let table = VTable::new(&keys, &values);
-            println!("{table}");
+                println!("{output}");
+            } else {
+                // TODO: Add custom derive macro that allows this without serde_json
+                let (keys, values) = pkg_info.into_pairs();
+
+                let table = VTable::new(&keys, &values);
+                println!("{table}");
+            }
         }
 
         Ok(())

@@ -9,7 +9,11 @@ use sfsu::{
 };
 
 #[derive(Debug, Clone, Parser)]
-pub struct Args;
+pub struct Args {
+    // TODO: Add json option
+    // #[clap(from_global)]
+    // json: bool,
+}
 
 impl super::Command for Args {
     fn run(self) -> Result<(), anyhow::Error> {

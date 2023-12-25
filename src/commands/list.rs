@@ -13,10 +13,7 @@ pub struct Args {
     #[clap(short, long, help = "The bucket to exclusively list packages in")]
     bucket: Option<String>,
 
-    #[clap(
-        long,
-        help = "Print in the raw JSON output, rather than a human readable format"
-    )]
+    #[clap(from_global)]
     json: bool,
 }
 
