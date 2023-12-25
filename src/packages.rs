@@ -429,14 +429,14 @@ impl Manifest {
                 .iter()
                 .map(|output| {
                     Text::new(format!(
-                        "{}{}\n",
+                        "{}{}",
                         crate::output::sectioned::WHITESPACE,
                         output.bold()
                     ))
                 })
                 .collect_vec();
 
-            Section::new(Children::Multiple(bins))
+            Section::new(Children::from(bins))
         } else {
             Section::new(Children::None)
         }

@@ -217,7 +217,7 @@ impl Bucket {
             Ok(None)
         } else {
             Ok(Some(
-                Section::new(Children::Multiple(matches))
+                Section::new(Children::from(matches))
                     // TODO: Remove quotes and bold bucket name
                     .with_title(format!("'{}' bucket:", self.name())),
             ))

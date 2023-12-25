@@ -158,7 +158,10 @@ impl<T: Display> Display for Text<T> {
 impl<T: Display> Display for Section<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if let Some(ref title) = self.title {
-            writeln!(f, "{title}")?;
+            match self.child {
+                Children::None => write!(f, "{title}")?,
+                _ => writeln!(f, "{title}")?,
+            }
         }
 
         write!(f, "{}", self.child)?;
@@ -171,10 +174,10 @@ impl<T: Display> Display for Children<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             // TODO: Indent children based on how nested they are
-            Children::Single(child) => write!(f, "{WHITESPACE}{child}"),
+            Children::Single(child) => writeln!(f, "{WHITESPACE}{child}"),
             Children::Multiple(children) => {
                 for child in children {
-                    write!(f, "{WHITESPACE}{child}")?;
+                    writeln!(f, "{WHITESPACE}{child}")?;
                 }
                 Ok(())
             }
