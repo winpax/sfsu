@@ -3,7 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use git2::{Reference, Remote, Repository};
+use git2::{Remote, Repository};
 use rayon::prelude::*;
 use regex::Regex;
 
