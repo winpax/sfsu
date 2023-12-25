@@ -19,6 +19,13 @@ struct Args {
 
     #[clap(long, global = true, help = "Disable terminal formatting")]
     no_color: bool,
+
+    #[clap(
+        long,
+        global = true,
+        help = "Print in the raw JSON output, rather than a human readable format"
+    )]
+    json: bool,
 }
 
 fn main() -> anyhow::Result<()> {

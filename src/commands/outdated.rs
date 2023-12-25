@@ -8,10 +8,13 @@ use sfsu::{
 };
 
 #[derive(Debug, Clone, Parser)]
-pub struct Args;
+pub struct Args {
+    #[clap(from_global)]
+    json: bool,
+}
 
 impl super::Command for Args {
-    fn run(self) -> anyhow::Result<()> {
+    fn runner(self) -> anyhow::Result<()> {
         let apps = Manifest::list_installed()?
             .into_iter()
             .filter(std::result::Result::is_ok)
@@ -42,10 +45,16 @@ impl super::Command for Args {
                 .map(serde_json::to_value)
                 .collect::<Result<Vec<_>, _>>()?;
 
-            let outputs =
-                Structured::new(&["Name", "Current", "Available"], &values).with_max_length(30);
+            if self.json {
+                let output = serde_json::to_string_pretty(&values)?;
 
-            print!("{outputs}");
+                println!("{output}");
+            } else {
+                let outputs =
+                    Structured::new(&["Name", "Current", "Available"], &values).with_max_length(30);
+
+                print!("{outputs}");
+            }
         }
 
         Ok(())

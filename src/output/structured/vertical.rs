@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use crate::SimIter;
+use crate::{output::wrappers::cap_str::CapitalizedStr, SimIter};
 
 #[derive(Debug)]
 #[must_use = "OptionalTruncate is lazy, and only takes effect when used in formatting"]
@@ -79,7 +79,7 @@ impl<'a, H: Display, V: Display + Send + Sync> VTable<'a, H, V> {
             values.len(),
             "The number of column headers must match quantity data for said columns"
         );
-        VTable {
+        Self {
             headers,
             values,
             max_length: None,
@@ -137,7 +137,8 @@ impl<'a, H: Display, V: Display + Send + Sync> Display for VTable<'a, H, V> {
         for (i, (header, element)) in iters {
             let header_size = header_lengths[i];
 
-            let truncated = OptionalTruncate::new(header).with_length(self.max_length);
+            let truncated = OptionalTruncate::new(CapitalizedStr::new(header).to_string())
+                .with_length(self.max_length);
 
             let element = element.to_string();
 

@@ -1,5 +1,6 @@
 use std::{
     borrow::Cow,
+    collections::HashSet,
     path::{Path, PathBuf},
 };
 
@@ -9,7 +10,7 @@ use regex::Regex;
 
 use crate::{
     output::sectioned::{Children, Section, Text},
-    packages::{self, CreateManifest, Manifest, SearchMode},
+    packages::{self, CreateManifest, InstallManifest, Manifest, SearchMode},
     Scoop,
 };
 
@@ -17,6 +18,9 @@ use crate::{
 pub enum BucketError {
     #[error("Interacting with repo: {0}")]
     RepoError(#[from] RepoError),
+
+    #[error("IO Error: {0}")]
+    IOError(#[from] std::io::Error),
 
     #[error("The bucket \"{0}\" does not exist")]
     InvalidBucket(PathBuf),
@@ -35,7 +39,7 @@ impl Bucket {
     /// # Errors
     /// - Bucket does not exist
     pub fn new(name: impl AsRef<Path>) -> Result<Self> {
-        Self::open(Self::buckets_path().join(name))
+        Self::open(Scoop::buckets_path().join(name))
     }
 
     /// Open given path as a bucket
@@ -50,6 +54,19 @@ impl Bucket {
             Ok(Self { bucket_path })
         } else {
             Err(BucketError::InvalidBucket(path.as_ref().to_path_buf()))
+        }
+    }
+
+    /// Open a single bucket, or return all available buckets
+    ///
+    /// # Errors
+    /// - Any listed or provided bucket is invalid
+    /// - Unable to read the bucket directory
+    pub fn one_or_all(name: Option<impl AsRef<Path>>) -> Result<Vec<Self>> {
+        if let Some(name) = name {
+            Ok(vec![Bucket::new(name)?])
+        } else {
+            Bucket::list_all()
         }
     }
 
@@ -79,38 +96,18 @@ impl Bucket {
         &self.bucket_path
     }
 
-    /// Get the paths where buckets are stored
-    #[must_use]
-    pub fn buckets_path() -> PathBuf {
-        let scoop_path = Scoop::get_scoop_path();
-
-        scoop_path.join("buckets")
-    }
-
     /// Gets all buckets
     ///
     /// # Errors
     /// - Was unable to read the bucket directory
-    ///
-    /// # Panics
     /// - Any listed bucket is invalid
-    pub fn list_all() -> std::io::Result<Vec<Bucket>> {
-        let buckets_path = Self::buckets_path();
+    pub fn list_all() -> Result<Vec<Bucket>> {
+        let bucket_dir = std::fs::read_dir(Scoop::buckets_path())?;
 
-        let bucket_dir = std::fs::read_dir(buckets_path)?;
-
-        let buckets = bucket_dir
+        bucket_dir
             .filter(|entry| entry.as_ref().is_ok_and(|entry| entry.path().is_dir()))
-            .map(|entry| {
-                Ok::<Bucket, std::io::Error>(
-                    Self::new(entry?.path())
-                        .expect("somehow the bucket we found that definitely exists doesn't exist"),
-                )
-            });
-
-        let buckets = buckets.collect::<std::result::Result<Vec<_>, _>>()?;
-
-        Ok(buckets)
+            .map(|entry| Self::new(entry?.path()))
+            .collect()
     }
 
     /// List all packages contained within this bucket
@@ -220,11 +217,33 @@ impl Bucket {
             Ok(None)
         } else {
             Ok(Some(
-                Section::new(Children::Multiple(matches))
+                Section::new(Children::from(matches))
                     // TODO: Remove quotes and bold bucket name
                     .with_title(format!("'{}' bucket:", self.name())),
             ))
         }
+    }
+
+    /// List all used buckets
+    ///
+    /// # Errors
+    /// Invalid install manifest
+    /// Reading directories fails
+    pub fn used() -> packages::Result<HashSet<String>> {
+        Ok(InstallManifest::list_all()?
+            .par_iter()
+            .filter_map(|entry| entry.bucket.clone())
+            .collect())
+    }
+
+    // TODO: Check if calling this for every single bucket is slow
+    /// Check if the current bucket is used
+    ///
+    /// # Errors
+    /// Invalid install manifest
+    /// Reading directories fails
+    pub fn is_used(&self) -> packages::Result<bool> {
+        Ok(Self::used()?.contains(&self.name().to_string()))
     }
 }
 
@@ -271,7 +290,7 @@ impl BucketRepo {
     }
 
     /// Checks if the bucket is outdated
-    pub fn is_outdated(&self) -> RepoResult<bool> {
+    pub fn outdated(&self) -> RepoResult<bool> {
         // let main_remote = self.main_remote()?;
         // self.repo.diff_tree_to_workdir(main_remote, None);
         unimplemented!()

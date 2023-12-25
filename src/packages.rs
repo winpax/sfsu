@@ -1,11 +1,16 @@
-use std::path::Path;
+use std::{
+    path::Path,
+    time::{SystemTimeError, UNIX_EPOCH},
+};
 
+use chrono::NaiveDateTime;
 use clap::{Parser, ValueEnum};
 use colored::Colorize as _;
 use itertools::Itertools as _;
+use quork::traits::truthy::ContainsTruth as _;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use regex::Regex;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use strum::Display;
 
 use crate::{
@@ -22,11 +27,95 @@ pub use manifest::Manifest;
 
 use manifest::StringOrArrayOfStringsOrAnArrayOfArrayOfStrings;
 
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct MinInfo {
+    pub name: String,
+    pub version: String,
+    pub source: String,
+    pub updated: String,
+    pub notes: String,
+}
+
+impl MinInfo {
+    /// Parse minmal package info for every installed app
+    ///
+    /// # Errors
+    /// - Invalid file names
+    /// - File metadata errors
+    /// - Invalid time
+    pub fn list_installed(bucket: Option<&String>) -> Result<Vec<Self>> {
+        let apps = Scoop::installed_apps()?;
+
+        apps.par_iter()
+            .map(Self::from_path)
+            .filter(|package| {
+                if let Ok(pkg) = package {
+                    if let Some(bucket) = bucket {
+                        return &pkg.source == bucket;
+                    }
+                }
+                // Keep errors so that the following line will return the error
+                true
+            })
+            .collect()
+    }
+
+    /// Parse minimal package into from a given path
+    ///
+    /// # Errors
+    /// - Invalid file names
+    /// - File metadata errors
+    /// - Invalid time
+    ///
+    /// # Panics
+    /// - Date time invalid or out of range
+    pub fn from_path(path: impl AsRef<Path>) -> Result<Self> {
+        let path = path.as_ref();
+
+        let package_name = path
+            .file_name()
+            .map(|f| f.to_string_lossy())
+            .ok_or(PackageError::MissingFileName)?;
+
+        let naive_time = {
+            let updated = {
+                let updated_sys = path.metadata()?.modified()?;
+
+                updated_sys.duration_since(UNIX_EPOCH)?.as_secs()
+            };
+
+            #[allow(clippy::cast_possible_wrap)]
+            NaiveDateTime::from_timestamp_opt(updated as i64, 0)
+                .expect("invalid or out-of-range datetime")
+        };
+
+        let app_current = path.join("current");
+
+        let manifest = Manifest::from_path(app_current.join("manifest.json")).unwrap_or_default();
+
+        let install_manifest =
+            InstallManifest::from_path(app_current.join("install.json")).unwrap_or_default();
+
+        Ok(Self {
+            name: package_name.to_string(),
+            version: manifest.version,
+            source: install_manifest.get_source(),
+            updated: naive_time.to_string(),
+            notes: if install_manifest.hold.contains_truth() {
+                String::from("Held")
+            } else {
+                String::new()
+            },
+        })
+    }
+}
+
 #[derive(Debug, thiserror::Error)]
 pub enum PackageError {
     #[error("Invalid utf8 found. This is not supported by sfsu")]
     NonUtf8,
-    #[error("Missing file name. The path terminated in '..'")]
+    #[error("Missing or invalid file name. The path terminated in '..' or wasn't valid utf8")]
     MissingFileName,
     #[error("{0}")]
     IO(#[from] std::io::Error),
@@ -34,6 +123,8 @@ pub enum PackageError {
     ParsingManifest(String, serde_json::Error),
     #[error("Interacting with buckets: {0}")]
     BucketError(#[from] buckets::BucketError),
+    #[error("System Time: {0}")]
+    TimeError(#[from] SystemTimeError),
 }
 
 #[derive(Debug, Default, Copy, Clone, ValueEnum, Display, Parser, PartialEq, Eq)]
@@ -201,10 +292,26 @@ impl InstallManifest {
     /// - Invalid install manifest
     /// - Reading directories fails
     pub fn list_all() -> Result<Vec<Self>> {
-        Scoop::list_installed_scoop_apps()?
+        Scoop::installed_apps()?
             .par_iter()
             .map(|path| Self::from_path(path.join("current/install.json")))
             .collect::<Result<Vec<_>>>()
+    }
+
+    /// List all install manifests, ignoring errors
+    ///
+    /// # Errors
+    /// - Reading directories fails
+    pub fn list_all_unchecked() -> Result<Vec<Self>> {
+        Ok(Scoop::installed_apps()?
+            .par_iter()
+            .filter_map(
+                |path| match Self::from_path(path.join("current/install.json")) {
+                    Ok(v) => Some(v),
+                    Err(_) => None,
+                },
+            )
+            .collect::<Vec<_>>())
     }
 }
 
@@ -253,7 +360,7 @@ impl Manifest {
     /// # Panics
     /// - If the file name is invalid
     pub fn list_installed() -> Result<Vec<Result<Self>>> {
-        Ok(Scoop::list_installed_scoop_apps()?
+        Ok(Scoop::installed_apps()?
             .par_iter()
             .map(|path| {
                 Self::from_path(path.join("current/manifest.json")).and_then(|mut manifest| {
@@ -322,14 +429,14 @@ impl Manifest {
                 .iter()
                 .map(|output| {
                     Text::new(format!(
-                        "{}{}\n",
+                        "{}{}",
                         crate::output::sectioned::WHITESPACE,
                         output.bold()
                     ))
                 })
                 .collect_vec();
 
-            Section::new(Children::Multiple(bins))
+            Section::new(Children::from(bins))
         } else {
             Section::new(Children::None)
         }
@@ -344,13 +451,11 @@ impl Manifest {
 /// # Panics
 /// - The file was not valid UTF-8
 pub fn is_installed(manifest_name: impl AsRef<Path>, bucket: Option<impl AsRef<str>>) -> bool {
-    let scoop_path = Scoop::get_scoop_path();
-    let installed_path = scoop_path
-        .join("apps")
+    let install_path = Scoop::apps_path()
         .join(manifest_name)
         .join("current/install.json");
 
-    match InstallManifest::from_path(installed_path) {
+    match InstallManifest::from_path(install_path) {
         Ok(manifest) => {
             if let Some(bucket) = bucket {
                 manifest.get_source() == bucket.as_ref()

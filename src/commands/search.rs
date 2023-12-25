@@ -25,10 +25,13 @@ pub struct Args {
 
     #[clap(short, long, help = "Search mode to use", default_value_t)]
     mode: SearchMode,
+    // TODO: Add json option
+    // #[clap(from_global)]
+    // json: bool,
 }
 
 impl super::Command for Args {
-    fn run(self) -> Result<(), anyhow::Error> {
+    fn runner(self) -> Result<(), anyhow::Error> {
         let (bucket, raw_pattern) =
             if let Some((bucket, raw_pattern)) = self.pattern.split_once('/') {
                 // Bucket flag overrides bucket/package syntax
