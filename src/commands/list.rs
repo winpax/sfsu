@@ -1,28 +1,9 @@
-use std::{path::Path, time::UNIX_EPOCH};
-
 use rayon::prelude::*;
 
-use chrono::NaiveDateTime;
 use clap::Parser;
 use colored::Colorize;
-use quork::traits::truthy::ContainsTruth;
-use serde::{Deserialize, Serialize};
 
-use sfsu::{
-    output::structured::Structured,
-    packages::{CreateManifest, InstallManifest, Manifest},
-    Scoop,
-};
-
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "PascalCase")]
-struct OutputPackage {
-    name: String,
-    version: String,
-    source: String,
-    updated: String,
-    notes: String,
-}
+use sfsu::{output::structured::Structured, summary::package, Scoop};
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
@@ -43,11 +24,9 @@ pub struct Args {
 
 impl super::Command for Args {
     fn run(self) -> Result<(), anyhow::Error> {
-        let apps = Scoop::list_installed_scoop_apps()?;
-
-        let outputs = apps
+        let outputs = Scoop::list_installed_scoop_apps()?
             .par_iter()
-            .map(parse_package)
+            .map(package::Summary::from_path)
             .filter(|package| {
                 if let Ok(pkg) = package {
                     if let Some(ref bucket) = self.bucket {
@@ -83,43 +62,4 @@ impl super::Command for Args {
 
         Ok(())
     }
-}
-
-fn parse_package(path: impl AsRef<Path>) -> anyhow::Result<OutputPackage> {
-    let path = path.as_ref();
-
-    let package_name = path
-        .file_name()
-        .map(|f| f.to_string_lossy())
-        .ok_or(anyhow::anyhow!("Missing or invalid file name"))?;
-
-    let naive_time = {
-        let updated = {
-            let updated_sys = path.metadata()?.modified()?;
-
-            updated_sys.duration_since(UNIX_EPOCH)?.as_secs()
-        };
-
-        NaiveDateTime::from_timestamp_opt(updated.try_into()?, 0)
-            .expect("invalid or out-of-range datetime")
-    };
-
-    let app_current = path.join("current");
-
-    let manifest = Manifest::from_path(app_current.join("manifest.json")).unwrap_or_default();
-
-    let install_manifest =
-        InstallManifest::from_path(app_current.join("install.json")).unwrap_or_default();
-
-    anyhow::Ok(OutputPackage {
-        name: package_name.to_string(),
-        version: manifest.version,
-        source: install_manifest.get_source(),
-        updated: naive_time.to_string(),
-        notes: if install_manifest.hold.contains_truth() {
-            String::from("Held")
-        } else {
-            String::new()
-        },
-    })
 }

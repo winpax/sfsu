@@ -1053,6 +1053,7 @@ dependencies = [
  "sfsu-derive",
  "strum",
  "thiserror",
+ "url",
 ]
 
 [[package]]
@@ -1239,6 +1240,7 @@ dependencies = [
  "form_urlencoded",
  "idna",
  "percent-encoding",
+ "serde",
 ]
 
 [[package]]
