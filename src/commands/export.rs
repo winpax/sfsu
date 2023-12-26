@@ -16,7 +16,7 @@ pub struct Args {
 impl super::Command for Args {
     fn run(self) -> anyhow::Result<()> {
         let buckets = Bucket::list_all()?
-            .into_iter()
+            .into_par_iter()
             .map(bucket::Summary::from_bucket)
             .collect::<Result<Vec<_>, _>>()?;
 
