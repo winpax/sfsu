@@ -4,7 +4,10 @@ use chrono::NaiveDateTime;
 use quork::traits::truthy::ContainsTruth as _;
 use serde::{Deserialize, Serialize};
 
-use crate::packages::{CreateManifest as _, InstallManifest, Manifest};
+use crate::{
+    packages::{CreateManifest as _, InstallManifest, Manifest},
+    summary::{Error, Result},
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
@@ -19,15 +22,17 @@ pub struct Summary {
 impl Summary {
     /// Summarize a package from the provided path
     ///
-    /// # Panics
-    /// - Invalid or out-of-range Date Time
-    pub fn from_path(path: impl AsRef<Path>) -> anyhow::Result<Self> {
+    /// # Errors
+    /// - Invalid Date Time
+    /// - Listing package names fails
+    /// - Missing or invalid package file name
+    pub fn from_path(path: impl AsRef<Path>) -> Result<Self> {
         let path = path.as_ref();
 
         let package_name = path
             .file_name()
             .map(|f| f.to_string_lossy())
-            .ok_or(anyhow::anyhow!("Missing or invalid file name"))?;
+            .ok_or(Error::MissingOrInvalidFileName)?;
 
         let naive_time = {
             let updated = {
@@ -37,7 +42,7 @@ impl Summary {
             };
 
             NaiveDateTime::from_timestamp_opt(updated.try_into()?, 0)
-                .expect("invalid or out-of-range datetime")
+                .ok_or(Error::InvalidDateTime)?
         };
 
         let app_current = path.join("current");

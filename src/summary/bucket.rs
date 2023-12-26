@@ -3,27 +3,9 @@ use serde::{Deserialize, Serialize};
 use url::Url;
 
 use crate::{
-    buckets::{Bucket, BucketError, RepoError},
-    packages::PackageError,
+    buckets::Bucket,
+    summary::{Error, Result},
 };
-
-#[derive(Debug, thiserror::Error)]
-pub enum SummaryError {
-    #[error("Git related error: {0}")]
-    GitError(#[from] git2::Error),
-    #[error("Interfacing with buckets: {0}")]
-    BucketError(#[from] BucketError),
-    #[error("Interfacing with repo buckets: {0}")]
-    RepoError(#[from] RepoError),
-    #[error("Interfacing with packages: {0}")]
-    PackageError(#[from] PackageError),
-    #[error("The provided remote url was invalid: {0}")]
-    InvalidRemoteUrl(#[from] url::ParseError),
-    #[error("Main remote is missing a url")]
-    MissingRemoteUrl,
-}
-
-pub type Result<T> = std::result::Result<T, SummaryError>;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Summary {
@@ -35,14 +17,26 @@ pub struct Summary {
 
 impl Summary {
     // TODO: Replace this anyhow::Result with a better error type
-    pub fn from_bucket(bucket: Bucket) -> Result<Summary> {
+    /// Create a bucket summary from a [`Bucket`]
+    ///
+    /// # Errors
+    /// - Bucket repo fails to open
+    /// - Bucket is missing a main remote
+    /// - The main remote is missing a url
+    /// - The found remote url is not a valid url
+    /// - Branch missing
+    /// - Branch has no commits
+    /// - Found commit was not a commit
+    /// - Invalid Date Time
+    /// - Listing package names fails
+    pub fn from_bucket(bucket: &Bucket) -> Result<Summary> {
         let repo = bucket.open_repo()?;
 
         let remote_url = {
             let main_remote = repo.main_remote()?;
 
             let Some(remote_url) = main_remote.url() else {
-                return Err(SummaryError::MissingRemoteUrl);
+                return Err(Error::MissingRemoteUrl);
             };
 
             Url::parse(remote_url)?
@@ -53,9 +47,13 @@ impl Summary {
             let commit = commit_obj.peel_to_commit()?;
 
             let epoch = commit.time().seconds();
-            let naive_time = NaiveDateTime::from_timestamp_opt(epoch, 0).expect("valid datetime");
+            let naive_time =
+                NaiveDateTime::from_timestamp_opt(epoch, 0).ok_or(Error::InvalidDateTime)?;
 
-            naive_time.and_local_timezone(Local).unwrap()
+            naive_time
+                .and_local_timezone(Local)
+                .earliest()
+                .ok_or(Error::InvalidDateTime)?
         };
 
         Ok(Self {
