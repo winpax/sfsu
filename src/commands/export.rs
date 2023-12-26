@@ -9,7 +9,7 @@ use sfsu::{
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
-    #[clap(short, long, help = "Export the scoop config too")]
+    #[clap(short, long, help = "Export the scoop config as well")]
     config: bool,
 }
 
