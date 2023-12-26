@@ -3,7 +3,7 @@ use rayon::prelude::*;
 use clap::Parser;
 use colored::Colorize;
 
-use sfsu::{output::structured::Structured, summary::package, Scoop};
+use sfsu::{output::structured::Structured, summary::package};
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
@@ -20,20 +20,17 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    fn runner(self) -> Result<(), anyhow::Error> {
-        let outputs = Scoop::installed_apps()?
-            .par_iter()
-            .map(package::Summary::from_path)
+    fn runner(self) -> anyhow::Result<()> {
+        let outputs = package::Summary::parse_all()?
+            .into_par_iter()
             .filter(|package| {
-                if let Ok(pkg) = package {
-                    if let Some(ref bucket) = self.bucket {
-                        return &pkg.source == bucket;
-                    }
+                if let Some(ref bucket) = self.bucket {
+                    return &package.source == bucket;
                 }
                 // Keep errors so that the following line will return the error
                 true
             })
-            .collect::<Result<Vec<_>, _>>()?;
+            .collect::<Vec<_>>();
 
         if self.json {
             let output_json = serde_json::to_string_pretty(&outputs)?;

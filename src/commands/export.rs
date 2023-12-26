@@ -20,10 +20,7 @@ impl super::Command for Args {
             .map(bucket::Summary::from_bucket)
             .collect::<Result<Vec<_>, _>>()?;
 
-        let packages = sfsu::Scoop::installed_apps()?
-            .par_iter()
-            .map(package::Summary::from_path)
-            .collect::<Result<Vec<_>, _>>()?;
+        let packages = package::Summary::parse_all()?;
 
         let summaries = Summaries {
             buckets,

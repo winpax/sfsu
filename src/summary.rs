@@ -16,6 +16,7 @@ pub mod package;
 pub struct Summaries {
     pub buckets: Vec<bucket::Summary>,
     pub packages: Vec<package::Summary>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub config: Option<crate::config::Scoop>,
 }
 

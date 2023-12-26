@@ -1,4 +1,5 @@
 use chrono::{DateTime, Local, NaiveDateTime};
+use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use url::Url;
 
@@ -16,7 +17,18 @@ pub struct Summary {
 }
 
 impl Summary {
-    // TODO: Replace this anyhow::Result with a better error type
+    /// Parse all local buckets
+    ///
+    /// # Errors
+    /// - Listing buckets fails
+    /// - Parsing buckets fails
+    pub fn parse_all() -> Result<Vec<Self>> {
+        Bucket::list_all()?
+            .par_iter()
+            .map(Self::from_bucket)
+            .collect()
+    }
+
     /// Create a bucket summary from a [`Bucket`]
     ///
     /// # Errors

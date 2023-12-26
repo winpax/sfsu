@@ -2,11 +2,13 @@ use std::{path::Path, time::UNIX_EPOCH};
 
 use chrono::NaiveDateTime;
 use quork::traits::truthy::ContainsTruth as _;
+use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::{
     packages::{CreateManifest as _, InstallManifest, Manifest},
     summary::{Error, Result},
+    Scoop,
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -19,6 +21,18 @@ pub struct Summary {
 }
 
 impl Summary {
+    /// Parse summary info from all installed apps
+    ///
+    /// # Errors
+    /// - Reading installed apps fails
+    /// - Parsing installed apps fails
+    pub fn parse_all() -> Result<Vec<Self>> {
+        Scoop::installed_apps()?
+            .par_iter()
+            .map(Self::from_path)
+            .collect()
+    }
+
     /// Summarize a package from the provided path
     ///
     /// # Errors
