@@ -10,7 +10,6 @@ use crate::{
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "PascalCase")]
 pub struct Summary {
     pub name: String,
     pub version: String,

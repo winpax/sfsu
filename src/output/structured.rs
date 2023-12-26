@@ -111,8 +111,12 @@ impl<'a> Display for Structured<'a> {
         };
 
         let contestants = {
-            // TODO: Make this dynamic largest header
-            let default_width = "Updated".len();
+            let default_width = self
+                .headers
+                .iter()
+                .map(|header| header.len())
+                .max()
+                .unwrap_or_default();
 
             let mut v = vec![default_width];
             v.extend(self.headers.iter().map(|s| s.len()));
