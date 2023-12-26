@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::{path::Path, time::SystemTimeError};
 
 use clap::{Parser, ValueEnum};
 use colored::Colorize as _;
@@ -26,7 +26,7 @@ use manifest::StringOrArrayOfStringsOrAnArrayOfArrayOfStrings;
 pub enum PackageError {
     #[error("Invalid utf8 found. This is not supported by sfsu")]
     NonUtf8,
-    #[error("Missing file name. The path terminated in '..'")]
+    #[error("Missing or invalid file name. The path terminated in '..' or wasn't valid utf8")]
     MissingFileName,
     #[error("{0}")]
     IO(#[from] std::io::Error),
@@ -34,6 +34,8 @@ pub enum PackageError {
     ParsingManifest(String, serde_json::Error),
     #[error("Interacting with buckets: {0}")]
     BucketError(#[from] buckets::BucketError),
+    #[error("System Time: {0}")]
+    TimeError(#[from] SystemTimeError),
 }
 
 #[derive(Debug, Default, Copy, Clone, ValueEnum, Display, Parser, PartialEq, Eq)]
@@ -201,10 +203,26 @@ impl InstallManifest {
     /// - Invalid install manifest
     /// - Reading directories fails
     pub fn list_all() -> Result<Vec<Self>> {
-        Scoop::list_installed_scoop_apps()?
+        Scoop::installed_apps()?
             .par_iter()
             .map(|path| Self::from_path(path.join("current/install.json")))
             .collect::<Result<Vec<_>>>()
+    }
+
+    /// List all install manifests, ignoring errors
+    ///
+    /// # Errors
+    /// - Reading directories fails
+    pub fn list_all_unchecked() -> Result<Vec<Self>> {
+        Ok(Scoop::installed_apps()?
+            .par_iter()
+            .filter_map(
+                |path| match Self::from_path(path.join("current/install.json")) {
+                    Ok(v) => Some(v),
+                    Err(_) => None,
+                },
+            )
+            .collect::<Vec<_>>())
     }
 }
 
@@ -253,7 +271,7 @@ impl Manifest {
     /// # Panics
     /// - If the file name is invalid
     pub fn list_installed() -> Result<Vec<Result<Self>>> {
-        Ok(Scoop::list_installed_scoop_apps()?
+        Ok(Scoop::installed_apps()?
             .par_iter()
             .map(|path| {
                 Self::from_path(path.join("current/manifest.json")).and_then(|mut manifest| {
@@ -322,14 +340,14 @@ impl Manifest {
                 .iter()
                 .map(|output| {
                     Text::new(format!(
-                        "{}{}\n",
+                        "{}{}",
                         crate::output::sectioned::WHITESPACE,
                         output.bold()
                     ))
                 })
                 .collect_vec();
 
-            Section::new(Children::Multiple(bins))
+            Section::new(Children::from(bins))
         } else {
             Section::new(Children::None)
         }
@@ -344,13 +362,11 @@ impl Manifest {
 /// # Panics
 /// - The file was not valid UTF-8
 pub fn is_installed(manifest_name: impl AsRef<Path>, bucket: Option<impl AsRef<str>>) -> bool {
-    let scoop_path = Scoop::get_scoop_path();
-    let installed_path = scoop_path
-        .join("apps")
+    let install_path = Scoop::apps_path()
         .join(manifest_name)
         .join("current/install.json");
 
-    match InstallManifest::from_path(installed_path) {
+    match InstallManifest::from_path(install_path) {
         Ok(manifest) => {
             if let Some(bucket) = bucket {
                 manifest.get_source() == bucket.as_ref()

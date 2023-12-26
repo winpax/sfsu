@@ -15,16 +15,13 @@ pub struct Args {
     #[clap(short, long, help = "The bucket to exclusively list packages in")]
     bucket: Option<String>,
 
-    #[clap(
-        long,
-        help = "Print in the raw JSON output, rather than a human readable format"
-    )]
+    #[clap(from_global)]
     json: bool,
 }
 
 impl super::Command for Args {
-    fn run(self) -> Result<(), anyhow::Error> {
-        let outputs = Scoop::list_installed_scoop_apps()?
+    fn runner(self) -> Result<(), anyhow::Error> {
+        let outputs = Scoop::installed_apps()?
             .par_iter()
             .map(package::Summary::from_path)
             .filter(|package| {

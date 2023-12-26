@@ -1,8 +1,7 @@
 #![warn(clippy::all, clippy::pedantic, rust_2018_idioms)]
 
-use std::{ffi::OsStr, fmt::Display, path::PathBuf};
+use std::{ffi::OsStr, path::PathBuf};
 
-use colored::Colorize;
 use rayon::prelude::*;
 
 pub mod buckets;
@@ -24,6 +23,10 @@ impl<A: Iterator<Item = AI>, AI, B: Iterator<Item = BI>, BI> Iterator for SimIte
     }
 }
 
+pub trait KeyValue {
+    fn into_pairs(self) -> (Vec<&'static str>, Vec<String>);
+}
+
 pub struct Scoop;
 
 impl Scoop {
@@ -35,7 +38,7 @@ impl Scoop {
     /// # Panics
     /// - There is no home folder
     /// - The discovered scoop path does not exist
-    pub fn get_scoop_path() -> PathBuf {
+    pub fn path() -> PathBuf {
         use std::env::var_os;
 
         // TODO: Add support for both global and non-global scoop installs
@@ -63,6 +66,18 @@ impl Scoop {
         }
     }
 
+    #[must_use]
+    /// Gets the user's scoop apps path
+    pub fn apps_path() -> PathBuf {
+        Self::path().join("apps")
+    }
+
+    #[must_use]
+    /// Gets the user's scoop buckets path
+    pub fn buckets_path() -> PathBuf {
+        Self::path().join("buckets")
+    }
+
     /// List all scoop apps and return their paths
     ///
     /// # Errors
@@ -70,10 +85,10 @@ impl Scoop {
     ///
     /// # Panics
     /// - Reading dir fails
-    pub fn list_installed_scoop_apps() -> std::io::Result<Vec<PathBuf>> {
-        let scoop_apps_path = Self::get_scoop_path().join("apps");
+    pub fn installed_apps() -> std::io::Result<Vec<PathBuf>> {
+        let apps_path = Self::apps_path();
 
-        let read = scoop_apps_path.read_dir()?;
+        let read = apps_path.read_dir()?;
 
         Ok(read
             .par_bridge()
@@ -89,31 +104,4 @@ impl Scoop {
             })
             .collect())
     }
-}
-
-#[deprecated(note = "Use `sfsu::deprecate` instead")]
-pub trait Deprecateable {
-    fn is_deprecated() -> bool;
-
-    #[must_use]
-    fn deprecation_message() -> Option<String> {
-        None
-    }
-
-    fn print_deprecation_message() {
-        if Self::is_deprecated() {
-            eprint!("WARNING: This command is deprecated");
-            if let Some(message) = Self::deprecation_message() {
-                eprint!(": {message}");
-            }
-            eprintln!();
-        }
-    }
-}
-
-pub fn deprecate(message: impl Display) {
-    eprintln!(
-        "{}",
-        format!("WARNING: This command is deprecated: {message}").yellow()
-    );
 }

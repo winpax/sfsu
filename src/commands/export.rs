@@ -14,13 +14,13 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    fn run(self) -> anyhow::Result<()> {
+    fn runner(self) -> anyhow::Result<()> {
         let buckets = Bucket::list_all()?
             .par_iter()
             .map(bucket::Summary::from_bucket)
             .collect::<Result<Vec<_>, _>>()?;
 
-        let packages = sfsu::Scoop::list_installed_scoop_apps()?
+        let packages = sfsu::Scoop::installed_apps()?
             .par_iter()
             .map(package::Summary::from_path)
             .collect::<Result<Vec<_>, _>>()?;
