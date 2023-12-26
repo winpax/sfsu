@@ -52,6 +52,7 @@ pub enum Commands {
     Info(info::Args),
     /// List outdated packages
     Outdated(outdated::Args),
-    /// Exports installed apps, buckets (and optionally configs) in JSON format
+    #[no_hook]
+    /// Exports installed apps, buckets (and optionally configs) in JSON format. Note that the exported format is not fully compatible with Scoop
     Export(export::Args),
 }

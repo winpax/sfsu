@@ -17,6 +17,7 @@ pub struct Summary {
     pub version: String,
     pub source: String,
     pub updated: String,
+    #[serde(skip_serializing_if = "String::is_empty", default = "String::new")]
     pub notes: String,
 }
 
