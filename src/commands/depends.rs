@@ -13,7 +13,7 @@ pub struct Args {
     #[clap(help = "The bucket of the given package")]
     bucket: Option<String>,
 
-    // TODO: Implement recursion
+    // TODO: Implement recursion?
     // recursive: bool,
     #[clap(from_global)]
     json: bool,
