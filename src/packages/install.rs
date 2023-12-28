@@ -3,6 +3,9 @@ use serde_json::Value;
 
 #[derive(Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Manifest {
+    /// This must be manually set
+    #[serde(skip)]
+    pub name: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     /// The bucket the package was installed from
     pub bucket: Option<String>,
@@ -74,6 +77,7 @@ mod tests {
         const MANIFEST: &str = r#"{"bucket":"main","architecture":"64bit"}"#;
 
         let zig_manifest = Manifest {
+            name: String::default(),
             bucket: Some("main".to_string()),
             hold: None,
             url: None,
@@ -95,6 +99,7 @@ mod tests {
         const MANIFEST: &str = r#"{"bucket":"main","hold":true,"architecture":"64bit"}"#;
 
         let zig_manifest = Manifest {
+            name: String::default(),
             bucket: Some("main".to_string()),
             hold: Some(true),
             url: None,

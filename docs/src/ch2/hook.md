@@ -1,5 +1,7 @@
 # Hook
 
+`sfsu hook`
+
 Generate shell hooks
 
 Prints the hook for the supplied shell, allowing one to use `sfsu` instead of `scoop` for its supported commands
@@ -9,7 +11,7 @@ Prints the hook for the supplied shell, allowing one to use `sfsu` instead of `s
 - `-D/--disable`
 
   A comma seperated list of commands to disable.
-    Could be, for example, one could supply `search`, and the `search` command would not work with the hooks and would thus just call the regular `scoop search` command
+  Could be, for example, one could supply `search`, and the `search` command would not work with the hooks and would thus just call the regular `scoop search` command
 
 - `-s/--shell`
 

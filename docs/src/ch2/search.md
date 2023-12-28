@@ -1,5 +1,7 @@
 # Search
 
+`sfsu search`
+
 Search for a package
 
 Takes one argument, which is a regular expression to search for.
@@ -12,9 +14,11 @@ but the query `g*gle` will return `googlechrome` and `megaglest`
 You may have noticed that the queries are not exclusive, and the search `googlechrome` may return `fakegooglechrome` as well.
 This can be fixed by putting a `^` at the start of the search, and a `$` at the end.
 
-> ⚠️ NOTE: The above is untrue at the moment, this will be fixed ASAP. Issue: [#165](https://github.com/jewlexx/sfsu/issues/165)
-
 ## Arguments
+
+- `<QUERY>`
+
+  The query to match. Currently takes a regular expression
 
 - `-C/--case-sensitive`
 
@@ -24,6 +28,12 @@ This can be fixed by putting a `^` at the start of the search, and a `$` at the 
 
   The name of the bucket to exclusively search in
 
-- `-I/--installed <NAME>`
+- `-I/--installed`
 
   Search only installed packages. Works similarly to running `sfsu list | grep <NAME>`
+
+- `-m/--mode <MODE>`
+
+  Determines what to match, whether that be the package name, its binaries, or both. Defaults to `name`
+
+  Possible values: `name`, `binary`, `both`
