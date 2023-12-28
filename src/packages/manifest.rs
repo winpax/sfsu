@@ -22,7 +22,7 @@ pub struct Manifest {
     /// Deprecated. Use ## instead.
     #[serde(rename = "_comment")]
     pub comment: Option<StringOrArrayOfStrings>,
-    pub architecture: Option<Architecture>,
+    pub architecture: Option<Arch>,
     pub autoupdate: Option<Autoupdate>,
     pub bin: Option<StringOrArrayOfStringsOrAnArrayOfArrayOfStrings>,
     pub checkver: Option<Checkver>,
@@ -59,16 +59,16 @@ pub struct Manifest {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct Architecture {
+pub struct Arch {
     #[serde(rename = "32bit")]
-    pub the_32_bit: Option<The32BitClass>,
+    pub the_32_bit: Option<ArchConfig>,
     #[serde(rename = "64bit")]
-    pub the_64_bit: Option<The32BitClass>,
-    pub arm64: Option<The32BitClass>,
+    pub the_64_bit: Option<ArchConfig>,
+    pub arm64: Option<ArchConfig>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct The32BitClass {
+pub struct ArchConfig {
     pub bin: Option<StringOrArrayOfStringsOrAnArrayOfArrayOfStrings>,
     pub checkver: Option<Checkver>,
     pub env_add_path: Option<StringOrArrayOfStrings>,

@@ -232,6 +232,21 @@ pub enum PackageReference {
 }
 
 impl PackageReference {
+    /// Update the bucket string in the package reference
+    pub fn set_bucket(&mut self, bucket: String) {
+        match self {
+            PackageReference::BucketNamePair {
+                bucket: old_bucket, ..
+            } => *old_bucket = bucket,
+            PackageReference::Name(name) => {
+                *self = PackageReference::BucketNamePair {
+                    bucket,
+                    name: name.clone(),
+                }
+            }
+        }
+    }
+
     #[must_use]
     /// Just get the bucket name
     pub fn bucket(&self) -> Option<&str> {
@@ -390,9 +405,9 @@ impl Manifest {
     /// Note that this does not include the package itself as a dependency
     pub fn depends(&self) -> Vec<String> {
         self.depends
+            .and_then(self.architecture)
             .clone()
             .map(|s| s.into_vec())
-            .unwrap_or_default()
     }
 
     /// Gets the manifest from a bucket and manifest name

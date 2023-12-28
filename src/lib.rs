@@ -1,6 +1,6 @@
 #![warn(clippy::all, clippy::pedantic, rust_2018_idioms)]
 
-use std::{ffi::OsStr, path::PathBuf};
+use std::{ffi::OsStr, fmt, path::PathBuf};
 
 use rayon::prelude::*;
 
@@ -26,9 +26,72 @@ pub trait KeyValue {
     fn into_pairs(self) -> (Vec<&'static str>, Vec<String>);
 }
 
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+pub enum SupportedArch {
+    Arm64,
+    X64,
+    X86,
+}
+
+impl SupportedArch {
+    #[must_use]
+    /// Get the architecture of the current environment
+    ///
+    /// # Panics
+    /// - Unsupported environment
+    pub const fn from_env() -> Self {
+        use std::env::consts::ARCH;
+        if const_str::equal!(ARCH, "x86") {
+            Self::X86
+        } else if const_str::equal!(ARCH, "x86_64") {
+            Self::X64
+        } else if const_str::equal!(ARCH, "aarch64") {
+            Self::Arm64
+        } else {
+            panic!("Unsupported architecture")
+        }
+    }
+
+    #[must_use]
+    /// Get the architecture of a given Scoop string
+    ///
+    /// # Panics
+    /// - Unsupported environment
+    pub fn from_scoop_string(string: &str) -> Self {
+        match string {
+            "64bit" => Self::X64,
+            "32bit" => Self::X86,
+            "arm64" => Self::Arm64,
+            _ => panic!("Unsupported architecture"),
+        }
+    }
+}
+
+impl fmt::Display for SupportedArch {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Arm64 => write!(f, "arm64"),
+            Self::X64 => write!(f, "64bit"),
+            Self::X86 => write!(f, "32bit"),
+        }
+    }
+}
+
+/// Ensure supported environment
+mod env {
+    use super::SupportedArch;
+
+    const _: SupportedArch = SupportedArch::from_env();
+    const _: SupportedArch = SupportedArch::from_env();
+}
+
 pub struct Scoop;
 
 impl Scoop {
+    pub fn arch() -> SupportedArch {
+        SupportedArch::from_env()
+    }
+
     #[must_use]
     /// Gets the user's scoop path, via either the default path or as provided by the SCOOP env variable
     ///
