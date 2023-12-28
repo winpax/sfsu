@@ -1,3 +1,4 @@
+use core::fmt;
 use std::{
     path::Path,
     str::FromStr,
@@ -273,6 +274,15 @@ impl PackageReference {
             bucket.get_manifest(self.name()).ok()
         } else {
             None
+        }
+    }
+}
+
+impl fmt::Display for PackageReference {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            PackageReference::BucketNamePair { bucket, name } => write!(f, "{bucket}/{name}"),
+            PackageReference::Name(name) => write!(f, "{name}"),
         }
     }
 }
