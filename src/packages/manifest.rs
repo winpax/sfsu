@@ -225,7 +225,7 @@ pub enum StringOrArrayOfStringsOrAnArrayOfArrayOfStrings {
 
 impl StringOrArrayOfStrings {
     #[must_use]
-    pub fn to_vec(&self) -> Vec<String> {
+    pub fn into_vec(&self) -> Vec<String> {
         match self {
             StringOrArrayOfStrings::String(s) => vec![s.clone()],
             StringOrArrayOfStrings::StringArray(string_array) => string_array.clone(),
@@ -235,7 +235,7 @@ impl StringOrArrayOfStrings {
 
 impl StringOrArrayOfStringsOrAnArrayOfArrayOfStrings {
     #[must_use]
-    pub fn to_vec(&self) -> Vec<String> {
+    pub fn into_vec(&self) -> Vec<String> {
         match self {
             StringOrArrayOfStringsOrAnArrayOfArrayOfStrings::String(s) => vec![s.clone()],
             StringOrArrayOfStringsOrAnArrayOfArrayOfStrings::StringArray(s) => s.clone(),
@@ -252,7 +252,7 @@ impl StringOrArrayOfStringsOrAnArrayOfArrayOfStrings {
 
 impl Display for StringOrArrayOfStringsOrAnArrayOfArrayOfStrings {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.to_vec().iter().format(", ").fmt(f)
+        self.into_vec().iter().format(", ").fmt(f)
     }
 }
 
@@ -293,7 +293,7 @@ pub enum StringOrArrayOfStrings {
 
 impl Display for StringOrArrayOfStrings {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.to_vec().iter().format(", ").fmt(f)
+        self.into_vec().iter().format(", ").fmt(f)
     }
 }
 

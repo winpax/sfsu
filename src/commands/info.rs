@@ -102,7 +102,7 @@ impl super::Command for Args {
                 version: manifest.version,
                 website: manifest.homepage,
                 license: manifest.license,
-                binaries: manifest.bin.map(|b| b.to_vec().join(",")),
+                binaries: manifest.bin.map(|b| b.into_vec().join(",")),
                 notes: manifest.notes.map(|notes| notes.to_string()),
                 installed: wrap_bool!(install_path.is_some()),
                 updated_at,

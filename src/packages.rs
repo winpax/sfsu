@@ -200,7 +200,11 @@ impl MatchCriteria {
         }
 
         if let Some(manifest) = manifest {
-            let binaries = manifest.bin.clone().map(|b| b.to_vec()).unwrap_or_default();
+            let binaries = manifest
+                .bin
+                .clone()
+                .map(|b| b.into_vec())
+                .unwrap_or_default();
 
             let binary_matches = binaries
                 .into_iter()
@@ -316,6 +320,17 @@ impl InstallManifest {
 }
 
 impl Manifest {
+    #[must_use]
+    /// List the dependencies of a given manifest, in the order that they will be installed
+    ///
+    /// Note that this does not include the package itself as a dependency
+    pub fn depends(&self) -> Vec<String> {
+        self.depends
+            .clone()
+            .map(|s| s.into_vec())
+            .unwrap_or_default()
+    }
+
     /// Gets the manifest from a bucket and manifest name
     ///
     /// # Errors
