@@ -25,7 +25,6 @@ impl super::Command for Args {
             self.package.set_bucket(bucket);
         }
 
-        // TODO: Search buckets for the first match, but warn of this
         let manifests = self.package.search_manifest();
 
         if manifests.is_empty() {

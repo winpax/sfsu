@@ -48,7 +48,6 @@ pub struct Args {
 
 impl super::Command for Args {
     fn runner(self) -> Result<(), anyhow::Error> {
-        // TODO: Not sure why this works
         let buckets = Bucket::one_or_all(self.bucket)?;
 
         let manifests: Vec<(String, String, Manifest)> = buckets
@@ -63,8 +62,6 @@ impl super::Command for Args {
             println!("No package found with the name \"{}\"", self.package);
             std::process::exit(1);
         }
-
-        // TODO: Fix execution time
 
         if manifests.len() > 1 {
             println!(
@@ -89,7 +86,6 @@ impl super::Command for Args {
                 Some(ref install_path) => {
                     let updated_at = install_path.metadata()?.modified()?;
 
-                    // TODO: Implement updated_by?
                     Some(updated_at.into())
                 }
                 _ => None,
@@ -113,7 +109,6 @@ impl super::Command for Args {
 
                 println!("{output}");
             } else {
-                // TODO: Add custom derive macro that allows this without serde_json
                 let (keys, values) = pkg_info.into_pairs();
 
                 let table = VTable::new(&keys, &values);
