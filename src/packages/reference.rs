@@ -123,3 +123,21 @@ impl FromStr for Package {
         }
     }
 }
+
+mod ser_de {
+    use super::{FromStr, Package};
+    use serde::{Deserialize, Deserializer, Serialize, Serializer};
+
+    impl Serialize for Package {
+        fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+            serializer.collect_str(self)
+        }
+    }
+
+    impl<'de> Deserialize<'de> for Package {
+        fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+            let s = String::deserialize(deserializer)?;
+            Package::from_str(&s).map_err(serde::de::Error::custom)
+        }
+    }
+}

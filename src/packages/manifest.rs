@@ -26,51 +26,44 @@ pub struct Manifest {
     pub comment: Option<StringOrArrayOfStrings>,
     pub architecture: Option<Arch>,
     pub autoupdate: Option<Autoupdate>,
-    pub bin: Option<StringOrArrayOfStringsOrAnArrayOfArrayOfStrings>,
-    pub checkver: Option<Checkver>,
     /// Undocumented: Found at https://github.com/se35710/scoop-java/search?l=JSON&q=cookie
     pub cookie: Option<HashMap<String, Option<serde_json::Value>>>,
     pub depends: Option<StringOrArrayOfStrings>,
     pub description: Option<String>,
-    pub env_add_path: Option<StringOrArrayOfStrings>,
-    pub env_set: Option<HashMap<String, Option<serde_json::Value>>>,
-    pub extract_dir: Option<StringOrArrayOfStrings>,
     pub extract_to: Option<StringOrArrayOfStrings>,
-    pub hash: Option<StringOrArrayOfStrings>,
     pub homepage: Option<String>,
     /// True if the installer InnoSetup based. Found in
     /// https://github.com/ScoopInstaller/Main/search?l=JSON&q=innosetup
     pub innosetup: Option<bool>,
-    pub installer: Option<Installer>,
     pub license: Option<PackageLicense>,
     #[deprecated]
-    /// Deprecated
-    pub msi: Option<StringOrArrayOfStrings>,
     pub notes: Option<StringOrArrayOfStrings>,
     pub persist: Option<StringOrArrayOfStringsOrAnArrayOfArrayOfStrings>,
-    pub post_install: Option<StringOrArrayOfStrings>,
-    pub post_uninstall: Option<StringOrArrayOfStrings>,
-    pub pre_install: Option<StringOrArrayOfStrings>,
-    pub pre_uninstall: Option<StringOrArrayOfStrings>,
     pub psmodule: Option<Psmodule>,
-    pub shortcuts: Option<Vec<Vec<String>>>,
     pub suggest: Option<Suggest>,
-    pub uninstaller: Option<Uninstaller>,
-    pub url: Option<StringOrArrayOfStrings>,
     pub version: String,
+    pub bin: Option<StringOrArrayOfStringsOrAnArrayOfArrayOfStrings>,
+    pub checkver: Option<Checkver>,
+    pub env_add_path: Option<StringOrArrayOfStrings>,
+    pub env_set: Option<HashMap<String, Option<serde_json::Value>>>,
+    pub extract_dir: Option<StringOrArrayOfStrings>,
+    pub hash: Option<StringOrArrayOfStrings>,
+    pub installer: Option<Installer>,
+    #[serde(flatten)]
+    pub install_config: InstallConfig,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Arch {
     #[serde(rename = "32bit")]
-    pub x86: Option<ArchConfig>,
+    pub x86: Option<InstallConfig>,
     #[serde(rename = "64bit")]
-    pub x64: Option<ArchConfig>,
-    pub arm64: Option<ArchConfig>,
+    pub x64: Option<InstallConfig>,
+    pub arm64: Option<InstallConfig>,
 }
 
 impl std::ops::Index<SupportedArch> for Arch {
-    type Output = Option<ArchConfig>;
+    type Output = Option<InstallConfig>;
 
     fn index(&self, index: SupportedArch) -> &Self::Output {
         match index {
@@ -81,8 +74,8 @@ impl std::ops::Index<SupportedArch> for Arch {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct ArchConfig {
+#[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct InstallConfig {
     pub bin: Option<StringOrArrayOfStringsOrAnArrayOfArrayOfStrings>,
     pub checkver: Option<Checkver>,
     pub env_add_path: Option<StringOrArrayOfStrings>,
