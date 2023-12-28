@@ -78,17 +78,21 @@ impl fmt::Display for SupportedArch {
 }
 
 /// Ensure supported environment
-mod env {
-    use super::SupportedArch;
+mod const_assertions {
+    use super::Scoop;
 
-    const _: SupportedArch = SupportedArch::from_env();
-    const _: SupportedArch = SupportedArch::from_env();
+    #[allow(unused)]
+    const fn eval<T>(_: &T) {}
+
+    const _: () = eval(&Scoop::arch());
 }
 
 pub struct Scoop;
 
 impl Scoop {
-    pub fn arch() -> SupportedArch {
+    #[must_use]
+    /// Get the system architecture
+    pub const fn arch() -> SupportedArch {
         SupportedArch::from_env()
     }
 

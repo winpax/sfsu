@@ -1,6 +1,6 @@
 use clap::Parser;
 use colored::Colorize as _;
-use sfsu::{buckets, packages::PackageReference};
+use sfsu::packages::PackageReference;
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
