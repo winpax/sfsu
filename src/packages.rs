@@ -251,7 +251,7 @@ impl PackageReference {
 
     #[must_use]
     /// Parse the bucket and package to get the manifest
-    pub fn package(&self) -> Option<Manifest> {
+    pub fn manifest(&self) -> Option<Manifest> {
         if let Some(bucket_name) = self.bucket() {
             let bucket = Bucket::new(bucket_name).ok()?;
 
