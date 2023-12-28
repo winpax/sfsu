@@ -90,6 +90,15 @@ pub enum Children<T> {
     None,
 }
 
+impl<T> Children<T> {
+    pub fn into_option(self) -> Option<Self> {
+        match self {
+            Children::None => None,
+            _ => Some(self),
+        }
+    }
+}
+
 impl<T> From<Vec<T>> for Children<T> {
     fn from(value: Vec<T>) -> Self {
         match value {

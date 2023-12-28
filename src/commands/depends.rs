@@ -42,20 +42,15 @@ impl super::Command for Args {
 
         let output: Sections<String> = manifests
             .into_iter()
-            .map(|manifest| {
-                let children = Children::from(manifest.depends());
-                match children {
-                    Children::None => Section::new(children).with_title(format!(
-                        "No dependencies found for {} in {}",
-                        manifest.name.to_string().red(),
-                        manifest.bucket.to_string().red()
-                    )),
-                    _ => Section::new(children).with_title(format!(
-                        "Dependencies for {} in {}",
-                        manifest.name.to_string().green(),
-                        manifest.bucket.to_string().green()
-                    )),
-                }
+            .filter_map(|manifest| {
+                Children::from(manifest.depends())
+                    .into_option()
+                    .map(|children| {
+                        Section::new(children).with_title(format!(
+                            "Dependencies for '{}' in '{}'",
+                            manifest.name, manifest.bucket
+                        ))
+                    })
             })
             .collect();
 
