@@ -267,6 +267,8 @@ impl PackageReference {
 
     #[must_use]
     /// Parse the bucket and package to get the manifest
+    ///
+    /// Returns [`None`] if the bucket is not valid or the manifest does not exist
     pub fn manifest(&self) -> Option<Manifest> {
         if let Some(bucket_name) = self.bucket() {
             let bucket = Bucket::new(bucket_name).ok()?;
@@ -274,6 +276,27 @@ impl PackageReference {
             bucket.get_manifest(self.name()).ok()
         } else {
             None
+        }
+    }
+
+    #[must_use]
+    /// Parse the bucket and package to get the manifest, or search for the first match in all local buckets
+    ///
+    /// Returns [`None`] if no bucket contained the manifest name
+    pub fn search_manifest(&self) -> Option<Manifest> {
+        if let Some(manifest) = self.manifest() {
+            Some(manifest)
+        } else {
+            let Ok(buckets) = buckets::Bucket::list_all() else {
+                return None;
+            };
+
+            buckets
+                .into_iter()
+                .find_map(|bucket| match bucket.get_manifest(self.name()) {
+                    Ok(manifest) => Some(manifest),
+                    Err(_) => None,
+                })
         }
     }
 }
