@@ -280,23 +280,26 @@ impl PackageReference {
     }
 
     #[must_use]
-    /// Parse the bucket and package to get the manifest, or search for the first match in all local buckets
+    /// Parse the bucket and package to get the manifest, or search for all matches in local buckets
     ///
-    /// Returns [`None`] if no bucket contained the manifest name
-    pub fn search_manifest(&self) -> Option<Manifest> {
+    /// Returns a [`Vec`] with a single manifest if the reference is valid
+    ///
+    /// Otherwise returns a [`Vec`] containing each matching manifest found in each local bucket
+    pub fn search_manifest(&self) -> Vec<Manifest> {
         if let Some(manifest) = self.manifest() {
-            Some(manifest)
+            vec![manifest]
         } else {
             let Ok(buckets) = buckets::Bucket::list_all() else {
-                return None;
+                return vec![];
             };
 
             buckets
                 .into_iter()
-                .find_map(|bucket| match bucket.get_manifest(self.name()) {
+                .filter_map(|bucket| match bucket.get_manifest(self.name()) {
                     Ok(manifest) => Some(manifest),
                     Err(_) => None,
                 })
+                .collect()
         }
     }
 }
@@ -432,6 +435,13 @@ impl InstallManifest {
 }
 
 impl Manifest {
+    #[must_use]
+    pub fn with_bucket(mut self, bucket: &Bucket) -> Self {
+        self.bucket = bucket.name().to_string();
+
+        self
+    }
+
     #[must_use]
     /// List the dependencies of a given manifest, in the order that they will be installed
     ///

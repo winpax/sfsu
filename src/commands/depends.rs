@@ -1,6 +1,9 @@
 use clap::Parser;
 use colored::Colorize as _;
-use sfsu::packages::PackageReference;
+use sfsu::{
+    output::sectioned::{Children, Section, Sections},
+    packages::PackageReference,
+};
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
@@ -23,12 +26,41 @@ impl super::Command for Args {
         }
 
         // TODO: Search buckets for the first match, but warn of this
-        let Some(manifest) = self.package.search_manifest() else {
-            eprintln!("Could not find package: {}", self.package.to_string().red());
+        let manifests = self.package.search_manifest();
+
+        if manifests.is_empty() {
+            eprintln!(
+                "Could not find any packages matching: {}",
+                self.package.to_string().red()
+            );
             std::process::exit(1);
         };
 
-        dbg!(manifest.depends());
+        if self.json {
+            println!("{}", serde_json::to_string(&manifests)?);
+            return Ok(());
+        }
+
+        let output: Sections<String> = manifests
+            .into_iter()
+            .map(|manifest| {
+                let children = Children::from(manifest.depends());
+                match children {
+                    Children::None => Section::new(children).with_title(format!(
+                        "No dependencies found for {} in {}",
+                        manifest.name.to_string().red(),
+                        manifest.bucket.to_string().red()
+                    )),
+                    _ => Section::new(children).with_title(format!(
+                        "Dependencies for {} in {}",
+                        manifest.name.to_string().green(),
+                        manifest.bucket.to_string().green()
+                    )),
+                }
+            })
+            .collect();
+
+        println!("{output}");
 
         Ok(())
     }

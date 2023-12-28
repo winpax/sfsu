@@ -176,7 +176,7 @@ impl Bucket {
 
         let manifest_path = manifests_path.join(file_name);
 
-        Manifest::from_path(manifest_path)
+        Manifest::from_path(manifest_path).map(|manifest| manifest.with_bucket(self))
     }
 
     /// List all matches for the given pattern
