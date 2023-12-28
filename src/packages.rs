@@ -1,5 +1,6 @@
 use std::{
     path::Path,
+    str::FromStr,
     time::{SystemTimeError, UNIX_EPOCH},
 };
 
@@ -228,6 +229,69 @@ impl MatchCriteria {
 pub enum PackageReference {
     BucketNamePair { bucket: String, name: String },
     Name(String),
+}
+
+impl PackageReference {
+    #[must_use]
+    /// Just get the bucket name
+    pub fn bucket(&self) -> Option<&str> {
+        match self {
+            PackageReference::BucketNamePair { bucket, .. } => Some(bucket),
+            PackageReference::Name(_) => None,
+        }
+    }
+
+    #[must_use]
+    /// Just get the package name
+    pub fn name(&self) -> &str {
+        match self {
+            PackageReference::Name(name) | PackageReference::BucketNamePair { name, .. } => name,
+        }
+    }
+
+    #[must_use]
+    /// Parse the bucket and package to get the manifest
+    pub fn package(&self) -> Option<Manifest> {
+        if let Some(bucket_name) = self.bucket() {
+            let bucket = Bucket::new(bucket_name).ok()?;
+
+            bucket.get_manifest(self.name()).ok()
+        } else {
+            None
+        }
+    }
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum PackageRefParseError {
+    #[error("Package name was not provided")]
+    MissingPackageName,
+    #[error(
+        "Too many segments in package reference. Expected either `<bucket>/<name>` or `<name>`"
+    )]
+    TooManySegments,
+}
+
+impl FromStr for PackageReference {
+    type Err = PackageRefParseError;
+
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+        let parts = s.split('/').collect_vec();
+        if parts.len() == 1 {
+            Ok(Self::Name(parts[0].to_string()))
+        } else if parts.len() == 2 {
+            Ok(Self::BucketNamePair {
+                bucket: parts[0].to_string(),
+                name: parts[1].to_string(),
+            })
+        } else if parts.len() > 2 {
+            Err(PackageRefParseError::TooManySegments)
+        } else if parts.is_empty() {
+            Err(PackageRefParseError::MissingPackageName)
+        } else {
+            unreachable!()
+        }
+    }
 }
 
 pub type Result<T> = std::result::Result<T, PackageError>;

@@ -1,10 +1,10 @@
 use clap::Parser;
-use sfsu::packages::Manifest;
+use sfsu::packages::PackageReference;
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
     #[clap(help = "The name of the package to list dependencies for")]
-    name: String,
+    name: PackageReference,
 
     // TODO: Implement recursivity
     // recursive: bool,
