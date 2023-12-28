@@ -2,15 +2,17 @@ use std::{env, path::PathBuf};
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Scoop {
-    // The timestamp of the last scoop update
+    /// The timestamp of the last scoop update
     pub last_update: Option<String>,
-    // The virustotal api key (removed as unused, and shouldn't be read if it doesn't need to be)
-    // pub virustotal_api_key: Option<String>,
+    /// The virustotal api key
+    pub virustotal_api_key: Option<String>,
+    /// Scoop repo
     pub scoop_repo: Option<String>,
+    /// Scoop repo branch
     pub scoop_branch: Option<String>,
-    // Scoop path
+    /// Scoop path
     pub root_path: Option<String>,
 }
 

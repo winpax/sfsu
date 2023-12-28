@@ -1,16 +1,11 @@
-use std::{
-    path::Path,
-    time::{SystemTimeError, UNIX_EPOCH},
-};
+use std::{path::Path, time::SystemTimeError};
 
-use chrono::NaiveDateTime;
 use clap::{Parser, ValueEnum};
 use colored::Colorize as _;
 use itertools::Itertools as _;
-use quork::traits::truthy::ContainsTruth as _;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use regex::Regex;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use strum::Display;
 
 use crate::{
@@ -26,90 +21,6 @@ pub use install::Manifest as InstallManifest;
 pub use manifest::Manifest;
 
 use manifest::StringOrArrayOfStringsOrAnArrayOfArrayOfStrings;
-
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "PascalCase")]
-pub struct MinInfo {
-    pub name: String,
-    pub version: String,
-    pub source: String,
-    pub updated: String,
-    pub notes: String,
-}
-
-impl MinInfo {
-    /// Parse minmal package info for every installed app
-    ///
-    /// # Errors
-    /// - Invalid file names
-    /// - File metadata errors
-    /// - Invalid time
-    pub fn list_installed(bucket: Option<&String>) -> Result<Vec<Self>> {
-        let apps = Scoop::installed_apps()?;
-
-        apps.par_iter()
-            .map(Self::from_path)
-            .filter(|package| {
-                if let Ok(pkg) = package {
-                    if let Some(bucket) = bucket {
-                        return &pkg.source == bucket;
-                    }
-                }
-                // Keep errors so that the following line will return the error
-                true
-            })
-            .collect()
-    }
-
-    /// Parse minimal package into from a given path
-    ///
-    /// # Errors
-    /// - Invalid file names
-    /// - File metadata errors
-    /// - Invalid time
-    ///
-    /// # Panics
-    /// - Date time invalid or out of range
-    pub fn from_path(path: impl AsRef<Path>) -> Result<Self> {
-        let path = path.as_ref();
-
-        let package_name = path
-            .file_name()
-            .map(|f| f.to_string_lossy())
-            .ok_or(PackageError::MissingFileName)?;
-
-        let naive_time = {
-            let updated = {
-                let updated_sys = path.metadata()?.modified()?;
-
-                updated_sys.duration_since(UNIX_EPOCH)?.as_secs()
-            };
-
-            #[allow(clippy::cast_possible_wrap)]
-            NaiveDateTime::from_timestamp_opt(updated as i64, 0)
-                .expect("invalid or out-of-range datetime")
-        };
-
-        let app_current = path.join("current");
-
-        let manifest = Manifest::from_path(app_current.join("manifest.json")).unwrap_or_default();
-
-        let install_manifest =
-            InstallManifest::from_path(app_current.join("install.json")).unwrap_or_default();
-
-        Ok(Self {
-            name: package_name.to_string(),
-            version: manifest.version,
-            source: install_manifest.get_source(),
-            updated: naive_time.to_string(),
-            notes: if install_manifest.hold.contains_truth() {
-                String::from("Held")
-            } else {
-                String::new()
-            },
-        })
-    }
-}
 
 #[derive(Debug, thiserror::Error)]
 pub enum PackageError {

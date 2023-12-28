@@ -1,4 +1,5 @@
 pub mod describe;
+pub mod export;
 pub mod hook;
 pub mod info;
 pub mod list;
@@ -51,4 +52,7 @@ pub enum Commands {
     Info(info::Args),
     /// List outdated packages
     Outdated(outdated::Args),
+    #[no_hook]
+    /// Exports installed apps, buckets (and optionally configs) in JSON format. Note that the exported format is not fully compatible with Scoop
+    Export(export::Args),
 }

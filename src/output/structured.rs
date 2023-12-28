@@ -3,6 +3,8 @@ use std::fmt::Display;
 use rayon::prelude::*;
 use serde_json::Value;
 
+use super::wrappers::cap_str::CapitalizedStr;
+
 pub mod vertical;
 
 #[derive(Debug)]
@@ -111,8 +113,12 @@ impl<'a> Display for Structured<'a> {
         };
 
         let contestants = {
-            // TODO: Make this dynamic largest header
-            let default_width = "Updated".len();
+            let default_width = self
+                .headers
+                .iter()
+                .map(|header| header.len())
+                .max()
+                .unwrap_or_default();
 
             let mut v = vec![default_width];
             v.extend(self.headers.iter().map(|s| s.len()));
@@ -153,7 +159,8 @@ impl<'a> Display for Structured<'a> {
         for (i, header) in self.headers.iter().enumerate() {
             let header_size = access_lengths[i];
 
-            let truncated = OptionalTruncate::new(header).with_length(self.max_length);
+            let truncated = OptionalTruncate::new(CapitalizedStr::new(header).to_string())
+                .with_length(self.max_length);
             write!(f, "{truncated:header_size$} | ")?;
         }
 

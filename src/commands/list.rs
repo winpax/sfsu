@@ -1,7 +1,9 @@
+use rayon::prelude::*;
+
 use clap::Parser;
 use colored::Colorize;
 
-use sfsu::{output::structured::Structured, packages::MinInfo};
+use sfsu::{output::structured::Structured, summary::package};
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
@@ -18,8 +20,17 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    fn runner(self) -> Result<(), anyhow::Error> {
-        let outputs = MinInfo::list_installed(self.bucket.as_ref())?;
+    fn runner(self) -> anyhow::Result<()> {
+        let outputs = package::Summary::parse_all()?
+            .into_par_iter()
+            .filter(|package| {
+                if let Some(ref bucket) = self.bucket {
+                    return &package.source == bucket;
+                }
+                // Keep errors so that the following line will return the error
+                true
+            })
+            .collect::<Vec<_>>();
 
         if self.json {
             let output_json = serde_json::to_string_pretty(&outputs)?;
@@ -37,7 +48,7 @@ impl super::Command for Args {
                 .collect::<Result<Vec<_>, _>>()?;
 
             let outputs =
-                Structured::new(&["Name", "Version", "Source", "Updated", "Notes"], &values)
+                Structured::new(&["name", "version", "source", "updated", "notes"], &values)
                     .with_max_length(30);
 
             print!("{outputs}");

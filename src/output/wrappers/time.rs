@@ -44,3 +44,15 @@ impl Serialize for NicerTime {
         self.to_string().serialize(serializer)
     }
 }
+
+// #[derive(Debug, Copy, Clone, AsRef, AsMut, Deref, DerefMut)]
+// pub struct IsoSer(DateTime<Local>);
+
+// impl Serialize for IsoSer {
+//     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+//     where
+//         S: serde::Serializer,
+//     {
+//         todo!()
+//     }
+// }

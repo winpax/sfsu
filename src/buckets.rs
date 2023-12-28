@@ -164,6 +164,15 @@ impl Bucket {
             .collect())
     }
 
+    /// Get the number of manifests in the given bucket
+    ///
+    /// # Errors
+    /// - The bucket is invalid
+    /// - See more at [`packages::PackageError`]
+    pub fn manifest_count(&self) -> packages::Result<usize> {
+        Ok(self.list_package_names()?.len())
+    }
+
     /// Gets the manifest that represents the given package name
     ///
     /// # Errors
@@ -254,13 +263,16 @@ pub enum RepoError {
 
     #[error("Git error: {0}")]
     Git2(#[from] git2::Error),
+
+    #[error("Branch was its name")]
+    MissingBranchName,
 }
 
 pub type RepoResult<T> = std::result::Result<T, RepoError>;
 
 pub struct BucketRepo {
-    bucket: Bucket,
-    repo: Repository,
+    pub bucket: Bucket,
+    pub repo: Repository,
 }
 
 impl BucketRepo {
@@ -284,9 +296,7 @@ impl BucketRepo {
     /// # Panics
     /// - Non-utf8 branch name
     pub fn main_remote(&self) -> RepoResult<Remote<'_>> {
-        Ok(self
-            .repo
-            .find_remote(self.repo.head()?.name().expect("utf8 branch name"))?)
+        Ok(self.repo.find_remote("origin")?)
     }
 
     /// Checks if the bucket is outdated
@@ -304,5 +314,23 @@ impl BucketRepo {
     /// Get the remote url of the bucket
     pub fn get_remote(&self) {
         unimplemented!()
+    }
+
+    pub fn branch(&self, name: Option<&str>) -> RepoResult<String> {
+        let branches = self.repo.branches(None)?;
+
+        for branch in branches {
+            match branch {
+                Ok((branch, _)) if branch.name()? == name || branch.is_head() => {
+                    return Ok(branch
+                        .name()?
+                        .ok_or(RepoError::MissingBranchName)?
+                        .to_string())
+                }
+                _ => {}
+            }
+        }
+
+        Err(RepoError::NoActiveBranch)
     }
 }
