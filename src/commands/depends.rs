@@ -2,13 +2,13 @@ use clap::Parser;
 use colored::Colorize as _;
 use sfsu::{
     output::sectioned::{Children, Section, Sections},
-    packages::PackageReference,
+    packages::reference::Package,
 };
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
     #[clap(help = "The package to list dependencies for")]
-    package: PackageReference,
+    package: Package,
 
     #[clap(help = "The bucket of the given package")]
     bucket: Option<String>,
