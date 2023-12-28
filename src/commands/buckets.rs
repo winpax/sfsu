@@ -4,12 +4,11 @@ use clap::{Parser, Subcommand};
 
 use sfsu_derive::{Hooks, Runnable};
 
-pub trait Command {
-    fn run(self) -> Result<(), anyhow::Error>;
-}
+use super::Command;
 
 #[derive(Debug, Hooks, Clone, Subcommand, Runnable)]
 pub enum Commands {
+    /// Find buckets that do not have any installed packages
     Unused(unused::Args),
 }
 
@@ -22,7 +21,7 @@ pub struct Args {
 
 impl super::Command for Args {
     #[inline]
-    fn run(self) -> Result<(), anyhow::Error> {
+    fn runner(self) -> Result<(), anyhow::Error> {
         self.command.run()
     }
 }

@@ -45,8 +45,6 @@ pub enum Commands {
     List(list::Args),
     /// Generate hooks for the given shell
     Hook(hook::Args),
-    /// Find buckets that do not have any installed packages
-    UnusedBuckets(unused::Args),
     /// Describe a package
     Describe(describe::Args),
     /// Display information about a package
