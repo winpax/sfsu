@@ -21,7 +21,7 @@ pub struct Manifest {
     pub empty: Option<StringOrArrayOfStrings>,
     #[serde(rename = "$schema")]
     pub schema: Option<String>,
-    /// Deprecated. Use ## instead.
+    #[deprecated(note = "Use ## instead")]
     #[serde(rename = "_comment")]
     pub comment: Option<StringOrArrayOfStrings>,
     pub architecture: Option<Arch>,
@@ -83,7 +83,7 @@ pub struct InstallConfig {
     pub extract_dir: Option<StringOrArrayOfStrings>,
     pub hash: Option<StringOrArrayOfStrings>,
     pub installer: Option<Installer>,
-    /// Deprecated
+    #[deprecated]
     pub msi: Option<StringOrArrayOfStrings>,
     pub post_install: Option<StringOrArrayOfStrings>,
     pub post_uninstall: Option<StringOrArrayOfStrings>,
@@ -186,7 +186,7 @@ pub struct HashExtraction {
     pub jsonpath: Option<String>,
     pub mode: Option<Mode>,
     pub regex: Option<String>,
-    /// Deprecated, hash type is determined automatically
+    #[deprecated(note = "hash type is determined automatically")]
     #[serde(rename = "type")]
     pub hash_extraction_type: Option<Type>,
     pub url: Option<String>,
@@ -227,7 +227,7 @@ pub struct Suggest {}
 pub enum StringOrArrayOfStringsOrAnArrayOfArrayOfStrings {
     String(String),
     StringArray(Vec<String>),
-    UnionArray(Vec<StringOrArrayOfStringsElement>),
+    UnionArray(Vec<StringOrArrayOfStrings>),
 }
 
 impl StringOrArrayOfStrings {
@@ -249,8 +249,8 @@ impl StringOrArrayOfStringsOrAnArrayOfArrayOfStrings {
             StringOrArrayOfStringsOrAnArrayOfArrayOfStrings::UnionArray(s) => s
                 .iter()
                 .flat_map(|s| match s {
-                    StringOrArrayOfStringsElement::String(s) => vec![s.clone()],
-                    StringOrArrayOfStringsElement::StringArray(s) => s.clone(),
+                    StringOrArrayOfStrings::String(s) => vec![s.clone()],
+                    StringOrArrayOfStrings::StringArray(s) => s.clone(),
                 })
                 .collect(),
         }
@@ -263,20 +263,6 @@ impl Display for StringOrArrayOfStringsOrAnArrayOfArrayOfStrings {
     }
 }
 
-/// A comment.
-///
-/// Deprecated. Use ## instead.
-///
-/// Custom `PowerShell` script to retrieve application version using more complex approach.
-///
-/// Deprecated
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(untagged)]
-pub enum StringOrArrayOfStringsElement {
-    String(String),
-    StringArray(Vec<String>),
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum Checkver {
@@ -284,13 +270,6 @@ pub enum Checkver {
     String(String),
 }
 
-/// A comment.
-///
-/// Deprecated. Use ## instead.
-///
-/// Custom `PowerShell` script to retrieve application version using more complex approach.
-///
-/// Deprecated
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum StringOrArrayOfStrings {
@@ -349,7 +328,6 @@ impl std::fmt::Display for PackageLicense {
     }
 }
 
-/// Deprecated, hash type is determined automatically
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum Type {
     #[serde(rename = "md5")]
