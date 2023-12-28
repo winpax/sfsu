@@ -5,7 +5,7 @@ use itertools::Itertools as _;
 use super::Manifest;
 use crate::buckets::Bucket;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Package {
     BucketNamePair { bucket: String, name: String },
     Name(String),

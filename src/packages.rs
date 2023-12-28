@@ -326,10 +326,10 @@ impl Manifest {
     /// List the dependencies of a given manifest, in the order that they will be installed
     ///
     /// Note that this does not include the package itself as a dependency
-    pub fn depends(&self) -> Vec<String> {
+    pub fn depends(&self) -> Vec<reference::Package> {
         self.depends
             .clone()
-            .map(|s| s.into_vec())
+            .map(manifest::TOrArrayOfTs::into_vec)
             .unwrap_or_default()
     }
 

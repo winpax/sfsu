@@ -28,7 +28,7 @@ pub struct Manifest {
     pub autoupdate: Option<Autoupdate>,
     /// Undocumented: Found at https://github.com/se35710/scoop-java/search?l=JSON&q=cookie
     pub cookie: Option<HashMap<String, Option<serde_json::Value>>>,
-    pub depends: Option<StringOrArrayOfStrings>,
+    pub depends: Option<TOrArrayOfTs<super::reference::Package>>,
     pub description: Option<String>,
     pub extract_to: Option<StringOrArrayOfStrings>,
     pub homepage: Option<String>,
@@ -268,6 +268,22 @@ impl Display for StringOrArrayOfStringsOrAnArrayOfArrayOfStrings {
 pub enum Checkver {
     CheckverClass(Box<CheckverClass>),
     String(String),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(untagged)]
+pub enum TOrArrayOfTs<T> {
+    T(T),
+    Array(Vec<T>),
+}
+
+impl<T> TOrArrayOfTs<T> {
+    pub fn into_vec(self) -> Vec<T> {
+        match self {
+            TOrArrayOfTs::T(t) => vec![t],
+            TOrArrayOfTs::Array(array) => array,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]

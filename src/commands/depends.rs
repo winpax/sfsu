@@ -2,7 +2,7 @@ use clap::Parser;
 use colored::Colorize as _;
 use sfsu::{
     output::sectioned::{Children, Section, Sections},
-    packages::reference::Package,
+    packages::reference::{self, Package},
 };
 
 #[derive(Debug, Clone, Parser)]
@@ -40,7 +40,7 @@ impl super::Command for Args {
             return Ok(());
         }
 
-        let output: Sections<String> = manifests
+        let output: Sections<reference::Package> = manifests
             .into_iter()
             .filter_map(|manifest| {
                 Children::from(manifest.depends())
