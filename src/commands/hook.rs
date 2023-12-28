@@ -14,8 +14,6 @@ enum Shell {
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
-    // TODO: Rename CommandsHooks to CommandHooks or something
-    // TODO: Add attribute macro that excludes a variant from the aforementioned enum
     #[clap(short = 'D', long, help = "The commands to disable")]
     disable: Vec<super::CommandsHooks>,
 
@@ -30,7 +28,6 @@ impl super::Command for Args {
             .filter(|variant| !self.disable.contains(variant))
             .collect();
 
-        // TODO: Add helper comments for other shells
         match shell {
             Shell::Powershell => {
                 print!("function scoop {{ switch ($args[0]) {{ ");

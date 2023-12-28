@@ -47,7 +47,6 @@ impl Bucket {
     /// # Errors
     /// - Bucket does not exist
     pub fn open(path: impl AsRef<Path>) -> Result<Self> {
-        // TODO: Verify that the bucket exists and is valid
         let bucket_path = path.as_ref().to_path_buf();
 
         if bucket_path.exists() {
@@ -176,7 +175,7 @@ impl Bucket {
 
         let manifest_path = manifests_path.join(file_name);
 
-        Manifest::from_path(manifest_path)
+        Manifest::from_path(manifest_path).map(|manifest| manifest.with_bucket(self))
     }
 
     /// List all matches for the given pattern
@@ -201,7 +200,6 @@ impl Bucket {
             .filter_map(|manifest_name| {
                 // Ignore non-matching manifests
                 if search_mode.eager_name_matches(manifest_name, search_regex) {
-                    // TODO: Remove this panic
                     match self.get_manifest(manifest_name) {
                         Ok(manifest) => manifest.parse_output(
                             self.name(),

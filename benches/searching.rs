@@ -96,7 +96,6 @@ fn criterion_benchmark(c: &mut Criterion) {
                                 return None;
                             }
 
-                            // TODO: Remove this panic
                             bucket
                                 .get_manifest(manifest_name)
                                 .expect("manifest to exist")

@@ -6,6 +6,8 @@ use std::{collections::HashMap, fmt::Display};
 use itertools::Itertools as _;
 use serde::{Deserialize, Serialize};
 
+use crate::SupportedArch;
+
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Manifest {
     /// This must be manually set
@@ -22,7 +24,7 @@ pub struct Manifest {
     /// Deprecated. Use ## instead.
     #[serde(rename = "_comment")]
     pub comment: Option<StringOrArrayOfStrings>,
-    pub architecture: Option<Architecture>,
+    pub architecture: Option<Arch>,
     pub autoupdate: Option<Autoupdate>,
     pub bin: Option<StringOrArrayOfStringsOrAnArrayOfArrayOfStrings>,
     pub checkver: Option<Checkver>,
@@ -59,16 +61,28 @@ pub struct Manifest {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct Architecture {
+pub struct Arch {
     #[serde(rename = "32bit")]
-    pub the_32_bit: Option<The32BitClass>,
+    pub x86: Option<ArchConfig>,
     #[serde(rename = "64bit")]
-    pub the_64_bit: Option<The32BitClass>,
-    pub arm64: Option<The32BitClass>,
+    pub x64: Option<ArchConfig>,
+    pub arm64: Option<ArchConfig>,
+}
+
+impl std::ops::Index<SupportedArch> for Arch {
+    type Output = Option<ArchConfig>;
+
+    fn index(&self, index: SupportedArch) -> &Self::Output {
+        match index {
+            SupportedArch::Arm64 => &self.arm64,
+            SupportedArch::X64 => &self.x64,
+            SupportedArch::X86 => &self.x86,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct The32BitClass {
+pub struct ArchConfig {
     pub bin: Option<StringOrArrayOfStringsOrAnArrayOfArrayOfStrings>,
     pub checkver: Option<Checkver>,
     pub env_add_path: Option<StringOrArrayOfStrings>,
@@ -225,7 +239,7 @@ pub enum StringOrArrayOfStringsOrAnArrayOfArrayOfStrings {
 
 impl StringOrArrayOfStrings {
     #[must_use]
-    pub fn to_vec(&self) -> Vec<String> {
+    pub fn into_vec(&self) -> Vec<String> {
         match self {
             StringOrArrayOfStrings::String(s) => vec![s.clone()],
             StringOrArrayOfStrings::StringArray(string_array) => string_array.clone(),
@@ -235,7 +249,7 @@ impl StringOrArrayOfStrings {
 
 impl StringOrArrayOfStringsOrAnArrayOfArrayOfStrings {
     #[must_use]
-    pub fn to_vec(&self) -> Vec<String> {
+    pub fn into_vec(&self) -> Vec<String> {
         match self {
             StringOrArrayOfStringsOrAnArrayOfArrayOfStrings::String(s) => vec![s.clone()],
             StringOrArrayOfStringsOrAnArrayOfArrayOfStrings::StringArray(s) => s.clone(),
@@ -252,7 +266,7 @@ impl StringOrArrayOfStringsOrAnArrayOfArrayOfStrings {
 
 impl Display for StringOrArrayOfStringsOrAnArrayOfArrayOfStrings {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.to_vec().iter().format(", ").fmt(f)
+        self.into_vec().iter().format(", ").fmt(f)
     }
 }
 
@@ -293,7 +307,7 @@ pub enum StringOrArrayOfStrings {
 
 impl Display for StringOrArrayOfStrings {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.to_vec().iter().format(", ").fmt(f)
+        self.into_vec().iter().format(", ").fmt(f)
     }
 }
 

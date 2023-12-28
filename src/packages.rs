@@ -1,5 +1,7 @@
+use core::fmt;
 use std::{
     path::Path,
+    str::FromStr,
     time::{SystemTimeError, UNIX_EPOCH},
 };
 
@@ -200,7 +202,11 @@ impl MatchCriteria {
         }
 
         if let Some(manifest) = manifest {
-            let binaries = manifest.bin.clone().map(|b| b.to_vec()).unwrap_or_default();
+            let binaries = manifest
+                .bin
+                .clone()
+                .map(|b| b.into_vec())
+                .unwrap_or_default();
 
             let binary_matches = binaries
                 .into_iter()
@@ -224,6 +230,119 @@ impl MatchCriteria {
 pub enum PackageReference {
     BucketNamePair { bucket: String, name: String },
     Name(String),
+}
+
+impl PackageReference {
+    /// Update the bucket string in the package reference
+    pub fn set_bucket(&mut self, bucket: String) {
+        match self {
+            PackageReference::BucketNamePair {
+                bucket: old_bucket, ..
+            } => *old_bucket = bucket,
+            PackageReference::Name(name) => {
+                *self = PackageReference::BucketNamePair {
+                    bucket,
+                    name: name.clone(),
+                }
+            }
+        }
+    }
+
+    #[must_use]
+    /// Just get the bucket name
+    pub fn bucket(&self) -> Option<&str> {
+        match self {
+            PackageReference::BucketNamePair { bucket, .. } => Some(bucket),
+            PackageReference::Name(_) => None,
+        }
+    }
+
+    #[must_use]
+    /// Just get the package name
+    pub fn name(&self) -> &str {
+        match self {
+            PackageReference::Name(name) | PackageReference::BucketNamePair { name, .. } => name,
+        }
+    }
+
+    #[must_use]
+    /// Parse the bucket and package to get the manifest
+    ///
+    /// Returns [`None`] if the bucket is not valid or the manifest does not exist
+    pub fn manifest(&self) -> Option<Manifest> {
+        if let Some(bucket_name) = self.bucket() {
+            let bucket = Bucket::new(bucket_name).ok()?;
+
+            bucket.get_manifest(self.name()).ok()
+        } else {
+            None
+        }
+    }
+
+    #[must_use]
+    /// Parse the bucket and package to get the manifest, or search for all matches in local buckets
+    ///
+    /// Returns a [`Vec`] with a single manifest if the reference is valid
+    ///
+    /// Otherwise returns a [`Vec`] containing each matching manifest found in each local bucket
+    pub fn search_manifest(&self) -> Vec<Manifest> {
+        if let Some(manifest) = self.manifest() {
+            vec![manifest]
+        } else {
+            let Ok(buckets) = buckets::Bucket::list_all() else {
+                return vec![];
+            };
+
+            buckets
+                .into_iter()
+                .filter_map(|bucket| match bucket.get_manifest(self.name()) {
+                    Ok(manifest) => Some(manifest),
+                    Err(_) => None,
+                })
+                .collect()
+        }
+    }
+}
+
+impl fmt::Display for PackageReference {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            PackageReference::BucketNamePair { bucket, name } => write!(f, "{bucket}/{name}"),
+            PackageReference::Name(name) => write!(f, "{name}"),
+        }
+    }
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum PackageRefParseError {
+    #[error("Package name was not provided")]
+    MissingPackageName,
+    #[error(
+        "Too many segments in package reference. Expected either `<bucket>/<name>` or `<name>`"
+    )]
+    TooManySegments,
+}
+
+impl FromStr for PackageReference {
+    type Err = PackageRefParseError;
+
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+        let parts = s.split('/').collect_vec();
+        if parts.len() == 1 {
+            Ok(Self::Name(parts[0].to_string()))
+        } else if parts.len() == 2 {
+            Ok(Self::BucketNamePair {
+                bucket: parts[0].to_string(),
+                name: parts[1].to_string(),
+            })
+        } else if parts.len() > 2 {
+            Err(PackageRefParseError::TooManySegments)
+        } else if parts.is_empty() {
+            Err(PackageRefParseError::MissingPackageName)
+        } else {
+            unreachable!()
+        }
+    }
 }
 
 pub type Result<T> = std::result::Result<T, PackageError>;
@@ -316,6 +435,24 @@ impl InstallManifest {
 }
 
 impl Manifest {
+    #[must_use]
+    pub fn with_bucket(mut self, bucket: &Bucket) -> Self {
+        self.bucket = bucket.name().to_string();
+
+        self
+    }
+
+    #[must_use]
+    /// List the dependencies of a given manifest, in the order that they will be installed
+    ///
+    /// Note that this does not include the package itself as a dependency
+    pub fn depends(&self) -> Vec<String> {
+        self.depends
+            .clone()
+            .map(|s| s.into_vec())
+            .unwrap_or_default()
+    }
+
     /// Gets the manifest from a bucket and manifest name
     ///
     /// # Errors
@@ -400,9 +537,6 @@ impl Manifest {
         if !match_output.name && match_output.bins.is_empty() {
             return None;
         }
-
-        // TODO: Refactor to remove pointless binary matching on name-only search mode
-        // TODO: Fix error parsing manifests
 
         let is_installed = is_installed(&self.name, Some(bucket));
         if installed_only && !is_installed {
