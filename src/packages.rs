@@ -538,9 +538,6 @@ impl Manifest {
             return None;
         }
 
-        // TODO: Refactor to remove pointless binary matching on name-only search mode
-        // TODO: Fix error parsing manifests
-
         let is_installed = is_installed(&self.name, Some(bucket));
         if installed_only && !is_installed {
             return None;
