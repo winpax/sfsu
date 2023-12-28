@@ -2,13 +2,13 @@ use clap::Parser;
 use colored::Colorize as _;
 use sfsu::{
     output::sectioned::{Children, Section, Sections},
-    packages::PackageReference,
+    packages::reference::{self, Package},
 };
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
     #[clap(help = "The package to list dependencies for")]
-    package: PackageReference,
+    package: Package,
 
     #[clap(help = "The bucket of the given package")]
     bucket: Option<String>,
@@ -40,7 +40,7 @@ impl super::Command for Args {
             return Ok(());
         }
 
-        let output: Sections<String> = manifests
+        let output: Sections<reference::Package> = manifests
             .into_iter()
             .filter_map(|manifest| {
                 Children::from(manifest.depends())

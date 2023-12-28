@@ -21,56 +21,49 @@ pub struct Manifest {
     pub empty: Option<StringOrArrayOfStrings>,
     #[serde(rename = "$schema")]
     pub schema: Option<String>,
-    /// Deprecated. Use ## instead.
+    #[deprecated(note = "Use ## instead")]
     #[serde(rename = "_comment")]
     pub comment: Option<StringOrArrayOfStrings>,
     pub architecture: Option<Arch>,
     pub autoupdate: Option<Autoupdate>,
-    pub bin: Option<StringOrArrayOfStringsOrAnArrayOfArrayOfStrings>,
-    pub checkver: Option<Checkver>,
     /// Undocumented: Found at https://github.com/se35710/scoop-java/search?l=JSON&q=cookie
     pub cookie: Option<HashMap<String, Option<serde_json::Value>>>,
-    pub depends: Option<StringOrArrayOfStrings>,
+    pub depends: Option<TOrArrayOfTs<super::reference::Package>>,
     pub description: Option<String>,
-    pub env_add_path: Option<StringOrArrayOfStrings>,
-    pub env_set: Option<HashMap<String, Option<serde_json::Value>>>,
-    pub extract_dir: Option<StringOrArrayOfStrings>,
     pub extract_to: Option<StringOrArrayOfStrings>,
-    pub hash: Option<StringOrArrayOfStrings>,
     pub homepage: Option<String>,
     /// True if the installer InnoSetup based. Found in
     /// https://github.com/ScoopInstaller/Main/search?l=JSON&q=innosetup
     pub innosetup: Option<bool>,
-    pub installer: Option<Installer>,
     pub license: Option<PackageLicense>,
     #[deprecated]
-    /// Deprecated
-    pub msi: Option<StringOrArrayOfStrings>,
     pub notes: Option<StringOrArrayOfStrings>,
     pub persist: Option<StringOrArrayOfStringsOrAnArrayOfArrayOfStrings>,
-    pub post_install: Option<StringOrArrayOfStrings>,
-    pub post_uninstall: Option<StringOrArrayOfStrings>,
-    pub pre_install: Option<StringOrArrayOfStrings>,
-    pub pre_uninstall: Option<StringOrArrayOfStrings>,
     pub psmodule: Option<Psmodule>,
-    pub shortcuts: Option<Vec<Vec<String>>>,
     pub suggest: Option<Suggest>,
-    pub uninstaller: Option<Uninstaller>,
-    pub url: Option<StringOrArrayOfStrings>,
     pub version: String,
+    pub bin: Option<StringOrArrayOfStringsOrAnArrayOfArrayOfStrings>,
+    pub checkver: Option<Checkver>,
+    pub env_add_path: Option<StringOrArrayOfStrings>,
+    pub env_set: Option<HashMap<String, Option<serde_json::Value>>>,
+    pub extract_dir: Option<StringOrArrayOfStrings>,
+    pub hash: Option<StringOrArrayOfStrings>,
+    pub installer: Option<Installer>,
+    #[serde(flatten)]
+    pub install_config: InstallConfig,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Arch {
     #[serde(rename = "32bit")]
-    pub x86: Option<ArchConfig>,
+    pub x86: Option<InstallConfig>,
     #[serde(rename = "64bit")]
-    pub x64: Option<ArchConfig>,
-    pub arm64: Option<ArchConfig>,
+    pub x64: Option<InstallConfig>,
+    pub arm64: Option<InstallConfig>,
 }
 
 impl std::ops::Index<SupportedArch> for Arch {
-    type Output = Option<ArchConfig>;
+    type Output = Option<InstallConfig>;
 
     fn index(&self, index: SupportedArch) -> &Self::Output {
         match index {
@@ -81,8 +74,8 @@ impl std::ops::Index<SupportedArch> for Arch {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct ArchConfig {
+#[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct InstallConfig {
     pub bin: Option<StringOrArrayOfStringsOrAnArrayOfArrayOfStrings>,
     pub checkver: Option<Checkver>,
     pub env_add_path: Option<StringOrArrayOfStrings>,
@@ -90,7 +83,7 @@ pub struct ArchConfig {
     pub extract_dir: Option<StringOrArrayOfStrings>,
     pub hash: Option<StringOrArrayOfStrings>,
     pub installer: Option<Installer>,
-    /// Deprecated
+    #[deprecated]
     pub msi: Option<StringOrArrayOfStrings>,
     pub post_install: Option<StringOrArrayOfStrings>,
     pub post_uninstall: Option<StringOrArrayOfStrings>,
@@ -193,7 +186,7 @@ pub struct HashExtraction {
     pub jsonpath: Option<String>,
     pub mode: Option<Mode>,
     pub regex: Option<String>,
-    /// Deprecated, hash type is determined automatically
+    #[deprecated(note = "hash type is determined automatically")]
     #[serde(rename = "type")]
     pub hash_extraction_type: Option<Type>,
     pub url: Option<String>,
@@ -234,7 +227,7 @@ pub struct Suggest {}
 pub enum StringOrArrayOfStringsOrAnArrayOfArrayOfStrings {
     String(String),
     StringArray(Vec<String>),
-    UnionArray(Vec<StringOrArrayOfStringsElement>),
+    UnionArray(Vec<StringOrArrayOfStrings>),
 }
 
 impl StringOrArrayOfStrings {
@@ -256,8 +249,8 @@ impl StringOrArrayOfStringsOrAnArrayOfArrayOfStrings {
             StringOrArrayOfStringsOrAnArrayOfArrayOfStrings::UnionArray(s) => s
                 .iter()
                 .flat_map(|s| match s {
-                    StringOrArrayOfStringsElement::String(s) => vec![s.clone()],
-                    StringOrArrayOfStringsElement::StringArray(s) => s.clone(),
+                    StringOrArrayOfStrings::String(s) => vec![s.clone()],
+                    StringOrArrayOfStrings::StringArray(s) => s.clone(),
                 })
                 .collect(),
         }
@@ -270,20 +263,6 @@ impl Display for StringOrArrayOfStringsOrAnArrayOfArrayOfStrings {
     }
 }
 
-/// A comment.
-///
-/// Deprecated. Use ## instead.
-///
-/// Custom `PowerShell` script to retrieve application version using more complex approach.
-///
-/// Deprecated
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(untagged)]
-pub enum StringOrArrayOfStringsElement {
-    String(String),
-    StringArray(Vec<String>),
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum Checkver {
@@ -291,13 +270,22 @@ pub enum Checkver {
     String(String),
 }
 
-/// A comment.
-///
-/// Deprecated. Use ## instead.
-///
-/// Custom `PowerShell` script to retrieve application version using more complex approach.
-///
-/// Deprecated
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(untagged)]
+pub enum TOrArrayOfTs<T> {
+    T(T),
+    Array(Vec<T>),
+}
+
+impl<T> TOrArrayOfTs<T> {
+    pub fn into_vec(self) -> Vec<T> {
+        match self {
+            TOrArrayOfTs::T(t) => vec![t],
+            TOrArrayOfTs::Array(array) => array,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum StringOrArrayOfStrings {
@@ -356,7 +344,6 @@ impl std::fmt::Display for PackageLicense {
     }
 }
 
-/// Deprecated, hash type is determined automatically
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum Type {
     #[serde(rename = "md5")]
