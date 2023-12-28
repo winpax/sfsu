@@ -6,6 +6,8 @@ use std::{collections::HashMap, fmt::Display};
 use itertools::Itertools as _;
 use serde::{Deserialize, Serialize};
 
+use crate::SupportedArch;
+
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Manifest {
     /// This must be manually set
@@ -61,10 +63,22 @@ pub struct Manifest {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Arch {
     #[serde(rename = "32bit")]
-    pub the_32_bit: Option<ArchConfig>,
+    pub x86: Option<ArchConfig>,
     #[serde(rename = "64bit")]
-    pub the_64_bit: Option<ArchConfig>,
+    pub x64: Option<ArchConfig>,
     pub arm64: Option<ArchConfig>,
+}
+
+impl std::ops::Index<SupportedArch> for Arch {
+    type Output = Option<ArchConfig>;
+
+    fn index(&self, index: SupportedArch) -> &Self::Output {
+        match index {
+            SupportedArch::Arm64 => &self.arm64,
+            SupportedArch::X64 => &self.x64,
+            SupportedArch::X86 => &self.x86,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]

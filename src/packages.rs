@@ -405,9 +405,9 @@ impl Manifest {
     /// Note that this does not include the package itself as a dependency
     pub fn depends(&self) -> Vec<String> {
         self.depends
-            .and_then(self.architecture)
             .clone()
             .map(|s| s.into_vec())
+            .unwrap_or_default()
     }
 
     /// Gets the manifest from a bucket and manifest name
