@@ -59,10 +59,12 @@ impl super::Command for Args {
 
         let mut matches: Sections<_> = matching_buckets
             .par_iter()
-            .filter_map(|bucket| match bucket.matches(&pattern, self.mode) {
-                Ok(Some(section)) => Some(section),
-                _ => None,
-            })
+            .filter_map(
+                |bucket| match bucket.matches(self.installed, &pattern, self.mode) {
+                    Ok(Some(section)) => Some(section),
+                    _ => None,
+                },
+            )
             .collect();
 
         matches.par_sort();

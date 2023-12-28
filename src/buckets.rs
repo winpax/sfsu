@@ -185,6 +185,7 @@ impl Bucket {
     /// - Could not load the manifest from the path
     pub fn matches(
         &self,
+        installed_only: bool,
         search_regex: &Regex,
         search_mode: SearchMode,
     ) -> packages::Result<Option<Section<Section<Text<String>>>>> {
@@ -202,9 +203,12 @@ impl Bucket {
                 if search_mode.eager_name_matches(manifest_name, search_regex) {
                     // TODO: Remove this panic
                     match self.get_manifest(manifest_name) {
-                        Ok(manifest) => {
-                            manifest.parse_output(self.name(), false, search_regex, search_mode)
-                        }
+                        Ok(manifest) => manifest.parse_output(
+                            self.name(),
+                            installed_only,
+                            search_regex,
+                            search_mode,
+                        ),
                         Err(_) => None,
                     }
                 } else {
