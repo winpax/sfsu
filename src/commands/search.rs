@@ -57,20 +57,6 @@ impl super::Command for Args {
             Bucket::list_all()?
         };
 
-        // // TODO: Refactor all this into the library
-        // if self.installed {
-        //     let installed_matches = Scoop::installed_apps()?
-        //         .into_par_iter()
-        //         .filter(|path| {
-        //             let Some(file_name) = path.file_name().and_then(|f| f.to_str()) else {
-        //                 return false;
-        //             };
-
-        //             pattern.is_match(file_name)
-        //         })
-        //         .collect::<Vec<_>>();
-        // }
-
         let mut matches: Sections<_> = matching_buckets
             .par_iter()
             .filter_map(
