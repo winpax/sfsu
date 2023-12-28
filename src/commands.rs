@@ -1,3 +1,4 @@
+pub mod depends;
 pub mod describe;
 pub mod hook;
 pub mod info;
@@ -51,4 +52,6 @@ pub enum Commands {
     Info(info::Args),
     /// List outdated packages
     Outdated(outdated::Args),
+    /// List the dependencies of a given package, in the order that they will be installed
+    Depends(depends::Args),
 }
