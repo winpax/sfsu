@@ -16,7 +16,7 @@ use strum::Display;
 use crate::{
     buckets::{self, Bucket},
     output::sectioned::{Children, Section, Text},
-    Scoop,
+    Scoop, SupportedArch,
 };
 
 pub mod install;
@@ -27,6 +27,8 @@ pub use install::Manifest as InstallManifest;
 pub use manifest::Manifest;
 
 use manifest::StringOrArrayOfStringsOrAnArrayOfArrayOfStrings;
+
+use self::manifest::InstallConfig;
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
@@ -315,6 +317,18 @@ impl InstallManifest {
 }
 
 impl Manifest {
+    #[must_use]
+    pub fn install_config(&self, arch: SupportedArch) -> InstallConfig {
+        self.architecture
+            .as_ref()
+            .and_then(|config| config[arch].clone())
+            .unwrap_or_else(|| self.install_config.clone())
+    }
+
+    pub fn download_url(&self, arch: SupportedArch) -> InstallConfig {
+        self.install_config(arch).url
+    }
+
     #[must_use]
     pub fn with_bucket(mut self, bucket: &Bucket) -> Self {
         self.bucket = bucket.name().to_string();
