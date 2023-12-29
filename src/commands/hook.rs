@@ -39,8 +39,9 @@ impl super::Command for Args {
 
                 println!("default {{ scoop.ps1 @args }} }} }}");
 
-                println!("# To add this to your config, add the following line to the end of your PowerShell profile:");
-                println!("#     Invoke-Expression (&sfsu hook)");
+                // TODO: Figure out a way to put these in that PowerShell won't throw a fit about
+                // println!("# To add this to your config, add the following line to the end of your PowerShell profile:");
+                // println!("#     Invoke-Expression (&sfsu hook)");
             }
             Shell::Bash | Shell::Zsh => {
                 let hook_list = enabled_hooks.iter().format(" | ");
