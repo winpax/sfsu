@@ -148,7 +148,7 @@ pub struct Autoupdate {
     pub extract_dir: Option<StringOrArrayOfStrings>,
     pub hash: Option<HashExtractionOrArrayOfHashExtractions>,
     pub installer: Option<AutoupdateInstaller>,
-    pub license: Option<AutoupdateLicense>,
+    pub license: Option<PackageLicense>,
     pub notes: Option<StringOrArrayOfStrings>,
     pub persist: Option<StringOrArrayOfStringsOrAnArrayOfArrayOfStrings>,
     pub psmodule: Option<AutoupdatePsmodule>,
@@ -312,13 +312,6 @@ pub enum HashExtractionOrArrayOfHashExtractions {
     Url(String),
     HashExtraction(HashExtraction),
     HashExtractionArray(Vec<HashExtraction>),
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(untagged)]
-pub enum AutoupdateLicense {
-    License(License),
-    String(String),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
