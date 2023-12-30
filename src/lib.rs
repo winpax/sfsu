@@ -7,7 +7,6 @@ use rayon::prelude::*;
 pub mod buckets;
 pub mod config;
 pub mod packages;
-pub mod pkginfo;
 
 mod opt;
 /// Currently this is mostly an internal api

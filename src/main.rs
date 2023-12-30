@@ -10,9 +10,11 @@ use clap::Parser;
 
 use commands::Commands;
 
+shadow_rs::shadow!(build);
+
 /// Scoop utilities that can replace the slowest parts of Scoop, and run anywhere from 30-100 times faster
 #[derive(Debug, Parser)]
-#[clap(about, long_about, author, version)]
+#[clap(about, long_about, version, long_version = build::CLAP_LONG_VERSION, author)]
 struct Args {
     #[command(subcommand)]
     command: Commands,

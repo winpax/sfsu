@@ -23,7 +23,7 @@ chrono = { version = "0.4", features = [
 ], default-features = false }
 clap = { version = "4.4", features = ["derive"] }
 colored = "2.1"
-const-str = { version = "0.5.6", features = ["all"] }
+const-str = { version = "0.5", features = ["all"] }
 derive_more = "0.99"
 directories = "5.0"
 dunce = "1.0"
@@ -37,6 +37,7 @@ semver = { version = "1.0", features = ["serde"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0", features = ["preserve_order"] }
 sfsu-derive = { path = "./sfsu-derive" }
+shadow-rs = "0.25"
 strum = { version = "0.25", features = ["derive"] }
 thiserror = "1.0"
 
@@ -44,4 +45,4 @@ thiserror = "1.0"
 criterion = { version = "0.5", features = ["html_reports"] }
 
 [build-dependencies]
-version_check = "0.9.4"
+shadow-rs = "0.25"
