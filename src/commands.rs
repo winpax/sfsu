@@ -4,6 +4,7 @@ pub mod hook;
 pub mod info;
 pub mod list;
 pub mod outdated;
+pub mod scoop_help;
 pub mod search;
 pub mod unused;
 
@@ -55,4 +56,6 @@ pub enum Commands {
     /// List the dependencies of a given package, in the order that they will be installed
     Depends(depends::Args),
     // TODO: Add help command for hooks that prints both sfsu help and scoop help
+    #[command_name = "help"]
+    ScoopHelp(scoop_help::Args),
 }
