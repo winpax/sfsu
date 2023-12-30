@@ -1,27 +1,17 @@
-use std::{
-    ffi::OsStr,
-    fs::{read_dir, DirEntry},
-    io::Error,
-};
-
-use colored::Colorize;
 use rayon::prelude::*;
 
 use clap::Parser;
 use regex::Regex;
 
-use sfsu::buckets;
-
-use sfsu::packages::{is_installed, CreateManifest, Manifest};
+use sfsu::{buckets::Bucket, output::sectioned::Sections, packages::SearchMode};
 
 #[derive(Debug, Clone, Parser)]
-/// Search for a package
 pub struct Args {
     #[clap(help = "The regex pattern to search for, using Rust Regex syntax")]
     pattern: String,
 
     #[clap(
-        short = 'c',
+        short,
         long,
         help = "Whether or not the pattern should match case-sensitively"
     )]
@@ -30,164 +20,56 @@ pub struct Args {
     #[clap(short, long, help = "The bucket to exclusively search in")]
     bucket: Option<String>,
 
-    #[clap(short = 'i', long, help = "Only search installed packages")]
+    #[clap(short, long, help = "Only search installed packages")]
     installed: bool,
-}
 
-fn parse_output(
-    file: &DirEntry,
-    bucket: impl AsRef<str>,
-    installed_only: bool,
-    pattern: &str,
-) -> Option<String> {
-    // This may be a bit of a hack, but it works
-    let path = file.path().with_extension("");
-    let file_name = path.file_name();
-    let package = file_name.unwrap().to_string_lossy().to_string();
-
-    match Manifest::from_path(file.path()) {
-        Ok(manifest) => {
-            let is_installed = is_installed(&package, Some(bucket));
-            if installed_only {
-                if is_installed {
-                    Some(format!("{} ({})", package, manifest.version,))
-                } else {
-                    None
-                }
-            } else {
-                Some(format!(
-                    "{} ({}) {}",
-                    if package == pattern {
-                        package.bold().to_string()
-                    } else {
-                        package
-                    },
-                    manifest.version,
-                    if is_installed { "[installed]" } else { "" },
-                ))
-            }
-        }
-        Err(_) => Some(format!("{package} - Invalid")),
-    }
+    #[clap(short, long, help = "Search mode to use", default_value_t)]
+    mode: SearchMode,
+    // TODO: Add json option
+    // #[clap(from_global)]
+    // json: bool,
 }
 
 impl super::Command for Args {
-    fn run(self) -> Result<(), anyhow::Error> {
-        let (bucket, raw_pattern) = if self.pattern.contains('/') {
-            let mut split = self.pattern.splitn(2, '/');
-
-            // Bucket flag overrides bucket/package syntax
-            let bucket = self.bucket.unwrap_or(split.next().unwrap().to_string());
-            let pattern = split.next().unwrap();
-
-            (Some(bucket), pattern.to_string())
-        } else {
-            (self.bucket, self.pattern)
-        };
+    fn runner(self) -> Result<(), anyhow::Error> {
+        let (bucket, raw_pattern) =
+            if let Some((bucket, raw_pattern)) = self.pattern.split_once('/') {
+                // Bucket flag overrides bucket/package syntax
+                (
+                    Some(self.bucket.unwrap_or(bucket.to_string())),
+                    raw_pattern.to_string(),
+                )
+            } else {
+                (self.bucket, self.pattern)
+            };
 
         let pattern = {
             Regex::new(&format!(
-                "{}{}",
+                "{}{raw_pattern}",
                 if self.case_sensitive { "" } else { "(?i)" },
-                &raw_pattern
             ))
             .expect("Invalid Regex provided. See https://docs.rs/regex/latest/regex/ for more info")
         };
 
-        let all_scoop_buckets = buckets::Bucket::list_all()?;
-
-        let scoop_buckets = {
-            if let Some(bucket) = bucket {
-                all_scoop_buckets
-                    .into_iter()
-                    .filter(|scoop_bucket| {
-                        let path = scoop_bucket.path();
-                        match path.components().last() {
-                            Some(x) => x.as_os_str() == bucket.as_str(),
-                            None => false,
-                        }
-                    })
-                    .collect()
-            } else {
-                all_scoop_buckets
-            }
+        let matching_buckets: Vec<Bucket> = if let Some(Ok(bucket)) = bucket.map(Bucket::new) {
+            vec![bucket]
+        } else {
+            Bucket::list_all()?
         };
 
-        let mut matches = scoop_buckets
+        let mut matches: Sections<_> = matching_buckets
             .par_iter()
-            .filter(|bucket| bucket.path().is_dir())
-            .filter_map(|bucket| {
-                // Ignore loose files in the buckets dir
-                if !bucket.path().is_dir() {
-                    return None;
-                }
+            .filter_map(
+                |bucket| match bucket.matches(self.installed, &pattern, self.mode) {
+                    Ok(Some(section)) => Some(section),
+                    _ => None,
+                },
+            )
+            .collect();
 
-                let bucket_path = {
-                    let bk_path = bucket.path().join("bucket");
+        matches.par_sort();
 
-                    if bk_path.exists() {
-                        bk_path
-                    } else {
-                        bucket.path()
-                    }
-                };
-
-                let bucket_contents = read_dir(bucket_path)
-                    .and_then(Iterator::collect::<Result<Vec<_>, _>>)
-                    .unwrap();
-
-                let matches = bucket_contents
-                    .par_iter()
-                    .filter_map(|file| {
-                        let path_raw = file.path();
-                        let file_name = {
-                            let no_ext = path_raw.with_extension("");
-                            let name = no_ext.file_name().unwrap();
-
-                            name.to_string_lossy().to_string()
-                        };
-
-                        let is_valid_extension = matches!(
-                            file.path().extension().and_then(OsStr::to_str),
-                            Some("json")
-                        );
-
-                        if pattern.is_match(&file_name) && is_valid_extension {
-                            parse_output(file, &bucket.name, self.installed, &raw_pattern)
-                        } else {
-                            None
-                        }
-                    })
-                    .collect::<Vec<_>>();
-
-                if matches.is_empty() {
-                    None
-                } else {
-                    Some(Ok::<_, Error>((bucket.name.clone(), matches)))
-                }
-            })
-            .collect::<Result<Vec<_>, _>>()?;
-
-        matches.par_sort_by_key(|x| x.0.clone());
-
-        let mut old_bucket = String::new();
-
-        for (bucket, matches) in matches {
-            if bucket != old_bucket {
-                // Do not print the newline on the first bucket
-                if !old_bucket.is_empty() {
-                    println!();
-                }
-
-                println!("'{bucket}' bucket:");
-
-                old_bucket = bucket;
-            }
-
-            for package in matches {
-                println!("  {package}");
-            }
-        }
+        print!("{matches}");
 
         Ok(())
     }

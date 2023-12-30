@@ -1,5 +1,9 @@
 # Describe
 
+`sfsu describe`
+
+> DEPRECATED: Use `sfsu info` instead. This will be removed in version 2.0
+
 Provides information about a particular `scoop` package, installed or not
 
 Acts pretty similar to `scoop info`, but lists every matching package in every bucket, in a more compact, non-powershell format, and slightly less verbose
