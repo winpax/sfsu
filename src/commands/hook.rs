@@ -12,6 +12,17 @@ enum Shell {
     Nu,
 }
 
+impl Shell {
+    pub fn config_path(self) -> &'static str {
+        match self {
+            Shell::Powershell => "$PROFILE",
+            Shell::Bash => "bashrc",
+            Shell::Zsh => "zshrc",
+            Shell::Nu => "$nu.config-path",
+        }
+    }
+}
+
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
     #[clap(short = 'D', long, help = "The commands to disable")]
@@ -34,7 +45,10 @@ impl super::Command for Args {
 
                 // I would love to make this all one condition, but Powershell doesn't seem to support that elegantly
                 for command in enabled_hooks {
-                    print!("  '{command}' {{ return sfsu.exe $args }} ");
+                    print!(
+                        "  '{command}' {{ return sfsu.exe {} }} ",
+                        command.command_name()
+                    );
                 }
 
                 println!("default {{ scoop.ps1 @args }} }} }}");
@@ -56,11 +70,7 @@ impl super::Command for Args {
                     }} \n\n\
                     # Add the following to the end of your ~/.{} \n\
                     #   source <(sfsu.exe hook --shell {shell})",
-                    if shell == Shell::Bash {
-                        "bashrc"
-                    } else {
-                        "zshrc"
-                    }
+                    shell.config_path()
                 );
             }
             Shell::Nu => {
@@ -72,8 +82,8 @@ impl super::Command for Args {
 
                 println!(
                         "\n# To add this to your config, run `sfsu hook --shell {shell} | save ~/.cache/sfsu.nu`\n\
-                        # And then in your main config add the following line to the end:\n\
-                        #   source ~/.cache/sfsu.nu"
+                        # And then in your {} add the following line to the end:\n\
+                        #   source ~/.cache/sfsu.nu", shell.config_path()
                     );
             }
         }

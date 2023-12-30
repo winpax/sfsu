@@ -99,7 +99,7 @@ pub fn hook_enum(input: DeriveInput) -> TokenStream {
 
     quote! {
         // TODO: Better way of doing this? or add support for meta in proc macro
-        #[derive(Debug, Clone, #strum::EnumIter, PartialEq, Eq)]
+        #[derive(Debug, Copy, Clone, #strum::EnumIter, PartialEq, Eq)]
         pub enum #struct_name {
             #(#variants),*
         }
