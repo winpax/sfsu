@@ -19,6 +19,7 @@ use crate::{
     Scoop, SupportedArch,
 };
 
+pub mod downloading;
 pub mod install;
 pub mod manifest;
 pub mod reference;
@@ -26,9 +27,8 @@ pub mod reference;
 pub use install::Manifest as InstallManifest;
 pub use manifest::Manifest;
 
-use manifest::StringOrArrayOfStringsOrAnArrayOfArrayOfStrings;
-
-use self::manifest::InstallConfig;
+use downloading::DownloadUrl;
+use manifest::{InstallConfig, StringOrArrayOfStringsOrAnArrayOfArrayOfStrings};
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
@@ -325,8 +325,10 @@ impl Manifest {
             .unwrap_or_else(|| self.install_config.clone())
     }
 
-    pub fn download_url(&self, arch: SupportedArch) -> InstallConfig {
-        self.install_config(arch).url
+    pub fn download_urls(&self, arch: SupportedArch) -> Option<Vec<DownloadUrl>> {
+        let urls = self.install_config(arch).url?.into_vec();
+
+        Some(urls.into_iter().map(DownloadUrl::from_string).collect())
     }
 
     #[must_use]
