@@ -10,6 +10,7 @@ impl DownloadUrl {
         Self { url, file_name }
     }
 
+    #[must_use]
     pub fn from_string(url: String) -> Self {
         if let Some((url, file_name)) = url.split_once("#/") {
             Self {
