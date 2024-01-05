@@ -13,7 +13,6 @@ pub struct ScoopCache;
 impl ScoopCache {
     #[must_use]
     pub fn open_manifest(
-        &self,
         manifest: &Manifest,
         arch: Option<SupportedArch>,
     ) -> Option<std::io::Result<Vec<ScoopCacheWriter>>> {
@@ -22,7 +21,7 @@ impl ScoopCache {
 
         let urls = manifest.download_urls(arch.unwrap_or_default())?;
 
-        let safe_urls = urls.into_iter().map(PathBuf::from);
+        let safe_urls = urls.into_iter().map(|url| (url, PathBuf::from(&url)));
 
         Some(
             safe_urls
@@ -36,12 +35,13 @@ impl ScoopCache {
 
 #[derive(Debug)]
 pub struct ScoopCacheWriter {
-    file_name: PathBuf,
+    url: String,
+    pub file_name: PathBuf,
     fp: File,
 }
 
 impl ScoopCacheWriter {
-    pub fn new(path: PathBuf) -> std::io::Result<Self> {
+    pub fn new(path: PathBuf, url: String) -> std::io::Result<Self> {
         Ok(Self {
             fp: File::create(Scoop::cache_path().join(&path))?,
             file_name: path,
