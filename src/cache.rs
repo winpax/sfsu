@@ -80,6 +80,7 @@ pub struct Downloader {
     cache: Handle,
     resp: Response,
     pb: ProgressBar,
+    message_ptr: *mut str,
 }
 
 impl Downloader {
@@ -100,10 +101,16 @@ impl Downloader {
             .to_string()
             .into_boxed_str();
 
-        let pb =
-            mp.add(ProgressBar::new(content_length).with_message(Box::leak(boxed) as &'static str));
+        let message: &'static str = Box::leak(boxed);
 
-        Ok(Self { cache, resp, pb })
+        let pb = mp.add(ProgressBar::new(content_length).with_message(message));
+
+        Ok(Self {
+            cache,
+            resp,
+            pb,
+            message_ptr: (message as *const str).cast_mut(),
+        })
     }
 
     /// Download the file to the cache
@@ -125,5 +132,13 @@ impl Read for Downloader {
         let read = self.resp.read(buf)?;
         self.pb.inc(read as u64);
         Ok(read)
+    }
+}
+
+impl Drop for Downloader {
+    fn drop(&mut self) {
+        // There is no code that would drop this message
+        // As such this should be safe
+        drop(unsafe { Box::from_raw(self.message_ptr) });
     }
 }
