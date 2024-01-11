@@ -1,5 +1,6 @@
 pub mod depends;
 pub mod describe;
+pub mod download;
 pub mod hook;
 pub mod info;
 pub mod list;
@@ -54,4 +55,6 @@ pub enum Commands {
     Outdated(outdated::Args),
     /// List the dependencies of a given package, in the order that they will be installed
     Depends(depends::Args),
+    /// Download the specified app
+    Download(download::Args),
 }

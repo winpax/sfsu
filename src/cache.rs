@@ -1,6 +1,7 @@
 use std::{fs::File, io::Write, path::PathBuf};
 
 use itertools::Itertools;
+use reqwest::blocking::Client;
 
 use crate::{
     packages::{downloading::DownloadUrl, Manifest},

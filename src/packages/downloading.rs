@@ -1,3 +1,7 @@
+use std::path::PathBuf;
+
+use regex::Regex;
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DownloadUrl {
     pub url: String,
@@ -23,5 +27,26 @@ impl DownloadUrl {
                 file_name: None,
             }
         }
+    }
+
+    #[must_use]
+    pub fn into_cache_path(&self) -> PathBuf {
+        self.into()
+    }
+}
+
+impl From<DownloadUrl> for PathBuf {
+    fn from(url: DownloadUrl) -> Self {
+        url.into()
+    }
+}
+
+impl From<&DownloadUrl> for PathBuf {
+    fn from(url: &DownloadUrl) -> Self {
+        let cache_path_regex = Regex::new(r"[^\w\.\-]+").expect("valid regex");
+
+        let safe_url = cache_path_regex.replace_all(&url.url, "_");
+
+        PathBuf::from(safe_url.to_string())
     }
 }
