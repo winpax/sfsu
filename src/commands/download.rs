@@ -1,13 +1,12 @@
 use anyhow::Context;
 use clap::Parser;
 
-use indicatif::{MultiProgress, ProgressBar};
-use rayon::iter::{IndexedParallelIterator, IntoParallelIterator, ParallelIterator};
+use indicatif::MultiProgress;
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use reqwest::blocking::Client;
 use sfsu::{
     cache::{Downloader, Handle},
     packages::reference::Package,
-    SupportedArch,
 };
 
 #[derive(Debug, Clone, Parser)]
