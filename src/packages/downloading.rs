@@ -27,6 +27,7 @@ impl DownloadUrl {
         }
     }
 
+    #[must_use]
     pub fn into_cache_path(&self) -> PathBuf {
         self.into()
     }

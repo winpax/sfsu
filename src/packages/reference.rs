@@ -54,7 +54,10 @@ impl Package {
 
             bucket.get_manifest(self.name()).ok()
         } else {
-            None
+            Bucket::list_all()
+                .ok()?
+                .into_iter()
+                .find_map(|bucket| bucket.get_manifest(self.name()).ok())
         }
     }
 

@@ -8,14 +8,26 @@ use crate::{
 };
 
 #[derive(Debug)]
-pub struct ScoopCache;
+pub struct ScoopCache {
+    url: String,
+    pub file_name: PathBuf,
+    fp: File,
+}
 
 impl ScoopCache {
+    pub fn new(file_name: PathBuf, url: String) -> std::io::Result<Self> {
+        Ok(Self {
+            fp: File::create(Scoop::cache_path().join(&file_name))?,
+            url,
+            file_name,
+        })
+    }
+
     #[must_use]
     pub fn open_manifest(
         manifest: &Manifest,
         arch: Option<SupportedArch>,
-    ) -> Option<std::io::Result<Vec<ScoopCacheWriter>>> {
+    ) -> Option<std::io::Result<Vec<Self>>> {
         let name = &manifest.name;
         let version = &manifest.version;
 
@@ -32,30 +44,13 @@ impl ScoopCache {
                     (url, format!("{}#{}#{}", name, version, file_name.display()))
                 })
                 .map(|(url, file_name)| (url, PathBuf::from(file_name)))
-                .map(|(url, file_name)| ScoopCacheWriter::new(file_name, url.url))
+                .map(|(url, file_name)| Self::new(file_name, url.url))
                 .collect(),
         )
     }
 }
 
-#[derive(Debug)]
-pub struct ScoopCacheWriter {
-    url: String,
-    pub file_name: PathBuf,
-    fp: File,
-}
-
-impl ScoopCacheWriter {
-    pub fn new(file_name: PathBuf, url: String) -> std::io::Result<Self> {
-        Ok(Self {
-            fp: File::create(Scoop::cache_path().join(&file_name))?,
-            url,
-            file_name,
-        })
-    }
-}
-
-impl Write for ScoopCacheWriter {
+impl Write for ScoopCache {
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
         self.fp.write(buf)
     }
