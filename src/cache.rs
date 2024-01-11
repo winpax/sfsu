@@ -21,13 +21,18 @@ impl ScoopCache {
 
         let urls = manifest.download_urls(arch.unwrap_or_default())?;
 
-        let safe_urls = urls.into_iter().map(|url| (url, PathBuf::from(&url)));
+        let safe_urls = urls.into_iter().map(|url| {
+            let safe_url = PathBuf::from(&url);
+            (url, safe_url)
+        });
 
         Some(
             safe_urls
-                .map(|file_name| format!("{}#{}#{}", name, version, file_name.display()))
-                .map(PathBuf::from)
-                .map(ScoopCacheWriter::new)
+                .map(|(url, file_name)| {
+                    (url, format!("{}#{}#{}", name, version, file_name.display()))
+                })
+                .map(|(url, file_name)| (url, PathBuf::from(file_name)))
+                .map(|(url, file_name)| ScoopCacheWriter::new(file_name, url.url))
                 .collect(),
         )
     }
@@ -41,10 +46,11 @@ pub struct ScoopCacheWriter {
 }
 
 impl ScoopCacheWriter {
-    pub fn new(path: PathBuf, url: String) -> std::io::Result<Self> {
+    pub fn new(file_name: PathBuf, url: String) -> std::io::Result<Self> {
         Ok(Self {
-            fp: File::create(Scoop::cache_path().join(&path))?,
-            file_name: path,
+            fp: File::create(Scoop::cache_path().join(&file_name))?,
+            url,
+            file_name,
         })
     }
 }

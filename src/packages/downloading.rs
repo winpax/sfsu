@@ -26,10 +26,20 @@ impl DownloadUrl {
             }
         }
     }
+
+    pub fn into_cache_path(&self) -> PathBuf {
+        self.into()
+    }
 }
 
 impl From<DownloadUrl> for PathBuf {
     fn from(url: DownloadUrl) -> Self {
+        url.into()
+    }
+}
+
+impl From<&DownloadUrl> for PathBuf {
+    fn from(url: &DownloadUrl) -> Self {
         const INVALID_FILE_NAME_CHARS: &[char] = &[
             '#', '"', '<', '>', '|', '\0', 1 as char, 2 as char, 3 as char, 4 as char, 5 as char,
             6 as char, 7 as char, 8 as char, 9 as char, 10 as char, 11 as char, 12 as char,
