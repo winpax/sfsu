@@ -5,6 +5,7 @@ use std::{ffi::OsStr, fmt, path::PathBuf};
 use rayon::prelude::*;
 
 pub mod buckets;
+pub mod cache;
 pub mod config;
 pub mod packages;
 
@@ -77,6 +78,12 @@ impl fmt::Display for SupportedArch {
     }
 }
 
+impl Default for SupportedArch {
+    fn default() -> Self {
+        Self::from_env()
+    }
+}
+
 /// Ensure supported environment
 mod const_assertions {
     use super::Scoop;
@@ -142,6 +149,12 @@ impl Scoop {
     /// Gets the user's scoop buckets path
     pub fn buckets_path() -> PathBuf {
         Self::path().join("buckets")
+    }
+
+    #[must_use]
+    /// Gets the user's scoop cache path
+    pub fn cache_path() -> PathBuf {
+        Self::path().join("cache")
     }
 
     /// List all scoop apps and return their paths
