@@ -118,10 +118,16 @@ impl Downloader {
     /// # Errors
     /// - If the file cannot be written to the cache
     pub fn download(mut self) -> std::io::Result<()> {
-        let mut buf = vec![];
+        // 1 kilobyte
+        let mut buf = vec![0; 1024 * 1024].into_boxed_slice();
 
-        self.read_to_end(&mut buf)?;
-        self.cache.write_all(&buf)?;
+        // while let Ok(read) = self.read_exact(&mut buf) {
+        //     if read == 0 {
+        //         break;
+        //     }
+
+        //     self.cache.write_all(&buf)?;
+        // }
 
         Ok(())
     }
