@@ -33,18 +33,13 @@ impl ScoopCache {
 
         let urls = manifest.download_urls(arch.unwrap_or_default())?;
 
-        let safe_urls = urls.into_iter().map(|url| {
-            let safe_url = PathBuf::from(&url);
-            (url, safe_url)
-        });
-
         Some(
-            safe_urls
-                .map(|(url, file_name)| {
+            urls.into_iter()
+                .map(|url| {
+                    let file_name = PathBuf::from(&url);
                     (url, format!("{}#{}#{}", name, version, file_name.display()))
                 })
-                .map(|(url, file_name)| (url, PathBuf::from(file_name)))
-                .map(|(url, file_name)| Self::new(file_name, url.url))
+                .map(|(url, file_name)| Self::new(PathBuf::from(file_name), url.url))
                 .collect(),
         )
     }

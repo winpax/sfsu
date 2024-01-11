@@ -1,5 +1,7 @@
 use std::path::PathBuf;
 
+use regex::Regex;
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DownloadUrl {
     pub url: String,
@@ -41,26 +43,10 @@ impl From<DownloadUrl> for PathBuf {
 
 impl From<&DownloadUrl> for PathBuf {
     fn from(url: &DownloadUrl) -> Self {
-        const INVALID_FILE_NAME_CHARS: &[char] = &[
-            '#', '"', '<', '>', '|', '\0', 1 as char, 2 as char, 3 as char, 4 as char, 5 as char,
-            6 as char, 7 as char, 8 as char, 9 as char, 10 as char, 11 as char, 12 as char,
-            13 as char, 14 as char, 15 as char, 16 as char, 17 as char, 18 as char, 19 as char,
-            20 as char, 21 as char, 22 as char, 23 as char, 24 as char, 25 as char, 26 as char,
-            27 as char, 28 as char, 29 as char, 30 as char, 31 as char, ':', '*', '?', '\\', '/',
-        ];
+        let cache_path_regex = Regex::new(r"[^\w\.\-]+").expect("valid regex");
 
-        let safe_url = url
-            .url
-            .chars()
-            .map(|char| {
-                if INVALID_FILE_NAME_CHARS.contains(&char) {
-                    '_'
-                } else {
-                    char
-                }
-            })
-            .collect::<String>();
+        let safe_url = cache_path_regex.replace_all(&url.url, "_");
 
-        PathBuf::from(safe_url)
+        PathBuf::from(safe_url.to_string())
     }
 }
