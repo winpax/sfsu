@@ -22,7 +22,7 @@ impl super::Command for Args {
     fn runner(self) -> Result<(), anyhow::Error> {
         let manifest = self.package.manifest().context("Failed to find manifest")?;
 
-        let mut m = MultiProgress::new();
+        let mp = MultiProgress::new();
         let client = Client::new();
 
         let downloaders =
@@ -30,7 +30,7 @@ impl super::Command for Args {
 
         let result: std::io::Result<Vec<_>> = downloaders
             .into_par_iter()
-            .map(|dl| Downloader::new(dl, &client, &m).unwrap())
+            .map(|dl| Downloader::new(dl, &client, &mp).unwrap())
             .map(Downloader::download)
             .collect();
 
