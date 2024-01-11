@@ -28,13 +28,11 @@ impl super::Command for Args {
         let downloaders =
             Handle::open_manifest(&manifest, None).context("missing download urls")??;
 
-        let result: std::io::Result<Vec<_>> = downloaders
+        downloaders
             .into_par_iter()
             .map(|dl| Downloader::new(dl, &client, &mp).unwrap())
             .map(Downloader::download)
-            .collect();
-
-        result?;
+            .collect::<std::io::Result<Vec<_>>>()?;
 
         Ok(())
     }
