@@ -5,7 +5,7 @@ use indicatif::{MultiProgress, ProgressBar};
 use rayon::iter::{IndexedParallelIterator, IntoParallelIterator, ParallelIterator};
 use reqwest::blocking::Client;
 use sfsu::{
-    cache::{CacheDownloader, ScoopCache},
+    cache::{Downloader, Handle},
     packages::reference::Package,
     SupportedArch,
 };
@@ -27,12 +27,12 @@ impl super::Command for Args {
         let client = Client::new();
 
         let downloaders =
-            ScoopCache::open_manifest(&manifest, None).context("missing download urls")??;
+            Handle::open_manifest(&manifest, None).context("missing download urls")??;
 
         let result: std::io::Result<Vec<_>> = downloaders
             .into_par_iter()
-            .map(|dl| CacheDownloader::new(dl, &client, &m).unwrap())
-            .map(CacheDownloader::download)
+            .map(|dl| Downloader::new(dl, &client, &m).unwrap())
+            .map(Downloader::download)
             .collect();
 
         result?;

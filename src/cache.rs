@@ -5,23 +5,24 @@ use std::{
 };
 
 use indicatif::{MultiProgress, ProgressBar};
-use itertools::Itertools;
 use reqwest::blocking::{Client, Response};
 
-use crate::{
-    packages::{downloading::DownloadUrl, Manifest},
-    Scoop, SupportedArch,
-};
+use crate::{packages::Manifest, Scoop, SupportedArch};
 
 #[derive(Debug)]
-pub struct ScoopCache {
+pub struct Handle {
     url: String,
     pub file_name: PathBuf,
     fp: File,
 }
 
-impl ScoopCache {
-    pub fn new(file_name: PathBuf, url: String) -> std::io::Result<Self> {
+impl Handle {
+    /// Construct a new cache handle
+    ///
+    /// # Errors
+    /// - If the file cannot be created
+    pub fn new(file_name: impl Into<PathBuf>, url: String) -> std::io::Result<Self> {
+        let file_name = file_name.into();
         Ok(Self {
             fp: File::create(Scoop::cache_path().join(&file_name))?,
             url,
@@ -50,13 +51,20 @@ impl ScoopCache {
         )
     }
 
-    pub fn begin_download(self, client: &Client) {
-        // let res =
-        todo!()
+    /// Create a new downloader
+    ///
+    /// # Errors
+    /// - If the request fails
+    pub fn begin_download(
+        self,
+        client: &Client,
+        mp: &MultiProgress,
+    ) -> reqwest::Result<Downloader> {
+        Downloader::new(self, client, mp)
     }
 }
 
-impl Write for ScoopCache {
+impl Write for Handle {
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
         self.fp.write(buf)
     }
@@ -67,14 +75,19 @@ impl Write for ScoopCache {
 }
 
 #[derive(Debug)]
-pub struct CacheDownloader {
-    cache: ScoopCache,
+#[must_use = "Does nothing until `download` is called"]
+pub struct Downloader {
+    cache: Handle,
     resp: Response,
     pb: ProgressBar,
 }
 
-impl CacheDownloader {
-    pub fn new(cache: ScoopCache, client: &Client, mp: &MultiProgress) -> reqwest::Result<Self> {
+impl Downloader {
+    /// Create a new downloader
+    ///
+    /// # Errors
+    /// - If the request fails
+    pub fn new(cache: Handle, client: &Client, mp: &MultiProgress) -> reqwest::Result<Self> {
         let url = cache.url.clone();
         let resp = client.get(url).send()?;
 
@@ -93,6 +106,10 @@ impl CacheDownloader {
         Ok(Self { cache, resp, pb })
     }
 
+    /// Download the file to the cache
+    ///
+    /// # Errors
+    /// - If the file cannot be written to the cache
     pub fn download(mut self) -> std::io::Result<()> {
         let mut buf = vec![];
 
@@ -103,7 +120,7 @@ impl CacheDownloader {
     }
 }
 
-impl Read for CacheDownloader {
+impl Read for Downloader {
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
         let read = self.resp.read(buf)?;
         self.pb.inc(read as u64);
