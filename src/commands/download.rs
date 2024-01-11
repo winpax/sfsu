@@ -2,8 +2,13 @@ use anyhow::Context;
 use clap::Parser;
 
 use indicatif::{MultiProgress, ProgressBar};
-use rayon::iter::{IntoParallelIterator, ParallelIterator};
-use sfsu::{cache::ScoopCache, packages::reference::Package, SupportedArch};
+use rayon::iter::{IndexedParallelIterator, IntoParallelIterator, ParallelIterator};
+use reqwest::blocking::Client;
+use sfsu::{
+    cache::{CacheDownloader, ScoopCache},
+    packages::reference::Package,
+    SupportedArch,
+};
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
@@ -19,18 +24,19 @@ impl super::Command for Args {
         let manifest = self.package.manifest().context("Failed to find manifest")?;
 
         let mut m = MultiProgress::new();
+        let client = Client::new();
 
         let downloaders =
             ScoopCache::open_manifest(&manifest, None).context("missing download urls")??;
 
-        // downloaders.into_par_iter().map(|dl| {
-        //     let pb = m.add(ProgressBar::new());
-        // });
+        let result: std::io::Result<Vec<_>> = downloaders
+            .into_par_iter()
+            .map(|dl| CacheDownloader::new(dl, &client, &m).unwrap())
+            .map(CacheDownloader::download)
+            .collect();
 
-        for dl in downloaders {
-            println!("Downloading \"{}\"", dl.file_name.display());
-        }
+        result?;
 
-        todo!()
+        Ok(())
     }
 }

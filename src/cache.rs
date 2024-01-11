@@ -1,7 +1,12 @@
-use std::{fs::File, io::Write, path::PathBuf};
+use std::{
+    fs::File,
+    io::{Read, Write},
+    path::PathBuf,
+};
 
+use indicatif::{MultiProgress, ProgressBar};
 use itertools::Itertools;
-use reqwest::blocking::Client;
+use reqwest::blocking::{Client, Response};
 
 use crate::{
     packages::{downloading::DownloadUrl, Manifest},
@@ -45,7 +50,7 @@ impl ScoopCache {
         )
     }
 
-    pub fn download(self, client: &Client) {
+    pub fn begin_download(self, client: &Client) {
         // let res =
         todo!()
     }
@@ -58,5 +63,50 @@ impl Write for ScoopCache {
 
     fn flush(&mut self) -> std::io::Result<()> {
         self.fp.flush()
+    }
+}
+
+#[derive(Debug)]
+pub struct CacheDownloader {
+    cache: ScoopCache,
+    resp: Response,
+    pb: ProgressBar,
+}
+
+impl CacheDownloader {
+    pub fn new(cache: ScoopCache, client: &Client, mp: &MultiProgress) -> reqwest::Result<Self> {
+        let url = cache.url.clone();
+        let resp = client.get(url).send()?;
+
+        let content_length = resp.content_length().unwrap_or_default();
+
+        // TODO: Implement a way to free this later to avoid (negligable) memory leaks
+        let boxed = cache
+            .file_name
+            .to_string_lossy()
+            .to_string()
+            .into_boxed_str();
+
+        let pb =
+            mp.add(ProgressBar::new(content_length).with_message(Box::leak(boxed) as &'static str));
+
+        Ok(Self { cache, resp, pb })
+    }
+
+    pub fn download(mut self) -> std::io::Result<()> {
+        let mut buf = vec![];
+
+        self.read_to_end(&mut buf)?;
+        self.cache.write_all(&buf)?;
+
+        Ok(())
+    }
+}
+
+impl Read for CacheDownloader {
+    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+        let read = self.resp.read(buf)?;
+        self.pb.inc(read as u64);
+        Ok(read)
     }
 }
