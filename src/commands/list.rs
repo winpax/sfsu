@@ -37,7 +37,7 @@ impl super::Command for Args {
     fn runner(self) -> Result<(), anyhow::Error> {
         let mut outputs = MinInfo::list_installed(self.bucket.as_ref())?;
 
-        outputs.sort_by(|a, b| match self.sort_by {
+        outputs.par_sort_by(|a, b| match self.sort_by {
             SortBy::Name => a.name.cmp(&b.name),
             SortBy::Version => a.version.cmp(&b.version),
             SortBy::Source => a.source.cmp(&b.source),
