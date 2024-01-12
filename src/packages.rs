@@ -309,7 +309,7 @@ impl InstallManifest {
             .par_iter()
             .filter_map(
                 |path| match Self::from_path(path.join("current/install.json")) {
-                    Ok(v) => Some(v),
+                    Ok(v) => Some(v.with_name(path)),
                     Err(_) => None,
                 },
             )
