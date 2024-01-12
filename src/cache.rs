@@ -4,8 +4,10 @@ use std::{
     path::PathBuf,
 };
 
+use futures_util::StreamExt as _;
 use indicatif::{MultiProgress, ProgressBar};
-use reqwest::blocking::{Client, Response};
+use reqwest::{Client, Response};
+use tokio::runtime::Runtime;
 
 use crate::{packages::Manifest, Scoop, SupportedArch};
 
@@ -55,12 +57,12 @@ impl Handle {
     ///
     /// # Errors
     /// - If the request fails
-    pub fn begin_download(
+    pub async fn begin_download(
         self,
         client: &Client,
         mp: &MultiProgress,
     ) -> reqwest::Result<Downloader> {
-        Downloader::new(self, client, mp)
+        Downloader::new(self, client, mp).await
     }
 }
 
@@ -88,13 +90,12 @@ impl Downloader {
     ///
     /// # Errors
     /// - If the request fails
-    pub fn new(cache: Handle, client: &Client, mp: &MultiProgress) -> reqwest::Result<Self> {
+    pub async fn new(cache: Handle, client: &Client, mp: &MultiProgress) -> reqwest::Result<Self> {
         let url = cache.url.clone();
-        let resp = client.get(url).send()?;
+        let resp = client.get(url).send().await?;
 
         let content_length = resp.content_length().unwrap_or_default();
 
-        // TODO: Implement a way to free this later to avoid (negligable) memory leaks
         let boxed = cache
             .file_name
             .to_string_lossy()
@@ -117,9 +118,15 @@ impl Downloader {
     ///
     /// # Errors
     /// - If the file cannot be written to the cache
-    pub fn download(mut self) -> std::io::Result<()> {
-        // 1 kilobyte
-        let mut buf = vec![0; 1024 * 1024].into_boxed_slice();
+    pub async fn download(mut self) -> anyhow::Result<()> {
+        let mut bytes_stream = self.resp.bytes_stream();
+
+        while let Some(chunk) = bytes_stream.next().await {
+            let chunk = chunk?;
+
+            self.pb.inc(chunk.len() as u64);
+            self.cache.write_all(&chunk)?;
+        }
 
         // while let Ok(read) = self.read_exact(&mut buf) {
         //     if read == 0 {
@@ -129,22 +136,10 @@ impl Downloader {
         //     self.cache.write_all(&buf)?;
         // }
 
-        Ok(())
-    }
-}
-
-impl Read for Downloader {
-    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
-        let read = self.resp.read(buf)?;
-        self.pb.inc(read as u64);
-        Ok(read)
-    }
-}
-
-impl Drop for Downloader {
-    fn drop(&mut self) {
         // There is no code that would drop this message
         // As such this should be safe
         drop(unsafe { Box::from_raw(self.message_ptr) });
+
+        Ok(())
     }
 }

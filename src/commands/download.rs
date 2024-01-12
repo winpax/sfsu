@@ -3,11 +3,12 @@ use clap::Parser;
 
 use indicatif::MultiProgress;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
-use reqwest::blocking::Client;
+use reqwest::Client;
 use sfsu::{
     cache::{Downloader, Handle},
     packages::reference::Package,
 };
+use tokio::runtime::Runtime;
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
@@ -23,16 +24,23 @@ impl super::Command for Args {
         let manifest = self.package.manifest().context("Failed to find manifest")?;
 
         let mp = MultiProgress::new();
-        let client = Client::new();
 
         let downloaders =
             Handle::open_manifest(&manifest, None).context("missing download urls")??;
 
-        downloaders
-            .into_par_iter()
-            .map(|dl| Downloader::new(dl, &client, &mp).unwrap())
-            .map(Downloader::download)
-            .collect::<std::io::Result<Vec<_>>>()?;
+        // TODO: Remove this panic
+        let rt = tokio::runtime::Builder::new_multi_thread()
+            .enable_all()
+            .build()
+            .unwrap();
+
+        downloaders.into_iter().map(|dl| {
+            let mp = mp.clone();
+            rt.spawn(async move {
+                let dl = dl.begin_download(&Client::new(), &mp).await.unwrap();
+                dl.download().await;
+            });
+        });
 
         Ok(())
     }
