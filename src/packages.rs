@@ -15,7 +15,10 @@ use strum::Display;
 
 use crate::{
     buckets::{self, Bucket},
-    output::sectioned::{Children, Section, Text},
+    output::{
+        sectioned::{Children, Section, Text},
+        wrappers::time::NicerNaiveTime,
+    },
     Scoop,
 };
 
@@ -28,13 +31,13 @@ pub use manifest::Manifest;
 
 use manifest::StringOrArrayOfStringsOrAnArrayOfArrayOfStrings;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct MinInfo {
     pub name: String,
     pub version: String,
     pub source: String,
-    pub updated: String,
+    pub updated: NicerNaiveTime,
     pub notes: String,
 }
 
@@ -102,7 +105,7 @@ impl MinInfo {
             name: package_name.to_string(),
             version: manifest.version,
             source: install_manifest.get_source(),
-            updated: naive_time.to_string(),
+            updated: naive_time.into(),
             notes: if install_manifest.hold.contains_truth() {
                 String::from("Held")
             } else {

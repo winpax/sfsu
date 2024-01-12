@@ -3,7 +3,7 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
-use chrono::{DateTime, Local, LocalResult, TimeZone};
+use chrono::{DateTime, Local, LocalResult, NaiveDateTime, TimeZone};
 use derive_more::{AsMut, AsRef, Deref, DerefMut};
 use serde::Serialize;
 
@@ -40,6 +40,27 @@ impl Display for NicerTime {
 }
 
 impl Serialize for NicerTime {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        self.to_string().serialize(serializer)
+    }
+}
+
+#[derive(Debug, Copy, Clone, AsRef, AsMut, Deref, DerefMut)]
+pub struct NicerNaiveTime(NaiveDateTime);
+
+impl From<NaiveDateTime> for NicerNaiveTime {
+    fn from(time: NaiveDateTime) -> Self {
+        Self(time)
+    }
+}
+
+impl Display for NicerNaiveTime {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
+impl Serialize for NicerNaiveTime {
     fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         self.to_string().serialize(serializer)
     }
