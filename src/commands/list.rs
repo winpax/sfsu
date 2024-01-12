@@ -14,8 +14,11 @@ pub struct Args {
     #[clap(short, long, help = "The bucket to exclusively list packages in")]
     bucket: Option<String>,
 
-    #[clap(short, long, help = "Sort by the given field", default_value = "name")]
+    #[clap(long, help = "Sort by the given field", default_value = "name")]
     sort_by: SortBy,
+
+    #[clap(long, help = "Sort in descending order")]
+    descending: bool,
 
     #[clap(from_global)]
     json: bool,
@@ -41,6 +44,10 @@ impl super::Command for Args {
             SortBy::Updated => a.updated.cmp(&b.updated),
             SortBy::Notes => a.notes.cmp(&b.notes),
         });
+
+        if self.descending {
+            outputs.reverse();
+        }
 
         if self.json {
             let output_json = serde_json::to_string_pretty(&outputs)?;
