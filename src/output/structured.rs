@@ -161,7 +161,6 @@ impl<'a> Display for Structured<'a> {
         writeln!(f)?;
 
         for row in &data {
-            // dbg!(row.get("Updated").unwrap());
             for (i, header) in self.headers.iter().enumerate() {
                 let value_size = access_lengths[i];
                 let element = row
