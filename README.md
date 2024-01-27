@@ -60,6 +60,10 @@ The above disable demonstration also works
 
 ## Benchmarks [^1]
 
+> [!NOTE]
+> These benchmarks may not accurately represent the speeds on your system.
+> While they do provide a relative measurement, your environment and results **will** be different.
+
 On average, `sfsu search` is **~400** times faster than regular `scoop search` and **~5** times faster than [scoop-search](https://github.com/shilangyu/scoop-search).
 
 `sfsu list` is **~35** times faster than `scoop list`
