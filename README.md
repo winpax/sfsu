@@ -76,26 +76,26 @@ Done on a _AMD Ryzen 9 7900X @ 5.5GHz_ with _32GB_ of RAM at 4800MHz and 11 scoo
 $ hyperfine --warmup 5 'sfsu search google' 'hok search google' 'scoop-search google' 'scoop search google'
 
 Benchmark 1: sfsu search google
-  Time (mean ± σ):      24.7 ms ±   1.2 ms    [User: 0.7 ms, System: 0.9 ms]
-  Range (min … max):    22.4 ms …  28.3 ms    109 runs
+  Time (mean ± σ):      32.0 ms ±   2.1 ms    [User: 0.4 ms, System: 2.4 ms]
+  Range (min … max):    29.5 ms …  44.5 ms    78 runs
 
 Benchmark 2: hok search google
-  Time (mean ± σ):      31.1 ms ±   1.2 ms    [User: 2.8 ms, System: 2.6 ms]
-  Range (min … max):    28.6 ms …  34.4 ms    85 runs
+  Time (mean ± σ):      37.8 ms ±   1.6 ms    [User: 2.2 ms, System: 2.2 ms]
+  Range (min … max):    34.5 ms …  44.2 ms    65 runs
 
 Benchmark 3: scoop-search google
-  Time (mean ± σ):     136.8 ms ±   6.1 ms    [User: 3.0 ms, System: 25.3 ms]
-  Range (min … max):   128.5 ms … 149.7 ms    21 runs
+  Time (mean ± σ):     352.6 ms ±  29.9 ms    [User: 14.1 ms, System: 78.1 ms]
+  Range (min … max):   325.2 ms … 415.2 ms    10 runs
 
 Benchmark 4: scoop search google
-  Time (mean ± σ):     10.141 s ±  0.116 s    [User: 3.744 s, System: 5.886 s]
-  Range (min … max):    9.960 s … 10.311 s    10 runs
+  Time (mean ± σ):     12.031 s ±  0.192 s    [User: 3.400 s, System: 6.475 s]
+  Range (min … max):   11.756 s … 12.464 s    10 runs
 
 Summary
   sfsu search google ran
-    1.26 ± 0.08 times faster than hok search google
-    5.54 ± 0.36 times faster than scoop-search google
-  410.60 ± 20.12 times faster than scoop search google
+    1.18 ± 0.09 times faster than hok search google
+   11.03 ± 1.17 times faster than scoop-search google
+  376.34 ± 24.89 times faster than scoop search google
 ```
 
 ### Listing [^list-version]
@@ -183,9 +183,10 @@ In the meantime I will continue working on this independently of Scoop as a coll
 **Made with 💗 by Juliette Cordor**
 
 [^1]: These benchmarks are done after warmups. You will likely see far greater improvements when run on "cold" systems. Results will also differ depending on search request and the number of results, as well as installed buckets, and a few other factors
-[^search-version]: Run on sfsu version [v1.6.3][v1.6.3], Hok version [v0.1.0-beta.3][hokv0.1.0-beta.4], scoop-search version [1.3.1](https://github.com/shilangyu/scoop-search/releases/tag/v1.3.1)
-[^info-version]: Run on sfsu version [v1.6.3][v1.6.3] and Hok version [v0.1.0-beta.3][hokv0.1.0-beta.4]
-[^list-version]: Run on sfsu version [v1.6.3][v1.6.3] and Hok version [v0.1.0-beta.3][hokv0.1.0-beta.4]
+[^search-version]: Run on sfsu version [v1.8.3][v1.8.3], Hok version [v0.1.0-beta.4][hokv0.1.0-beta.4], scoop-search version [1.4.0](https://github.com/shilangyu/scoop-search/releases/tag/v1.4.0)
+[^info-version]: Run on sfsu version [v1.6.3][v1.6.3] and Hok version [v0.1.0-beta.4][hokv0.1.0-beta.4]
+[^list-version]: Run on sfsu version [v1.6.3][v1.6.3] and Hok version [v0.1.0-beta.4][hokv0.1.0-beta.4]
 
+[v1.8.3]: https://github.com/jewlexx/sfsu/releases/tag/v1.8.3
 [v1.6.3]: https://github.com/jewlexx/sfsu/releases/tag/v1.6.3
 [hokv0.1.0-beta.4]: https://github.com/chawyehsu/hok/releases/tag/v0.1.0-beta.4
