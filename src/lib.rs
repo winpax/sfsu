@@ -8,6 +8,7 @@ pub mod buckets;
 pub mod cache;
 pub mod config;
 pub mod packages;
+pub mod stream;
 
 mod opt;
 /// Currently this is mostly an internal api
