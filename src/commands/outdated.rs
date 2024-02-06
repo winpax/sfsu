@@ -1,11 +1,7 @@
 use clap::Parser;
 use rayon::prelude::*;
 use serde::Serialize;
-use sfsu::{
-    buckets::Bucket,
-    output::structured::Structured,
-    packages::{Manifest, Result as PackageResult},
-};
+use sfsu::{buckets::Bucket, output::structured::Structured, packages::install};
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
@@ -15,23 +11,25 @@ pub struct Args {
 
 impl super::Command for Args {
     fn runner(self) -> anyhow::Result<()> {
-        let apps = Manifest::list_installed()?
-            .into_iter()
-            .filter(std::result::Result::is_ok)
-            .collect::<PackageResult<Vec<_>>>()?;
+        let apps = install::Manifest::list_all_unchecked()?;
 
         let mut outdated: Vec<Outdated> = apps
             .par_iter()
             .flat_map(|app| -> anyhow::Result<Outdated> {
-                // TODO: Add the option to check all buckets and find the highest version (will require semver to order versions)
-                let bucket = Bucket::new(&app.bucket)?;
-                match bucket.get_manifest(&app.name) {
-                    Ok(manifest) if manifest.version != app.version => Ok(Outdated {
-                        name: app.name.clone(),
-                        current: app.version.clone(),
-                        available: manifest.version.clone(),
-                    }),
-                    _ => anyhow::bail!("bucket does not have that package"),
+                if let Some(bucket) = &app.bucket {
+                    let app_manifest = app.get_manifest()?;
+                    // TODO: Add the option to check all buckets and find the highest version (will require semver to order versions)
+                    let bucket = Bucket::new(bucket)?;
+                    match bucket.get_manifest(&app.name) {
+                        Ok(manifest) if app_manifest.version != manifest.version => Ok(Outdated {
+                            name: app.name.clone(),
+                            current: app_manifest.version.clone(),
+                            available: manifest.version.clone(),
+                        }),
+                        _ => anyhow::bail!("no update available"),
+                    }
+                } else {
+                    anyhow::bail!("no bucket specified")
                 }
             })
             .collect();
@@ -40,6 +38,8 @@ impl super::Command for Args {
             println!("No outdated packages.");
         } else {
             outdated.dedup();
+            outdated.par_sort_by(|a, b| a.name.cmp(&b.name));
+
             let values = outdated
                 .par_iter()
                 .map(serde_json::to_value)
@@ -61,7 +61,7 @@ impl super::Command for Args {
     }
 }
 
-#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, PartialEq, Eq, Hash)]
 #[serde(rename_all = "PascalCase")]
 pub struct Outdated {
     name: String,

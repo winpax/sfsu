@@ -66,7 +66,7 @@ impl super::Command for Args {
             Shell::Nu => {
                 for command in enabled_hooks {
                     println!(
-                        "def --wrapped \"scoop {command}\" [...rest] {{ sfsu {command} $rest }}"
+                        "def --wrapped \"scoop {command}\" [...rest] {{ sfsu {command} ...$rest }}"
                     );
                 }
 
