@@ -121,6 +121,7 @@ impl Downloader {
     /// # Panics
     /// - The request did not provide a content length
     pub fn download(mut self) -> std::io::Result<()> {
+        // NOTE: Currently uses insane amounts of memory
         let total_length = self.resp.content_length().expect("content length");
         let mut current = 0;
 
