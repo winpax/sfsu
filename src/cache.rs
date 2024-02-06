@@ -117,17 +117,31 @@ impl Downloader {
     ///
     /// # Errors
     /// - If the file cannot be written to the cache
+    ///
+    /// # Panics
+    /// - The request did not provide a content length
     pub fn download(mut self) -> std::io::Result<()> {
-        // 1 kilobyte
-        let mut buf = vec![0; 1024 * 1024].into_boxed_slice();
+        let total_length = self.resp.content_length().expect("content length");
+        let mut current = 0;
 
-        // while let Ok(read) = self.read_exact(&mut buf) {
-        //     if read == 0 {
-        //         break;
-        //     }
+        let mut chunk = [0; 1024];
 
-        //     self.cache.write_all(&buf)?;
-        // }
+        loop {
+            // Ensures that `read_exact` does not exhaust the reader, and throw an error in the final chunk
+            if total_length - current < 1024 {
+                break;
+            }
+
+            self.read_exact(&mut chunk)?;
+
+            self.cache.write_all(&chunk)?;
+            current += total_length;
+        }
+
+        // Handles all remaning data
+        let mut final_chunk = vec![];
+        self.read_to_end(&mut final_chunk)?;
+        self.cache.write_all(&final_chunk)?;
 
         Ok(())
     }
