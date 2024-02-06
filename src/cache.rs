@@ -121,7 +121,6 @@ impl Downloader {
     /// # Panics
     /// - The request did not provide a content length
     pub fn download(mut self) -> std::io::Result<()> {
-        // NOTE: Currently uses insane amounts of memory
         let total_length = self.resp.content_length().expect("content length");
         let mut current = 0;
 
@@ -136,7 +135,7 @@ impl Downloader {
             self.read_exact(&mut chunk)?;
 
             self.cache.write_all(&chunk)?;
-            current += total_length;
+            current += 1024;
         }
 
         // Handles all remaning data
