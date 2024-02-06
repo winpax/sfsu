@@ -80,7 +80,7 @@ pub struct Downloader {
     cache: Handle,
     resp: Response,
     pb: ProgressBar,
-    message_ptr: *mut str,
+    message_ptr: &'static str,
 }
 
 impl Downloader {
@@ -109,7 +109,7 @@ impl Downloader {
             cache,
             resp,
             pb,
-            message_ptr: (message as *const str).cast_mut(),
+            message_ptr: message,
         })
     }
 
@@ -145,6 +145,6 @@ impl Drop for Downloader {
     fn drop(&mut self) {
         // There is no code that would drop this message
         // As such this should be safe
-        drop(unsafe { Box::from_raw(self.message_ptr) });
+        drop(unsafe { Box::from_raw((self.message_ptr as *const str).cast_mut()) });
     }
 }
