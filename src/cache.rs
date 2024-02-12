@@ -4,7 +4,7 @@ use std::{
     path::PathBuf,
 };
 
-use indicatif::{MultiProgress, ProgressBar};
+use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 use reqwest::blocking::{Client, Response};
 
 use crate::{packages::Manifest, Scoop, SupportedArch};
@@ -88,6 +88,10 @@ impl Downloader {
     ///
     /// # Errors
     /// - If the request fails
+    ///
+    /// # Panics
+    /// - A non-empty file name
+    /// - Invalid progress style template
     pub fn new(cache: Handle, client: &Client, mp: &MultiProgress) -> reqwest::Result<Self> {
         let url = cache.url.clone();
         let resp = client.get(url).send()?;
@@ -99,11 +103,26 @@ impl Downloader {
             .file_name
             .to_string_lossy()
             .to_string()
+            .split('_')
+            .next_back()
+            .expect("non-empty file name")
+            .to_string()
             .into_boxed_str();
 
         let message: &'static str = Box::leak(boxed);
 
-        let pb = mp.add(ProgressBar::new(content_length).with_message(message));
+        let pb = mp.add(
+            ProgressBar::new(content_length)
+                .with_style(
+                    ProgressStyle::with_template(
+                        "{msg} {spinner:.green} [{wide_bar:.cyan/blue}] {bytes}/{total_bytes} ({eta})",
+                    )
+                    .unwrap()
+                    .progress_chars("#>-"),
+                )
+                .with_message(message)
+                .with_finish(indicatif::ProgressFinish::WithMessage("Finished ✅".into())),
+        );
 
         Ok(Self {
             cache,

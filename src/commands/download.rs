@@ -2,7 +2,6 @@ use anyhow::Context;
 use clap::Parser;
 
 use indicatif::MultiProgress;
-use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use reqwest::blocking::Client;
 use sfsu::{
     cache::{Downloader, Handle},
@@ -25,14 +24,25 @@ impl super::Command for Args {
         let mp = MultiProgress::new();
         let client = Client::new();
 
-        let downloaders =
-            Handle::open_manifest(&manifest, None).context("missing download urls")??;
+        // Note that these are split because it helps the downloads run in parallel
 
-        downloaders
-            .into_par_iter()
+        let downloaders = Handle::open_manifest(&manifest, None)
+            .context("missing download urls")??
+            .into_iter()
             .map(|dl| Downloader::new(dl, &client, &mp).unwrap())
-            .map(Downloader::download)
-            .collect::<std::io::Result<Vec<_>>>()?;
+            .collect::<Vec<_>>();
+
+        let threads = downloaders
+            .into_iter()
+            .map(|dl| std::thread::spawn(|| dl.download()))
+            .collect::<Vec<_>>();
+
+        for thread in threads {
+            match thread.join() {
+                Ok(res) => res?,
+                Err(err) => anyhow::bail!("Thread returned with an error: {err:?}"),
+            }
+        }
 
         Ok(())
     }
