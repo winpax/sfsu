@@ -53,13 +53,18 @@ impl Package {
 
     #[must_use]
     /// Just get the package name
-    ///
-    /// Returns [`None`] if the reference was a url
     pub fn name(&self) -> Option<String> {
         match self {
             Package::Name(name) | Package::BucketNamePair { name, .. } => Some(name.to_string()),
             Package::File(path) => Some(path.with_extension("").file_name()?.to_str()?.to_string()),
-            Package::Url(_) => None,
+            Package::Url(url) => Some(
+                url.path_segments()?
+                    .last()?
+                    .to_string()
+                    .split('.')
+                    .next()?
+                    .to_string(),
+            ),
         }
     }
 
@@ -70,7 +75,7 @@ impl Package {
     /// or an error was thrown while getting the manifest
     pub fn manifest(&self) -> Option<Manifest> {
         if matches!(self, Self::File(_) | Self::Url(_)) {
-            let manifest = match self {
+            let mut manifest = match self {
                 Package::File(path) => Manifest::from_path(path).ok()?,
                 Package::Url(url) => {
                     let manifest_string =
@@ -80,6 +85,8 @@ impl Package {
                 }
                 _ => unreachable!(),
             };
+
+            manifest.name = self.name()?;
 
             return Some(manifest);
         }
