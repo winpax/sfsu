@@ -4,7 +4,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use git2::{Remote, Repository};
+use git2::{FetchOptions, Remote, Repository};
 use rayon::prelude::*;
 use regex::Regex;
 
@@ -293,11 +293,37 @@ impl BucketRepo {
             .find_remote(self.repo.head()?.name().expect("utf8 branch name"))?)
     }
 
+    /// Get the current branch
+    ///
+    /// # Errors
+    /// - No active branch
+    pub fn current_branch(&self) -> RepoResult<String> {
+        self.repo
+            .head()?
+            .shorthand()
+            .ok_or(RepoError::NoActiveBranch)
+            .map(std::string::ToString::to_string)
+    }
+
     /// Checks if the bucket is outdated
+    ///
+    /// # Errors
+    /// - No remote named "origin"
+    /// - No active branch
     pub fn outdated(&self) -> RepoResult<bool> {
-        // let main_remote = self.main_remote()?;
-        // self.repo.diff_tree_to_workdir(main_remote, None);
-        unimplemented!()
+        let current_branch = self.current_branch()?;
+
+        // Fetch the latest changes from the remote repository
+        let mut fetch_options = FetchOptions::new();
+        fetch_options.update_fetchhead(true);
+        let mut remote = self.repo.find_remote("origin")?;
+        remote.fetch(&[current_branch], Some(&mut fetch_options), None)?;
+
+        // Get the local and remote HEADs
+        let local_head = self.repo.head()?.peel_to_commit()?;
+        let fetch_head = self.repo.find_reference("FETCH_HEAD")?.peel_to_commit()?;
+
+        Ok(local_head.id() != fetch_head.id())
     }
 
     /// Update the bucket by pulling any changes
