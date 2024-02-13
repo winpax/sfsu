@@ -22,7 +22,7 @@ pub struct Args {
 impl super::Command for Args {
     fn runner(mut self) -> Result<(), anyhow::Error> {
         if let Some(bucket) = self.bucket {
-            self.package.set_bucket(bucket);
+            self.package.set_bucket(bucket)?;
         }
 
         let manifests = self.package.search_manifest();
