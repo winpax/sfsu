@@ -1,62 +1,53 @@
-use std::{path::Path, time::UNIX_EPOCH};
-
+use clap::{Parser, ValueEnum};
+use colored::Colorize;
 use rayon::prelude::*;
 
-use chrono::NaiveDateTime;
-use clap::Parser;
-use colored::Colorize;
-use quork::traits::truthy::ContainsTruth;
-use serde::{Deserialize, Serialize};
-
-use sfsu::{
-    output::structured::Structured,
-    packages::{CreateManifest, InstallManifest, Manifest},
-};
-
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "PascalCase")]
-struct OutputPackage {
-    name: String,
-    version: String,
-    source: String,
-    updated: String,
-    notes: String,
-}
+use sfsu::{output::structured::Structured, packages::MinInfo};
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
     #[clap(
-        help = format!("The pattern to search for (can be a regex). {}", "DEPRECATED: Use sfsu search --installed".yellow())
+        help = format!("The pattern to search for (can be a regex). {}", "DEPRECATED: Use sfsu search --installed. Will be removed in v2".yellow())
     )]
     pattern: Option<String>,
 
     #[clap(short, long, help = "The bucket to exclusively list packages in")]
     bucket: Option<String>,
 
-    #[clap(
-        long,
-        help = "Print in the raw JSON output, rather than a human readable format"
-    )]
+    #[clap(long, help = "Sort by the given field", default_value = "name")]
+    sort_by: SortBy,
+
+    #[clap(long, help = "Sort in descending order")]
+    descending: bool,
+
+    #[clap(from_global)]
     json: bool,
 }
 
-impl super::Command for Args {
-    fn run(self) -> Result<(), anyhow::Error> {
-        let apps = sfsu::list_scoop_apps()?;
+#[derive(Debug, Copy, Clone, ValueEnum)]
+pub enum SortBy {
+    Name,
+    Version,
+    Source,
+    Updated,
+    Notes,
+}
 
-        let outputs = apps
-            .par_iter()
-            .map(parse_package)
-            .filter(|package| {
-                if let Ok(pkg) = package {
-                    if let Some(ref bucket) = self.bucket {
-                        return &pkg.source == bucket;
-                    }
-                }
-                // Keep errors so that the following line will return the error
-                true
-            })
-            .collect::<Result<Vec<_>, _>>()?;
+impl super::Command for Args {
+    fn runner(self) -> Result<(), anyhow::Error> {
+        let mut outputs = MinInfo::list_installed(self.bucket.as_ref())?;
+
+        outputs.par_sort_by(|a, b| match self.sort_by {
+            SortBy::Name => a.name.cmp(&b.name),
+            SortBy::Version => a.version.cmp(&b.version),
+            SortBy::Source => a.source.cmp(&b.source),
+            SortBy::Updated => a.updated.cmp(&b.updated),
+            SortBy::Notes => a.notes.cmp(&b.notes),
+        });
+
+        if self.descending {
+            outputs.reverse();
+        }
 
         if self.json {
             let output_json = serde_json::to_string_pretty(&outputs)?;
@@ -69,7 +60,7 @@ impl super::Command for Args {
             }
 
             let values = outputs
-                .into_iter()
+                .into_par_iter()
                 .map(serde_json::to_value)
                 .collect::<Result<Vec<_>, _>>()?;
 
@@ -82,45 +73,4 @@ impl super::Command for Args {
 
         Ok(())
     }
-}
-
-fn parse_package(path: impl AsRef<Path>) -> anyhow::Result<OutputPackage> {
-    let path = path.as_ref();
-
-    let package_name = path
-        .components()
-        .last()
-        .unwrap()
-        .as_os_str()
-        .to_string_lossy();
-
-    let naive_time = {
-        let updated = {
-            let updated_sys = path.metadata()?.modified()?;
-
-            updated_sys.duration_since(UNIX_EPOCH)?.as_secs()
-        };
-
-        NaiveDateTime::from_timestamp_opt(updated.try_into()?, 0)
-            .expect("invalid or out-of-range datetime")
-    };
-
-    let app_current = path.join("current");
-
-    let manifest = Manifest::from_path(app_current.join("manifest.json")).unwrap_or_default();
-
-    let install_manifest =
-        InstallManifest::from_path(app_current.join("install.json")).unwrap_or_default();
-
-    anyhow::Ok(OutputPackage {
-        name: package_name.to_string(),
-        version: manifest.version,
-        source: install_manifest.get_source(),
-        updated: naive_time.to_string(),
-        notes: if install_manifest.hold.contains_truth() {
-            String::from("Held")
-        } else {
-            String::new()
-        },
-    })
 }
