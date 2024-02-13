@@ -44,7 +44,7 @@ shadow-rs = "0.26"
 strum = { version = "0.25", features = ["derive"] }
 thiserror = "1.0"
 tinyvec = "1.6.0"
-url = { version = "2.5", features = ["serde"] }
+url = { version = "2.5" }
 
 [dev-dependencies]
 criterion = { version = "0.5", features = ["html_reports"] }

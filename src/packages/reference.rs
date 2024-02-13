@@ -1,19 +1,31 @@
-use std::{fmt, str::FromStr};
+use std::{fmt, path::PathBuf, str::FromStr};
 
 use itertools::Itertools as _;
+use url::Url;
 
-use super::Manifest;
+use super::{CreateManifest, Manifest};
 use crate::buckets::Bucket;
+
+#[derive(Debug, thiserror::Error)]
+pub enum Error {
+    #[error("Attempted to set bucket on a file path or url. This is not supported.")]
+    BucketOnDirectRef,
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Package {
     BucketNamePair { bucket: String, name: String },
     Name(String),
+    File(PathBuf),
+    Url(Url),
 }
 
 impl Package {
     /// Update the bucket string in the package reference
-    pub fn set_bucket(&mut self, bucket: String) {
+    ///
+    /// # Errors
+    /// - If the package reference is a url. Setting the bucket on a url reference is not supported
+    pub fn set_bucket(&mut self, bucket: String) -> Result<(), Error> {
         match self {
             Package::BucketNamePair {
                 bucket: old_bucket, ..
@@ -24,7 +36,10 @@ impl Package {
                     name: name.clone(),
                 }
             }
+            _ => return Err(Error::BucketOnDirectRef),
         }
+
+        Ok(())
     }
 
     #[must_use]
@@ -32,32 +47,52 @@ impl Package {
     pub fn bucket(&self) -> Option<&str> {
         match self {
             Package::BucketNamePair { bucket, .. } => Some(bucket),
-            Package::Name(_) => None,
+            _ => None,
         }
     }
 
     #[must_use]
     /// Just get the package name
-    pub fn name(&self) -> &str {
+    ///
+    /// Returns [`None`] if the reference was a url
+    pub fn name(&self) -> Option<String> {
         match self {
-            Package::Name(name) | Package::BucketNamePair { name, .. } => name,
+            Package::Name(name) | Package::BucketNamePair { name, .. } => Some(name.to_string()),
+            Package::File(path) => Some(path.with_extension("").file_name()?.to_str()?.to_string()),
+            Package::Url(_) => None,
         }
     }
 
     #[must_use]
     /// Parse the bucket and package to get the manifest
     ///
-    /// Returns [`None`] if the bucket is not valid or the manifest does not exist
+    /// Returns [`None`] if the bucket is not valid, the manifest does not exist,
+    /// or an error was thrown while getting the manifest
     pub fn manifest(&self) -> Option<Manifest> {
+        if matches!(self, Self::File(_) | Self::Url(_)) {
+            let manifest = match self {
+                Package::File(path) => Manifest::from_path(path).ok()?,
+                Package::Url(url) => {
+                    let manifest_string =
+                        reqwest::blocking::get(url.to_string()).ok()?.text().ok()?;
+
+                    Manifest::from_str(manifest_string).ok()?
+                }
+                _ => unreachable!(),
+            };
+
+            return Some(manifest);
+        }
+
         if let Some(bucket_name) = self.bucket() {
             let bucket = Bucket::new(bucket_name).ok()?;
 
-            bucket.get_manifest(self.name()).ok()
+            bucket.get_manifest(self.name()?).ok()
         } else {
             Bucket::list_all()
                 .ok()?
                 .into_iter()
-                .find_map(|bucket| bucket.get_manifest(self.name()).ok())
+                .find_map(|bucket| bucket.get_manifest(self.name()?).ok())
         }
     }
 
@@ -77,7 +112,7 @@ impl Package {
 
             buckets
                 .into_iter()
-                .filter_map(|bucket| match bucket.get_manifest(self.name()) {
+                .filter_map(|bucket| match bucket.get_manifest(self.name()?) {
                     Ok(manifest) => Some(manifest),
                     Err(_) => None,
                 })
@@ -91,6 +126,11 @@ impl fmt::Display for Package {
         match self {
             Package::BucketNamePair { bucket, name } => write!(f, "{bucket}/{name}"),
             Package::Name(name) => write!(f, "{name}"),
+            Package::File(_) => {
+                let name = self.name().unwrap();
+                write!(f, "{name}")
+            }
+            Package::Url(url) => write!(f, "{url}"),
         }
     }
 }
@@ -109,6 +149,16 @@ impl FromStr for Package {
     type Err = PackageRefParseError;
 
     fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+        if let Ok(url) = url::Url::parse(s) {
+            return Ok(Self::Url(url));
+        }
+
+        if let Ok(path) = PathBuf::from_str(s) {
+            if path.exists() {
+                return Ok(Self::File(path));
+            }
+        }
+
         let parts = s.split('/').collect_vec();
         if parts.len() == 1 {
             Ok(Self::Name(parts[0].to_string()))
