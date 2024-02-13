@@ -55,6 +55,8 @@ pub enum Commands {
     Outdated(outdated::Args),
     /// List the dependencies of a given package, in the order that they will be installed
     Depends(depends::Args),
-    /// Download the specified app
+    /// Download the specified app.
+    /// NOTE: This is currently experimental, and might not always work as expected.
+    /// Please report any issues found
     Download(download::Args),
 }

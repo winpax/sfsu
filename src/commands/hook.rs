@@ -2,6 +2,8 @@ use clap::{Parser, ValueEnum};
 use itertools::Itertools;
 use strum::{Display, IntoEnumIterator};
 
+use super::CommandsHooks;
+
 #[derive(Debug, Default, ValueEnum, Copy, Clone, Display, PartialEq, Eq)]
 #[strum(serialize_all = "snake_case")]
 enum Shell {
@@ -12,10 +14,19 @@ enum Shell {
     Nu,
 }
 
+const DISABLED_BY_DEFAULT: &[CommandsHooks] = &[CommandsHooks::Download];
+
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
     #[clap(short = 'D', long, help = "The commands to disable")]
-    disable: Vec<super::CommandsHooks>,
+    disable: Vec<CommandsHooks>,
+
+    #[clap(
+        short = 'C',
+        long,
+        help = "The commands to explicitly enable. Will ignore `--disable` flag"
+    )]
+    enabled: Vec<CommandsHooks>,
 
     #[clap(short, long, help = "Print hooks for the given shell", default_value_t = Shell::Powershell)]
     shell: Shell,
@@ -24,9 +35,15 @@ pub struct Args {
 impl super::Command for Args {
     fn runner(self) -> Result<(), anyhow::Error> {
         let shell = self.shell;
-        let enabled_hooks: Vec<super::CommandsHooks> = super::CommandsHooks::iter()
-            .filter(|variant| !self.disable.contains(variant))
-            .collect();
+        let enabled_hooks: Vec<CommandsHooks> = if self.enabled.is_empty() {
+            CommandsHooks::iter()
+                .filter(|variant| {
+                    !self.disable.contains(variant) && !DISABLED_BY_DEFAULT.contains(variant)
+                })
+                .collect()
+        } else {
+            self.enabled
+        };
 
         match shell {
             Shell::Powershell => {
