@@ -52,7 +52,7 @@ impl Package {
     }
 
     #[must_use]
-    /// Just get the package name
+    /// Get the package name
     pub fn name(&self) -> Option<String> {
         match self {
             Package::Name(name) | Package::BucketNamePair { name, .. } => Some(name.to_string()),
