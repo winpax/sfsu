@@ -1,6 +1,10 @@
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+use crate::Scoop;
+
+use super::CreateManifest;
+
 #[derive(Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Manifest {
     /// This must be manually set
@@ -64,6 +68,19 @@ impl Manifest {
             (None, Some(url)) => url.to_string(),
             _ => "Unknown".to_string(),
         }
+    }
+
+    /// Get the package manifest from the install manifest
+    ///
+    /// # Errors
+    /// - Missing or invalid manifest
+    pub fn get_manifest(&self) -> super::Result<super::manifest::Manifest> {
+        let manifest_path = Scoop::apps_path()
+            .join(&self.name)
+            .join("current")
+            .join("manifest.json");
+
+        super::manifest::Manifest::from_path(manifest_path)
     }
 }
 

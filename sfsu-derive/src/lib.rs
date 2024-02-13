@@ -4,6 +4,7 @@ use syn::{parse_macro_input, DeriveInput};
 
 mod hooks;
 mod inner;
+mod keyvalue;
 
 #[proc_macro_derive(Runnable)]
 #[proc_macro_error]
@@ -15,4 +16,10 @@ pub fn derive_into_inner(input: TokenStream) -> TokenStream {
 #[proc_macro_error]
 pub fn derive_hook_enum(input: TokenStream) -> TokenStream {
     hooks::hook_enum(parse_macro_input!(input as DeriveInput)).into()
+}
+
+#[proc_macro_derive(KeyValue, attributes(deprecated))]
+#[proc_macro_error]
+pub fn derive_key_value(input: TokenStream) -> TokenStream {
+    keyvalue::keyvalue(parse_macro_input!(input as DeriveInput)).into()
 }

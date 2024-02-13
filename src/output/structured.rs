@@ -3,6 +3,8 @@ use std::fmt::Display;
 use rayon::prelude::*;
 use serde_json::Value;
 
+pub mod vertical;
+
 #[derive(Debug)]
 #[must_use = "OptionalTruncate is lazy, and only takes effect when used in formatting"]
 pub struct OptionalTruncate<T> {

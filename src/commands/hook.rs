@@ -2,7 +2,7 @@ use clap::{Parser, ValueEnum};
 use itertools::Itertools;
 use strum::{Display, IntoEnumIterator};
 
-#[derive(Debug, Default, ValueEnum, Copy, Clone, Display)]
+#[derive(Debug, Default, ValueEnum, Copy, Clone, Display, PartialEq, Eq)]
 #[strum(serialize_all = "snake_case")]
 enum Shell {
     #[default]
@@ -14,8 +14,6 @@ enum Shell {
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
-    // TODO: Rename CommandsHooks to CommandHooks or something
-    // TODO: Add attribute macro that excludes a variant from the aforementioned enum
     #[clap(short = 'D', long, help = "The commands to disable")]
     disable: Vec<super::CommandsHooks>,
 
@@ -24,48 +22,59 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    fn run(self) -> Result<(), anyhow::Error> {
+    fn runner(self) -> Result<(), anyhow::Error> {
+        let shell = self.shell;
         let enabled_hooks: Vec<super::CommandsHooks> = super::CommandsHooks::iter()
             .filter(|variant| !self.disable.contains(variant))
             .collect();
 
-        // TODO: Add helper comments for other shells
-        match self.shell {
+        match shell {
             Shell::Powershell => {
                 print!("function scoop {{ switch ($args[0]) {{ ");
 
                 // I would love to make this all one condition, but Powershell doesn't seem to support that elegantly
                 for command in enabled_hooks {
-                    print!("'{command}' {{ return sfsu.exe $args }} ");
+                    print!("  '{command}' {{ return sfsu.exe $args }} ");
                 }
 
-                print!("default {{ scoop.ps1 @args }} }} }}");
+                println!("default {{ scoop.ps1 @args }} }} }}");
+
+                // TODO: Figure out a way to put these in that PowerShell won't throw a fit about
+                // println!("# To add this to your config, add the following line to the end of your PowerShell profile:");
+                // println!("#     Invoke-Expression (&sfsu hook)");
             }
             Shell::Bash | Shell::Zsh => {
-                println!("export SCOOP_EXEC=$(which scoop)");
-
-                println!("scoop () {{\n  case $1 in");
+                let hook_list = enabled_hooks.iter().format(" | ");
 
                 println!(
-                    "      ({}) sfsu.exe $@ ;;",
-                    enabled_hooks.iter().format(" | ")
-                );
-
-                println!("      (*) $SCOOP_EXEC $@ ;;");
-                println!("  esac\n}}");
-
-                println!(
-                    "# Add the following to the end of your zshrc \n\
-                    #\tsource <(sfsu.exe hook --shell {})",
-                    self.shell
+                    "SCOOP_EXEC=$(which scoop) \n\
+                    scoop () {{ \n\
+                    case $1 in \n\
+                    ({hook_list}) sfsu.exe $@ ;; \n\
+                    (*) $SCOOP_EXEC $@ ;; \n\
+                    esac \n\
+                    }} \n\n\
+                    # Add the following to the end of your ~/.{} \n\
+                    #   source <(sfsu.exe hook --shell {shell})",
+                    if shell == Shell::Bash {
+                        "bashrc"
+                    } else {
+                        "zshrc"
+                    }
                 );
             }
             Shell::Nu => {
                 for command in enabled_hooks {
                     println!(
-                        "extern-wrapped \"scoop {command}\" [...rest] {{ sfsu {command} $rest }} "
+                        "def --wrapped \"scoop {command}\" [...rest] {{ sfsu {command} ...$rest }}"
                     );
                 }
+
+                println!(
+                        "\n# To add this to your config, run `sfsu hook --shell {shell} | save ~/.cache/sfsu.nu`\n\
+                        # And then in your main config add the following line to the end:\n\
+                        #   source ~/.cache/sfsu.nu"
+                    );
             }
         }
 
