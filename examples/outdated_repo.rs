@@ -8,7 +8,10 @@ fn main() -> Result<(), git2::Error> {
     let mut fetch_options = FetchOptions::new();
     fetch_options.update_fetchhead(true);
     let mut remote = repo.find_remote("origin")?;
-    remote.fetch(&["outdated-repo"], Some(&mut fetch_options), None)?;
+
+    let branch = repo.find_remote(repo.head()?.name().expect("utf8 branch name"))?;
+
+    remote.fetch(&[branch.name().unwrap()], Some(&mut fetch_options), None)?;
 
     // Get the local and remote HEADs
     let local_head = repo.head()?.peel_to_commit()?;
