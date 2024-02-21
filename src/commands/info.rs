@@ -1,4 +1,5 @@
 use clap::Parser;
+use itertools::Itertools;
 use serde::Serialize;
 use sfsu::{
     buckets::Bucket,
@@ -6,6 +7,7 @@ use sfsu::{
         structured::vertical::VTable,
         wrappers::{
             bool::{wrap_bool, NicerBool},
+            keys::Key,
             time::NicerTime,
         },
     },
@@ -110,6 +112,8 @@ impl super::Command for Args {
                 println!("{output}");
             } else {
                 let (keys, values) = pkg_info.into_pairs();
+
+                let keys = keys.into_iter().map(Key::wrap).collect_vec();
 
                 let table = VTable::new(&keys, &values);
                 println!("{table}");
