@@ -5,6 +5,7 @@ use sfsu::{
     output::{
         structured::vertical::VTable,
         wrappers::{
+            alias_vec::AliasVec,
             bool::{wrap_bool, NicerBool},
             time::NicerTime,
         },
@@ -29,6 +30,7 @@ struct PackageInfo {
     installed: NicerBool,
     binaries: Option<String>,
     notes: Option<String>,
+    shortcuts: AliasVec<String>,
 }
 
 #[derive(Debug, Clone, Parser)]
@@ -101,6 +103,7 @@ impl super::Command for Args {
                 binaries: manifest.bin.map(|b| b.into_vec().join(",")),
                 notes: manifest.notes.map(|notes| notes.to_string()),
                 installed: wrap_bool!(install_path.is_some()),
+                shortcuts: AliasVec::from_shortcuts(manifest.install_config.shortcuts),
                 updated_at,
             };
 
