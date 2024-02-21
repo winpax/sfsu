@@ -6,6 +6,7 @@ use rayon::prelude::*;
 
 pub mod buckets;
 pub mod config;
+pub mod git;
 pub mod packages;
 
 mod opt;
