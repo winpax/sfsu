@@ -21,15 +21,15 @@ impl<T: Display> Display for AliasVec<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut first = true;
 
-        for alias in &self.0 {
+        for alias_cfg in &self.0 {
             if !first {
                 write!(f, ", ")?;
             }
 
-            let name = &alias[0];
-            // let value = alias[1];
+            // let value = alias[0];
+            let alias = &alias_cfg[1];
 
-            name.fmt(f)?;
+            alias.fmt(f)?;
             first = false;
         }
 
