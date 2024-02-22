@@ -1,4 +1,4 @@
-use git2::{FetchOptions, Remote, Repository};
+use git2::{Commit, FetchOptions, Remote, Repository};
 
 use crate::buckets::Bucket;
 
@@ -53,12 +53,12 @@ impl Repo {
             .map(std::string::ToString::to_string)
     }
 
-    /// Checks if the bucket is outdated
+    /// Fetch latest changes in the repo
     ///
     /// # Errors
     /// - No remote named "origin"
     /// - No active branch
-    pub fn outdated(&self) -> RepoResult<bool> {
+    pub fn fetch(&self) -> RepoResult<()> {
         let current_branch = self.current_branch()?;
 
         // Fetch the latest changes from the remote repository
@@ -67,11 +67,32 @@ impl Repo {
         let mut remote = self.0.find_remote("origin")?;
         remote.fetch(&[current_branch], Some(&mut fetch_options), None)?;
 
+        Ok(())
+    }
+
+    /// Checks if the bucket is outdated
+    ///
+    /// # Errors
+    /// - No remote named "origin"
+    /// - No active branch
+    /// - No reference "`FETCH_HEAD`"
+    pub fn outdated(&self) -> RepoResult<bool> {
+        self.fetch()?;
+
         // Get the local and remote HEADs
-        let local_head = self.0.head()?.peel_to_commit()?;
+        let local_head = self.latest_commit()?;
         let fetch_head = self.0.find_reference("FETCH_HEAD")?.peel_to_commit()?;
 
         Ok(local_head.id() != fetch_head.id())
+    }
+
+    /// Get the latest commit
+    ///
+    /// # Errors
+    /// - Missing head
+    /// - Missing latest commit
+    pub fn latest_commit(&self) -> RepoResult<Commit<'_>> {
+        Ok(self.0.head()?.peel_to_commit()?)
     }
 
     /// Update the bucket by pulling any changes

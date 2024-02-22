@@ -51,7 +51,8 @@ impl super::Command for Args {
             .expect("Invalid Regex provided. See https://docs.rs/regex/latest/regex/ for more info")
         };
 
-        let matching_buckets: Vec<Bucket> = if let Some(Ok(bucket)) = bucket.map(Bucket::new) {
+        let matching_buckets: Vec<Bucket> = if let Some(Ok(bucket)) = bucket.map(Bucket::from_name)
+        {
             vec![bucket]
         } else {
             Bucket::list_all()?
