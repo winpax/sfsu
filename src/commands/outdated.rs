@@ -19,7 +19,7 @@ impl super::Command for Args {
                 if let Some(bucket) = &app.bucket {
                     let app_manifest = app.get_manifest()?;
                     // TODO: Add the option to check all buckets and find the highest version (will require semver to order versions)
-                    let bucket = Bucket::new(bucket)?;
+                    let bucket = Bucket::from_name(bucket)?;
                     match bucket.get_manifest(&app.name) {
                         Ok(manifest) if app_manifest.version != manifest.version => Ok(Outdated {
                             name: app.name.clone(),

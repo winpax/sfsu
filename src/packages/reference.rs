@@ -50,7 +50,7 @@ impl Package {
     /// Returns [`None`] if the bucket is not valid or the manifest does not exist
     pub fn manifest(&self) -> Option<Manifest> {
         if let Some(bucket_name) = self.bucket() {
-            let bucket = Bucket::new(bucket_name).ok()?;
+            let bucket = Bucket::from_name(bucket_name).ok()?;
 
             bucket.get_manifest(self.name()).ok()
         } else {
