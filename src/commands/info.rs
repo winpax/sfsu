@@ -3,6 +3,7 @@ use itertools::Itertools;
 use serde::Serialize;
 use sfsu::{
     buckets::Bucket,
+    calm_panic::calm_panic,
     output::{
         structured::vertical::VTable,
         wrappers::{
@@ -63,8 +64,10 @@ impl super::Command for Args {
             .collect();
 
         if manifests.is_empty() {
-            println!("No package found with the name \"{}\"", self.package);
-            std::process::exit(1);
+            calm_panic(format!(
+                "No package found with the name \"{}\"",
+                self.package
+            ));
         }
 
         if manifests.len() > 1 {

@@ -5,6 +5,7 @@ use std::{ffi::OsStr, fmt, path::PathBuf};
 use rayon::prelude::*;
 
 pub mod buckets;
+pub mod calm_panic;
 pub mod config;
 pub mod packages;
 
