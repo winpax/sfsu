@@ -3,6 +3,8 @@
 
 #![allow(clippy::module_name_repetitions)]
 
+pub mod alias_vec;
 pub mod bool;
 pub mod cap_str;
+pub mod keys;
 pub mod time;

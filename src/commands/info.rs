@@ -1,11 +1,14 @@
 use clap::Parser;
+use itertools::Itertools;
 use serde::Serialize;
 use sfsu::{
     buckets::Bucket,
     output::{
         structured::vertical::VTable,
         wrappers::{
+            alias_vec::AliasVec,
             bool::{wrap_bool, NicerBool},
+            keys::Key,
             time::NicerTime,
         },
     },
@@ -29,6 +32,7 @@ struct PackageInfo {
     installed: NicerBool,
     binaries: Option<String>,
     notes: Option<String>,
+    shortcuts: AliasVec<String>,
 }
 
 #[derive(Debug, Clone, Parser)]
@@ -101,6 +105,7 @@ impl super::Command for Args {
                 binaries: manifest.bin.map(|b| b.into_vec().join(",")),
                 notes: manifest.notes.map(|notes| notes.to_string()),
                 installed: wrap_bool!(install_path.is_some()),
+                shortcuts: AliasVec::from_shortcuts(manifest.install_config.shortcuts),
                 updated_at,
             };
 
@@ -110,6 +115,8 @@ impl super::Command for Args {
                 println!("{output}");
             } else {
                 let (keys, values) = pkg_info.into_pairs();
+
+                let keys = keys.into_iter().map(Key::wrap).collect_vec();
 
                 let table = VTable::new(&keys, &values);
                 println!("{table}");
