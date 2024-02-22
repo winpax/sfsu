@@ -38,15 +38,15 @@ impl Bucket {
     ///
     /// # Errors
     /// - Bucket does not exist
-    pub fn new(name: impl AsRef<Path>) -> Result<Self> {
-        Self::open(Scoop::buckets_path().join(name))
+    pub fn from_name(name: impl AsRef<Path>) -> Result<Self> {
+        Self::from_path(Scoop::buckets_path().join(name))
     }
 
     /// Open given path as a bucket
     ///
     /// # Errors
     /// - Bucket does not exist
-    pub fn open(path: impl AsRef<Path>) -> Result<Self> {
+    pub fn from_path(path: impl AsRef<Path>) -> Result<Self> {
         let bucket_path = path.as_ref().to_path_buf();
 
         if bucket_path.exists() {
@@ -63,7 +63,7 @@ impl Bucket {
     /// - Unable to read the bucket directory
     pub fn one_or_all(name: Option<impl AsRef<Path>>) -> Result<Vec<Self>> {
         if let Some(name) = name {
-            Ok(vec![Bucket::new(name)?])
+            Ok(vec![Bucket::from_name(name)?])
         } else {
             Bucket::list_all()
         }
@@ -105,7 +105,7 @@ impl Bucket {
 
         bucket_dir
             .filter(|entry| entry.as_ref().is_ok_and(|entry| entry.path().is_dir()))
-            .map(|entry| Self::new(entry?.path()))
+            .map(|entry| Self::from_name(entry?.path()))
             .collect()
     }
 
