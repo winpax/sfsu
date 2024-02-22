@@ -26,14 +26,12 @@ struct PackageInfo {
     bucket: String,
     website: Option<String>,
     license: Option<PackageLicense>,
-    #[serde(rename = "Updated at")]
     updated_at: Option<NicerTime>,
-    // #[serde(rename = "Updated by")]
-    // updated_by: Option<String>,
+    updated_by: Option<String>,
     installed: NicerBool,
     binaries: Option<String>,
     notes: Option<String>,
-    shortcuts: AliasVec<String>,
+    shortcuts: Option<AliasVec<String>>,
 }
 
 #[derive(Debug, Clone, Parser)]
@@ -108,8 +106,9 @@ impl super::Command for Args {
                 binaries: manifest.bin.map(|b| b.into_vec().join(",")),
                 notes: manifest.notes.map(|notes| notes.to_string()),
                 installed: wrap_bool!(install_path.is_some()),
-                shortcuts: AliasVec::from_shortcuts(manifest.install_config.shortcuts),
+                shortcuts: manifest.install_config.shortcuts.map(AliasVec::from_vec),
                 updated_at,
+                updated_by: None,
             };
 
             if self.json {
