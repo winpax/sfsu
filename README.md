@@ -8,7 +8,7 @@
 
 > [!NOTE]
 > This is still under development. It currently does not replace even close to all the scoop commands, and is missing a lot of functionality.
-> There is unlikely to be any breaking changes, so there isn't much harm using it as is.
+> There is unlikely to be any breaking changes, so there is likely no harm using it as is.
 
 Super fast replacements and additions to scoop commands written in Rust
 
