@@ -4,11 +4,11 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use git2::{Remote, Repository};
 use rayon::prelude::*;
 use regex::Regex;
 
 use crate::{
+    git::{Repo, RepoError},
     output::sectioned::{Children, Section, Text},
     packages::{self, CreateManifest, InstallManifest, Manifest, SearchMode},
     Scoop,
@@ -38,15 +38,15 @@ impl Bucket {
     ///
     /// # Errors
     /// - Bucket does not exist
-    pub fn new(name: impl AsRef<Path>) -> Result<Self> {
-        Self::open(Scoop::buckets_path().join(name))
+    pub fn from_name(name: impl AsRef<Path>) -> Result<Self> {
+        Self::from_path(Scoop::buckets_path().join(name))
     }
 
     /// Open given path as a bucket
     ///
     /// # Errors
     /// - Bucket does not exist
-    pub fn open(path: impl AsRef<Path>) -> Result<Self> {
+    pub fn from_path(path: impl AsRef<Path>) -> Result<Self> {
         let bucket_path = path.as_ref().to_path_buf();
 
         if bucket_path.exists() {
@@ -63,7 +63,7 @@ impl Bucket {
     /// - Unable to read the bucket directory
     pub fn one_or_all(name: Option<impl AsRef<Path>>) -> Result<Vec<Self>> {
         if let Some(name) = name {
-            Ok(vec![Bucket::new(name)?])
+            Ok(vec![Bucket::from_name(name)?])
         } else {
             Bucket::list_all()
         }
@@ -74,8 +74,8 @@ impl Bucket {
     /// # Errors
     /// - The bucket could not be opened as a repository
     #[inline]
-    pub fn open_repo(&self) -> Result<BucketRepo> {
-        Ok(BucketRepo::from_bucket(self)?)
+    pub fn open_repo(&self) -> Result<Repo> {
+        Ok(Repo::from_bucket(self)?)
     }
 
     /// Gets the bucket's name (the final component of the path)
@@ -105,7 +105,7 @@ impl Bucket {
 
         bucket_dir
             .filter(|entry| entry.as_ref().is_ok_and(|entry| entry.path().is_dir()))
-            .map(|entry| Self::new(entry?.path()))
+            .map(|entry| Self::from_name(entry?.path()))
             .collect()
     }
 
@@ -246,65 +246,5 @@ impl Bucket {
     /// Reading directories fails
     pub fn is_used(&self) -> packages::Result<bool> {
         Ok(Self::used()?.contains(&self.name().to_string()))
-    }
-}
-
-#[derive(Debug, thiserror::Error)]
-pub enum RepoError {
-    #[error("Could not find the active branch (HEAD)")]
-    NoActiveBranch,
-
-    #[error("Git error: {0}")]
-    Git2(#[from] git2::Error),
-}
-
-pub type RepoResult<T> = std::result::Result<T, RepoError>;
-
-pub struct BucketRepo {
-    bucket: Bucket,
-    repo: Repository,
-}
-
-impl BucketRepo {
-    /// Open the repository from the bucket path
-    ///
-    /// # Errors
-    /// - The bucket could not be opened as a repository
-    pub fn from_bucket(bucket: &Bucket) -> RepoResult<Self> {
-        let bucket = bucket.clone();
-
-        let repo = Repository::open(bucket.path())?;
-
-        Ok(Self { bucket, repo })
-    }
-
-    /// Get the current remote branch
-    ///
-    /// # Errors
-    /// - Missing head
-    ///
-    /// # Panics
-    /// - Non-utf8 branch name
-    pub fn main_remote(&self) -> RepoResult<Remote<'_>> {
-        Ok(self
-            .repo
-            .find_remote(self.repo.head()?.name().expect("utf8 branch name"))?)
-    }
-
-    /// Checks if the bucket is outdated
-    pub fn outdated(&self) -> RepoResult<bool> {
-        // let main_remote = self.main_remote()?;
-        // self.repo.diff_tree_to_workdir(main_remote, None);
-        unimplemented!()
-    }
-
-    /// Update the bucket by pulling any changes
-    pub fn update(&self) {
-        unimplemented!()
-    }
-
-    /// Get the remote url of the bucket
-    pub fn get_remote(&self) {
-        unimplemented!()
     }
 }

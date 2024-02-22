@@ -341,7 +341,7 @@ impl Manifest {
     /// # Errors
     /// - If the manifest doesn't exist or bucket is invalid
     pub fn from_reference((bucket, name): (String, String)) -> Result<Self> {
-        Bucket::new(bucket)?.get_manifest(name)
+        Bucket::from_name(bucket)?.get_manifest(name)
     }
 
     #[must_use]

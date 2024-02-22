@@ -1,19 +1,27 @@
-//! Currently unused
-// Borrowed from https://github.com/rust-lang/git2-rs/blob/master/examples/pull.rs
-// The following is licensed under the MIT or the Apache-2.0 license, at your option.
-// Licensed by Alex Crichton
-
-use std::{
-    io::{self, Write},
-    path::Path,
-};
+/*
+ * libgit2 "pull" example - shows how to pull remote data into a local branch.
+ *
+ * Written by the libgit2 contributors
+ *
+ * To the extent possible under law, the author(s) have dedicated all copyright
+ * and related and neighboring rights to this software to the public domain
+ * worldwide. This software is distributed without any warranty.
+ *
+ * You should have received a copy of the CC0 Public Domain Dedication along
+ * with this software. If not, see
+ * <http://creativecommons.org/publicdomain/zero/1.0/>.
+ *
+ * Adapted by me (Juliette Cordor)
+ */
 
 use git2::Repository;
+use std::io::{self, Write};
+use std::str;
 
 fn do_fetch<'a>(
     repo: &'a git2::Repository,
     refs: &[&str],
-    remote: &'a mut git2::Remote,
+    remote: &'a mut git2::Remote<'_>,
 ) -> Result<git2::AnnotatedCommit<'a>, git2::Error> {
     let mut cb = git2::RemoteCallbacks::new();
 
@@ -68,21 +76,20 @@ fn do_fetch<'a>(
     }
 
     let fetch_head = repo.find_reference("FETCH_HEAD")?;
-
     repo.reference_to_annotated_commit(&fetch_head)
 }
 
 fn fast_forward(
     repo: &Repository,
-    lb: &mut git2::Reference,
-    rc: &git2::AnnotatedCommit,
+    lb: &mut git2::Reference<'_>,
+    rc: &git2::AnnotatedCommit<'_>,
 ) -> Result<(), git2::Error> {
     let name = match lb.name() {
         Some(s) => s.to_string(),
         None => String::from_utf8_lossy(lb.name_bytes()).to_string(),
     };
     let msg = format!("Fast-Forward: Setting {} to id: {}", name, rc.id());
-    println!("{}", msg);
+    println!("{msg}");
     lb.set_target(rc.id(), &msg)?;
     repo.set_head(&name)?;
     repo.checkout_head(Some(
@@ -97,8 +104,8 @@ fn fast_forward(
 
 fn normal_merge(
     repo: &Repository,
-    local: &git2::AnnotatedCommit,
-    remote: &git2::AnnotatedCommit,
+    local: &git2::AnnotatedCommit<'_>,
+    remote: &git2::AnnotatedCommit<'_>,
 ) -> Result<(), git2::Error> {
     let local_tree = repo.find_commit(local.id())?.tree()?;
     let remote_tree = repo.find_commit(remote.id())?.tree()?;
@@ -108,7 +115,7 @@ fn normal_merge(
     let mut idx = repo.merge_trees(&ancestor, &local_tree, &remote_tree, None)?;
 
     if idx.has_conflicts() {
-        println!("Merge conficts detected...");
+        println!("Merge conflicts detected...");
         repo.checkout_index(Some(&mut idx), None)?;
         return Ok(());
     }
@@ -135,57 +142,50 @@ fn normal_merge(
 fn do_merge<'a>(
     repo: &'a Repository,
     remote_branch: &str,
-    fetch_commit: git2::AnnotatedCommit<'a>,
+    fetch_commit: &git2::AnnotatedCommit<'a>,
 ) -> Result<(), git2::Error> {
     // 1. do a merge analysis
-    let analysis = repo.merge_analysis(&[&fetch_commit])?;
+    let analysis = repo.merge_analysis(&[fetch_commit])?;
 
-    // 2. Do the appopriate merge
+    // 2. Do the appropriate merge
     if analysis.0.is_fast_forward() {
         println!("Doing a fast forward");
         // do a fast forward
-        let refname = format!("refs/heads/{}", remote_branch);
-        match repo.find_reference(&refname) {
-            Ok(mut r) => {
-                fast_forward(repo, &mut r, &fetch_commit)?;
-            }
-            Err(_) => {
-                // The branch doesn't exist so just set the reference to the
-                // commit directly. Usually this is because you are pulling
-                // into an empty repository.
-                repo.reference(
-                    &refname,
-                    fetch_commit.id(),
-                    true,
-                    &format!("Setting {} to {}", remote_branch, fetch_commit.id()),
-                )?;
-                repo.set_head(&refname)?;
-                repo.checkout_head(Some(
-                    git2::build::CheckoutBuilder::default()
-                        .allow_conflicts(true)
-                        .conflict_style_merge(true)
-                        .force(),
-                ))?;
-            }
-        };
+        let refname = format!("refs/heads/{remote_branch}");
+        if let Ok(mut r) = repo.find_reference(&refname) {
+            fast_forward(repo, &mut r, fetch_commit)?;
+        } else {
+            // The branch doesn't exist so just set the reference to the
+            // commit directly. Usually this is because you are pulling
+            // into an empty repository.
+            repo.reference(
+                &refname,
+                fetch_commit.id(),
+                true,
+                &format!("Setting {} to {}", remote_branch, fetch_commit.id()),
+            )?;
+            repo.set_head(&refname)?;
+            repo.checkout_head(Some(
+                git2::build::CheckoutBuilder::default()
+                    .allow_conflicts(true)
+                    .conflict_style_merge(true)
+                    .force(),
+            ))?;
+        }
     } else if analysis.0.is_normal() {
         // do a normal merge
         let head_commit = repo.reference_to_annotated_commit(&repo.head()?)?;
-        normal_merge(repo, &head_commit, &fetch_commit)?;
+        normal_merge(repo, &head_commit, fetch_commit)?;
     } else {
         println!("Nothing to do...");
     }
     Ok(())
 }
 
-pub fn run(
-    path_raw: impl AsRef<Path>,
-    config: crate::config::ScoopConfig,
-) -> Result<(), git2::Error> {
-    let repo = Repository::open(path_raw)?;
-    let mut remote = repo.find_remote("origin")?;
-    let remote_branch = config.scoop_branch.unwrap_or_else(|| "master".to_string());
-    let fetch_commit = do_fetch(&repo, &[&remote_branch], &mut remote)?;
-    do_merge(&repo, "master", fetch_commit)?;
-    Ok(())
+fn pull(repo: &Repository, remote: Option<&str>, branch: Option<&str>) -> Result<(), git2::Error> {
+    let remote_name = remote.unwrap_or("origin");
+    let remote_branch = branch.unwrap_or("master");
+    let mut remote = repo.find_remote(remote_name)?;
+    let fetch_commit = do_fetch(repo, &[remote_branch], &mut remote)?;
+    do_merge(repo, remote_branch, &fetch_commit)
 }
