@@ -25,7 +25,7 @@ impl super::super::Command for Args {
             println!("All buckets up to date!");
         } else {
             for bucket in outdated_buckets {
-                println!("❌ `{}` out of date", bucket.name());
+                println!("❌ `{}` bucket is out of date", bucket.name());
             }
         }
 
