@@ -49,7 +49,7 @@ impl Command for Args {
             } else {
                 println!("Outdated Apps:");
                 Commands::Apps(apps::Args { json: self.json }).run()?;
-                println!("Outdated Buckets:");
+                println!("\nOutdated Buckets:");
                 Commands::Buckets(buckets::Args { json: self.json }).run()?;
             }
 
