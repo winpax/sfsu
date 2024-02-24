@@ -3,7 +3,7 @@ use clap::Parser;
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
     #[clap(from_global)]
-    json: bool,
+    pub(super) json: bool,
 }
 
 impl super::super::Command for Args {
