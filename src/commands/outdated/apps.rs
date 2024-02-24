@@ -1,7 +1,11 @@
 use clap::Parser;
 use rayon::prelude::*;
-use serde::Serialize;
-use sfsu::{buckets::Bucket, output::structured::Structured, packages::install};
+use sfsu::{
+    buckets::Bucket,
+    calm_panic::calm_panic,
+    output::structured::Structured,
+    packages::{install, outdated},
+};
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
@@ -9,33 +13,27 @@ pub struct Args {
     pub(super) json: bool,
 }
 
-#[derive(Debug, Clone, Serialize, PartialEq, Eq, Hash)]
-#[serde(rename_all = "PascalCase")]
-pub struct Outdated {
-    name: String,
-    current: String,
-    available: String,
-}
-
 impl super::super::Command for Args {
     fn runner(self) -> Result<(), anyhow::Error> {
         let apps = install::Manifest::list_all_unchecked()?;
 
-        let mut outdated: Vec<Outdated> = apps
+        let mut outdated: Vec<outdated::Info> = apps
             .par_iter()
-            .flat_map(|app| -> anyhow::Result<Outdated> {
+            .flat_map(|app| -> anyhow::Result<outdated::Info> {
                 if let Some(bucket) = &app.bucket {
-                    let app_manifest = app.get_manifest()?;
+                    let local_manifest = app.get_manifest()?;
                     // TODO: Add the option to check all buckets and find the highest version (will require semver to order versions)
                     let bucket = Bucket::from_name(bucket)?;
-                    match bucket.get_manifest(&app.name) {
-                        Ok(manifest) if app_manifest.version != manifest.version => Ok(Outdated {
-                            name: app.name.clone(),
-                            current: app_manifest.version.clone(),
-                            available: manifest.version.clone(),
-                        }),
-                        _ => anyhow::bail!("no update available"),
-                    }
+
+                    Ok(bucket.get_manifest(&app.name).map(|remote_manifest| {
+                        if let Some(info) =
+                            outdated::Info::from_manifests(&local_manifest, &remote_manifest)
+                        {
+                            info
+                        } else {
+                            calm_panic("Error: no update available");
+                        }
+                    })?)
                 } else {
                     anyhow::bail!("no bucket specified")
                 }
