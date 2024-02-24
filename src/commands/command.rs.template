@@ -1,14 +1,13 @@
 use clap::Parser;
 
 #[derive(Debug, Clone, Parser)]
-/// <HELP INFO>
 pub struct Args {
     #[clap(from_global)]
     json: bool,
 }
 
 impl super::Command for Args {
-    fn run(self) -> Result<(), anyhow::Error> {
+    fn runner(self) -> Result<(), anyhow::Error> {
         todo!()
     }
 }

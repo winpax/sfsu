@@ -24,6 +24,7 @@ use crate::{
 
 pub mod install;
 pub mod manifest;
+pub mod outdated;
 pub mod reference;
 
 pub use install::Manifest as InstallManifest;

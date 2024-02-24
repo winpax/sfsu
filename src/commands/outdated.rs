@@ -1,70 +1,59 @@
-use clap::Parser;
-use rayon::prelude::*;
-use serde::Serialize;
-use sfsu::{buckets::Bucket, output::structured::Structured, packages::install};
+use clap::{Parser, Subcommand};
+use serde_json::Map;
+use sfsu_derive::Runnable;
+
+use super::Command;
+
+mod apps;
+mod buckets;
+
+#[derive(Debug, Clone, Subcommand, Runnable)]
+pub enum Commands {
+    /// List outdated apps
+    Apps(apps::Args),
+    /// List outdated buckets
+    Buckets(buckets::Args),
+}
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
+    #[command(subcommand)]
+    command: Option<Commands>,
+
     #[clap(from_global)]
     json: bool,
 }
 
-impl super::Command for Args {
+impl Command for Args {
     fn runner(self) -> anyhow::Result<()> {
-        let apps = install::Manifest::list_all_unchecked()?;
-
-        let mut outdated: Vec<Outdated> = apps
-            .par_iter()
-            .flat_map(|app| -> anyhow::Result<Outdated> {
-                if let Some(bucket) = &app.bucket {
-                    let app_manifest = app.get_manifest()?;
-                    // TODO: Add the option to check all buckets and find the highest version (will require semver to order versions)
-                    let bucket = Bucket::from_name(bucket)?;
-                    match bucket.get_manifest(&app.name) {
-                        Ok(manifest) if app_manifest.version != manifest.version => Ok(Outdated {
-                            name: app.name.clone(),
-                            current: app_manifest.version.clone(),
-                            available: manifest.version.clone(),
-                        }),
-                        _ => anyhow::bail!("no update available"),
-                    }
-                } else {
-                    anyhow::bail!("no bucket specified")
-                }
-            })
-            .collect();
-
-        if outdated.is_empty() {
-            println!("No outdated packages.");
+        if let Some(command) = self.command {
+            command.run()
         } else {
-            outdated.dedup();
-            outdated.par_sort_by(|a, b| a.name.cmp(&b.name));
-
-            let values = outdated
-                .par_iter()
-                .map(serde_json::to_value)
-                .collect::<Result<Vec<_>, _>>()?;
-
             if self.json {
-                let output = serde_json::to_string_pretty(&values)?;
+                let mut map = Map::new();
+
+                let apps = apps::Args { json: self.json }
+                    .run_direct(false)?
+                    .unwrap_or_default();
+
+                let buckets = buckets::Args { json: self.json }
+                    .run_direct(false)?
+                    .unwrap_or_default();
+
+                map.insert("outdated_apps".into(), apps.into());
+                map.insert("outdated_buckets".into(), buckets.into());
+
+                let output = serde_json::to_string_pretty(&map)?;
 
                 println!("{output}");
             } else {
-                let outputs =
-                    Structured::new(&["Name", "Current", "Available"], &values).with_max_length(30);
-
-                print!("{outputs}");
+                println!("Outdated Apps:");
+                Commands::Apps(apps::Args { json: self.json }).run()?;
+                println!("\nOutdated Buckets:");
+                Commands::Buckets(buckets::Args { json: self.json }).run()?;
             }
+
+            Ok(())
         }
-
-        Ok(())
     }
-}
-
-#[derive(Debug, Clone, Serialize, PartialEq, Eq, Hash)]
-#[serde(rename_all = "PascalCase")]
-pub struct Outdated {
-    name: String,
-    current: String,
-    available: String,
 }

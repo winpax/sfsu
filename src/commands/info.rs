@@ -115,7 +115,7 @@ impl super::Command for Args {
                 };
 
                 let author_wrapped =
-                    Author::from_signature(author).with_show_emails(!dbg!(self.hide_emails));
+                    Author::from_signature(author).with_show_emails(!self.hide_emails);
 
                 (
                     Some(date_time.to_string()),
@@ -139,6 +139,8 @@ impl super::Command for Args {
                 version: manifest.version,
                 website: manifest.homepage,
                 license: manifest.license,
+                // TODO: Fix binaries display
+                // NOTE: Run `sfsu info inkscape` to know what I mean 😬
                 binaries: manifest.bin.map(|b| b.into_vec().join(",")),
                 notes: manifest.notes.map(|notes| notes.to_string()),
                 installed: wrap_bool!(install_path.is_some()),
