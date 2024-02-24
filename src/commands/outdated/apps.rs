@@ -2,7 +2,6 @@ use clap::Parser;
 use rayon::prelude::*;
 use sfsu::{
     buckets::Bucket,
-    calm_panic::calm_panic,
     output::structured::Structured,
     packages::{install, outdated},
 };
@@ -25,15 +24,15 @@ impl super::super::Command for Args {
                     // TODO: Add the option to check all buckets and find the highest version (will require semver to order versions)
                     let bucket = Bucket::from_name(bucket)?;
 
-                    Ok(bucket.get_manifest(&app.name).map(|remote_manifest| {
-                        if let Some(info) =
-                            outdated::Info::from_manifests(&local_manifest, &remote_manifest)
-                        {
-                            info
-                        } else {
-                            calm_panic("Error: no update available");
-                        }
-                    })?)
+                    let remote_manifest = bucket.get_manifest(&app.name)?;
+
+                    if let Some(info) =
+                        outdated::Info::from_manifests(&local_manifest, &remote_manifest)
+                    {
+                        Ok(info)
+                    } else {
+                        anyhow::bail!("no update available")
+                    }
                 } else {
                     anyhow::bail!("no bucket specified")
                 }
