@@ -247,4 +247,15 @@ impl Bucket {
     pub fn is_used(&self) -> packages::Result<bool> {
         Ok(Self::used()?.contains(&self.name().to_string()))
     }
+
+    /// Checks if the given bucket is outdated
+    ///
+    /// # Errors
+    /// - The bucket could not be opened as a directory
+    /// - No remote named "origin"
+    /// - No active branch
+    /// - No reference "`FETCH_HEAD`"
+    pub fn outdated(&self) -> Result<bool> {
+        Ok(self.open_repo()?.outdated()?)
+    }
 }
