@@ -5,25 +5,30 @@ check:
     cargo c
 
 build-all:
-    just build x86_64-pc-windows-msvc
-    just build i686-pc-windows-msvc
+    just build x86_64
+    just build i686
+    just build aarch64
 
 build TARGET:
-    cargo auditable b -r --target {{ TARGET }}
+    cross auditable b -r --target {{ TARGET }}-pc-windows-msvc
 
-release: build-all
+clean:
     if (Test-Path "release") { rm -r "release" -Force -ErrorAction Ignore }
     mkdir "release"
 
-    cp "./target/x86_64-pc-windows-msvc/release/sfsu.exe" "./release/sfsu.exe"
-    7z a "./release/dl-x86_64" "./release/sfsu.exe"
-    mv "./release/sfsu.exe" "./release/sfsu-x86_64.exe"
-    just export-hash x86_64
+release TARGET:
+    just build {{ TARGET }}
 
-    cp "./target/i686-pc-windows-msvc/release/sfsu.exe" "./release/sfsu.exe"
-    7z a "./release/dl-i686" "./release/sfsu.exe"
-    mv "./release/sfsu.exe" "./release/sfsu-i686.exe"
-    just export-hash i686
+    cp ./target/{{ TARGET }}-pc-windows-msvc/release/sfsu.exe ./release/sfsu.exe
+    7z a ./release/dl-{{ TARGET }} ./release/sfsu.exe
+    mv ./release/sfsu.exe ./release/sfsu-{{ TARGET }}.exe
+    just export-hash {{ TARGET }}
+
+release-all: clean
+    just release x86_64
+    just release i686
+    just release aarch64
+
 
 export-hash TARGET:
     python scripts/hash.py './release/dl-{{ TARGET }}.7z'
