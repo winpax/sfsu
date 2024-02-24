@@ -1,4 +1,5 @@
 use clap::{Parser, Subcommand};
+use serde_json::Map;
 use sfsu_derive::Runnable;
 
 use super::Command;
@@ -28,10 +29,29 @@ impl Command for Args {
         if let Some(command) = self.command {
             command.run()
         } else {
-            println!("Outdated Apps:");
-            Commands::Apps(apps::Args { json: self.json }).run()?;
-            println!("Outdated Buckets:");
-            Commands::Buckets(buckets::Args { json: self.json }).run()?;
+            if self.json {
+                let mut map = Map::new();
+
+                let apps = apps::Args { json: self.json }
+                    .run_direct(false)?
+                    .unwrap_or_default();
+
+                let buckets = buckets::Args { json: self.json }
+                    .run_direct(false)?
+                    .unwrap_or_default();
+
+                map.insert("outdated_apps".into(), apps.into());
+                map.insert("outdated_buckets".into(), buckets.into());
+
+                let output = serde_json::to_string_pretty(&map)?;
+
+                println!("{output}");
+            } else {
+                println!("Outdated Apps:");
+                Commands::Apps(apps::Args { json: self.json }).run()?;
+                println!("Outdated Buckets:");
+                Commands::Buckets(buckets::Args { json: self.json }).run()?;
+            }
 
             Ok(())
         }

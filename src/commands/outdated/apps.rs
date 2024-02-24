@@ -1,5 +1,6 @@
 use clap::Parser;
 use rayon::prelude::*;
+use serde_json::Value;
 use sfsu::{
     buckets::Bucket,
     output::structured::Structured,
@@ -14,6 +15,18 @@ pub struct Args {
 
 impl super::super::Command for Args {
     fn runner(self) -> Result<(), anyhow::Error> {
+        self.run_direct(true)?;
+
+        Ok(())
+    }
+}
+
+impl Args {
+    /// Special function for these subcommands which can be run in different contexts
+    ///
+    /// Will be called with `is_subcommand` as true when called via clap subcommands,
+    /// or with `is_subcommand` as false, when called directly, from the `sfsu outdated` command
+    pub fn run_direct(self, is_subcommand: bool) -> Result<Option<Vec<Value>>, anyhow::Error> {
         let apps = install::Manifest::list_all_unchecked()?;
 
         let mut outdated: Vec<outdated::Info> = apps
@@ -51,6 +64,10 @@ impl super::super::Command for Args {
                 .collect::<Result<Vec<_>, _>>()?;
 
             if self.json {
+                if !is_subcommand {
+                    return Ok(Some(values));
+                }
+
                 let output = serde_json::to_string_pretty(&values)?;
 
                 println!("{output}");
@@ -80,6 +97,6 @@ impl super::super::Command for Args {
             }
         }
 
-        Ok(())
+        Ok(None)
     }
 }
