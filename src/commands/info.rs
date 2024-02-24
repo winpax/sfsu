@@ -115,7 +115,7 @@ impl super::Command for Args {
                 };
 
                 let author_wrapped =
-                    Author::from_signature(author).with_show_emails(!dbg!(self.hide_emails));
+                    Author::from_signature(author).with_show_emails(!self.hide_emails);
 
                 (
                     Some(date_time.to_string()),
