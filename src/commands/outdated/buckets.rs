@@ -39,9 +39,7 @@ impl Args {
             })
             .collect::<Vec<_>>();
 
-        if outdated_buckets.is_empty() {
-            println!("All buckets up to date!");
-        } else if self.json {
+        if self.json {
             let outdated_bucket_names = outdated_buckets
                 .into_iter()
                 .map(|bucket| bucket.name().to_string())
@@ -54,6 +52,8 @@ impl Args {
             let output = serde_json::to_string_pretty(&outdated_bucket_names)?;
 
             println!("{output}");
+        } else if outdated_buckets.is_empty() {
+            println!("All buckets are up to date!");
         } else {
             for bucket in outdated_buckets {
                 println!("❌ `{}` bucket is out of date", bucket.name());
