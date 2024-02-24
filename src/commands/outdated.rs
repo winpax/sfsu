@@ -9,6 +9,14 @@ pub struct Args {
     json: bool,
 }
 
+#[derive(Debug, Clone, Serialize, PartialEq, Eq, Hash)]
+#[serde(rename_all = "PascalCase")]
+pub struct Outdated {
+    name: String,
+    current: String,
+    available: String,
+}
+
 impl super::Command for Args {
     fn runner(self) -> anyhow::Result<()> {
         let apps = install::Manifest::list_all_unchecked()?;
@@ -59,12 +67,4 @@ impl super::Command for Args {
 
         Ok(())
     }
-}
-
-#[derive(Debug, Clone, Serialize, PartialEq, Eq, Hash)]
-#[serde(rename_all = "PascalCase")]
-pub struct Outdated {
-    name: String,
-    current: String,
-    available: String,
 }
