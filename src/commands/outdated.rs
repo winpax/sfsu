@@ -3,6 +3,9 @@ use rayon::prelude::*;
 use serde::Serialize;
 use sfsu::{buckets::Bucket, output::structured::Structured, packages::install};
 
+mod apps;
+mod buckets;
+
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
     #[clap(from_global)]

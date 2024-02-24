@@ -6,7 +6,7 @@ pub struct Args {
     json: bool,
 }
 
-impl super::Command for Args {
+impl super::super::Command for Args {
     fn runner(self) -> Result<(), anyhow::Error> {
         todo!()
     }
