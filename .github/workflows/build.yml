@@ -91,12 +91,12 @@ jobs:
 
       - name: Setup Cross toolchains
         run: |
-          - git clone https://github.com/cross-rs/cross
-          - cd cross
-          - git submodule update --init --remote
-          - cargo build-docker-image x86_64-pc-windows-msvc-cross --tag local
-          - cargo build-docker-image i686-pc-windows-msvc-cross --tag local
-          - cargo build-docker-image aarch64-pc-windows-msvc-cross --tag local
+          git clone https://github.com/cross-rs/cross
+          cd cross
+          git submodule update --init --remote
+          cargo build-docker-image x86_64-pc-windows-msvc-cross --tag local
+          cargo build-docker-image i686-pc-windows-msvc-cross --tag local
+          cargo build-docker-image aarch64-pc-windows-msvc-cross --tag local
 
       - name: Build and Package
         run: just release
