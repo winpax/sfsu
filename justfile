@@ -10,7 +10,7 @@ build-all:
     just build aarch64
 
 build TARGET:
-    cargo b -r --target {{ TARGET }}-pc-windows-msvc
+    cargo auditable b -r --target {{ TARGET }}-pc-windows-msvc
 
 clean:
     if (Test-Path "release") { rm -r "release" -Force -ErrorAction Ignore }
