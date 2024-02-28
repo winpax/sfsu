@@ -28,7 +28,7 @@ const-str = { version = "0.5", features = ["all"] }
 derive_more = "0.99"
 directories = "5.0"
 dunce = "1.0"
-git2 = { version = "0.18" }
+git2 = "0.18"
 human-panic = "1.2"
 itertools = "0.12"
 quork = "0.6"
