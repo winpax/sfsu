@@ -108,7 +108,6 @@ jobs:
           update_release_body: true
           vt_api_key: ${{ secrets.VT_API_KEY }}
           files: |
-            dl-i686.7z
-            dl-x86_64.7z
             sfsu-i686.exe
             sfsu-x86_64.exe
+            sfsu-aarch64.exe
