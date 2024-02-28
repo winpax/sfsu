@@ -86,11 +86,8 @@ jobs:
           toolchain: stable
           override: true
 
-      - name: Install cargo-auditable
-        run: cargo install cargo-auditable
-
       - name: Build and Package
-        run: just release
+        run: just release-all
 
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v4.3.1
