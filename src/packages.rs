@@ -15,12 +15,16 @@ use strum::Display;
 
 use crate::{
     buckets::{self, Bucket},
-    output::sectioned::{Children, Section, Text},
+    output::{
+        sectioned::{Children, Section, Text},
+        wrappers::time::NicerNaiveTime,
+    },
     Scoop,
 };
 
 pub mod install;
 pub mod manifest;
+pub mod outdated;
 pub mod reference;
 
 pub use install::Manifest as InstallManifest;
@@ -28,13 +32,13 @@ pub use manifest::Manifest;
 
 use manifest::StringOrArrayOfStringsOrAnArrayOfArrayOfStrings;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct MinInfo {
     pub name: String,
     pub version: String,
     pub source: String,
-    pub updated: String,
+    pub updated: NicerNaiveTime,
     pub notes: String,
 }
 
@@ -102,7 +106,7 @@ impl MinInfo {
             name: package_name.to_string(),
             version: manifest.version,
             source: install_manifest.get_source(),
-            updated: naive_time.to_string(),
+            updated: naive_time.into(),
             notes: if install_manifest.hold.contains_truth() {
                 String::from("Held")
             } else {
@@ -306,7 +310,7 @@ impl InstallManifest {
             .par_iter()
             .filter_map(
                 |path| match Self::from_path(path.join("current/install.json")) {
-                    Ok(v) => Some(v),
+                    Ok(v) => Some(v.with_name(path)),
                     Err(_) => None,
                 },
             )
@@ -338,7 +342,7 @@ impl Manifest {
     /// # Errors
     /// - If the manifest doesn't exist or bucket is invalid
     pub fn from_reference((bucket, name): (String, String)) -> Result<Self> {
-        Bucket::new(bucket)?.get_manifest(name)
+        Bucket::from_name(bucket)?.get_manifest(name)
     }
 
     #[must_use]

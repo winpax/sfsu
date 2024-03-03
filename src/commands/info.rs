@@ -1,11 +1,18 @@
+use chrono::{DateTime, FixedOffset, NaiveDateTime};
 use clap::Parser;
+use itertools::Itertools;
 use serde::Serialize;
 use sfsu::{
     buckets::Bucket,
+    calm_panic::calm_panic,
+    git::Repo,
     output::{
         structured::vertical::VTable,
         wrappers::{
+            alias_vec::AliasVec,
+            author::Author,
             bool::{wrap_bool, NicerBool},
+            keys::Key,
             time::NicerTime,
         },
     },
@@ -22,13 +29,12 @@ struct PackageInfo {
     bucket: String,
     website: Option<String>,
     license: Option<PackageLicense>,
-    #[serde(rename = "Updated at")]
-    updated_at: Option<NicerTime>,
-    // #[serde(rename = "Updated by")]
-    // updated_by: Option<String>,
+    updated_at: Option<String>,
+    updated_by: Option<String>,
     installed: NicerBool,
     binaries: Option<String>,
     notes: Option<String>,
+    shortcuts: Option<AliasVec<String>>,
 }
 
 #[derive(Debug, Clone, Parser)]
@@ -38,6 +44,9 @@ pub struct Args {
 
     #[clap(short, long, help = "The bucket to exclusively search in")]
     bucket: Option<String>,
+
+    #[clap(short = 'E', long, help = "Show `Updated by` user emails")]
+    hide_emails: bool,
 
     #[clap(long, help = "Display more information about the package")]
     verbose: bool,
@@ -59,8 +68,10 @@ impl super::Command for Args {
             .collect();
 
         if manifests.is_empty() {
-            println!("No package found with the name \"{}\"", self.package);
-            std::process::exit(1);
+            calm_panic(format!(
+                "No package found with the name \"{}\"",
+                self.package
+            ));
         }
 
         if manifests.len() > 1 {
@@ -82,13 +93,43 @@ impl super::Command for Args {
                 install_path.cloned()
             };
 
-            let updated_at = match install_path {
-                Some(ref install_path) => {
-                    let updated_at = install_path.metadata()?.modified()?;
+            let repo =
+                Bucket::from_name(&bucket).and_then(|bucket| Ok(Repo::from_bucket(&bucket)?));
 
-                    Some(updated_at.into())
+            let (updated_at, updated_by) = if let Ok(repo) = repo {
+                let latest_commit = repo.latest_commit()?;
+                let time = latest_commit.time();
+                let author = latest_commit.author();
+
+                let date_time = {
+                    let secs = time.seconds();
+                    let offset = time.offset_minutes();
+
+                    let naive_time = NaiveDateTime::from_timestamp_opt(secs, 0)
+                        .ok_or(anyhow::anyhow!("Invalid time"))?;
+
+                    let offset = FixedOffset::east_opt(offset * 60)
+                        .ok_or(anyhow::anyhow!("Invalid timezone offset"))?;
+
+                    DateTime::<FixedOffset>::from_naive_utc_and_offset(naive_time, offset)
+                };
+
+                let author_wrapped =
+                    Author::from_signature(author).with_show_emails(!self.hide_emails);
+
+                (
+                    Some(date_time.to_string()),
+                    Some(author_wrapped.to_string()),
+                )
+            } else {
+                match install_path {
+                    Some(ref install_path) => {
+                        let updated_at = install_path.metadata()?.modified()?;
+
+                        (Some(NicerTime::from(updated_at).to_string()), None)
+                    }
+                    _ => (None, None),
                 }
-                _ => None,
             };
 
             let pkg_info = PackageInfo {
@@ -98,10 +139,14 @@ impl super::Command for Args {
                 version: manifest.version,
                 website: manifest.homepage,
                 license: manifest.license,
+                // TODO: Fix binaries display
+                // NOTE: Run `sfsu info inkscape` to know what I mean 😬
                 binaries: manifest.bin.map(|b| b.into_vec().join(",")),
                 notes: manifest.notes.map(|notes| notes.to_string()),
                 installed: wrap_bool!(install_path.is_some()),
+                shortcuts: manifest.install_config.shortcuts.map(AliasVec::from_vec),
                 updated_at,
+                updated_by,
             };
 
             if self.json {
@@ -110,6 +155,8 @@ impl super::Command for Args {
                 println!("{output}");
             } else {
                 let (keys, values) = pkg_info.into_pairs();
+
+                let keys = keys.into_iter().map(Key::wrap).collect_vec();
 
                 let table = VTable::new(&keys, &values);
                 println!("{table}");
