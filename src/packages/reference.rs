@@ -84,6 +84,8 @@ impl Package {
     /// Returns [`None`] if the bucket is not valid, the manifest does not exist,
     /// or an error was thrown while getting the manifest
     pub fn manifest(&self) -> Option<Manifest> {
+        // TODO: Map output to fix version
+
         if matches!(self.manifest, ManifestRef::File(_) | ManifestRef::Url(_)) {
             let mut manifest = match &self.manifest {
                 ManifestRef::File(path) => Manifest::from_path(path).ok()?,

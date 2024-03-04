@@ -5,7 +5,7 @@ use indicatif::MultiProgress;
 use reqwest::blocking::Client;
 use sfsu::{
     cache::{Downloader, Handle},
-    packages::reference::{ManifestRef, Package},
+    packages::reference::Package,
 };
 
 #[derive(Debug, Clone, Parser)]
