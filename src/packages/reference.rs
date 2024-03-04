@@ -13,7 +13,13 @@ pub enum Error {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum Package {
+pub struct Package {
+    manifest: ManifestRef,
+    version: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum ManifestRef {
     BucketNamePair { bucket: String, name: String },
     Name(String),
     File(PathBuf),
@@ -26,12 +32,12 @@ impl Package {
     /// # Errors
     /// - If the package reference is a url. Setting the bucket on a url reference is not supported
     pub fn set_bucket(&mut self, bucket: String) -> Result<(), Error> {
-        match self {
-            Package::BucketNamePair {
+        match &mut self.manifest {
+            ManifestRef::BucketNamePair {
                 bucket: old_bucket, ..
             } => *old_bucket = bucket,
-            Package::Name(name) => {
-                *self = Package::BucketNamePair {
+            ManifestRef::Name(name) => {
+                self.manifest = ManifestRef::BucketNamePair {
                     bucket,
                     name: name.clone(),
                 }
@@ -45,8 +51,8 @@ impl Package {
     #[must_use]
     /// Just get the bucket name
     pub fn bucket(&self) -> Option<&str> {
-        match self {
-            Package::BucketNamePair { bucket, .. } => Some(bucket),
+        match &self.manifest {
+            ManifestRef::BucketNamePair { bucket, .. } => Some(bucket),
             _ => None,
         }
     }
@@ -54,10 +60,14 @@ impl Package {
     #[must_use]
     /// Get the package name
     pub fn name(&self) -> Option<String> {
-        match self {
-            Package::Name(name) | Package::BucketNamePair { name, .. } => Some(name.to_string()),
-            Package::File(path) => Some(path.with_extension("").file_name()?.to_str()?.to_string()),
-            Package::Url(url) => Some(
+        match &self.manifest {
+            ManifestRef::Name(name) | ManifestRef::BucketNamePair { name, .. } => {
+                Some(name.to_string())
+            }
+            ManifestRef::File(path) => {
+                Some(path.with_extension("").file_name()?.to_str()?.to_string())
+            }
+            ManifestRef::Url(url) => Some(
                 url.path_segments()?
                     .last()?
                     .to_string()
@@ -74,10 +84,10 @@ impl Package {
     /// Returns [`None`] if the bucket is not valid, the manifest does not exist,
     /// or an error was thrown while getting the manifest
     pub fn manifest(&self) -> Option<Manifest> {
-        if matches!(self, Self::File(_) | Self::Url(_)) {
-            let mut manifest = match self {
-                Package::File(path) => Manifest::from_path(path).ok()?,
-                Package::Url(url) => {
+        if matches!(self.manifest, ManifestRef::File(_) | ManifestRef::Url(_)) {
+            let mut manifest = match &self.manifest {
+                ManifestRef::File(path) => Manifest::from_path(path).ok()?,
+                ManifestRef::Url(url) => {
                     let manifest_string =
                         reqwest::blocking::get(url.to_string()).ok()?.text().ok()?;
 
@@ -128,16 +138,25 @@ impl Package {
     }
 }
 
-impl fmt::Display for Package {
+impl From<ManifestRef> for Package {
+    fn from(manifest: ManifestRef) -> Self {
+        Package {
+            manifest,
+            version: None,
+        }
+    }
+}
+
+impl fmt::Display for ManifestRef {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Package::BucketNamePair { bucket, name } => write!(f, "{bucket}/{name}"),
-            Package::Name(name) => write!(f, "{name}"),
-            Package::File(_) => {
-                let name = self.name().unwrap();
+            ManifestRef::BucketNamePair { bucket, name } => write!(f, "{bucket}/{name}"),
+            ManifestRef::Name(name) => write!(f, "{name}"),
+            ManifestRef::File(_) => {
+                let name = Package::from(self.clone()).name().unwrap();
                 write!(f, "{name}")
             }
-            Package::Url(url) => write!(f, "{url}"),
+            ManifestRef::Url(url) => write!(f, "{url}"),
         }
     }
 }
@@ -150,9 +169,11 @@ pub enum PackageRefParseError {
         "Too many segments in package reference. Expected either `<bucket>/<name>` or `<name>`"
     )]
     TooManySegments,
+    #[error("Invalid version supplied")]
+    InvalidVersion,
 }
 
-impl FromStr for Package {
+impl FromStr for ManifestRef {
     type Err = PackageRefParseError;
 
     fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
@@ -184,8 +205,40 @@ impl FromStr for Package {
     }
 }
 
+impl fmt::Display for Package {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.manifest)?;
+
+        if let Some(version) = &self.version {
+            write!(f, "@{version}")?;
+        }
+
+        Ok(())
+    }
+}
+
+impl FromStr for Package {
+    type Err = PackageRefParseError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let parts = s.split('@').collect_vec();
+
+        match parts.len() {
+            1 => Ok(Package {
+                manifest: ManifestRef::from_str(s)?,
+                version: None,
+            }),
+            2 => Ok(Package {
+                manifest: ManifestRef::from_str(parts[0])?,
+                version: Some(parts[1].to_string()),
+            }),
+            _ => Err(PackageRefParseError::InvalidVersion),
+        }
+    }
+}
+
 mod ser_de {
-    use super::{FromStr, Package};
+    use super::{FromStr, ManifestRef, Package};
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
     impl Serialize for Package {
@@ -198,6 +251,19 @@ mod ser_de {
         fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
             let s = String::deserialize(deserializer)?;
             Package::from_str(&s).map_err(serde::de::Error::custom)
+        }
+    }
+
+    impl Serialize for ManifestRef {
+        fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+            serializer.collect_str(self)
+        }
+    }
+
+    impl<'de> Deserialize<'de> for ManifestRef {
+        fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+            let s = String::deserialize(deserializer)?;
+            ManifestRef::from_str(&s).map_err(serde::de::Error::custom)
         }
     }
 }
