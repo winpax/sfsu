@@ -15,6 +15,7 @@ use strum::Display;
 
 use crate::{
     buckets::{self, Bucket},
+    config,
     output::{
         sectioned::{Children, Section, Text},
         wrappers::time::NicerNaiveTime,
@@ -478,6 +479,39 @@ impl Manifest {
 
         Some(package)
     }
+
+    #[must_use]
+    pub fn set_version(&mut self, version: String) -> std::result::Result<(), SetVersionError> {
+        // self.version = version;
+
+        let autoupdate = self
+            .autoupdate
+            .as_mut()
+            .ok_or(SetVersionError::MissingAutoUpdate)?;
+
+        if let Some(architecture) = autoupdate.architecture.as_mut() {
+            let autoupdate_arch = match Scoop::arch() {
+                SupportedArch::Arm64 => architecture.aarch64.as_mut(),
+                SupportedArch::X64 => architecture.x64.as_mut(),
+                SupportedArch::X86 => architecture.x86.as_mut(),
+            }
+            .ok_or(SetVersionError::MissingAutoUpdate)?;
+
+            // TODO: Figure out hash extraction
+            autoupdate_arch.hash
+        }
+
+        todo!()
+    }
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum SetVersionError {
+    #[error("Manifest does not have `autoupdate` field")]
+    MissingAutoUpdate,
+
+    #[error("Manifest architecture section does not have `autoupdate` field")]
+    MissingArchAutoUpdate,
 }
 
 /// Check if the manifest path is installed, and optionally confirm the bucket

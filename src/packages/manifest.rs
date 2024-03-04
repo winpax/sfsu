@@ -158,10 +158,10 @@ pub struct Autoupdate {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct AutoupdateArchitecture {
     #[serde(rename = "32bit")]
-    pub the_32_bit: Option<AutoupdateArch>,
+    pub x86: Option<AutoupdateArch>,
     #[serde(rename = "64bit")]
-    pub the_64_bit: Option<AutoupdateArch>,
-    pub arm64: Option<AutoupdateArch>,
+    pub x64: Option<AutoupdateArch>,
+    pub aarch64: Option<AutoupdateArch>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
