@@ -1,28 +1,28 @@
 [package]
-name = "sfsu"
 description = "Stupid Fast Scoop Utils"
-version = "1.8.4"
-edition = "2021"
+edition     = "2021"
+name        = "sfsu"
+version     = "1.8.6"
 
 [workspace]
 members = ["sfsu-derive"]
 
 [[bench]]
-name = "searching"
 harness = false
+name    = "searching"
 
 [profile.release]
 codegen-units = 1
-lto = true
+lto           = true
 
 [dependencies]
 anyhow = "1.0"
-chrono = { version = "0.4", features = [
-    "serde",
+chrono = { version = ">=0.4.20", features = [
     "clock",
+    "serde",
     "std",
 ], default-features = false }
-clap = { version = "4.4", features = ["derive"] }
+clap = { version = "4.5", features = ["derive"] }
 colored = "2.1"
 const-str = { version = "0.5", features = ["all"] }
 derive_more = "0.99"
@@ -33,7 +33,7 @@ human-panic = "1.2"
 indicatif = { version = "0.17", features = ["rayon"] }
 itertools = "0.12"
 quork = "0.6"
-rayon = "1.8"
+rayon = "1.9"
 regex = "1.10"
 reqwest = { version = "0.11", features = ["blocking"] }
 semver = { version = "1.0", features = ["serde"] }
@@ -41,12 +41,13 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0", features = ["preserve_order"] }
 sfsu-derive = { path = "./sfsu-derive" }
 shadow-rs = "0.26"
-strum = { version = "0.25", features = ["derive"] }
+strum = { version = "0.26", features = ["derive"] }
 thiserror = "1.0"
 tinyvec = "1.6.0"
 url = { version = "2.5" }
 
 [dev-dependencies]
+chrono    = ">=0.4.20"
 criterion = { version = "0.5", features = ["html_reports"] }
 
 [build-dependencies]

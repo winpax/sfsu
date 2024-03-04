@@ -78,7 +78,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: Swatinem/rust-cache@v2.7.3
-      - uses: extractions/setup-just@v1
+      - uses: extractions/setup-just@v2
 
       - name: Install latest stable
         uses: actions-rs/toolchain@v1
@@ -86,14 +86,11 @@ jobs:
           toolchain: stable
           override: true
 
-      - name: Install cargo-auditable
-        run: cargo install cargo-auditable
-
       - name: Build and Package
-        run: just release
+        run: just release-all
 
       - name: Upload a Build Artifact
-        uses: actions/upload-artifact@v4.3.0
+        uses: actions/upload-artifact@v4.3.1
         with:
           name: package.zip
           path: release/*
@@ -111,7 +108,4 @@ jobs:
           update_release_body: true
           vt_api_key: ${{ secrets.VT_API_KEY }}
           files: |
-            dl-i686.7z
-            dl-x86_64.7z
-            sfsu-i686.exe
-            sfsu-x86_64.exe
+            .exe$

@@ -25,6 +25,7 @@ use crate::{
 pub mod downloading;
 pub mod install;
 pub mod manifest;
+pub mod outdated;
 pub mod reference;
 
 pub use install::Manifest as InstallManifest;
@@ -357,7 +358,7 @@ impl Manifest {
     /// # Errors
     /// - If the manifest doesn't exist or bucket is invalid
     pub fn from_reference((bucket, name): (String, String)) -> Result<Self> {
-        Bucket::new(bucket)?.get_manifest(name)
+        Bucket::from_name(bucket)?.get_manifest(name)
     }
 
     #[must_use]

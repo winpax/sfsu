@@ -6,9 +6,9 @@
 ![GitHub](https://img.shields.io/github/license/jewlexx/sfsu)
 ![Scoop Version (extras bucket)](https://img.shields.io/scoop/v/sfsu?bucket=extras)
 
-> [!WARNING]
+> [!NOTE]
 > This is still under development. It currently does not replace even close to all the scoop commands, and is missing a lot of functionality.
-> There is unlikely to be any breaking changes, so there isn't much harm using it as is.
+> There is unlikely to be any breaking changes, so there is likely no harm using it as is.
 
 Super fast replacements and additions to scoop commands written in Rust
 

@@ -6,7 +6,9 @@ use rayon::prelude::*;
 
 pub mod buckets;
 pub mod cache;
+pub mod calm_panic;
 pub mod config;
+pub mod git;
 pub mod packages;
 pub mod stream;
 

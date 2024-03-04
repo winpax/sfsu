@@ -92,7 +92,7 @@ impl Package {
         }
 
         if let Some(bucket_name) = self.bucket() {
-            let bucket = Bucket::new(bucket_name).ok()?;
+            let bucket = Bucket::from_name(bucket_name).ok()?;
 
             bucket.get_manifest(self.name()?).ok()
         } else {
