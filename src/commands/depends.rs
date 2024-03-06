@@ -2,7 +2,7 @@ use clap::Parser;
 use colored::Colorize as _;
 use sfsu::{
     output::sectioned::{Children, Section, Sections},
-    packages::reference::{self, ManifestRef, Package},
+    packages::reference::{self, Package},
 };
 
 #[derive(Debug, Clone, Parser)]
