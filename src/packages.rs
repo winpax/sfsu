@@ -498,7 +498,8 @@ impl Manifest {
             .ok_or(SetVersionError::MissingAutoUpdate)?;
 
             // TODO: Figure out hash extraction
-            autoupdate_arch.hash
+            // autoupdate_arch.hash
+            todo!()
         }
 
         todo!()

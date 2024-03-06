@@ -2,10 +2,10 @@ use anyhow::Context;
 use clap::Parser;
 
 use indicatif::MultiProgress;
-use reqwest::blocking::Client;
 use sfsu::{
     cache::{Downloader, Handle},
     packages::reference::Package,
+    requests::BlockingClient,
 };
 
 #[derive(Debug, Clone, Parser)]
@@ -22,7 +22,7 @@ impl super::Command for Args {
         let manifest = self.package.manifest().context("Failed to find manifest")?;
 
         let mp = MultiProgress::new();
-        let client = Client::new();
+        let client = BlockingClient::new();
 
         // Note that these are split because it helps the downloads run in parallel
 

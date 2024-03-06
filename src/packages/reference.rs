@@ -90,8 +90,12 @@ impl Package {
             let mut manifest = match &self.manifest {
                 ManifestRef::File(path) => Manifest::from_path(path).ok()?,
                 ManifestRef::Url(url) => {
-                    let manifest_string =
-                        reqwest::blocking::get(url.to_string()).ok()?.text().ok()?;
+                    let manifest_string = crate::requests::BlockingClient::new()
+                        .get(url.to_string())
+                        .send()
+                        .ok()?
+                        .text()
+                        .ok()?;
 
                     Manifest::from_str(manifest_string).ok()?
                 }

@@ -5,7 +5,7 @@ name        = "sfsu"
 version     = "1.8.6"
 
 [workspace]
-members = ["sfsu-derive"]
+members = ["crates/derive", "crates/hash"]
 
 [[bench]]
 harness = false
@@ -25,6 +25,7 @@ chrono = { version = ">=0.4.20", features = [
 clap = { version = "4.5", features = ["derive"] }
 colored = "2.1"
 const-str = { version = "0.5", features = ["all"] }
+const_format = { version = "0.2.32", features = [] }
 derive_more = "0.99"
 directories = "5.0"
 dunce = "1.0"
@@ -35,11 +36,11 @@ itertools = "0.12"
 quork = "0.6"
 rayon = "1.9"
 regex = "1.10"
-reqwest = { version = "0.11", features = ["blocking"] }
+reqwest = { version = "0.11.24", features = ["blocking"] }
 semver = { version = "1.0", features = ["serde"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0", features = ["preserve_order"] }
-sfsu-derive = { path = "./sfsu-derive" }
+sfsu-derive = { path = "./crates/derive" }
 shadow-rs = "0.26"
 strum = { version = "0.26", features = ["derive"] }
 thiserror = "1.0"

@@ -10,6 +10,7 @@ pub mod calm_panic;
 pub mod config;
 pub mod git;
 pub mod packages;
+pub mod requests;
 pub mod stream;
 
 mod opt;

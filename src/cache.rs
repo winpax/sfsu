@@ -1,11 +1,12 @@
 use std::{
     fs::File,
     io::{Read, Write},
+    ops::Deref,
     path::PathBuf,
 };
 
 use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
-use reqwest::blocking::{Client, Response};
+use reqwest::blocking::Response;
 
 use crate::{packages::Manifest, Scoop, SupportedArch};
 
@@ -57,7 +58,7 @@ impl Handle {
     /// - If the request fails
     pub fn begin_download(
         self,
-        client: &Client,
+        client: &impl Deref<Target = reqwest::blocking::Client>,
         mp: &MultiProgress,
     ) -> reqwest::Result<Downloader> {
         Downloader::new(self, client, mp)
@@ -92,7 +93,11 @@ impl Downloader {
     /// # Panics
     /// - A non-empty file name
     /// - Invalid progress style template
-    pub fn new(cache: Handle, client: &Client, mp: &MultiProgress) -> reqwest::Result<Self> {
+    pub fn new(
+        cache: Handle,
+        client: &impl Deref<Target = reqwest::blocking::Client>,
+        mp: &MultiProgress,
+    ) -> reqwest::Result<Self> {
         let url = cache.url.clone();
         let resp = client.get(url).send()?;
 
