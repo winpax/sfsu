@@ -1,6 +1,4 @@
-use std::path::Path;
-
-pub mod formats;
+mod formats;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Hash {
@@ -18,7 +16,21 @@ pub enum HashType {
 }
 
 impl Hash {
-    pub fn find_hash_in_rdf(url: String, file_names: &[impl AsRef<Path>]) -> String {
-        todo!()
+    pub fn from_rdf(
+        source: impl AsRef<str>,
+        file_names: &[impl AsRef<str>],
+    ) -> Vec<(String, Self)> {
+        formats::rdf::parse_xml(source, file_names)
+            .into_iter()
+            .map(|(hash_file, hash)| {
+                (
+                    hash_file,
+                    Self {
+                        hash,
+                        hash_type: HashType::Sha256,
+                    },
+                )
+            })
+            .collect()
     }
 }
