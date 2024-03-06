@@ -18,7 +18,7 @@ pub enum HashType {
 }
 
 impl Hash {
-    pub fn find_hash_in_rdf(url: String, file_name: impl AsRef<Path>) -> String {
+    pub fn find_hash_in_rdf(url: String, file_names: &[impl AsRef<Path>]) -> String {
         todo!()
     }
 }
