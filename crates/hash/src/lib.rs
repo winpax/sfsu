@@ -33,4 +33,11 @@ impl Hash {
             })
             .collect()
     }
+
+    pub fn from_text(
+        source: impl AsRef<str>,
+        file_names: &[impl AsRef<str>],
+        regex: Regex,
+    ) -> Vec<(String, Self)> {
+    }
 }
