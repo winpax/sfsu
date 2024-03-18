@@ -1,3 +1,4 @@
+pub mod buckets;
 pub mod depends;
 pub mod describe;
 pub mod hook;
@@ -5,7 +6,6 @@ pub mod info;
 pub mod list;
 pub mod outdated;
 pub mod search;
-pub mod unused;
 
 use clap::Subcommand;
 
@@ -38,14 +38,14 @@ pub trait Command {
 
 #[derive(Debug, Clone, Subcommand, Hooks, Runnable)]
 pub enum Commands {
+    /// Commands to manage scoop buckets
+    Buckets(buckets::Args),
     /// Search for a package
     Search(search::Args),
     /// List all installed packages
     List(list::Args),
     /// Generate hooks for the given shell
     Hook(hook::Args),
-    /// Find buckets that do not have any installed packages
-    UnusedBuckets(unused::Args),
     /// Describe a package
     Describe(describe::Args),
     /// Display information about a package
