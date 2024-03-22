@@ -1,4 +1,9 @@
+use std::collections::HashMap;
+
+use regex::Regex;
+
 mod formats;
+mod ops;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Hash {
@@ -37,7 +42,10 @@ impl Hash {
     pub fn from_text(
         source: impl AsRef<str>,
         file_names: &[impl AsRef<str>],
-        regex: Regex,
+        substitutions: HashMap<String, String>,
+        regex: String,
     ) -> Vec<(String, Self)> {
+        formats::text::parse_text(source, file_names, substitutions, regex);
+        todo!()
     }
 }
