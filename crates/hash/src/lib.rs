@@ -5,6 +5,9 @@ use regex::Regex;
 mod formats;
 mod ops;
 
+#[macro_use]
+extern crate log;
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Hash {
     hash: String,

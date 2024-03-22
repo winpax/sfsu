@@ -5,7 +5,7 @@ pub enum SubstituteBuilder {
 }
 
 impl SubstituteBuilder {
-    pub fn substitute(self, params: HashMap<String, String>, regex_escape: bool) -> String {
+    pub fn substitute(self, params: &HashMap<String, String>, regex_escape: bool) -> String {
         match self {
             SubstituteBuilder::String(entity) => {
                 let mut new_entity = entity;
@@ -27,19 +27,19 @@ impl SubstituteBuilder {
 }
 
 pub trait Substitute {
-    fn substitute(&mut self, params: HashMap<String, String>, regex_escape: bool)
+    fn substitute(&mut self, params: &HashMap<String, String>, regex_escape: bool)
     where
         Self: Clone;
 
-    fn into_substituted(self, params: HashMap<String, String>, regex_escape: bool) -> Self;
+    fn into_substituted(self, params: &HashMap<String, String>, regex_escape: bool) -> Self;
 }
 
 impl Substitute for String {
-    fn into_substituted(self, params: HashMap<String, String>, regex_escape: bool) -> Self {
+    fn into_substituted(self, params: &HashMap<String, String>, regex_escape: bool) -> Self {
         SubstituteBuilder::String(self).substitute(params, regex_escape)
     }
 
-    fn substitute(&mut self, params: HashMap<String, String>, regex_escape: bool) {
+    fn substitute(&mut self, params: &HashMap<String, String>, regex_escape: bool) {
         let substituted = self.clone().into_substituted(params, regex_escape);
 
         *self = substituted;
