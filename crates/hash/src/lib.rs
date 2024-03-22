@@ -44,11 +44,10 @@ impl Hash {
 
     pub fn from_text(
         source: impl AsRef<str>,
-        file_names: &[impl AsRef<str>],
         substitutions: HashMap<String, String>,
         regex: String,
     ) -> Vec<(String, Self)> {
-        formats::text::parse_text(source, file_names, substitutions, regex);
+        formats::text::parse_text(source, substitutions, regex);
         todo!()
     }
 }

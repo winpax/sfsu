@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use regex::Regex;
 use strum::{Display, EnumIter};
 
-use crate::ops::{Substitute, SubstituteBuilder};
+use crate::ops::Substitute;
 
 #[derive(Debug, thiserror::Error)]
 pub enum TextError {
@@ -58,10 +58,9 @@ impl RegexTemplates {
 
 pub fn parse_text(
     source: impl AsRef<str>,
-    file_names: &[impl AsRef<str>],
     substitutions: HashMap<String, String>,
     regex: String,
-) -> Result<Vec<(String, String)>, TextError> {
+) -> Result<Option<String>, TextError> {
     // TODO: Incorporate file_names
 
     let regex = if regex.is_empty() {
@@ -132,14 +131,16 @@ pub fn parse_text(
             .find(source.as_ref())
             .map(|hash| hash.as_str().to_string());
 
-        let metalink_regex = Regex::new(r"<hash[^>]+>([a-fA-F0-9]{64})")?;
+        if hash.is_none() {
+            let metalink_regex = Regex::new(r"<hash[^>]+>([a-fA-F0-9]{64})")?;
 
-        hash = metalink_regex
-            .find(source.as_ref())
-            .map(|hash| hash.as_str().to_string());
+            hash = metalink_regex
+                .find(source.as_ref())
+                .map(|hash| hash.as_str().to_string());
+        }
     }
 
     hash = hash.map(|hash| hash.to_lowercase());
 
-    todo!()
+    Ok(hash)
 }
