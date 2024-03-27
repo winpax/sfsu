@@ -496,7 +496,7 @@ impl Manifest {
 
             #[cfg(not(feature = "info-difftrees"))]
             if let Some(message) = commit.message() {
-                if message.contains(&self.name) {
+                if message.starts_with(&self.name) {
                     updated_commit = Some(commit);
                     break 'revwalk;
                 }
