@@ -525,8 +525,6 @@ impl Manifest {
                         .to_string_lossy();
 
                     if self.name == manifest_name {
-                        dbg!(delta.new_file().path());
-                        dbg!(commit.message());
                         updated_commit = Some(commit);
                         break 'revwalk;
                     }
@@ -538,7 +536,6 @@ impl Manifest {
 
         let updated_commit = updated_commit.ok_or(PackageError::NoUpdatedCommit)?;
 
-        dbg!(updated_commit.message());
 
         let time = updated_commit.time();
         let author = updated_commit.author();
