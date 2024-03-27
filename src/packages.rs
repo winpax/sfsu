@@ -6,10 +6,11 @@ use std::{
 use chrono::{DateTime, FixedOffset, NaiveDateTime};
 use clap::{Parser, ValueEnum};
 use colored::Colorize as _;
-use git2::Commit;
-use itertools::Itertools as _;
+use git2::{Commit, Oid, Revwalk};
+use itertools::Itertools;
 use quork::traits::truthy::ContainsTruth as _;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
+use rayon::prelude::*;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use strum::Display;
@@ -486,14 +487,15 @@ impl Manifest {
         revwalk.push_head()?;
         revwalk.set_sorting(git2::Sort::TIME)?;
 
-        #[cfg(feature = "info-difftrees")]
-        let mut last_tree = repo.head()?.peel_to_tree()?;
-
         let mut updated_commit: Option<Commit<'_>> = None;
 
-        'revwalk: for rev in revwalk {
+        'revwalk: for (new_oid, old_oid) in revwalk
+            .filter_map(std::result::Result::ok)
+            .tuple_windows::<(_, _)>()
+        {
             // TODO: Add tests using personal bucket to ensure that different methods return the same info
-            let commit = repo.find_commit(rev?)?;
+            let new_commit = repo.find_commit(new_oid)?;
+            let old_commit = repo.find_commit(old_oid)?;
 
             #[cfg(not(feature = "info-difftrees"))]
             if let Some(message) = commit.message() {
@@ -505,17 +507,18 @@ impl Manifest {
 
             #[cfg(feature = "info-difftrees")]
             {
-                let current_tree = commit.tree()?;
+                let new_tree = new_commit.tree()?;
+                let old_tree = old_commit.tree()?;
 
                 let diff = repo.diff_tree_to_tree(
-                    Some(&last_tree),
-                    Some(&current_tree),
+                    Some(&old_tree),
+                    Some(&new_tree),
                     Some(&mut git2::DiffOptions::new()),
                 )?;
 
                 for delta in diff.deltas() {
                     let path = delta
-                        .new_file()
+                        .old_file()
                         .path()
                         .ok_or(PackageError::DeltaNoPath)?
                         .with_extension("");
@@ -526,12 +529,10 @@ impl Manifest {
                         .to_string_lossy();
 
                     if self.name == manifest_name {
-                        updated_commit = Some(commit);
+                        updated_commit = Some(new_commit);
                         break 'revwalk;
                     }
                 }
-
-                last_tree = current_tree;
             }
         }
 
