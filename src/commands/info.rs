@@ -58,6 +58,9 @@ pub struct Args {
 
     #[clap(from_global)]
     disable_git: bool,
+
+    #[clap(long, help = "Disable updated info")]
+    disable_updated: bool,
 }
 
 impl super::Command for Args {
@@ -98,7 +101,9 @@ impl super::Command for Args {
                 install_path.cloned()
             };
 
-            let (updated_at, updated_by) =
+            let (updated_at, updated_by) = if self.disable_updated {
+                (None, None)
+            } else {
                 match manifest.last_updated_info(self.hide_emails, self.disable_git) {
                     Ok(v) => v,
                     Err(_) => match install_path {
@@ -109,7 +114,8 @@ impl super::Command for Args {
                         }
                         _ => (None, None),
                     },
-                };
+                }
+            };
 
             let pkg_info = PackageInfo {
                 name: manifest.name,
