@@ -1,7 +1,5 @@
 use std::collections::HashMap;
 
-use regex::Regex;
-
 mod formats;
 mod ops;
 

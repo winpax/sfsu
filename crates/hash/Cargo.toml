@@ -8,6 +8,7 @@ version = "0.1.0"
 [dependencies]
 anyhow = "1.0.81"
 base64 = "0.22.0"
+itertools = "0.12.1"
 log = "0.4.21"
 quick-xml = "0.31.0"
 regex = "1.10.3"

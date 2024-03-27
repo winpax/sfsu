@@ -665,6 +665,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "base64 0.22.0",
+ "itertools 0.12.1",
  "log",
  "quick-xml",
  "regex",

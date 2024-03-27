@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use itertools::Itertools as _;
 use regex::Regex;
 use strum::{Display, EnumIter};
 
@@ -82,12 +83,15 @@ pub fn parse_text(
         Regex::new(&regex)?
     };
 
-    let mut hash = substituted
-        .find(source.as_ref())
-        .map(|hash| hash.as_str().replace(' ', ""));
+    dbg!(&substituted);
+
+    let mut hashes = substituted
+        .find_iter(source.as_ref())
+        .map(|hash| hash.as_str().replace(' ', ""))
+        .collect_vec();
 
     // Convert base64 encoded hashes
-    if let Some(hash) = hash.as_mut() {
+    let hash = if let Some(hash) = hashes.get_mut(1) {
         let base64_regex = Regex::new(
             r"^(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=|[A-Za-z0-9+\/]{4})$",
         )
@@ -113,12 +117,14 @@ pub fn parse_text(
                     hash.clone()
                 };
 
-                *hash = decoded_hash;
+                Some(decoded_hash)
+            } else {
+                None
             }
+        } else {
+            None
         }
-    }
-
-    if hash.is_none() {
+    } else {
         let filename_regex = {
             let regex = r"([a-fA-F0-9]{32,128})[\x20\t]+.*`$basename(?:[\x20\t]+\d+)?"
                 .to_string()
@@ -127,20 +133,47 @@ pub fn parse_text(
             Regex::new(&regex)?
         };
 
-        hash = filename_regex
-            .find(source.as_ref())
-            .map(|hash| hash.as_str().to_string());
+        let mut temp_hash = filename_regex
+            .find_iter(source.as_ref())
+            .map(|hash| hash.as_str().to_string())
+            .collect_vec()
+            .get(1)
+            .cloned();
 
-        if hash.is_none() {
+        if temp_hash.is_none() {
             let metalink_regex = Regex::new(r"<hash[^>]+>([a-fA-F0-9]{64})")?;
 
-            hash = metalink_regex
-                .find(source.as_ref())
-                .map(|hash| hash.as_str().to_string());
+            temp_hash = metalink_regex
+                .find_iter(source.as_ref())
+                .map(|hash| hash.as_str().to_string())
+                .collect_vec()
+                .get(1)
+                .cloned();
         }
+
+        temp_hash
+    };
+
+    Ok(hash.map(|hash| hash.to_lowercase()))
+}
+
+#[cfg(test)]
+mod tests {
+    use std::collections::HashMap;
+
+    use super::*;
+
+    #[test]
+    fn test_finding_mysql_hashes() {
+        const TEXT_URL: &str = "https://dev.mysql.com/downloads/mysql/";
+        const FIND_REGEX: &str = "md5\">([A-Fa-f\\d]{32})";
+
+        let text_file = reqwest::blocking::get(TEXT_URL).unwrap().text().unwrap();
+
+        let hash = parse_text(text_file, HashMap::new(), FIND_REGEX.to_string())
+            .unwrap()
+            .expect("found hash");
+
+        assert_eq!("186efc230e44ded93b5aa89193a6fcbf", hash);
     }
-
-    hash = hash.map(|hash| hash.to_lowercase());
-
-    Ok(hash)
 }
