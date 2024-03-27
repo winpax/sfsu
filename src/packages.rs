@@ -1,9 +1,7 @@
 use std::{
     path::Path,
     process::{Command, Stdio},
-    rc::Rc,
-    sync::Arc,
-    time::{SystemTime, SystemTimeError, UNIX_EPOCH},
+    time::{SystemTimeError, UNIX_EPOCH},
 };
 
 use chrono::{DateTime, FixedOffset, NaiveDateTime};
@@ -14,7 +12,6 @@ use git2::{Commit, DiffOptions, Oid, Revwalk};
 use itertools::Itertools;
 use quork::traits::truthy::ContainsTruth as _;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
-use rayon::prelude::*;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use strum::Display;
