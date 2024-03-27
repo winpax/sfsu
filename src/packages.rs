@@ -536,7 +536,6 @@ impl Manifest {
 
         let updated_commit = updated_commit.ok_or(PackageError::NoUpdatedCommit)?;
 
-
         let time = updated_commit.time();
         let author = updated_commit.author();
 
