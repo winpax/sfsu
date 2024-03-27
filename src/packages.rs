@@ -492,6 +492,7 @@ impl Manifest {
         let mut updated_commit: Option<Commit<'_>> = None;
 
         'revwalk: for rev in revwalk {
+            // TODO: Add tests using personal bucket to ensure that different methods return the same info
             let commit = repo.find_commit(rev?)?;
 
             #[cfg(not(feature = "info-difftrees"))]
