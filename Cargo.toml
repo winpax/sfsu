@@ -16,7 +16,7 @@ codegen-units = 1
 lto           = true
 
 [features]
-default             = []
+default = []
 
 [dependencies]
 anyhow = "1.0"
@@ -39,21 +39,18 @@ itertools = "0.12"
 quork = "0.6"
 rayon = "1.9"
 regex = "1.10"
-reqwest = { version = "0.11.24", features = ["blocking"] }
+reqwest = { version = "0.12", features = ["blocking"] }
 scoop-manifest-hash = { version = "0.1.0", path = "crates/manifest-hash", optional = true }
-semver = { version = "1.0", features = ["serde"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0", features = ["preserve_order"] }
 sfsu-derive = { path = "./crates/derive" }
-shadow-rs = "0.26"
+shadow-rs = "0.27"
 strum = { version = "0.26", features = ["derive"] }
 thiserror = "1.0"
-tinyvec = "1.6.0"
 url = { version = "2.5" }
 
 [dev-dependencies]
-chrono    = ">=0.4.20"
 criterion = { version = "0.5", features = ["html_reports"] }
 
 [build-dependencies]
-shadow-rs = "0.26"
+shadow-rs = "0.27"
