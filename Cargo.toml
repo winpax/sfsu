@@ -19,9 +19,11 @@ lto           = true
 default = []
 # Breaking changes are locked behind this feature flag
 v2 = []
+info-difftrees = []
 
 [dependencies]
 anyhow = "1.0"
+cfg-if = "1.0.0"
 chrono = { version = ">=0.4.20", features = [
     "clock",
     "serde",

@@ -1,3 +1,4 @@
+use derive_more::Deref;
 use git2::{Commit, FetchOptions, Remote, Repository};
 
 use crate::buckets::Bucket;
@@ -15,6 +16,7 @@ pub enum RepoError {
 
 pub type RepoResult<T> = std::result::Result<T, RepoError>;
 
+#[derive(Deref)]
 pub struct Repo(Repository);
 
 impl Repo {

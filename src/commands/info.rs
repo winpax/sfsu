@@ -101,40 +101,16 @@ impl super::Command for Args {
             let repo = Bucket::from_name(&manifest.bucket)
                 .and_then(|bucket| Ok(Repo::from_bucket(&bucket)?));
 
-            let (updated_at, updated_by) = if let Ok(repo) = repo {
-                let latest_commit = repo.latest_commit()?;
-                let time = latest_commit.time();
-                let author = latest_commit.author();
-
-                let date_time = {
-                    let secs = time.seconds();
-                    let offset = time.offset_minutes();
-
-                    let naive_time = NaiveDateTime::from_timestamp_opt(secs, 0)
-                        .ok_or(anyhow::anyhow!("Invalid time"))?;
-
-                    let offset = FixedOffset::east_opt(offset * 60)
-                        .ok_or(anyhow::anyhow!("Invalid timezone offset"))?;
-
-                    DateTime::<FixedOffset>::from_naive_utc_and_offset(naive_time, offset)
-                };
-
-                let author_wrapped =
-                    Author::from_signature(author).with_show_emails(!self.hide_emails);
-
-                (
-                    Some(date_time.to_string()),
-                    Some(author_wrapped.to_string()),
-                )
-            } else {
-                match install_path {
+            let (updated_at, updated_by) = match manifest.last_updated_info(self.hide_emails) {
+                Ok(v) => v,
+                Err(_) => match install_path {
                     Some(ref install_path) => {
                         let updated_at = install_path.metadata()?.modified()?;
 
                         (Some(NicerTime::from(updated_at).to_string()), None)
                     }
                     _ => (None, None),
-                }
+                },
             };
 
             let pkg_info = PackageInfo {

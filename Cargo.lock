@@ -1120,6 +1120,7 @@ name = "sfsu"
 version = "1.8.6"
 dependencies = [
  "anyhow",
+ "cfg-if",
  "chrono",
  "clap",
  "colored",

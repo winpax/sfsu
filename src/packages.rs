@@ -3,9 +3,10 @@ use std::{
     time::{SystemTimeError, UNIX_EPOCH},
 };
 
-use chrono::NaiveDateTime;
+use chrono::{DateTime, FixedOffset, NaiveDateTime};
 use clap::{Parser, ValueEnum};
 use colored::Colorize as _;
+use git2::Commit;
 use itertools::Itertools as _;
 use quork::traits::truthy::ContainsTruth as _;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
@@ -15,9 +16,10 @@ use strum::Display;
 
 use crate::{
     buckets::{self, Bucket},
+    git::{self, Repo},
     output::{
         sectioned::{Children, Section, Text},
-        wrappers::time::NicerNaiveTime,
+        wrappers::{author::Author, time::NicerNaiveTime},
     },
     Scoop,
 };
@@ -128,8 +130,20 @@ pub enum PackageError {
     ParsingManifest(String, serde_json::Error),
     #[error("Interacting with buckets: {0}")]
     BucketError(#[from] buckets::BucketError),
+    #[error("Interacting with git2: {0}")]
+    RepoError(#[from] git::RepoError),
+    #[error("git2 internal error: {0}")]
+    Git2Error(#[from] git2::Error),
     #[error("System Time: {0}")]
     TimeError(#[from] SystemTimeError),
+    #[error("Git delta did not have a path")]
+    DeltaNoPath,
+    #[error("Cannot find git commit where package was updated")]
+    NoUpdatedCommit,
+    #[error("Invalid time. (time went backwards or way way way too far forwards (hello future! whats it like?))")]
+    InvalidTime,
+    #[error("Invalid timezone provided. (where are you?)")]
+    InvalidTimeZone,
 }
 
 #[derive(Debug, Default, Copy, Clone, ValueEnum, Display, Parser, PartialEq, Eq)]
@@ -461,6 +475,92 @@ impl Manifest {
         .with_title(title);
 
         Some(package)
+    }
+
+    /// Get the time and author of the commit where this manifest was last changed
+    pub fn last_updated_info(&self, hide_emails: bool) -> Result<(Option<String>, Option<String>)> {
+        let bucket = Bucket::from_name(&self.bucket)?;
+        let repo = Repo::from_bucket(&bucket)?;
+
+        let mut revwalk = repo.revwalk()?;
+        revwalk.push_head()?;
+        revwalk.set_sorting(git2::Sort::TIME)?;
+
+        #[cfg(feature = "info-difftrees")]
+        let mut last_tree = repo.head()?.peel_to_tree()?;
+
+        let mut updated_commit: Option<Commit<'_>> = None;
+
+        'revwalk: for rev in revwalk {
+            let commit = repo.find_commit(rev?)?;
+
+            #[cfg(not(feature = "info-difftrees"))]
+            if let Some(message) = commit.message() {
+                if message.contains("sfsu") {
+                    updated_commit = Some(commit);
+                    break 'revwalk;
+                }
+            }
+
+            #[cfg(feature = "info-difftrees")]
+            {
+                let current_tree = commit.tree()?;
+
+                let diff = repo.diff_tree_to_tree(
+                    Some(&last_tree),
+                    Some(&current_tree),
+                    Some(&mut git2::DiffOptions::new()),
+                )?;
+
+                for delta in diff.deltas() {
+                    let path = delta
+                        .new_file()
+                        .path()
+                        .ok_or(PackageError::DeltaNoPath)?
+                        .with_extension("");
+
+                    let manifest_name = path
+                        .file_name()
+                        .expect("file not terminated in '..'")
+                        .to_string_lossy();
+
+                    if self.name == manifest_name {
+                        dbg!(delta.new_file().path());
+                        dbg!(commit.message());
+                        updated_commit = Some(commit);
+                        break 'revwalk;
+                    }
+                }
+
+                last_tree = current_tree;
+            }
+        }
+
+        let updated_commit = updated_commit.ok_or(PackageError::NoUpdatedCommit)?;
+
+        dbg!(updated_commit.message());
+
+        let time = updated_commit.time();
+        let author = updated_commit.author();
+
+        let date_time = {
+            let secs = time.seconds();
+            let offset = time.offset_minutes();
+
+            let naive_time =
+                NaiveDateTime::from_timestamp_opt(secs, 0).ok_or(PackageError::InvalidTime)?;
+
+            let offset = FixedOffset::east_opt(offset * 60).ok_or(PackageError::InvalidTimeZone)?;
+
+            DateTime::<FixedOffset>::from_naive_utc_and_offset(naive_time, offset)
+        };
+
+        let author_wrapped = Author::from_signature(author).with_show_emails(!hide_emails);
+
+        Ok((
+            Some(date_time.to_string()),
+            Some(author_wrapped.to_string()),
+        ))
     }
 }
 
