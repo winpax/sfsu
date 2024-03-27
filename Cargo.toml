@@ -5,7 +5,7 @@ name        = "sfsu"
 version     = "1.8.6"
 
 [workspace]
-members = ["crates/derive", "crates/hash"]
+members = ["crates/*"]
 
 [[bench]]
 harness = false
@@ -14,6 +14,9 @@ name    = "searching"
 [profile.release]
 codegen-units = 1
 lto           = true
+
+[features]
+default             = []
 
 [dependencies]
 anyhow = "1.0"
@@ -37,6 +40,7 @@ quork = "0.6"
 rayon = "1.9"
 regex = "1.10"
 reqwest = { version = "0.11.24", features = ["blocking"] }
+scoop-manifest-hash = { version = "0.1.0", path = "crates/manifest-hash", optional = true }
 semver = { version = "1.0", features = ["serde"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0", features = ["preserve_order"] }

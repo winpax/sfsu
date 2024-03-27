@@ -1,0 +1,17 @@
+[package]
+edition = "2021"
+name    = "scoop-manifest-hash"
+version = "0.1.0"
+
+[dependencies]
+anyhow    = "1.0"
+base64    = "0.22"
+itertools = "0.12"
+log       = "0.4"
+quick-xml = "0.31"
+regex     = "1.10"
+strum     = { version = "0.26", features = ["derive"] }
+thiserror = "1.0"
+
+[dev-dependencies]
+reqwest = { version = "0.12", features = ["blocking"] }
