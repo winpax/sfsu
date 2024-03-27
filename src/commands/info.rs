@@ -1,11 +1,8 @@
-use chrono::{DateTime, FixedOffset, NaiveDateTime};
 use clap::Parser;
 use itertools::Itertools;
 use serde::Serialize;
 use sfsu::{
-    buckets::Bucket,
     calm_panic::calm_panic,
-    git::Repo,
     output::{
         structured::vertical::VTable,
         wrappers::{
@@ -96,7 +93,6 @@ impl super::Command for Args {
 
                 install_path.cloned()
             };
-
 
             let (updated_at, updated_by) = match manifest.last_updated_info(self.hide_emails) {
                 Ok(v) => v,
