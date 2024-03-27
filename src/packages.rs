@@ -627,8 +627,6 @@ impl Manifest {
                 .map(|(time, author)| (time.to_string(), author.to_string()))
                 .unzip();
 
-            dbg!(&time, &author);
-
             Ok((time, author))
         }
     }
