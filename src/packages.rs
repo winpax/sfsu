@@ -502,9 +502,7 @@ impl Manifest {
 
         let mut revwalk = repo.revwalk()?;
         revwalk.push_head()?;
-        revwalk.set_sorting(git2::Sort::TIME)?;
-
-        let revwalk = SSRevwalk(revwalk);
+        revwalk.set_sorting(git2::Sort::TOPOLOGICAL)?;
 
         let mut updated_commit: Option<Commit<'_>> = None;
 
