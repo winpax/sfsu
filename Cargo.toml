@@ -24,7 +24,7 @@ v2 = []
 [dependencies]
 anyhow = "1.0"
 cfg-if = "1.0.0"
-chrono = { version = ">=0.4.20", features = [
+chrono = { version = ">=0.4.37", features = [
     "clock",
     "serde",
     "std",
@@ -51,7 +51,7 @@ thiserror = "1.0"
 which = "6.0.1"
 
 [dev-dependencies]
-chrono    = ">=0.4.20"
+chrono    = ">=0.4.37"
 criterion = { version = "0.5", features = ["html_reports"] }
 
 [build-dependencies]
