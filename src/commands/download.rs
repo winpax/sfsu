@@ -6,6 +6,7 @@ use sfsu::{
     cache::{Downloader, Handle},
     packages::reference::Package,
     requests::BlockingClient,
+    Scoop,
 };
 
 #[derive(Debug, Clone, Parser)]
@@ -26,7 +27,7 @@ impl super::Command for Args {
 
         // Note that these are split because it helps the downloads run in parallel
 
-        let downloaders = Handle::open_manifest(&manifest, None)
+        let downloaders = Handle::open_manifest(Scoop::cache_path(), &manifest, None)
             .context("missing download urls")??
             .into_iter()
             .map(|dl| Downloader::new(dl, &client, &mp).unwrap())

@@ -15,7 +15,6 @@ use strum::Display;
 
 use crate::{
     buckets::{self, Bucket},
-    config,
     output::{
         sectioned::{Children, Section, Text},
         wrappers::time::NicerNaiveTime,

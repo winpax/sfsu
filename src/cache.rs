@@ -2,13 +2,13 @@ use std::{
     fs::File,
     io::{Read, Write},
     ops::Deref,
-    path::PathBuf,
+    path::{Path, PathBuf},
 };
 
 use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 use reqwest::blocking::Response;
 
-use crate::{packages::Manifest, Scoop, SupportedArch};
+use crate::{packages::Manifest, SupportedArch};
 
 #[derive(Debug)]
 pub struct Handle {
@@ -22,10 +22,14 @@ impl Handle {
     ///
     /// # Errors
     /// - If the file cannot be created
-    pub fn new(file_name: impl Into<PathBuf>, url: String) -> std::io::Result<Self> {
+    pub fn new(
+        cache_path: impl AsRef<Path>,
+        file_name: impl Into<PathBuf>,
+        url: String,
+    ) -> std::io::Result<Self> {
         let file_name = file_name.into();
         Ok(Self {
-            fp: File::create(Scoop::cache_path().join(&file_name))?,
+            fp: File::create(cache_path.as_ref().join(&file_name))?,
             url,
             file_name,
         })
@@ -33,6 +37,7 @@ impl Handle {
 
     #[must_use]
     pub fn open_manifest(
+        cache_path: impl AsRef<Path>,
         manifest: &Manifest,
         arch: Option<SupportedArch>,
     ) -> Option<std::io::Result<Vec<Self>>> {
@@ -47,7 +52,9 @@ impl Handle {
                     let file_name = PathBuf::from(&url);
                     (url, format!("{}#{}#{}", name, version, file_name.display()))
                 })
-                .map(|(url, file_name)| Self::new(PathBuf::from(file_name), url.url))
+                .map(|(url, file_name)| {
+                    Self::new(cache_path.as_ref(), PathBuf::from(file_name), url.url)
+                })
                 .collect(),
         )
     }
