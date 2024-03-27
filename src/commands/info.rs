@@ -34,6 +34,7 @@ struct PackageInfo {
 }
 
 #[derive(Debug, Clone, Parser)]
+#[allow(clippy::struct_excessive_bools)]
 pub struct Args {
     #[clap(help = "The package to get info from")]
     package: reference::Package,
@@ -54,6 +55,9 @@ pub struct Args {
 
     #[clap(from_global)]
     json: bool,
+
+    #[clap(from_global)]
+    disable_git: bool,
 }
 
 impl super::Command for Args {
@@ -94,17 +98,18 @@ impl super::Command for Args {
                 install_path.cloned()
             };
 
-            let (updated_at, updated_by) = match manifest.last_updated_info(self.hide_emails) {
-                Ok(v) => v,
-                Err(_) => match install_path {
-                    Some(ref install_path) => {
-                        let updated_at = install_path.metadata()?.modified()?;
+            let (updated_at, updated_by) =
+                match manifest.last_updated_info(self.hide_emails, self.disable_git) {
+                    Ok(v) => v,
+                    Err(_) => match install_path {
+                        Some(ref install_path) => {
+                            let updated_at = install_path.metadata()?.modified()?;
 
-                        (Some(NicerTime::from(updated_at).to_string()), None)
-                    }
-                    _ => (None, None),
-                },
-            };
+                            (Some(NicerTime::from(updated_at).to_string()), None)
+                        }
+                        _ => (None, None),
+                    },
+                };
 
             let pkg_info = PackageInfo {
                 name: manifest.name,

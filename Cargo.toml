@@ -16,9 +16,8 @@ codegen-units = 1
 lto           = true
 
 [features]
-default        = ["info-git-commands"]
+default        = ["info-difftrees"]
 info-difftrees = []
-info-git-commands = []
 # Breaking changes are locked behind this feature flag
 v2 = []
 

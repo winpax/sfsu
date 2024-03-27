@@ -499,11 +499,107 @@ impl Manifest {
 
     #[cfg_attr(feature = "info-git-commands", allow(unreachable_code))]
     /// Get the time and author of the commit where this manifest was last changed
-    pub fn last_updated_info(&self, hide_emails: bool) -> Result<(Option<String>, Option<String>)> {
+    pub fn last_updated_info(
+        &self,
+        hide_emails: bool,
+        disable_git: bool,
+    ) -> Result<(Option<String>, Option<String>)> {
         let bucket = Bucket::from_name(&self.bucket)?;
 
-        #[cfg(feature = "info-git-commands")]
-        {
+        if disable_git {
+            let repo = Repo::from_bucket(&bucket)?;
+
+            let mut revwalk = repo.revwalk()?;
+            revwalk.push_head()?;
+            revwalk.set_sorting(git2::Sort::TOPOLOGICAL)?;
+
+            let mut updated_commit: Option<Commit<'_>> = None;
+
+            let mut diff_options = DiffOptions::new();
+
+            diff_options
+                .ignore_submodules(true)
+                .enable_fast_untracked_dirs(true)
+                .context_lines(0)
+                .interhunk_lines(0)
+                .disable_pathspec_match(true)
+                .ignore_whitespace(true)
+                .ignore_whitespace_change(true)
+                .ignore_whitespace_eol(true)
+                .force_binary(true)
+                .include_ignored(false)
+                .include_typechange(false)
+                .include_ignored(false)
+                .include_typechange_trees(false)
+                .include_unmodified(false)
+                .include_unreadable(false)
+                .include_unreadable_as_untracked(false)
+                .include_untracked(false);
+
+            'revwalk: for oid in revwalk
+            // .filter_map(std::result::Result::ok)
+            // .map(|oid| Arc::new(oid.as_bytes().to_vec()))
+            // .into_iter()
+            // .par_bridge()
+            {
+                // TODO: Add tests using personal bucket to ensure that different methods return the same info
+                let commit = repo.find_commit(oid?)?;
+
+                #[cfg(not(any(feature = "info-difftrees", feature = "info-git-commands")))]
+                if let Some(message) = commit.message() {
+                    if message.starts_with(&self.name) {
+                        updated_commit = Some(commit);
+                        break 'revwalk;
+                    }
+                }
+
+                #[cfg(feature = "info-difftrees")]
+                {
+                    let tree = commit.tree()?;
+                    let parent_tree = commit.parent(0)?.tree()?;
+
+                    let manifest_path = format!("bucket/{}.json", self.name);
+
+                    let diff = repo.diff_tree_to_tree(
+                        Some(&parent_tree),
+                        Some(&tree),
+                        Some(diff_options.pathspec(&manifest_path)),
+                    )?;
+
+                    // Given that the diffoptions ensure that we only match the specific manifest
+                    // we are safe to return as soon as we find a commit thats changed anything
+                    if diff.stats()?.files_changed() != 0 {
+                        updated_commit = Some(commit);
+                        break 'revwalk;
+                    }
+                }
+            }
+
+            let updated_commit = updated_commit.ok_or(PackageError::NoUpdatedCommit)?;
+
+            let time = updated_commit.time();
+            let author = updated_commit.author();
+
+            let date_time = {
+                let secs = time.seconds();
+                let offset = time.offset_minutes();
+
+                let naive_time =
+                    NaiveDateTime::from_timestamp_opt(secs, 0).ok_or(PackageError::InvalidTime)?;
+
+                let offset =
+                    FixedOffset::east_opt(offset * 60).ok_or(PackageError::InvalidTimeZone)?;
+
+                DateTime::<FixedOffset>::from_naive_utc_and_offset(naive_time, offset)
+            };
+
+            let author_wrapped = Author::from_signature(author).with_show_emails(!hide_emails);
+
+            Ok((
+                Some(date_time.to_string()),
+                Some(author_wrapped.to_string()),
+            ))
+        } else {
             let git_path = Scoop::git_path()?;
 
             let output = Command::new(git_path)
@@ -533,100 +629,8 @@ impl Manifest {
 
             dbg!(&time, &author);
 
-            return Ok((time, author));
+            Ok((time, author))
         }
-
-        let repo = Repo::from_bucket(&bucket)?;
-
-        let mut revwalk = repo.revwalk()?;
-        revwalk.push_head()?;
-        revwalk.set_sorting(git2::Sort::TOPOLOGICAL)?;
-
-        let mut updated_commit: Option<Commit<'_>> = None;
-
-        let mut diff_options = DiffOptions::new();
-
-        diff_options
-            .ignore_submodules(true)
-            .enable_fast_untracked_dirs(true)
-            .context_lines(0)
-            .interhunk_lines(0)
-            .disable_pathspec_match(true)
-            .ignore_whitespace(true)
-            .ignore_whitespace_change(true)
-            .ignore_whitespace_eol(true)
-            .force_binary(true)
-            .include_ignored(false)
-            .include_typechange(false)
-            .include_ignored(false)
-            .include_typechange_trees(false)
-            .include_unmodified(false)
-            .include_unreadable(false)
-            .include_unreadable_as_untracked(false)
-            .include_untracked(false);
-
-        'revwalk: for oid in revwalk
-        // .filter_map(std::result::Result::ok)
-        // .map(|oid| Arc::new(oid.as_bytes().to_vec()))
-        // .into_iter()
-        // .par_bridge()
-        {
-            // TODO: Add tests using personal bucket to ensure that different methods return the same info
-            let commit = repo.find_commit(oid?)?;
-
-            #[cfg(not(any(feature = "info-difftrees", feature = "info-git-commands")))]
-            if let Some(message) = commit.message() {
-                if message.starts_with(&self.name) {
-                    updated_commit = Some(commit);
-                    break 'revwalk;
-                }
-            }
-
-            #[cfg(feature = "info-difftrees")]
-            {
-                let tree = commit.tree()?;
-                let parent_tree = commit.parent(0)?.tree()?;
-
-                let manifest_path = format!("bucket/{}.json", self.name);
-
-                let diff = repo.diff_tree_to_tree(
-                    Some(&parent_tree),
-                    Some(&tree),
-                    Some(diff_options.pathspec(&manifest_path)),
-                )?;
-
-                // Given that the diffoptions ensure that we only match the specific manifest
-                // we are safe to return as soon as we find a commit thats changed anything
-                if diff.stats()?.files_changed() != 0 {
-                    updated_commit = Some(commit);
-                    break 'revwalk;
-                }
-            }
-        }
-
-        let updated_commit = updated_commit.ok_or(PackageError::NoUpdatedCommit)?;
-
-        let time = updated_commit.time();
-        let author = updated_commit.author();
-
-        let date_time = {
-            let secs = time.seconds();
-            let offset = time.offset_minutes();
-
-            let naive_time =
-                NaiveDateTime::from_timestamp_opt(secs, 0).ok_or(PackageError::InvalidTime)?;
-
-            let offset = FixedOffset::east_opt(offset * 60).ok_or(PackageError::InvalidTimeZone)?;
-
-            DateTime::<FixedOffset>::from_naive_utc_and_offset(naive_time, offset)
-        };
-
-        let author_wrapped = Author::from_signature(author).with_show_emails(!hide_emails);
-
-        Ok((
-            Some(date_time.to_string()),
-            Some(author_wrapped.to_string()),
-        ))
     }
 }
 
