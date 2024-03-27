@@ -10,7 +10,6 @@ use sfsu::{
         structured::vertical::VTable,
         wrappers::{
             alias_vec::AliasVec,
-            author::Author,
             bool::{wrap_bool, NicerBool},
             keys::Key,
             time::NicerTime,
@@ -98,8 +97,6 @@ impl super::Command for Args {
                 install_path.cloned()
             };
 
-            let repo = Bucket::from_name(&manifest.bucket)
-                .and_then(|bucket| Ok(Repo::from_bucket(&bucket)?));
 
             let (updated_at, updated_by) = match manifest.last_updated_info(self.hide_emails) {
                 Ok(v) => v,
