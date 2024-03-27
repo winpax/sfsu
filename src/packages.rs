@@ -1,5 +1,7 @@
 use std::{
     path::Path,
+    rc::Rc,
+    sync::Arc,
     time::{SystemTimeError, UNIX_EPOCH},
 };
 
@@ -498,9 +500,9 @@ impl Manifest {
             let old_commit = repo.find_commit(old_oid)?;
 
             #[cfg(not(feature = "info-difftrees"))]
-            if let Some(message) = commit.message() {
+            if let Some(message) = new_commit.message() {
                 if message.starts_with(&self.name) {
-                    updated_commit = Some(commit);
+                    updated_commit = Some(new_commit);
                     break 'revwalk;
                 }
             }

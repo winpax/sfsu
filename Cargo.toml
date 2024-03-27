@@ -16,10 +16,10 @@ codegen-units = 1
 lto           = true
 
 [features]
-default = ["info-difftrees"]
+default        = []
+info-difftrees = []
 # Breaking changes are locked behind this feature flag
 v2 = []
-info-difftrees = []
 
 [dependencies]
 anyhow = "1.0"
