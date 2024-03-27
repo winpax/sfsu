@@ -16,7 +16,7 @@ use sfsu::{
             time::NicerTime,
         },
     },
-    packages::{manifest::PackageLicense, Manifest},
+    packages::{manifest::PackageLicense, reference},
     KeyValue, Scoop,
 };
 
@@ -40,9 +40,14 @@ struct PackageInfo {
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
     #[clap(help = "The package to get info from")]
-    package: String,
+    package: reference::Package,
 
-    #[clap(short, long, help = "The bucket to exclusively search in")]
+    #[cfg(not(feature = "v2"))]
+    #[clap(
+        short,
+        long,
+        help = "The bucket to exclusively search in. Deprecated: use <bucket>/<package> syntax instead"
+    )]
     bucket: Option<String>,
 
     #[clap(short = 'E', long, help = "Show `Updated by` user emails")]
@@ -56,16 +61,15 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    fn runner(self) -> Result<(), anyhow::Error> {
-        let buckets = Bucket::one_or_all(self.bucket)?;
+    fn runner(mut self) -> Result<(), anyhow::Error> {
+        #[cfg(not(feature = "v2"))]
+        if self.package.bucket().is_none() {
+            if let Some(bucket) = self.bucket {
+                self.package.set_bucket(bucket);
+            }
+        }
 
-        let manifests: Vec<(String, String, Manifest)> = buckets
-            .iter()
-            .filter_map(|bucket| match bucket.get_manifest(&self.package) {
-                Ok(manifest) => Some((self.package.clone(), bucket.name().to_string(), manifest)),
-                Err(_) => None,
-            })
-            .collect();
+        let manifests = self.package.list_manifests();
 
         if manifests.is_empty() {
             calm_panic(format!(
@@ -84,17 +88,18 @@ impl super::Command for Args {
 
         let installed_apps = Scoop::installed_apps()?;
 
-        for (name, bucket, manifest) in manifests {
+        for manifest in manifests {
             let install_path = {
                 let install_path = installed_apps.iter().find(|app| {
-                    app.with_extension("").file_name() == Some(&std::ffi::OsString::from(&name))
+                    app.with_extension("").file_name()
+                        == Some(&std::ffi::OsString::from(&manifest.name))
                 });
 
                 install_path.cloned()
             };
 
-            let repo =
-                Bucket::from_name(&bucket).and_then(|bucket| Ok(Repo::from_bucket(&bucket)?));
+            let repo = Bucket::from_name(&manifest.bucket)
+                .and_then(|bucket| Ok(Repo::from_bucket(&bucket)?));
 
             let (updated_at, updated_by) = if let Ok(repo) = repo {
                 let latest_commit = repo.latest_commit()?;
@@ -133,8 +138,8 @@ impl super::Command for Args {
             };
 
             let pkg_info = PackageInfo {
-                name,
-                bucket,
+                name: manifest.name,
+                bucket: manifest.bucket,
                 description: manifest.description,
                 version: manifest.version,
                 website: manifest.homepage,

@@ -64,7 +64,7 @@ impl Package {
     /// Returns a [`Vec`] with a single manifest if the reference is valid
     ///
     /// Otherwise returns a [`Vec`] containing each matching manifest found in each local bucket
-    pub fn search_manifest(&self) -> Vec<Manifest> {
+    pub fn list_manifests(&self) -> Vec<Manifest> {
         if let Some(manifest) = self.manifest() {
             vec![manifest]
         } else {
