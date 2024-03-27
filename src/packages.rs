@@ -480,6 +480,7 @@ impl Manifest {
     }
 
     #[must_use]
+    #[cfg(feature = "scoop-manifest-hash")]
     pub fn set_version(&mut self, version: String) -> std::result::Result<(), SetVersionError> {
         // self.version = version;
 
