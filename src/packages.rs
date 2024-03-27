@@ -1,5 +1,6 @@
 use std::{
     path::Path,
+    process::{Command, Stdio},
     rc::Rc,
     sync::Arc,
     time::{SystemTime, SystemTimeError, UNIX_EPOCH},
@@ -154,6 +155,8 @@ pub enum PackageError {
     Git2Error(#[from] git2::Error),
     #[error("System Time: {0}")]
     TimeError(#[from] SystemTimeError),
+    #[error("Could not find executable in path: {0}")]
+    MissingInPath(#[from] which::Error),
     #[error("Git delta did not have a path")]
     DeltaNoPath,
     #[error("Cannot find git commit where package was updated")]
@@ -162,6 +165,8 @@ pub enum PackageError {
     InvalidTime,
     #[error("Invalid timezone provided. (where are you?)")]
     InvalidTimeZone,
+    #[error("Git provided no output")]
+    MissingGitOutput,
 }
 
 #[derive(Debug, Default, Copy, Clone, ValueEnum, Display, Parser, PartialEq, Eq)]
@@ -495,9 +500,45 @@ impl Manifest {
         Some(package)
     }
 
+    #[cfg_attr(feature = "info-git-commands", allow(unreachable_code))]
     /// Get the time and author of the commit where this manifest was last changed
     pub fn last_updated_info(&self, hide_emails: bool) -> Result<(Option<String>, Option<String>)> {
         let bucket = Bucket::from_name(&self.bucket)?;
+
+        #[cfg(feature = "info-git-commands")]
+        {
+            let git_path = Scoop::git_path()?;
+
+            let output = Command::new(git_path)
+                .current_dir(bucket.path())
+                .arg("-C")
+                .arg("bucket")
+                .arg("log")
+                .arg("-1")
+                .arg("-s")
+                .arg("--format='%aD#%an'")
+                .arg(self.name.clone() + ".json")
+                .stderr(Stdio::null())
+                .output()
+                .map_err(|_| PackageError::MissingGitOutput)?;
+
+            let stdout_string =
+                String::from_utf8(output.stdout).map_err(|_| PackageError::NonUtf8)?;
+
+            let (time, author) = stdout_string
+                // Remove newline from end
+                .trim_end()
+                // Remove weird single quote from either end
+                .trim_matches('\'')
+                .split_once('#')
+                .map(|(time, author)| (time.to_string(), author.to_string()))
+                .unzip();
+
+            dbg!(&time, &author);
+
+            return Ok((time, author));
+        }
+
         let repo = Repo::from_bucket(&bucket)?;
 
         let mut revwalk = repo.revwalk()?;
@@ -536,7 +577,7 @@ impl Manifest {
             // TODO: Add tests using personal bucket to ensure that different methods return the same info
             let commit = repo.find_commit(oid?)?;
 
-            #[cfg(not(feature = "info-difftrees"))]
+            #[cfg(not(any(feature = "info-difftrees", feature = "info-git-commands")))]
             if let Some(message) = commit.message() {
                 if message.starts_with(&self.name) {
                     updated_commit = Some(commit);

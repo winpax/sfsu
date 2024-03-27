@@ -16,8 +16,9 @@ codegen-units = 1
 lto           = true
 
 [features]
-default        = []
+default        = ["info-git-commands"]
 info-difftrees = []
+info-git-commands = []
 # Breaking changes are locked behind this feature flag
 v2 = []
 
@@ -48,6 +49,7 @@ sfsu-derive = { path = "./sfsu-derive" }
 shadow-rs = "0.27"
 strum = { version = "0.26", features = ["derive"] }
 thiserror = "1.0"
+which = "6.0.1"
 
 [dev-dependencies]
 chrono    = ">=0.4.20"
