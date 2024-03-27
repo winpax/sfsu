@@ -8,7 +8,7 @@ use std::{
 use chrono::{DateTime, FixedOffset, NaiveDateTime};
 use clap::{Parser, ValueEnum};
 use colored::Colorize as _;
-use git2::{Commit, Oid, Revwalk};
+use git2::{Commit, DiffOptions, Oid, Revwalk};
 use itertools::Itertools;
 use quork::traits::truthy::ContainsTruth as _;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
@@ -508,17 +508,27 @@ impl Manifest {
                 let tree = commit.tree()?;
                 let parent_tree = commit.parent(0)?.tree()?;
 
-                let diff = repo.diff_tree_to_tree(Some(&parent_tree), Some(&tree), None)?;
+                let manifest_path = format!("bucket/{}.json", self.name);
 
-                if let Some(matched_commit) = diff
-                    .deltas()
-                    .find(|delta| {
-                        delta.new_file().path()
-                            == Some(Path::new(&format!("bucket/{}.json", self.name)))
-                    })
-                    .map(|_| commit)
-                {
-                    updated_commit = Some(matched_commit);
+                let mut diff_options = DiffOptions::new();
+
+                diff_options
+                    .ignore_submodules(true)
+                    .pathspec(&manifest_path)
+                    .enable_fast_untracked_dirs(true)
+                    .context_lines(0)
+                    .interhunk_lines(0);
+
+                let diff = repo.diff_tree_to_tree(
+                    Some(&parent_tree),
+                    Some(&tree),
+                    Some(&mut diff_options),
+                )?;
+
+                // Given that the diffoptions ensure that we only match the specific manifest
+                // we are safe to return as soon as we find a commit thats changed anything
+                if diff.stats()?.files_changed() != 0 {
+                    updated_commit = Some(commit);
                     break 'revwalk;
                 }
             }
