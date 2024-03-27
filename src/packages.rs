@@ -2,12 +2,13 @@ use std::{
     path::Path,
     rc::Rc,
     sync::Arc,
-    time::{SystemTimeError, UNIX_EPOCH},
+    time::{SystemTime, SystemTimeError, UNIX_EPOCH},
 };
 
 use chrono::{DateTime, FixedOffset, NaiveDateTime};
 use clap::{Parser, ValueEnum};
 use colored::Colorize as _;
+use derive_more::{Deref, DerefMut};
 use git2::{Commit, DiffOptions, Oid, Revwalk};
 use itertools::Itertools;
 use quork::traits::truthy::ContainsTruth as _;
@@ -16,6 +17,20 @@ use rayon::prelude::*;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use strum::Display;
+
+#[derive(Deref, DerefMut)]
+struct SSRevwalk<'a>(Revwalk<'a>);
+
+unsafe impl<'a> Send for SSRevwalk<'a> {}
+unsafe impl<'a> Sync for SSRevwalk<'a> {}
+
+impl<'a> Iterator for SSRevwalk<'a> {
+    type Item = std::result::Result<Oid, git2::Error>;
+
+    fn next(&mut self) -> Option<std::result::Result<Oid, git2::Error>> {
+        self.0.next()
+    }
+}
 
 use crate::{
     buckets::{self, Bucket},
@@ -489,9 +504,37 @@ impl Manifest {
         revwalk.push_head()?;
         revwalk.set_sorting(git2::Sort::TIME)?;
 
+        let revwalk = SSRevwalk(revwalk);
+
         let mut updated_commit: Option<Commit<'_>> = None;
 
-        'revwalk: for oid in revwalk {
+        let mut diff_options = DiffOptions::new();
+
+        diff_options
+            .ignore_submodules(true)
+            .enable_fast_untracked_dirs(true)
+            .context_lines(0)
+            .interhunk_lines(0)
+            .disable_pathspec_match(true)
+            .ignore_whitespace(true)
+            .ignore_whitespace_change(true)
+            .ignore_whitespace_eol(true)
+            .force_binary(true)
+            .include_ignored(false)
+            .include_typechange(false)
+            .include_ignored(false)
+            .include_typechange_trees(false)
+            .include_unmodified(false)
+            .include_unreadable(false)
+            .include_unreadable_as_untracked(false)
+            .include_untracked(false);
+
+        'revwalk: for oid in revwalk
+        // .filter_map(std::result::Result::ok)
+        // .map(|oid| Arc::new(oid.as_bytes().to_vec()))
+        // .into_iter()
+        // .par_bridge()
+        {
             // TODO: Add tests using personal bucket to ensure that different methods return the same info
             let commit = repo.find_commit(oid?)?;
 
@@ -510,19 +553,10 @@ impl Manifest {
 
                 let manifest_path = format!("bucket/{}.json", self.name);
 
-                let mut diff_options = DiffOptions::new();
-
-                diff_options
-                    .ignore_submodules(true)
-                    .pathspec(&manifest_path)
-                    .enable_fast_untracked_dirs(true)
-                    .context_lines(0)
-                    .interhunk_lines(0);
-
                 let diff = repo.diff_tree_to_tree(
                     Some(&parent_tree),
                     Some(&tree),
-                    Some(&mut diff_options),
+                    Some(diff_options.pathspec(&manifest_path)),
                 )?;
 
                 // Given that the diffoptions ensure that we only match the specific manifest
