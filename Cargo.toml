@@ -17,7 +17,8 @@ lto           = true
 
 [features]
 default = []
-v2      = []
+# Breaking changes are locked behind this feature flag
+v2 = []
 
 [dependencies]
 anyhow = "1.0"
