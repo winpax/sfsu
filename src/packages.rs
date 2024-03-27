@@ -491,13 +491,9 @@ impl Manifest {
 
         let mut updated_commit: Option<Commit<'_>> = None;
 
-        'revwalk: for (new_oid, old_oid) in revwalk
-            .filter_map(std::result::Result::ok)
-            .tuple_windows::<(_, _)>()
-        {
+        'revwalk: for oid in revwalk {
             // TODO: Add tests using personal bucket to ensure that different methods return the same info
-            let new_commit = repo.find_commit(new_oid)?;
-            let old_commit = repo.find_commit(old_oid)?;
+            let commit = repo.find_commit(oid?)?;
 
             #[cfg(not(feature = "info-difftrees"))]
             if let Some(message) = new_commit.message() {
@@ -509,31 +505,21 @@ impl Manifest {
 
             #[cfg(feature = "info-difftrees")]
             {
-                let new_tree = new_commit.tree()?;
-                let old_tree = old_commit.tree()?;
+                let tree = commit.tree()?;
+                let parent_tree = commit.parent(0)?.tree()?;
 
-                let diff = repo.diff_tree_to_tree(
-                    Some(&old_tree),
-                    Some(&new_tree),
-                    Some(&mut git2::DiffOptions::new()),
-                )?;
+                let diff = repo.diff_tree_to_tree(Some(&parent_tree), Some(&tree), None)?;
 
-                for delta in diff.deltas() {
-                    let path = delta
-                        .old_file()
-                        .path()
-                        .ok_or(PackageError::DeltaNoPath)?
-                        .with_extension("");
-
-                    let manifest_name = path
-                        .file_name()
-                        .expect("file not terminated in '..'")
-                        .to_string_lossy();
-
-                    if self.name == manifest_name {
-                        updated_commit = Some(new_commit);
-                        break 'revwalk;
-                    }
+                if let Some(matched_commit) = diff
+                    .deltas()
+                    .find(|delta| {
+                        delta.new_file().path()
+                            == Some(Path::new(&format!("bucket/{}.json", self.name)))
+                    })
+                    .map(|_| commit)
+                {
+                    updated_commit = Some(matched_commit);
+                    break 'revwalk;
                 }
             }
         }
