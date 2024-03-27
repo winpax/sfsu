@@ -98,6 +98,14 @@ impl Scoop {
         SupportedArch::from_env()
     }
 
+    /// Get the git executable path
+    ///
+    /// # Errors
+    /// - Could not find `git` in path
+    pub fn git_path() -> Result<PathBuf, which::Error> {
+        which::which("git")
+    }
+
     #[must_use]
     /// Gets the user's scoop path, via either the default path or as provided by the SCOOP env variable
     ///

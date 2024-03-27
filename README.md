@@ -127,25 +127,42 @@ Summary
 
 ### Info [^info-version]
 
-```shell
-$ hyperfine --warmup 5 'sfsu describe sfsu' 'hok info sfsu' 'scoop info sfsu'
+Hok does not have the `Updated at` and `Updated by` fields.
+As such, for the sake of fairness, I have split the benchmark in two.
 
-Benchmark 1: sfsu describe sfsu
-  Time (mean ± σ):      20.3 ms ±   1.9 ms    [User: 1.4 ms, System: 5.2 ms]
-  Range (min … max):    18.0 ms …  30.5 ms    134 runs
+The first benchmark compares `sfsu` without these fields to Hok,
+and the second benchmark compares `sfsu` with these fields to Scoop.
+
+```shell
+$ hyperfine --warmup 5 'sfsu info sfsu --disable-updated' 'hok info sfsu'
+
+Benchmark 1: sfsu info sfsu --disable-updated
+  Time (mean ± σ):      63.1 ms ±   9.4 ms    [User: 0.6 ms, System: 15.0 ms]
+  Range (min … max):    53.9 ms …  90.7 ms    53 runs
 
 Benchmark 2: hok info sfsu
-  Time (mean ± σ):      31.6 ms ±   1.2 ms    [User: 4.1 ms, System: 6.4 ms]
-  Range (min … max):    29.4 ms …  35.2 ms    84 runs
-
-Benchmark 3: scoop info sfsu
-  Time (mean ± σ):     475.1 ms ±   3.9 ms    [User: 146.9 ms, System: 59.7 ms]
-  Range (min … max):   469.9 ms … 481.2 ms    10 runs
+  Time (mean ± σ):     133.0 ms ±  19.1 ms    [User: 7.4 ms, System: 29.8 ms]
+  Range (min … max):   111.9 ms … 181.7 ms    21 runs
 
 Summary
-  sfsu describe sfsu ran
-    1.55 ± 0.16 times faster than hok info sfsu
-   23.35 ± 2.22 times faster than scoop info sfsu
+  sfsu info sfsu --disable-updated ran
+    2.11 ± 0.44 times faster than hok info sfsu
+```
+
+```shell
+$ hyperfine --warmup 5 'sfsu info sfsu' 'scoop info sfsu'
+
+Benchmark 1: sfsu info sfsu
+  Time (mean ± σ):     425.3 ms ±  57.4 ms    [User: 86.3 ms, System: 114.7 ms]
+  Range (min … max):   350.6 ms … 526.7 ms    10 runs
+
+Benchmark 2: scoop info sfsu
+  Time (mean ± σ):     814.6 ms ±  47.2 ms    [User: 153.4 ms, System: 192.8 ms]
+  Range (min … max):   756.4 ms … 902.8 ms    10 runs
+
+Summary
+  sfsu info sfsu ran
+    1.92 ± 0.28 times faster than scoop info sfsu
 ```
 
 ### Scoop Buckets

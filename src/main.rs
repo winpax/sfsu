@@ -28,6 +28,13 @@ struct Args {
         help = "Print in the raw JSON output, rather than a human readable format"
     )]
     json: bool,
+
+    #[clap(
+        long,
+        global = true,
+        help = "Disable using git commands for certain parts of the program. Allows sfsu to work entirely if you don't have git installed, but can negatively affect performance."
+    )]
+    disable_git: bool,
 }
 
 fn main() -> anyhow::Result<()> {

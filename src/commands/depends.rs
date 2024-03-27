@@ -25,7 +25,7 @@ impl super::Command for Args {
             self.package.set_bucket(bucket);
         }
 
-        let manifests = self.package.search_manifest();
+        let manifests = self.package.list_manifests();
 
         if manifests.is_empty() {
             eprintln!(
