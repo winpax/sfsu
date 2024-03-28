@@ -36,22 +36,26 @@ pub enum SupportedArch {
 }
 
 impl SupportedArch {
+    /// Get the architecture of the current environment
+    pub const ARCH: Self = {
+        if cfg!(target_arch = "x86_64") {
+            Self::X64
+        } else if cfg!(target_arch = "x86") {
+            Self::X86
+        } else if cfg!(target_arch = "aarch64") {
+            Self::Arm64
+        } else {
+            panic!("Unsupported architecture")
+        }
+    };
+
     #[must_use]
     /// Get the architecture of the current environment
     ///
     /// # Panics
     /// - Unsupported environment
     pub const fn from_env() -> Self {
-        use std::env::consts::ARCH;
-        if const_str::equal!(ARCH, "x86") {
-            Self::X86
-        } else if const_str::equal!(ARCH, "x86_64") {
-            Self::X64
-        } else if const_str::equal!(ARCH, "aarch64") {
-            Self::Arm64
-        } else {
-            panic!("Unsupported architecture")
-        }
+        Self::ARCH
     }
 
     #[must_use]
