@@ -6,6 +6,7 @@ use sfsu::{output::structured::Structured, packages::MinInfo};
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
+    #[cfg(not(feature = "v2"))]
     #[clap(
         help = format!("The pattern to search for (can be a regex). {}", "DEPRECATED: Use sfsu search --installed. Will be removed in v2".yellow())
     )]

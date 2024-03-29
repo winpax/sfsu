@@ -47,6 +47,7 @@ pub enum Commands {
     /// Find buckets that do not have any installed packages
     UnusedBuckets(unused::Args),
     /// Describe a package
+    #[cfg(not(feature = "v2"))]
     Describe(describe::Args),
     /// Display information about a package
     Info(info::Args),

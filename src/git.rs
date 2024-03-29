@@ -1,5 +1,5 @@
 use derive_more::Deref;
-use git2::{Commit, FetchOptions, Remote, Repository};
+use git2::{Commit, DiffOptions, FetchOptions, Remote, Repository};
 
 use crate::buckets::Bucket;
 
@@ -105,5 +105,30 @@ impl Repo {
     /// Get the remote url of the bucket
     pub fn get_remote(&self) {
         unimplemented!()
+    }
+
+    pub(crate) fn default_diff_options() -> DiffOptions {
+        let mut diff_options = DiffOptions::new();
+
+        diff_options
+            .ignore_submodules(true)
+            .enable_fast_untracked_dirs(true)
+            .context_lines(0)
+            .interhunk_lines(0)
+            .disable_pathspec_match(true)
+            .ignore_whitespace(true)
+            .ignore_whitespace_change(true)
+            .ignore_whitespace_eol(true)
+            .force_binary(true)
+            .include_ignored(false)
+            .include_typechange(false)
+            .include_ignored(false)
+            .include_typechange_trees(false)
+            .include_unmodified(false)
+            .include_unreadable(false)
+            .include_unreadable_as_untracked(false)
+            .include_untracked(false);
+
+        diff_options
     }
 }
