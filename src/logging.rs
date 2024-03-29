@@ -17,6 +17,8 @@ impl Logger {
 
         log::set_logger(logger)?;
 
+        trace!("Initialized logger");
+
         Ok(())
     }
 }
