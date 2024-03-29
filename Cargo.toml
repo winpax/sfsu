@@ -2,7 +2,7 @@
 description = "Stupid Fast Scoop Utils"
 edition     = "2021"
 name        = "sfsu"
-version     = "1.8.6"
+version     = "1.8.7"
 
 [workspace]
 members = ["sfsu-derive"]
@@ -15,8 +15,15 @@ name    = "searching"
 codegen-units = 1
 lto           = true
 
+[features]
+default        = ["info-difftrees"]
+info-difftrees = []
+# Breaking changes are locked behind this feature flag
+v2 = []
+
 [dependencies]
 anyhow = "1.0"
+cfg-if = "1.0.0"
 chrono = { version = ">=0.4.20", features = [
     "clock",
     "serde",
@@ -41,6 +48,7 @@ sfsu-derive = { path = "./sfsu-derive" }
 shadow-rs = "0.27"
 strum = { version = "0.26", features = ["derive"] }
 thiserror = "1.0"
+which = "6.0.1"
 
 [dev-dependencies]
 chrono    = ">=0.4.20"

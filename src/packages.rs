@@ -1,23 +1,41 @@
 use std::{
     path::Path,
+    process::{Command, Stdio},
     time::{SystemTimeError, UNIX_EPOCH},
 };
 
-use chrono::NaiveDateTime;
+use chrono::{DateTime, FixedOffset, Local};
 use clap::{Parser, ValueEnum};
 use colored::Colorize as _;
-use itertools::Itertools as _;
+use derive_more::{Deref, DerefMut};
+use git2::{Commit, DiffOptions, Oid, Revwalk};
+use itertools::Itertools;
 use quork::traits::truthy::ContainsTruth as _;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use strum::Display;
 
+#[derive(Deref, DerefMut)]
+struct SSRevwalk<'a>(Revwalk<'a>);
+
+unsafe impl<'a> Send for SSRevwalk<'a> {}
+unsafe impl<'a> Sync for SSRevwalk<'a> {}
+
+impl<'a> Iterator for SSRevwalk<'a> {
+    type Item = std::result::Result<Oid, git2::Error>;
+
+    fn next(&mut self) -> Option<std::result::Result<Oid, git2::Error>> {
+        self.0.next()
+    }
+}
+
 use crate::{
     buckets::{self, Bucket},
+    git::{self, Repo},
     output::{
         sectioned::{Children, Section, Text},
-        wrappers::time::NicerNaiveTime,
+        wrappers::{author::Author, time::NicerNaiveTime},
     },
     Scoop,
 };
@@ -38,7 +56,7 @@ pub struct MinInfo {
     pub name: String,
     pub version: String,
     pub source: String,
-    pub updated: NicerNaiveTime,
+    pub updated: NicerNaiveTime<DateTime<Local>>,
     pub notes: String,
 }
 
@@ -83,7 +101,7 @@ impl MinInfo {
             .map(|f| f.to_string_lossy())
             .ok_or(PackageError::MissingFileName)?;
 
-        let naive_time = {
+        let updated_time = {
             let updated = {
                 let updated_sys = path.metadata()?.modified()?;
 
@@ -91,8 +109,9 @@ impl MinInfo {
             };
 
             #[allow(clippy::cast_possible_wrap)]
-            NaiveDateTime::from_timestamp_opt(updated as i64, 0)
+            DateTime::from_timestamp(updated as i64, 0)
                 .expect("invalid or out-of-range datetime")
+                .with_timezone(&Local)
         };
 
         let app_current = path.join("current");
@@ -106,7 +125,7 @@ impl MinInfo {
             name: package_name.to_string(),
             version: manifest.version,
             source: install_manifest.get_source(),
-            updated: naive_time.into(),
+            updated: updated_time.into(),
             notes: if install_manifest.hold.contains_truth() {
                 String::from("Held")
             } else {
@@ -128,8 +147,24 @@ pub enum PackageError {
     ParsingManifest(String, serde_json::Error),
     #[error("Interacting with buckets: {0}")]
     BucketError(#[from] buckets::BucketError),
+    #[error("Interacting with git2: {0}")]
+    RepoError(#[from] git::RepoError),
+    #[error("git2 internal error: {0}")]
+    Git2Error(#[from] git2::Error),
     #[error("System Time: {0}")]
     TimeError(#[from] SystemTimeError),
+    #[error("Could not find executable in path: {0}")]
+    MissingInPath(#[from] which::Error),
+    #[error("Git delta did not have a path")]
+    DeltaNoPath,
+    #[error("Cannot find git commit where package was updated")]
+    NoUpdatedCommit,
+    #[error("Invalid time. (time went backwards or way way way too far forwards (hello future! whats it like?))")]
+    InvalidTime,
+    #[error("Invalid timezone provided. (where are you?)")]
+    InvalidTimeZone,
+    #[error("Git provided no output")]
+    MissingGitOutput,
 }
 
 #[derive(Debug, Default, Copy, Clone, ValueEnum, Display, Parser, PartialEq, Eq)]
@@ -461,6 +496,143 @@ impl Manifest {
         .with_title(title);
 
         Some(package)
+    }
+
+    #[must_use]
+    pub fn commit_message_matches(&self, commit: &Commit<'_>) -> bool {
+        if let Some(message) = commit.message() {
+            message.starts_with(&self.name)
+        } else {
+            false
+        }
+    }
+
+    /// Check if the commit's changed files matches the name of the manifest
+    ///
+    /// # Errors
+    /// - Git2 errors
+    pub fn commit_diff_matches(&self, repo: &Repo, commit: &Commit<'_>) -> Result<bool> {
+        let mut diff_options = Repo::default_diff_options();
+
+        let tree = commit.tree()?;
+        let parent_tree = commit.parent(0)?.tree()?;
+
+        let manifest_path = format!("bucket/{}.json", self.name);
+
+        let diff = repo.diff_tree_to_tree(
+            Some(&parent_tree),
+            Some(&tree),
+            Some(diff_options.pathspec(&manifest_path)),
+        )?;
+
+        // Given that the diffoptions ensure that we only match the specific manifest
+        // we are safe to return as soon as we find a commit thats changed anything
+        Ok(diff.stats()?.files_changed() != 0)
+    }
+
+    #[cfg_attr(feature = "info-git-commands", allow(unreachable_code))]
+    /// Get the time and author of the commit where this manifest was last changed
+    ///
+    /// # Errors
+    /// - Invalid bucket
+    /// - Invalid repo bucket
+    /// - Internal git2 errors
+    pub fn last_updated_info(
+        &self,
+        hide_emails: bool,
+        disable_git: bool,
+    ) -> Result<(Option<String>, Option<String>)> {
+        let bucket = Bucket::from_name(&self.bucket)?;
+
+        if disable_git {
+            let repo = Repo::from_bucket(&bucket)?;
+
+            let mut revwalk = repo.revwalk()?;
+            revwalk.push_head()?;
+            revwalk.set_sorting(git2::Sort::TOPOLOGICAL)?;
+
+            let updated_commit = revwalk
+                .find_map(|oid| {
+                    let find_commit = || {
+                        // TODO: Add tests using personal bucket to ensure that different methods return the same info
+                        let commit = repo.find_commit(oid?)?;
+
+                        #[cfg(not(any(
+                            feature = "info-difftrees",
+                            feature = "info-git-commands"
+                        )))]
+                        if self.commit_matches_name(&commit) {
+                            return Ok(commit);
+                        }
+
+                        #[cfg(feature = "info-difftrees")]
+                        {
+                            if let Ok(true) = self.commit_diff_matches(&repo, &commit) {
+                                return Ok(commit);
+                            }
+                        }
+
+                        Err(PackageError::NoUpdatedCommit)
+                    };
+
+                    let result = find_commit();
+
+                    match result {
+                        Ok(commit) => Some(Ok(commit)),
+                        Err(PackageError::NoUpdatedCommit) => None,
+                        Err(e) => Some(Err(e)),
+                    }
+                })
+                .ok_or(PackageError::NoUpdatedCommit)??;
+
+            let date_time = {
+                let time = updated_commit.time();
+                let secs = time.seconds();
+                let offset = time.offset_minutes() * 60;
+
+                let utc_time =
+                    DateTime::from_timestamp(secs, 0).ok_or(PackageError::InvalidTime)?;
+
+                let offset = FixedOffset::east_opt(offset).ok_or(PackageError::InvalidTimeZone)?;
+
+                utc_time.with_timezone(&offset)
+            };
+
+            let author_wrapped =
+                Author::from_signature(updated_commit.author()).with_show_emails(!hide_emails);
+
+            Ok((
+                Some(date_time.to_string()),
+                Some(author_wrapped.to_string()),
+            ))
+        } else {
+            let git_path = Scoop::git_path()?;
+
+            let output = Command::new(git_path)
+                .current_dir(bucket.path())
+                .arg("-C")
+                .arg("bucket")
+                .arg("log")
+                .arg("-1")
+                .arg("-s")
+                .arg("--format='%aD#%an'")
+                .arg(self.name.clone() + ".json")
+                .stderr(Stdio::null())
+                .output()
+                .map_err(|_| PackageError::MissingGitOutput)?;
+
+            let info = String::from_utf8(output.stdout)
+                .map_err(|_| PackageError::NonUtf8)?
+                // Remove newline from end
+                .trim_end()
+                // Remove weird single quote from either end
+                .trim_matches('\'')
+                .split_once('#')
+                .map(|(time, author)| (time.to_string(), author.to_string()))
+                .unzip();
+
+            Ok(info)
+        }
     }
 }
 

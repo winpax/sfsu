@@ -1,14 +1,12 @@
-use chrono::{DateTime, FixedOffset, NaiveDateTime};
+use chrono::{DateTime, FixedOffset};
 use git2::Repository;
 
 fn parse_time(secs: i64, offset: i32) -> Option<DateTime<FixedOffset>> {
-    let naive_time = NaiveDateTime::from_timestamp_opt(secs, 0)?;
+    let naive_time = DateTime::from_timestamp(secs, 0)?;
 
     let offset = FixedOffset::east_opt(offset * 60)?;
 
-    let date_time = DateTime::<FixedOffset>::from_naive_utc_and_offset(naive_time, offset);
-
-    Some(date_time)
+    Some(naive_time.with_timezone(&offset))
 }
 
 fn main() -> Result<(), git2::Error> {
