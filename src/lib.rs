@@ -1,7 +1,8 @@
 #![warn(clippy::all, clippy::pedantic, rust_2018_idioms)]
 
-use std::{ffi::OsStr, fmt, path::PathBuf};
+use std::{ffi::OsStr, fmt, fs::File, path::PathBuf};
 
+use chrono::Local;
 use rayon::prelude::*;
 
 pub mod buckets;
@@ -183,5 +184,39 @@ impl Scoop {
                 }
             })
             .collect())
+    }
+
+    /// Get the path to the log directory
+    ///
+    /// # Errors
+    /// - Creating the directory fails
+    pub fn logging_dir() -> std::io::Result<PathBuf> {
+        let logs_path = Scoop::apps_path().join("sfsu").join("logs");
+
+        if !logs_path.exists() {
+            std::fs::create_dir_all(&logs_path)?;
+        }
+
+        Ok(logs_path)
+    }
+
+    /// Create a new log file
+    ///
+    /// # Errors
+    /// - Creating the file fails
+    pub fn new_log() -> std::io::Result<File> {
+        let logs_dir = Self::logging_dir()?;
+        let date = Local::now();
+
+        let mut i = 0;
+        loop {
+            i += 1;
+
+            let log_path = logs_dir.join(format!("sfsu-{}-{i}", date.format("%Y-%m-%d-%H-%M-%S")));
+
+            if !log_path.exists() {
+                break File::create(&log_path);
+            }
+        }
     }
 }
