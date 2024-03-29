@@ -39,6 +39,7 @@ struct Args {
 
 fn main() -> anyhow::Result<()> {
     logging::panics::handle();
+    logging::Logger::init()?;
 
     let args = Args::parse();
     if args.no_color {
