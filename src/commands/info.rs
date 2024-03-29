@@ -1,6 +1,8 @@
 use clap::Parser;
+use colored::Colorize;
 use itertools::Itertools;
 use serde::Serialize;
+
 use sfsu::{
     calm_panic::calm_panic,
     output::{
@@ -43,7 +45,7 @@ pub struct Args {
     #[clap(
         short,
         long,
-        help = "The bucket to exclusively search in. Deprecated: use <bucket>/<package> syntax instead"
+        help = format!("The bucket to exclusively search in. {}", "DEPRECATED: Use <bucket>/<package> syntax instead".yellow())
     )]
     bucket: Option<String>,
 
