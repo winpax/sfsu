@@ -536,12 +536,7 @@ impl Manifest {
                 .include_unreadable_as_untracked(false)
                 .include_untracked(false);
 
-            'revwalk: for oid in revwalk
-            // .filter_map(std::result::Result::ok)
-            // .map(|oid| Arc::new(oid.as_bytes().to_vec()))
-            // .into_iter()
-            // .par_bridge()
-            {
+            'revwalk: for oid in revwalk {
                 // TODO: Add tests using personal bucket to ensure that different methods return the same info
                 let commit = repo.find_commit(oid?)?;
 
