@@ -36,7 +36,7 @@ pub struct Manifest {
     /// https://github.com/ScoopInstaller/Main/search?l=JSON&q=innosetup
     pub innosetup: Option<bool>,
     pub license: Option<PackageLicense>,
-    #[deprecated]
+    /// Deprecated
     pub notes: Option<StringOrArrayOfStrings>,
     pub persist: Option<StringOrArrayOfStringsOrAnArrayOfArrayOfStrings>,
     pub psmodule: Option<Psmodule>,

@@ -12,7 +12,12 @@ use sfsu::{
             time::NicerTime,
         },
     },
-    packages::{manifest::PackageLicense, reference},
+    packages::{
+        manifest::{
+            PackageLicense, StringOrArrayOfStrings, StringOrArrayOfStringsOrAnArrayOfArrayOfStrings,
+        },
+        reference,
+    },
     KeyValue, Scoop,
 };
 
@@ -126,7 +131,21 @@ impl super::Command for Args {
                 license: manifest.license,
                 // TODO: Fix binaries display
                 // NOTE: Run `sfsu info inkscape` to know what I mean 😬
-                binaries: manifest.bin.map(|b| b.into_vec().join(",")),
+                binaries: manifest.bin.map(|b| match b {
+                    StringOrArrayOfStringsOrAnArrayOfArrayOfStrings::String(bin) => bin.to_string(),
+                    StringOrArrayOfStringsOrAnArrayOfArrayOfStrings::StringArray(bins) => {
+                        bins.join(" | ")
+                    }
+                    StringOrArrayOfStringsOrAnArrayOfArrayOfStrings::UnionArray(bins) => bins
+                        .into_iter()
+                        .map(|bin_union| match bin_union {
+                            StringOrArrayOfStrings::String(bin) => bin,
+                            StringOrArrayOfStrings::StringArray(mut bin_alias) => {
+                                bin_alias.remove(0)
+                            }
+                        })
+                        .join(" | "),
+                }),
                 notes: manifest.notes.map(|notes| notes.to_string()),
                 installed: wrap_bool!(install_path.is_some()),
                 shortcuts: manifest.install_config.shortcuts.map(AliasVec::from_vec),
