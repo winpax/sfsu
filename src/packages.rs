@@ -497,6 +497,38 @@ impl Manifest {
         Some(package)
     }
 
+    #[must_use]
+    pub fn commit_message_matches(&self, commit: &Commit<'_>) -> bool {
+        if let Some(message) = commit.message() {
+            message.starts_with(&self.name)
+        } else {
+            false
+        }
+    }
+
+    /// Check if the commit's changed files matches the name of the manifest
+    ///
+    /// # Errors
+    /// - Git2 errors
+    pub fn commit_diff_matches(&self, repo: &Repo, commit: &Commit<'_>) -> Result<bool> {
+        let mut diff_options = Repo::default_diff_options();
+
+        let tree = commit.tree()?;
+        let parent_tree = commit.parent(0)?.tree()?;
+
+        let manifest_path = format!("bucket/{}.json", self.name);
+
+        let diff = repo.diff_tree_to_tree(
+            Some(&parent_tree),
+            Some(&tree),
+            Some(diff_options.pathspec(&manifest_path)),
+        )?;
+
+        // Given that the diffoptions ensure that we only match the specific manifest
+        // we are safe to return as soon as we find a commit thats changed anything
+        Ok(diff.stats()?.files_changed() != 0)
+    }
+
     #[cfg_attr(feature = "info-git-commands", allow(unreachable_code))]
     /// Get the time and author of the commit where this manifest was last changed
     pub fn last_updated_info(
@@ -513,69 +545,42 @@ impl Manifest {
             revwalk.push_head()?;
             revwalk.set_sorting(git2::Sort::TOPOLOGICAL)?;
 
-            let mut updated_commit: Option<Commit<'_>> = None;
+            let updated_commit = revwalk
+                .find_map(|oid| {
+                    let find_commit = || {
+                        // TODO: Add tests using personal bucket to ensure that different methods return the same info
+                        let commit = repo.find_commit(oid?)?;
 
-            let mut diff_options = DiffOptions::new();
+                        #[cfg(not(any(
+                            feature = "info-difftrees",
+                            feature = "info-git-commands"
+                        )))]
+                        if self.commit_matches_name(&commit) {
+                            return Ok(commit);
+                        }
 
-            diff_options
-                .ignore_submodules(true)
-                .enable_fast_untracked_dirs(true)
-                .context_lines(0)
-                .interhunk_lines(0)
-                .disable_pathspec_match(true)
-                .ignore_whitespace(true)
-                .ignore_whitespace_change(true)
-                .ignore_whitespace_eol(true)
-                .force_binary(true)
-                .include_ignored(false)
-                .include_typechange(false)
-                .include_ignored(false)
-                .include_typechange_trees(false)
-                .include_unmodified(false)
-                .include_unreadable(false)
-                .include_unreadable_as_untracked(false)
-                .include_untracked(false);
+                        #[cfg(feature = "info-difftrees")]
+                        {
+                            if let Ok(true) = self.commit_diff_matches(&repo, &commit) {
+                                return Ok(commit);
+                            }
+                        }
 
-            'revwalk: for oid in revwalk {
-                // TODO: Add tests using personal bucket to ensure that different methods return the same info
-                let commit = repo.find_commit(oid?)?;
+                        Err(PackageError::NoUpdatedCommit)
+                    };
 
-                #[cfg(not(any(feature = "info-difftrees", feature = "info-git-commands")))]
-                if let Some(message) = commit.message() {
-                    if message.starts_with(&self.name) {
-                        updated_commit = Some(commit);
-                        break 'revwalk;
+                    let result = find_commit();
+
+                    match result {
+                        Ok(commit) => Some(Ok(commit)),
+                        Err(PackageError::NoUpdatedCommit) => None,
+                        Err(e) => Some(Err(e)),
                     }
-                }
-
-                #[cfg(feature = "info-difftrees")]
-                {
-                    let tree = commit.tree()?;
-                    let parent_tree = commit.parent(0)?.tree()?;
-
-                    let manifest_path = format!("bucket/{}.json", self.name);
-
-                    let diff = repo.diff_tree_to_tree(
-                        Some(&parent_tree),
-                        Some(&tree),
-                        Some(diff_options.pathspec(&manifest_path)),
-                    )?;
-
-                    // Given that the diffoptions ensure that we only match the specific manifest
-                    // we are safe to return as soon as we find a commit thats changed anything
-                    if diff.stats()?.files_changed() != 0 {
-                        updated_commit = Some(commit);
-                        break 'revwalk;
-                    }
-                }
-            }
-
-            let updated_commit = updated_commit.ok_or(PackageError::NoUpdatedCommit)?;
-
-            let time = updated_commit.time();
-            let author = updated_commit.author();
+                })
+                .ok_or(PackageError::NoUpdatedCommit)??;
 
             let date_time = {
+                let time = updated_commit.time();
                 let secs = time.seconds();
                 let offset = time.offset_minutes();
 
@@ -588,7 +593,8 @@ impl Manifest {
                 DateTime::<FixedOffset>::from_naive_utc_and_offset(naive_time, offset)
             };
 
-            let author_wrapped = Author::from_signature(author).with_show_emails(!hide_emails);
+            let author_wrapped =
+                Author::from_signature(updated_commit.author()).with_show_emails(!hide_emails);
 
             Ok((
                 Some(date_time.to_string()),
@@ -610,10 +616,8 @@ impl Manifest {
                 .output()
                 .map_err(|_| PackageError::MissingGitOutput)?;
 
-            let stdout_string =
-                String::from_utf8(output.stdout).map_err(|_| PackageError::NonUtf8)?;
-
-            let (time, author) = stdout_string
+            let info = String::from_utf8(output.stdout)
+                .map_err(|_| PackageError::NonUtf8)?
                 // Remove newline from end
                 .trim_end()
                 // Remove weird single quote from either end
@@ -622,7 +626,7 @@ impl Manifest {
                 .map(|(time, author)| (time.to_string(), author.to_string()))
                 .unzip();
 
-            Ok((time, author))
+            Ok(info)
         }
     }
 }
