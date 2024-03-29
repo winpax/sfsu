@@ -191,7 +191,7 @@ impl Scoop {
     /// # Errors
     /// - Creating the directory fails
     pub fn logging_dir() -> std::io::Result<PathBuf> {
-        let logs_path = Scoop::apps_path().join("sfsu").join("logs");
+        let logs_path = Scoop::apps_path().join("sfsu").join("current").join("logs");
 
         if !logs_path.exists() {
             std::fs::create_dir_all(&logs_path)?;
@@ -212,7 +212,8 @@ impl Scoop {
         loop {
             i += 1;
 
-            let log_path = logs_dir.join(format!("sfsu-{}-{i}", date.format("%Y-%m-%d-%H-%M-%S")));
+            let log_path =
+                logs_dir.join(format!("sfsu-{}-{i}.txt", date.format("%Y-%m-%d-%H-%M-%S")));
 
             if !log_path.exists() {
                 break File::create(&log_path);
