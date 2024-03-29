@@ -4,7 +4,7 @@ use std::{
     time::{SystemTimeError, UNIX_EPOCH},
 };
 
-use chrono::{DateTime, FixedOffset, Local, NaiveDateTime};
+use chrono::{DateTime, FixedOffset, Local};
 use clap::{Parser, ValueEnum};
 use colored::Colorize as _;
 use derive_more::{Deref, DerefMut};
@@ -500,6 +500,11 @@ impl Manifest {
 
     #[cfg_attr(feature = "info-git-commands", allow(unreachable_code))]
     /// Get the time and author of the commit where this manifest was last changed
+    ///
+    /// # Errors
+    /// - Invalid bucket
+    /// - Invalid repo bucket
+    /// - Internal git2 errors
     pub fn last_updated_info(
         &self,
         hide_emails: bool,
@@ -583,15 +588,14 @@ impl Manifest {
 
             let date_time = {
                 let secs = time.seconds();
-                let offset = time.offset_minutes();
+                let offset = time.offset_minutes() * 60;
 
-                let naive_time =
-                    NaiveDateTime::from_timestamp_opt(secs, 0).ok_or(PackageError::InvalidTime)?;
+                let utc_time =
+                    DateTime::from_timestamp(secs, 0).ok_or(PackageError::InvalidTime)?;
 
-                let offset =
-                    FixedOffset::east_opt(offset * 60).ok_or(PackageError::InvalidTimeZone)?;
+                let offset = FixedOffset::east_opt(offset).ok_or(PackageError::InvalidTimeZone)?;
 
-                DateTime::<FixedOffset>::from_naive_utc_and_offset(naive_time, offset)
+                utc_time.with_timezone(&offset)
             };
 
             let author_wrapped = Author::from_signature(author).with_show_emails(!hide_emails);

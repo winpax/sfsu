@@ -3,7 +3,7 @@ use git2::{Commit, FetchOptions, Remote, Repository};
 
 use crate::buckets::Bucket;
 
-pub mod pull;
+// pub mod pull;
 
 #[derive(Debug, thiserror::Error)]
 pub enum RepoError {
