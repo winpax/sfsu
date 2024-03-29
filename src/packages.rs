@@ -4,7 +4,7 @@ use std::{
     time::{SystemTimeError, UNIX_EPOCH},
 };
 
-use chrono::{DateTime, FixedOffset, NaiveDateTime};
+use chrono::{DateTime, FixedOffset, Local, NaiveDateTime};
 use clap::{Parser, ValueEnum};
 use colored::Colorize as _;
 use derive_more::{Deref, DerefMut};
@@ -56,7 +56,7 @@ pub struct MinInfo {
     pub name: String,
     pub version: String,
     pub source: String,
-    pub updated: NicerNaiveTime,
+    pub updated: NicerNaiveTime<DateTime<Local>>,
     pub notes: String,
 }
 
@@ -101,7 +101,7 @@ impl MinInfo {
             .map(|f| f.to_string_lossy())
             .ok_or(PackageError::MissingFileName)?;
 
-        let naive_time = {
+        let updated_time = {
             let updated = {
                 let updated_sys = path.metadata()?.modified()?;
 
@@ -109,8 +109,9 @@ impl MinInfo {
             };
 
             #[allow(clippy::cast_possible_wrap)]
-            NaiveDateTime::from_timestamp_opt(updated as i64, 0)
+            DateTime::from_timestamp(updated as i64, 0)
                 .expect("invalid or out-of-range datetime")
+                .with_timezone(&Local)
         };
 
         let app_current = path.join("current");
@@ -124,7 +125,7 @@ impl MinInfo {
             name: package_name.to_string(),
             version: manifest.version,
             source: install_manifest.get_source(),
-            updated: naive_time.into(),
+            updated: updated_time.into(),
             notes: if install_manifest.hold.contains_truth() {
                 String::from("Held")
             } else {
