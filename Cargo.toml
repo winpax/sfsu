@@ -2,7 +2,7 @@
 description = "Stupid Fast Scoop Utils"
 edition     = "2021"
 name        = "sfsu"
-version     = "1.8.7"
+version     = "1.8.8"
 
 [workspace]
 members = ["sfsu-derive"]
@@ -23,7 +23,7 @@ v2 = []
 
 [dependencies]
 anyhow = "1.0"
-cfg-if = "1.0.0"
+cfg-if = "1.0"
 chrono = { version = ">=0.4.20", features = [
     "clock",
     "serde",
@@ -38,8 +38,8 @@ dunce = "1.0"
 git2 = "0.18"
 human-panic = "1.2"
 itertools = "0.12"
-lazy_static = "1.4.0"
-log = { version = "0.4.21", features = ["std"] }
+lazy_static = "1.4"
+log = { version = "0.4", features = ["std"] }
 quork = "0.6"
 rayon = "1.10"
 regex = "1.10"
@@ -50,7 +50,7 @@ sfsu-derive = { path = "./sfsu-derive" }
 shadow-rs = "0.27"
 strum = { version = "0.26", features = ["derive"] }
 thiserror = "1.0"
-which = "6.0.1"
+which = "6.0"
 
 [dev-dependencies]
 chrono    = ">=0.4.20"
