@@ -37,11 +37,11 @@ directories = "5.0"
 dunce = "1.0"
 git2 = "0.18"
 human-panic = "1.2"
-indicatif = { version = "0.17.8", features = ["improved_unicode", "rayon"] }
+indicatif = { version = "0.17", features = ["improved_unicode", "rayon"] }
 itertools = "0.12"
 lazy_static = "1.4"
 log = { version = "0.4", features = ["std"] }
-parking_lot = "0.12.1"
+parking_lot = "0.12"
 quork = "0.6"
 rayon = "1.10"
 regex = "1.10"
