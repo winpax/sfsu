@@ -3,8 +3,6 @@ use itertools::Itertools;
 use rayon::prelude::*;
 use sfsu::buckets::Bucket;
 
-use crate::commands::{DeprecationMessage, DeprecationWarning};
-
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
     #[clap(from_global)]

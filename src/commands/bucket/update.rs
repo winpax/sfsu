@@ -1,10 +1,7 @@
 use clap::Parser;
 use rayon::prelude::*;
 
-use sfsu::{
-    buckets::{self, Bucket},
-    git,
-};
+use sfsu::buckets::{self, Bucket};
 
 use crate::commands;
 
@@ -28,9 +25,11 @@ impl commands::Command for Args {
             .try_for_each(|bucket| -> buckets::Result<()> {
                 let repo = bucket.open_repo()?;
 
-                Ok(())
-            });
+                repo.pull()?;
 
-        todo!()
+                Ok(())
+            })?;
+
+        Ok(())
     }
 }

@@ -57,9 +57,6 @@ pub struct Args {
     #[clap(short = 'E', long, help = "Show `Updated by` user emails")]
     hide_emails: bool,
 
-    #[clap(long, help = "Display more information about the package")]
-    verbose: bool,
-
     #[clap(from_global)]
     json: bool,
 
