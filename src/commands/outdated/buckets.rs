@@ -12,13 +12,6 @@ pub struct Args {
 }
 
 impl super::super::Command for Args {
-    fn deprecated() -> Option<crate::commands::DeprecationWarning> {
-        Some(DeprecationWarning {
-            message: DeprecationMessage::Replacement("sfsu outdated buckets"),
-            version: Some(2.0),
-        })
-    }
-
     fn runner(self) -> Result<(), anyhow::Error> {
         self.run_direct(true)?;
 
