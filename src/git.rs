@@ -3,7 +3,9 @@ use git2::{Commit, DiffOptions, FetchOptions, Remote, Repository};
 
 use crate::buckets::Bucket;
 
-// pub mod pull;
+use self::pull::ProgressCallback;
+
+mod pull;
 
 #[derive(Debug, thiserror::Error)]
 pub enum RepoError {
@@ -14,7 +16,7 @@ pub enum RepoError {
     Git2(#[from] git2::Error),
 }
 
-pub type RepoResult<T> = std::result::Result<T, RepoError>;
+pub type Result<T> = std::result::Result<T, RepoError>;
 
 #[derive(Deref)]
 pub struct Repo(Repository);
@@ -24,7 +26,7 @@ impl Repo {
     ///
     /// # Errors
     /// - The bucket could not be opened as a repository
-    pub fn from_bucket(bucket: &Bucket) -> RepoResult<Self> {
+    pub fn from_bucket(bucket: &Bucket) -> Result<Self> {
         let repo = Repository::open(bucket.path())?;
 
         Ok(Self(repo))
@@ -37,7 +39,7 @@ impl Repo {
     ///
     /// # Panics
     /// - Non-utf8 branch name
-    pub fn main_remote(&self) -> RepoResult<Remote<'_>> {
+    pub fn main_remote(&self) -> Result<Remote<'_>> {
         Ok(self
             .0
             .find_remote(self.0.head()?.name().expect("utf8 branch name"))?)
@@ -47,7 +49,7 @@ impl Repo {
     ///
     /// # Errors
     /// - No active branch
-    pub fn current_branch(&self) -> RepoResult<String> {
+    pub fn current_branch(&self) -> Result<String> {
         self.0
             .head()?
             .shorthand()
@@ -60,7 +62,7 @@ impl Repo {
     /// # Errors
     /// - No remote named "origin"
     /// - No active branch
-    pub fn fetch(&self) -> RepoResult<()> {
+    pub fn fetch(&self) -> Result<()> {
         let current_branch = self.current_branch()?;
 
         // Fetch the latest changes from the remote repository
@@ -78,7 +80,7 @@ impl Repo {
     /// - No remote named "origin"
     /// - No active branch
     /// - No reference "`FETCH_HEAD`"
-    pub fn outdated(&self) -> RepoResult<bool> {
+    pub fn outdated(&self) -> Result<bool> {
         self.fetch()?;
 
         // Get the local and remote HEADs
@@ -93,7 +95,7 @@ impl Repo {
     /// # Errors
     /// - Missing head
     /// - Missing latest commit
-    pub fn latest_commit(&self) -> RepoResult<Commit<'_>> {
+    pub fn latest_commit(&self) -> Result<Commit<'_>> {
         Ok(self.0.head()?.peel_to_commit()?)
     }
 
@@ -130,5 +132,22 @@ impl Repo {
             .include_untracked(false);
 
         diff_options
+    }
+
+    /// Pull the latest changes from the remote repository
+    ///
+    /// # Errors
+    /// - No active branch
+    /// - No remote named "origin"
+    /// - No reference "`FETCH_HEAD`"
+    /// - Missing head
+    /// - Missing latest commit
+    /// - Git error
+    pub fn pull(&self, stats_cb: Option<ProgressCallback<'_>>) -> Result<()> {
+        let current_branch = self.current_branch()?;
+
+        pull::pull(self, None, Some(current_branch.as_str()), stats_cb)?;
+
+        Ok(())
     }
 }

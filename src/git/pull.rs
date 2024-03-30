@@ -15,64 +15,35 @@
  */
 
 use git2::Repository;
-use std::io::{self, Write};
+use log::trace;
 use std::str;
+
+pub type ProgressCallback<'a> = &'a dyn Fn(git2::Progress<'_>, bool) -> bool;
 
 fn do_fetch<'a>(
     repo: &'a git2::Repository,
     refs: &[&str],
     remote: &'a mut git2::Remote<'_>,
+    stats_cb: Option<ProgressCallback<'_>>,
 ) -> Result<git2::AnnotatedCommit<'a>, git2::Error> {
     let mut cb = git2::RemoteCallbacks::new();
 
     // Print out our transfer progress.
-    cb.transfer_progress(|stats| {
-        if stats.received_objects() == stats.total_objects() {
-            print!(
-                "Resolving deltas {}/{}\r",
-                stats.indexed_deltas(),
-                stats.total_deltas()
-            );
-        } else if stats.total_objects() > 0 {
-            print!(
-                "Received {}/{} objects ({}) in {} bytes\r",
-                stats.received_objects(),
-                stats.total_objects(),
-                stats.indexed_objects(),
-                stats.received_bytes()
-            );
-        }
-        io::stdout().flush().unwrap();
-        true
-    });
+    if let Some(stats_cb) = stats_cb.as_ref() {
+        cb.transfer_progress(|stats| stats_cb(stats, false));
+    }
 
     let mut fo = git2::FetchOptions::new();
     fo.remote_callbacks(cb);
     // Always fetch all tags.
     // Perform a download and also update tips
     fo.download_tags(git2::AutotagOption::All);
-    println!("Fetching {} for repo", remote.name().unwrap());
     remote.fetch(refs, Some(&mut fo), None)?;
 
-    // If there are local objects (we got a thin pack), then tell the user
-    // how many objects we saved from having to cross the network.
     let stats = remote.stats();
-    if stats.local_objects() > 0 {
-        println!(
-            "\rReceived {}/{} objects in {} bytes (used {} local \
-             objects)",
-            stats.indexed_objects(),
-            stats.total_objects(),
-            stats.received_bytes(),
-            stats.local_objects()
-        );
-    } else {
-        println!(
-            "\rReceived {}/{} objects in {} bytes",
-            stats.indexed_objects(),
-            stats.total_objects(),
-            stats.received_bytes()
-        );
+
+    if let Some(stats_cb) = stats_cb.as_ref() {
+        stats_cb(stats, true);
     }
 
     let fetch_head = repo.find_reference("FETCH_HEAD")?;
@@ -89,7 +60,6 @@ fn fast_forward(
         None => String::from_utf8_lossy(lb.name_bytes()).to_string(),
     };
     let msg = format!("Fast-Forward: Setting {} to id: {}", name, rc.id());
-    println!("{msg}");
     lb.set_target(rc.id(), &msg)?;
     repo.set_head(&name)?;
     repo.checkout_head(Some(
@@ -115,7 +85,7 @@ fn normal_merge(
     let mut idx = repo.merge_trees(&ancestor, &local_tree, &remote_tree, None)?;
 
     if idx.has_conflicts() {
-        println!("Merge conflicts detected...");
+        trace!("Merge conflicts detected...");
         repo.checkout_index(Some(&mut idx), None)?;
         return Ok(());
     }
@@ -149,7 +119,6 @@ fn do_merge<'a>(
 
     // 2. Do the appropriate merge
     if analysis.0.is_fast_forward() {
-        println!("Doing a fast forward");
         // do a fast forward
         let refname = format!("refs/heads/{remote_branch}");
         if let Ok(mut r) = repo.find_reference(&refname) {
@@ -176,16 +145,19 @@ fn do_merge<'a>(
         // do a normal merge
         let head_commit = repo.reference_to_annotated_commit(&repo.head()?)?;
         normal_merge(repo, &head_commit, fetch_commit)?;
-    } else {
-        println!("Nothing to do...");
     }
     Ok(())
 }
 
-fn pull(repo: &Repository, remote: Option<&str>, branch: Option<&str>) -> Result<(), git2::Error> {
+pub fn pull(
+    repo: &super::Repo,
+    remote: Option<&str>,
+    branch: Option<&str>,
+    stats_cb: Option<ProgressCallback<'_>>,
+) -> Result<(), git2::Error> {
     let remote_name = remote.unwrap_or("origin");
     let remote_branch = branch.unwrap_or("master");
     let mut remote = repo.find_remote(remote_name)?;
-    let fetch_commit = do_fetch(repo, &[remote_branch], &mut remote)?;
+    let fetch_commit = do_fetch(repo, &[remote_branch], &mut remote, stats_cb)?;
     do_merge(repo, remote_branch, &fetch_commit)
 }
