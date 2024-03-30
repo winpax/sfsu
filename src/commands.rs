@@ -4,9 +4,11 @@ pub mod describe;
 pub mod hook;
 pub mod info;
 pub mod list;
-pub mod outdated;
 pub mod search;
 pub mod status;
+
+#[cfg(not(feature = "v2"))]
+pub mod outdated;
 
 use clap::Subcommand;
 
@@ -75,11 +77,12 @@ pub enum Commands {
     #[cfg_attr(not(feature = "v2"), no_hook)]
     /// Manages buckets
     Bucket(bucket::Args),
-    /// Describe a package
     #[cfg(not(feature = "v2"))]
+    /// Describe a package
     Describe(describe::Args),
     /// Display information about a package
     Info(info::Args),
+    #[cfg(not(feature = "v2"))]
     /// List outdated buckets and/or packages
     Outdated(outdated::Args),
     /// List the dependencies of a given package, in the order that they will be installed
