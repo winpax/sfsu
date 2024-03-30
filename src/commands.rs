@@ -11,9 +11,23 @@ use clap::Subcommand;
 
 use sfsu_derive::{Hooks, Runnable};
 
+pub struct DeprecationWarning {
+    /// Deprecation message
+    message: DeprecationMessage,
+    /// Version to be removed in
+    version: Option<f32>,
+}
+
+pub enum DeprecationMessage {
+    /// Replacement info
+    Replacement(&'static str),
+    /// Warning message
+    Warning(&'static str),
+}
+
 // TODO: Run command could return `impl Display` and print that itself
 pub trait Command {
-    fn deprecated() -> Option<&'static str> {
+    fn deprecated() -> Option<DeprecationWarning> {
         None
     }
 
@@ -23,11 +37,21 @@ pub trait Command {
     where
         Self: Sized,
     {
-        if let Some(deprecation_message) = Self::deprecated() {
+        if let Some(deprecation_warning) = Self::deprecated() {
             use colored::Colorize as _;
 
             let mut output = String::from("DEPRECATED: ");
-            output += deprecation_message;
+
+            match deprecation_warning.message {
+                DeprecationMessage::Replacement(replacement) => {
+                    output += &format!("Use `{replacement}` instead. ");
+                }
+                DeprecationMessage::Warning(warning) => output += &warning,
+            }
+
+            if let Some(version) = deprecation_warning.version {
+                output += &format!("Will be removed in v{version}. ");
+            }
 
             println!("{}\n", output.yellow());
         }

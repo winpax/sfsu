@@ -7,7 +7,7 @@ use sfsu::{
     packages::InstallManifest,
 };
 
-use crate::commands;
+use crate::commands::{self, DeprecationMessage, DeprecationWarning};
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
@@ -16,6 +16,13 @@ pub struct Args {
 }
 
 impl commands::Command for Args {
+    fn deprecated() -> Option<DeprecationWarning> {
+        Some(DeprecationWarning {
+            message: DeprecationMessage::Replacement("sfsu bucket unused"),
+            version: Some(2.0),
+        })
+    }
+
     fn runner(self) -> Result<(), anyhow::Error> {
         // TODO: Refactor
         let used_buckets = InstallManifest::list_all_unchecked()?
