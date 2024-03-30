@@ -6,6 +6,7 @@ pub mod info;
 pub mod list;
 pub mod outdated;
 pub mod search;
+pub mod status;
 
 use clap::Subcommand;
 
@@ -83,4 +84,6 @@ pub enum Commands {
     Outdated(outdated::Args),
     /// List the dependencies of a given package, in the order that they will be installed
     Depends(depends::Args),
+    /// Show status and check for new app versions
+    Status(status::Args),
 }
