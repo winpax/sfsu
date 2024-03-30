@@ -38,29 +38,9 @@ fn do_fetch<'a>(
     // Always fetch all tags.
     // Perform a download and also update tips
     fo.download_tags(git2::AutotagOption::All);
-    trace!("Fetching {} for repo", remote.name().unwrap());
     remote.fetch(refs, Some(&mut fo), None)?;
 
-    // If there are local objects (we got a thin pack), then tell the user
-    // how many objects we saved from having to cross the network.
     let stats = remote.stats();
-    // if stats.local_objects() > 0 {
-    //     trace!(
-    //         "\rReceived {}/{} objects in {} bytes (used {} local \
-    //          objects)",
-    //         stats.indexed_objects(),
-    //         stats.total_objects(),
-    //         stats.received_bytes(),
-    //         stats.local_objects()
-    //     );
-    // } else {
-    //     trace!(
-    //         "\rReceived {}/{} objects in {} bytes",
-    //         stats.indexed_objects(),
-    //         stats.total_objects(),
-    //         stats.received_bytes()
-    //     );
-    // }
 
     if let Some(stats_cb) = stats_cb.as_ref() {
         stats_cb(stats, true);
@@ -80,7 +60,6 @@ fn fast_forward(
         None => String::from_utf8_lossy(lb.name_bytes()).to_string(),
     };
     let msg = format!("Fast-Forward: Setting {} to id: {}", name, rc.id());
-    trace!("{msg}");
     lb.set_target(rc.id(), &msg)?;
     repo.set_head(&name)?;
     repo.checkout_head(Some(
@@ -140,7 +119,6 @@ fn do_merge<'a>(
 
     // 2. Do the appropriate merge
     if analysis.0.is_fast_forward() {
-        trace!("Doing a fast forward");
         // do a fast forward
         let refname = format!("refs/heads/{remote_branch}");
         if let Ok(mut r) = repo.find_reference(&refname) {
@@ -167,8 +145,6 @@ fn do_merge<'a>(
         // do a normal merge
         let head_commit = repo.reference_to_annotated_commit(&repo.head()?)?;
         normal_merge(repo, &head_commit, fetch_commit)?;
-    } else {
-        trace!("Nothing to do...");
     }
     Ok(())
 }
