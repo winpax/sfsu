@@ -32,6 +32,19 @@ impl Repo {
         Ok(Self(repo))
     }
 
+    /// Open Scoop app repository
+    ///
+    /// # Errors
+    /// - The Scoop app could not be opened as a repository
+    pub fn scoop_app() -> Result<Self> {
+        use crate::Scoop;
+
+        let scoop_path = Scoop::apps_path().join("scoop").join("current");
+        let repo = Repository::open(scoop_path)?;
+
+        Ok(Self(repo))
+    }
+
     /// Get the current remote branch
     ///
     /// # Errors

@@ -8,6 +8,7 @@ use serde_json::Value;
 
 use sfsu::{
     buckets::Bucket,
+    git::Repo,
     output::{
         sectioned::{Children, Section},
         structured::Structured,
@@ -25,6 +26,8 @@ pub struct Args {
 
 impl super::Command for Args {
     fn runner(self) -> anyhow::Result<()> {
+        self.handle_scoop()?;
+
         self.handle_buckets()?;
 
         self.handle_packages()?;
@@ -34,6 +37,21 @@ impl super::Command for Args {
 }
 
 impl Args {
+    fn handle_scoop(&self) -> anyhow::Result<()> {
+        let scoop_repo = Repo::scoop_app()?;
+
+        if scoop_repo.outdated()? {
+            eprintln!(
+                "{}",
+                "Scoop is out of date. Run `scoop update` to get the latest changes.".yellow()
+            );
+        } else {
+            eprintln!("Scoop app is up to date.");
+        }
+
+        Ok(())
+    }
+
     fn handle_buckets(&self) -> anyhow::Result<()> {
         let buckets = Bucket::list_all()?;
 
