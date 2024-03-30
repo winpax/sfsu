@@ -8,7 +8,7 @@ use chrono::{DateTime, FixedOffset, Local};
 use clap::{Parser, ValueEnum};
 use colored::Colorize as _;
 use derive_more::{Deref, DerefMut};
-use git2::{Commit, DiffOptions, Oid, Revwalk};
+use git2::{Commit, Oid, Revwalk};
 use itertools::Itertools;
 use quork::traits::truthy::ContainsTruth as _;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
