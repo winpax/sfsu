@@ -1,5 +1,6 @@
 use clap::Parser;
-use indicatif::{MultiProgress, ProgressBar, ProgressFinish};
+use indicatif::{MultiProgress, ProgressBar, ProgressFinish, ProgressStyle};
+use itertools::Itertools;
 use parking_lot::Mutex;
 use rayon::prelude::*;
 
@@ -17,27 +18,51 @@ impl commands::Command for Args {
     fn runner(self) -> Result<(), anyhow::Error> {
         let buckets = Bucket::list_all()?;
 
+        let progress_style = ProgressStyle::with_template(
+            "{prefix} {spinner:.green} [{wide_bar:.cyan/blue}] {pos}/{len} ({eta}) {msg}",
+        )
+        .unwrap()
+        .progress_chars("#>-");
+
         let mp = MultiProgress::new();
+
+        let longest_bucket_name = buckets
+            .iter()
+            .map(|bucket| bucket.name().len())
+            .max()
+            .unwrap_or(0);
 
         let outdated_buckets = buckets
             .into_iter()
             .map(|bucket| {
                 let pb = Mutex::new(
                     mp.add(
-                        ProgressBar::new(0)
-                            .with_message(format!("{}: Pulling updates", bucket.name()))
-                            .with_finish(ProgressFinish::WithMessage("Finished pull".into())),
+                        ProgressBar::new(1)
+                            .with_position(0)
+                            .with_style(progress_style.clone())
+                            .with_message("Checking bucket for updates")
+                            .with_prefix(format!("{:<longest_bucket_name$}", bucket.name()))
+                            .with_finish(ProgressFinish::WithMessage("✅ Finished pull".into())),
                     ),
                 );
 
+                pb.lock().set_position(0);
+
                 (bucket, pb)
             })
-            .filter(|(bucket, pb)| {
-                if matches!(bucket.outdated(), Ok(true)) {
-                    true
+            .map(|(bucket, pb)| {
+                let outdated = matches!(bucket.outdated(), Ok(true));
+
+                (bucket, pb, outdated)
+            })
+            .collect_vec()
+            .into_iter()
+            .filter_map(|(bucket, pb, outdated)| {
+                if outdated {
+                    Some((bucket, pb))
                 } else {
-                    pb.lock().finish_with_message("Finished pull");
-                    false
+                    pb.lock().finish_with_message("✅ Up to date");
+                    None
                 }
             })
             .collect::<Vec<_>>();
@@ -54,7 +79,7 @@ impl commands::Command for Args {
                     let pb = pb.lock();
 
                     if finished {
-                        pb.finish();
+                        pb.finish_with_message("✅ Finished pull");
                         return true;
                     }
 
