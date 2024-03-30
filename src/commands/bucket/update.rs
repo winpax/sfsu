@@ -9,17 +9,16 @@ use sfsu::buckets::{self, Bucket};
 use crate::commands;
 
 #[derive(Debug, Clone, Parser)]
-pub struct Args {
-    #[clap(from_global)]
-    json: bool,
-}
+pub struct Args;
 
 impl commands::Command for Args {
     fn runner(self) -> Result<(), anyhow::Error> {
+        const FINISH_MESSAGE: &str = "✅";
+
         let buckets = Bucket::list_all()?;
 
         let progress_style = ProgressStyle::with_template(
-            "{prefix} {spinner:.green} [{wide_bar:.cyan/blue}] {pos}/{len} ({eta}) {msg}",
+            "{prefix} {spinner:.green} [{wide_bar:.cyan/blue}] ({eta}) {msg}",
         )
         .unwrap()
         .progress_chars("#>-");
@@ -42,7 +41,7 @@ impl commands::Command for Args {
                             .with_style(progress_style.clone())
                             .with_message("Checking bucket for updates")
                             .with_prefix(format!("{:<longest_bucket_name$}", bucket.name()))
-                            .with_finish(ProgressFinish::WithMessage("✅ Finished pull".into())),
+                            .with_finish(ProgressFinish::WithMessage(FINISH_MESSAGE.into())),
                     ),
                 );
 
@@ -50,22 +49,7 @@ impl commands::Command for Args {
 
                 (bucket, pb)
             })
-            .map(|(bucket, pb)| {
-                let outdated = matches!(bucket.outdated(), Ok(true));
-
-                (bucket, pb, outdated)
-            })
-            .collect_vec()
-            .into_iter()
-            .filter_map(|(bucket, pb, outdated)| {
-                if outdated {
-                    Some((bucket, pb))
-                } else {
-                    pb.lock().finish_with_message("✅ Up to date");
-                    None
-                }
-            })
-            .collect::<Vec<_>>();
+            .collect_vec();
 
         outdated_buckets
             .par_iter()
@@ -79,7 +63,7 @@ impl commands::Command for Args {
                     let pb = pb.lock();
 
                     if finished {
-                        pb.finish_with_message("✅ Finished pull");
+                        pb.finish_with_message(FINISH_MESSAGE);
                         return true;
                     }
 
@@ -91,13 +75,6 @@ impl commands::Command for Args {
                         pb.set_position(stats.received_objects() as u64);
                         pb.set_length(stats.total_objects() as u64);
                         pb.set_message("Receiving objects");
-                        // eprint!(
-                        //     "Received {}/{} objects ({}) in {} bytes\r",
-                        //     stats.received_objects(),
-                        //     stats.total_objects(),
-                        //     stats.indexed_objects(),
-                        //     stats.received_bytes()
-                        // );
                     }
 
                     true
