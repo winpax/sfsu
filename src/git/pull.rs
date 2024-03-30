@@ -18,19 +18,19 @@ use git2::Repository;
 use log::trace;
 use std::str;
 
-pub type ProgressCallback<'a> = &'a mut dyn FnMut(git2::Progress<'_>) -> bool;
+pub type ProgressCallback<'a> = &'a dyn Fn(git2::Progress<'_>, bool) -> bool;
 
 fn do_fetch<'a>(
     repo: &'a git2::Repository,
     refs: &[&str],
     remote: &'a mut git2::Remote<'_>,
-    mut stats_cb: Option<ProgressCallback<'_>>,
+    stats_cb: Option<ProgressCallback<'_>>,
 ) -> Result<git2::AnnotatedCommit<'a>, git2::Error> {
     let mut cb = git2::RemoteCallbacks::new();
 
     // Print out our transfer progress.
-    if let Some(stats_cb) = stats_cb.as_mut() {
-        cb.transfer_progress(stats_cb);
+    if let Some(stats_cb) = stats_cb.as_ref() {
+        cb.transfer_progress(|stats| stats_cb(stats, false));
     }
 
     let mut fo = git2::FetchOptions::new();
@@ -60,6 +60,10 @@ fn do_fetch<'a>(
             stats.total_objects(),
             stats.received_bytes()
         );
+    }
+
+    if let Some(stats_cb) = stats_cb.as_ref() {
+        stats_cb(stats, true);
     }
 
     let fetch_head = repo.find_reference("FETCH_HEAD")?;
