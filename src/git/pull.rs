@@ -182,7 +182,11 @@ fn do_merge<'a>(
     Ok(())
 }
 
-fn pull(repo: &Repository, remote: Option<&str>, branch: Option<&str>) -> Result<(), git2::Error> {
+pub fn pull(
+    repo: &super::Repo,
+    remote: Option<&str>,
+    branch: Option<&str>,
+) -> Result<(), git2::Error> {
     let remote_name = remote.unwrap_or("origin");
     let remote_branch = branch.unwrap_or("master");
     let mut remote = repo.find_remote(remote_name)?;
