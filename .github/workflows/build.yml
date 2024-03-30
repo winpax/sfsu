@@ -99,9 +99,7 @@ jobs:
         uses: softprops/action-gh-release@v2.0.4
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: |
-            .exe$
-            .exe.sha256$
+          files: .exe*$
 
       - name: VirusTotal Scan
         uses: crazy-max/ghaction-virustotal@v4
