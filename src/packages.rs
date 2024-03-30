@@ -7,28 +7,13 @@ use std::{
 use chrono::{DateTime, FixedOffset, Local};
 use clap::{Parser, ValueEnum};
 use colored::Colorize as _;
-use derive_more::{Deref, DerefMut};
-use git2::{Commit, Oid, Revwalk};
+use git2::Commit;
 use itertools::Itertools;
 use quork::traits::truthy::ContainsTruth as _;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use strum::Display;
-
-#[derive(Deref, DerefMut)]
-struct SSRevwalk<'a>(Revwalk<'a>);
-
-unsafe impl<'a> Send for SSRevwalk<'a> {}
-unsafe impl<'a> Sync for SSRevwalk<'a> {}
-
-impl<'a> Iterator for SSRevwalk<'a> {
-    type Item = std::result::Result<Oid, git2::Error>;
-
-    fn next(&mut self) -> Option<std::result::Result<Oid, git2::Error>> {
-        self.0.next()
-    }
-}
 
 use crate::{
     buckets::{self, Bucket},
