@@ -44,23 +44,23 @@ fn do_fetch<'a>(
     // If there are local objects (we got a thin pack), then tell the user
     // how many objects we saved from having to cross the network.
     let stats = remote.stats();
-    if stats.local_objects() > 0 {
-        trace!(
-            "\rReceived {}/{} objects in {} bytes (used {} local \
-             objects)",
-            stats.indexed_objects(),
-            stats.total_objects(),
-            stats.received_bytes(),
-            stats.local_objects()
-        );
-    } else {
-        trace!(
-            "\rReceived {}/{} objects in {} bytes",
-            stats.indexed_objects(),
-            stats.total_objects(),
-            stats.received_bytes()
-        );
-    }
+    // if stats.local_objects() > 0 {
+    //     trace!(
+    //         "\rReceived {}/{} objects in {} bytes (used {} local \
+    //          objects)",
+    //         stats.indexed_objects(),
+    //         stats.total_objects(),
+    //         stats.received_bytes(),
+    //         stats.local_objects()
+    //     );
+    // } else {
+    //     trace!(
+    //         "\rReceived {}/{} objects in {} bytes",
+    //         stats.indexed_objects(),
+    //         stats.total_objects(),
+    //         stats.received_bytes()
+    //     );
+    // }
 
     if let Some(stats_cb) = stats_cb.as_ref() {
         stats_cb(stats, true);

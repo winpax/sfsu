@@ -18,7 +18,7 @@ impl commands::Command for Args {
         let buckets = Bucket::list_all()?;
 
         let progress_style = ProgressStyle::with_template(
-            "{prefix} {spinner:.green} [{wide_bar:.cyan/blue}] ({eta}) {msg}",
+            "{prefix} {spinner:.green} [{wide_bar:.cyan/blue}] {pos}/{len} ({eta}) {msg}",
         )
         .unwrap()
         .progress_chars("#>-");
@@ -63,7 +63,10 @@ impl commands::Command for Args {
                     let pb = pb.lock();
 
                     if finished {
-                        pb.finish_with_message(FINISH_MESSAGE);
+                        // Thin pack
+                        pb.set_position(stats.indexed_objects() as u64);
+                        pb.set_length(stats.total_objects() as u64);
+
                         return true;
                     }
 
