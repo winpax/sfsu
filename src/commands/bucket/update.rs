@@ -1,5 +1,3 @@
-use std::mem::MaybeUninit;
-
 use clap::Parser;
 use indicatif::{MultiProgress, ProgressBar, ProgressFinish};
 use parking_lot::Mutex;
@@ -33,9 +31,10 @@ impl commands::Command for Args {
 
                 let pb = Mutex::new(None::<ProgressBar>);
 
-                println!("starting doing shit lets go yay");
+                debug!("Beggining pull for {}", bucket.path().display());
 
                 repo.pull(Some(&mut |stats| {
+                    debug!("Callback for outdated backup pull");
                     if let Some(pb) = pb.lock().as_ref() {
                         if stats.received_objects() == stats.total_objects() {
                             pb.set_position(stats.indexed_deltas() as u64);
@@ -60,7 +59,7 @@ impl commands::Command for Args {
                                 .with_finish(ProgressFinish::WithMessage("Finished pull".into())),
                         );
 
-                        println!("Fetching from {}", bucket.path().display());
+                        debug!("Fetching from {}", bucket.path().display());
                     }
 
                     true
