@@ -1,8 +1,5 @@
-use std::collections::HashMap;
-
 use clap::Parser;
 use colored::Colorize as _;
-use itertools::Itertools as _;
 use rayon::prelude::*;
 use serde_json::Value;
 
@@ -18,29 +15,42 @@ use sfsu::{
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
-    // #[clap(from_global)]
-    // json: bool,
+    #[clap(from_global)]
+    json: bool,
+
     #[clap(from_global)]
     verbose: bool,
 }
 
 impl super::Command for Args {
     fn runner(self) -> anyhow::Result<()> {
-        self.handle_scoop()?;
+        let mut value = Value::default();
 
-        self.handle_buckets()?;
+        self.handle_scoop(&mut value)?;
 
-        self.handle_packages()?;
+        self.handle_buckets(&mut value)?;
+
+        self.handle_packages(&mut value)?;
+
+        if self.json {
+            let output = serde_json::to_string(&value)?;
+            println!("{output}");
+        }
 
         Ok(())
     }
 }
 
 impl Args {
-    fn handle_scoop(&self) -> anyhow::Result<()> {
+    fn handle_scoop(&self, value: &mut Value) -> anyhow::Result<()> {
         let scoop_repo = Repo::scoop_app()?;
 
-        if scoop_repo.outdated()? {
+        let is_outdated = scoop_repo.outdated()?;
+
+        if self.json {
+            value["scoop"] = serde_json::to_value(is_outdated)?;
+            return Ok(());
+        } else if is_outdated {
             eprintln!(
                 "{}",
                 "Scoop is out of date. Run `scoop update` to get the latest changes.".yellow()
@@ -52,11 +62,11 @@ impl Args {
         Ok(())
     }
 
-    fn handle_buckets(&self) -> anyhow::Result<()> {
+    fn handle_buckets(&self, value: &mut Value) -> anyhow::Result<()> {
         let buckets = Bucket::list_all()?;
 
         // Handle buckets
-        if self.verbose {
+        if self.verbose || self.json {
             let outdated_buckets = buckets
                 .into_par_iter()
                 .filter_map(|bucket| {
@@ -70,12 +80,13 @@ impl Args {
                 })
                 .collect::<Vec<_>>();
 
+            if self.json {
+                value["buckets"] = serde_json::to_value(&outdated_buckets)?;
+                return Ok(());
+            }
+
             if outdated_buckets.is_empty() {
                 eprintln!("All buckets up to date.");
-            // } else if self.json {
-            //     let json = serde_json::to_string_pretty(&outdated_buckets)?;
-
-            //     println!("{json}");
             } else {
                 let title = format!("{} outdated buckets:", outdated_buckets.len());
 
@@ -105,7 +116,7 @@ impl Args {
         Ok(())
     }
 
-    fn handle_packages(&self) -> anyhow::Result<()> {
+    fn handle_packages(&self, value: &mut Value) -> anyhow::Result<()> {
         let apps = install::Manifest::list_all_unchecked()?;
 
         let mut outdated: Vec<outdated::Info> = apps
@@ -130,6 +141,12 @@ impl Args {
                 }
             })
             .collect();
+
+        if self.json {
+            outdated.dedup();
+            value["packages"] = serde_json::to_value(&outdated)?;
+            return Ok(());
+        }
 
         if outdated.is_empty() {
             println!("No outdated packages.");
