@@ -2,7 +2,7 @@
 description = "Stupid Fast Scoop Utils"
 edition     = "2021"
 name        = "sfsu"
-version     = "1.8.9"
+version     = "1.8.10"
 
 [workspace]
 members = ["sfsu-derive"]

@@ -1171,7 +1171,7 @@ dependencies = [
 
 [[package]]
 name = "sfsu"
-version = "1.8.9"
+version = "1.8.10"
 dependencies = [
  "anyhow",
  "cfg-if",
