@@ -67,14 +67,9 @@ impl Package {
             ManifestRef::File(path) => {
                 Some(path.with_extension("").file_name()?.to_str()?.to_string())
             }
-            ManifestRef::Url(url) => Some(
-                url.path_segments()?
-                    .last()?
-                    .to_string()
-                    .split('.')
-                    .next()?
-                    .to_string(),
-            ),
+            ManifestRef::Url(url) => {
+                Some(url.path_segments()?.last()?.split('.').next()?.to_string())
+            }
         }
     }
 

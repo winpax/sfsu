@@ -114,7 +114,6 @@ impl Downloader {
         let boxed = cache
             .file_name
             .to_string_lossy()
-            .to_string()
             .split('_')
             .next_back()
             .expect("non-empty file name")
