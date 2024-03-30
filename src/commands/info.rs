@@ -1,22 +1,25 @@
-use chrono::{DateTime, FixedOffset, NaiveDateTime};
 use clap::Parser;
+use colored::Colorize;
 use itertools::Itertools;
 use serde::Serialize;
+
 use sfsu::{
-    buckets::Bucket,
     calm_panic::calm_panic,
-    git::Repo,
     output::{
         structured::vertical::VTable,
         wrappers::{
             alias_vec::AliasVec,
-            author::Author,
             bool::{wrap_bool, NicerBool},
             keys::Key,
             time::NicerTime,
         },
     },
-    packages::{manifest::PackageLicense, Manifest},
+    packages::{
+        manifest::{
+            PackageLicense, StringOrArrayOfStrings, StringOrArrayOfStringsOrAnArrayOfArrayOfStrings,
+        },
+        reference,
+    },
     KeyValue, Scoop,
 };
 
@@ -38,11 +41,17 @@ struct PackageInfo {
 }
 
 #[derive(Debug, Clone, Parser)]
+#[allow(clippy::struct_excessive_bools)]
 pub struct Args {
     #[clap(help = "The package to get info from")]
-    package: String,
+    package: reference::Package,
 
-    #[clap(short, long, help = "The bucket to exclusively search in")]
+    #[cfg(not(feature = "v2"))]
+    #[clap(
+        short,
+        long,
+        help = format!("The bucket to exclusively search in. {}", "DEPRECATED: Use <bucket>/<package> syntax instead".yellow())
+    )]
     bucket: Option<String>,
 
     #[clap(short = 'E', long, help = "Show `Updated by` user emails")]
@@ -53,19 +62,24 @@ pub struct Args {
 
     #[clap(from_global)]
     json: bool,
+
+    #[clap(from_global)]
+    disable_git: bool,
+
+    #[clap(long, help = "Disable updated info")]
+    disable_updated: bool,
 }
 
 impl super::Command for Args {
-    fn runner(self) -> Result<(), anyhow::Error> {
-        let buckets = Bucket::one_or_all(self.bucket)?;
+    fn runner(mut self) -> anyhow::Result<()> {
+        #[cfg(not(feature = "v2"))]
+        if self.package.bucket().is_none() {
+            if let Some(bucket) = self.bucket {
+                self.package.set_bucket(bucket)?;
+            }
+        }
 
-        let manifests: Vec<(String, String, Manifest)> = buckets
-            .iter()
-            .filter_map(|bucket| match bucket.get_manifest(&self.package) {
-                Ok(manifest) => Some((self.package.clone(), bucket.name().to_string(), manifest)),
-                Err(_) => None,
-            })
-            .collect();
+        let manifests = self.package.list_manifests();
 
         if manifests.is_empty() {
             calm_panic(format!(
@@ -84,64 +98,56 @@ impl super::Command for Args {
 
         let installed_apps = Scoop::installed_apps()?;
 
-        for (name, bucket, manifest) in manifests {
+        for manifest in manifests {
             let install_path = {
                 let install_path = installed_apps.iter().find(|app| {
-                    app.with_extension("").file_name() == Some(&std::ffi::OsString::from(&name))
+                    app.with_extension("").file_name()
+                        == Some(&std::ffi::OsString::from(&manifest.name))
                 });
 
                 install_path.cloned()
             };
 
-            let repo =
-                Bucket::from_name(&bucket).and_then(|bucket| Ok(Repo::from_bucket(&bucket)?));
-
-            let (updated_at, updated_by) = if let Ok(repo) = repo {
-                let latest_commit = repo.latest_commit()?;
-                let time = latest_commit.time();
-                let author = latest_commit.author();
-
-                let date_time = {
-                    let secs = time.seconds();
-                    let offset = time.offset_minutes();
-
-                    let naive_time = NaiveDateTime::from_timestamp_opt(secs, 0)
-                        .ok_or(anyhow::anyhow!("Invalid time"))?;
-
-                    let offset = FixedOffset::east_opt(offset * 60)
-                        .ok_or(anyhow::anyhow!("Invalid timezone offset"))?;
-
-                    DateTime::<FixedOffset>::from_naive_utc_and_offset(naive_time, offset)
-                };
-
-                let author_wrapped =
-                    Author::from_signature(author).with_show_emails(!self.hide_emails);
-
-                (
-                    Some(date_time.to_string()),
-                    Some(author_wrapped.to_string()),
-                )
+            let (updated_at, updated_by) = if self.disable_updated {
+                (None, None)
             } else {
-                match install_path {
-                    Some(ref install_path) => {
-                        let updated_at = install_path.metadata()?.modified()?;
+                match manifest.last_updated_info(self.hide_emails, self.disable_git) {
+                    Ok(v) => v,
+                    Err(_) => match install_path {
+                        Some(ref install_path) => {
+                            let updated_at = install_path.metadata()?.modified()?;
 
-                        (Some(NicerTime::from(updated_at).to_string()), None)
-                    }
-                    _ => (None, None),
+                            (Some(NicerTime::from(updated_at).to_string()), None)
+                        }
+                        _ => (None, None),
+                    },
                 }
             };
 
             let pkg_info = PackageInfo {
-                name,
-                bucket,
+                name: manifest.name,
+                bucket: manifest.bucket,
                 description: manifest.description,
                 version: manifest.version,
                 website: manifest.homepage,
                 license: manifest.license,
                 // TODO: Fix binaries display
                 // NOTE: Run `sfsu info inkscape` to know what I mean 😬
-                binaries: manifest.bin.map(|b| b.into_vec().join(",")),
+                binaries: manifest.bin.map(|b| match b {
+                    StringOrArrayOfStringsOrAnArrayOfArrayOfStrings::String(bin) => bin.to_string(),
+                    StringOrArrayOfStringsOrAnArrayOfArrayOfStrings::StringArray(bins) => {
+                        bins.join(" | ")
+                    }
+                    StringOrArrayOfStringsOrAnArrayOfArrayOfStrings::UnionArray(bins) => bins
+                        .into_iter()
+                        .map(|bin_union| match bin_union {
+                            StringOrArrayOfStrings::String(bin) => bin,
+                            StringOrArrayOfStrings::StringArray(mut bin_alias) => {
+                                bin_alias.remove(0)
+                            }
+                        })
+                        .join(" | "),
+                }),
                 notes: manifest.notes.map(|notes| notes.to_string()),
                 installed: wrap_bool!(install_path.is_some()),
                 shortcuts: manifest.install_config.shortcuts.map(AliasVec::from_vec),

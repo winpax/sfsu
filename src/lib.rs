@@ -1,7 +1,8 @@
 #![warn(clippy::all, clippy::pedantic, rust_2018_idioms)]
 
-use std::{ffi::OsStr, fmt, path::PathBuf};
+use std::{ffi::OsStr, fmt, fs::File, path::PathBuf};
 
+use chrono::Local;
 use rayon::prelude::*;
 
 pub mod buckets;
@@ -39,22 +40,26 @@ pub enum SupportedArch {
 }
 
 impl SupportedArch {
+    /// Get the architecture of the current environment
+    pub const ARCH: Self = {
+        if cfg!(target_arch = "x86_64") {
+            Self::X64
+        } else if cfg!(target_arch = "x86") {
+            Self::X86
+        } else if cfg!(target_arch = "aarch64") {
+            Self::Arm64
+        } else {
+            panic!("Unsupported architecture")
+        }
+    };
+
     #[must_use]
     /// Get the architecture of the current environment
     ///
     /// # Panics
     /// - Unsupported environment
     pub const fn from_env() -> Self {
-        use std::env::consts::ARCH;
-        if const_str::equal!(ARCH, "x86") {
-            Self::X86
-        } else if const_str::equal!(ARCH, "x86_64") {
-            Self::X64
-        } else if const_str::equal!(ARCH, "aarch64") {
-            Self::Arm64
-        } else {
-            panic!("Unsupported architecture")
-        }
+        Self::ARCH
     }
 
     #[must_use]
@@ -105,6 +110,14 @@ impl Scoop {
     /// Get the system architecture
     pub const fn arch() -> SupportedArch {
         SupportedArch::from_env()
+    }
+
+    /// Get the git executable path
+    ///
+    /// # Errors
+    /// - Could not find `git` in path
+    pub fn git_path() -> Result<PathBuf, which::Error> {
+        which::which("git")
     }
 
     #[must_use]
@@ -186,5 +199,40 @@ impl Scoop {
                 }
             })
             .collect())
+    }
+
+    /// Get the path to the log directory
+    ///
+    /// # Errors
+    /// - Creating the directory fails
+    pub fn logging_dir() -> std::io::Result<PathBuf> {
+        let logs_path = Scoop::apps_path().join("sfsu").join("current").join("logs");
+
+        if !logs_path.exists() {
+            std::fs::create_dir_all(&logs_path)?;
+        }
+
+        Ok(logs_path)
+    }
+
+    /// Create a new log file
+    ///
+    /// # Errors
+    /// - Creating the file fails
+    pub fn new_log() -> std::io::Result<File> {
+        let logs_dir = Self::logging_dir()?;
+        let date = Local::now();
+
+        let mut i = 0;
+        loop {
+            i += 1;
+
+            let log_path =
+                logs_dir.join(format!("sfsu-{}-{i}.txt", date.format("%Y-%m-%d-%H-%M-%S")));
+
+            if !log_path.exists() {
+                break File::create(&log_path);
+            }
+        }
     }
 }
