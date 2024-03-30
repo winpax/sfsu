@@ -55,7 +55,6 @@ fn main() -> anyhow::Result<()> {
 
     logging::Logger::init(args.verbose)?;
 
-
     if args.no_color {
         debug!("Colour disabled globally");
         colored::control::set_override(false);
