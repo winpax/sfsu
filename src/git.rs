@@ -3,6 +3,8 @@ use git2::{Commit, DiffOptions, FetchOptions, Remote, Repository};
 
 use crate::buckets::Bucket;
 
+use self::pull::ProgressCallback;
+
 mod pull;
 
 #[derive(Debug, thiserror::Error)]
@@ -141,10 +143,10 @@ impl Repo {
     /// - Missing head
     /// - Missing latest commit
     /// - Git error
-    pub fn pull(&self) -> Result<()> {
+    pub fn pull(&self, stats_cb: Option<ProgressCallback<'_>>) -> Result<()> {
         let current_branch = self.current_branch()?;
 
-        pull::pull(self, None, Some(current_branch.as_str()))?;
+        pull::pull(self, None, Some(current_branch.as_str()), stats_cb)?;
 
         Ok(())
     }
