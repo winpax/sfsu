@@ -36,7 +36,7 @@ derive_more = "0.99"
 directories = "5.0"
 dunce = "1.0"
 git2 = "0.18"
-heck = "0.5.0"
+heck = "0.5"
 human-panic = "1.2"
 indicatif = { version = "0.17", features = ["improved_unicode", "rayon"] }
 itertools = "0.12"
