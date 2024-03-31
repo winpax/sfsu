@@ -107,9 +107,8 @@ impl Repo {
         );
 
         let local_head = self.latest_commit()?;
-        let fetch_head = self.0.find_commit(head.oid())?;
 
-        Ok(local_head.id() != fetch_head.id())
+        Ok(local_head.id() != head.oid())
     }
 
     /// Get the latest commit
