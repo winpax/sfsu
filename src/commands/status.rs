@@ -128,8 +128,13 @@ impl Args {
             }
         } else {
             let buckets_outdated = buckets.par_iter().any(|bucket| {
-                bucket.outdated().unwrap_or_else(|_| {
+                bucket.outdated().unwrap_or_else(|err| {
                     eprintln!("Failed to check bucket: {}", bucket.name());
+                    error!(
+                        "Failed to check bucket: {}. Threw Error: {:?}",
+                        bucket.name(),
+                        err
+                    );
                     false
                 })
             });

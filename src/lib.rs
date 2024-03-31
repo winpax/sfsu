@@ -192,7 +192,11 @@ impl Scoop {
     /// # Errors
     /// - Creating the directory fails
     pub fn logging_dir() -> std::io::Result<PathBuf> {
+        #[cfg(not(debug_assertions))]
         let logs_path = Scoop::apps_path().join("sfsu").join("current").join("logs");
+
+        #[cfg(debug_assertions)]
+        let logs_path = std::env::current_dir()?.join("logs");
 
         if !logs_path.exists() {
             std::fs::create_dir_all(&logs_path)?;

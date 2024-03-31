@@ -1,7 +1,7 @@
 use derive_more::Deref;
-use git2::{Commit, DiffOptions, FetchOptions, Remote, Repository};
+use git2::{Commit, DiffOptions, Direction, FetchOptions, Remote, Repository};
 
-use crate::buckets::Bucket;
+use crate::{buckets::Bucket, opt::ResultIntoOption};
 
 use self::pull::ProgressCallback;
 
@@ -14,6 +14,12 @@ pub enum RepoError {
 
     #[error("Git error: {0}")]
     Git2(#[from] git2::Error),
+
+    #[error("No remote named {0}")]
+    MissingRemote(String),
+
+    #[error("Missing head in remote")]
+    MissingHead,
 }
 
 pub type Result<T> = std::result::Result<T, RepoError>;
@@ -45,17 +51,9 @@ impl Repo {
         Ok(Self(repo))
     }
 
-    /// Get the current remote branch
-    ///
-    /// # Errors
-    /// - Missing head
-    ///
-    /// # Panics
-    /// - Non-utf8 branch name
-    pub fn main_remote(&self) -> Result<Remote<'_>> {
-        Ok(self
-            .0
-            .find_remote(self.0.head()?.name().expect("utf8 branch name"))?)
+    /// Get the origin remote
+    pub fn origin(&self) -> Option<Remote<'_>> {
+        self.find_remote("origin").into_option()
     }
 
     /// Get the current branch
@@ -96,6 +94,15 @@ impl Repo {
     pub fn outdated(&self) -> Result<bool> {
         // TODO: Use ls-remote (https://github.com/rust-lang/git2-rs/blob/master/examples/ls-remote.rs) instead of fetch and download
         self.fetch()?;
+
+        let mut remote = self
+            .origin()
+            .ok_or(RepoError::MissingRemote("origin".to_string()))?;
+
+        let connection = remote.connect_auth(Direction::Fetch, None, None)?;
+
+        let head = connection.list()?.first().ok_or(RepoError::MissingHead)?;
+        debug!("{}\t{}", head.oid(), head.name());
 
         // Get the local and remote HEADs
         let local_head = self.latest_commit()?;

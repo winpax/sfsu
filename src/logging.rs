@@ -1,5 +1,7 @@
 use std::{fs::File, io::Write};
 
+use log::LevelFilter;
+
 pub mod panics;
 
 pub struct Logger {
@@ -17,10 +19,8 @@ impl Logger {
     }
 
     pub fn init(verbose: bool) -> Result<(), log::SetLoggerError> {
-        let logger = Box::new(Logger::new(verbose));
-        let logger = Box::leak(logger);
-
-        log::set_logger(logger)?;
+        log::set_boxed_logger(Box::new(Logger::new(verbose)))?;
+        log::set_max_level(LevelFilter::Trace);
 
         debug!("Initialized logger");
 
@@ -38,13 +38,11 @@ impl log::Log for Logger {
     }
 
     fn log(&self, record: &log::Record<'_>) {
-        if self.enabled(record.metadata()) {
-            if record.metadata().level() == log::Level::Trace {
-                eprintln!("{}: {}", record.level(), record.args());
-            } else {
-                writeln!(&self.file, "{}: {}", record.level(), record.args())
-                    .expect("writing to log file");
-            }
+        if record.metadata().level() == log::Level::Trace {
+            eprintln!("{}: {}", record.level(), record.args());
+        } else {
+            writeln!(&self.file, "{}: {}", record.level(), record.args())
+                .expect("writing to log file");
         }
     }
 
