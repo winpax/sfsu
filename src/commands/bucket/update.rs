@@ -8,6 +8,7 @@ use rayon::prelude::*;
 
 use sfsu::{
     buckets::{self, Bucket},
+    config::Scoop,
     progress::{style, MessagePosition, ProgressOptions},
 };
 
@@ -99,6 +100,10 @@ impl commands::Command for Args {
 
                 Ok(())
             })?;
+
+        let mut scoop_config = Scoop::load()?;
+        scoop_config.update_last_update_time();
+        scoop_config.save()?;
 
         Ok(())
     }
