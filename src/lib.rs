@@ -229,9 +229,13 @@ impl Scoop {
         }
     }
 
-    pub fn app_installed(name: &str) -> std::io::Result<bool> {
+    /// Checks if the app is installed by its name
+    ///
+    /// # Errors
+    /// - Reading app dir fails
+    pub fn app_installed(name: impl AsRef<str>) -> std::io::Result<bool> {
         Ok(Self::installed_apps()?
             .iter()
-            .any(|path| path.file_name() == Some(OsStr::new(name))))
+            .any(|path| path.file_name() == Some(OsStr::new(name.as_ref()))))
     }
 }

@@ -14,7 +14,7 @@ use sfsu::{
         sectioned::{Children, Section},
         structured::Structured,
     },
-    packages::{install, status::StatusInfo},
+    packages::{install, status::Info},
     progress::style,
 };
 
@@ -161,13 +161,13 @@ impl Args {
 
         let mut invalid_apps = apps
             .par_iter()
-            .flat_map(|app| -> anyhow::Result<StatusInfo> {
+            .flat_map(|app| -> anyhow::Result<Info> {
                 if let Some(bucket) = &app.bucket {
                     let local_manifest = app.get_manifest()?;
                     // TODO: Add the option to check all buckets and find the highest version (will require semver to order versions)
                     let bucket = Bucket::from_name(bucket)?;
 
-                    match StatusInfo::from_manifests(&local_manifest, &bucket) {
+                    match Info::from_manifests(&local_manifest, &bucket) {
                         Ok(info) => Ok(info),
                         Err(err) => {
                             error!("Failed to get status for {}: {:?}", app.name, err);

@@ -1,6 +1,5 @@
 use std::fmt::Display;
 
-use itertools::Itertools;
 use rayon::prelude::*;
 use serde_json::Value;
 

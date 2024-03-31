@@ -7,7 +7,7 @@ use crate::{buckets::Bucket, Scoop};
 use super::{reference, Manifest, Result};
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq, Hash)]
-pub struct StatusInfo {
+pub struct Info {
     pub name: String,
     pub current: String,
     pub available: String,
@@ -15,8 +15,8 @@ pub struct StatusInfo {
     pub info: Option<String>,
 }
 
-impl StatusInfo {
-    /// Parse [`StatusInfo`] from a local manifest
+impl Info {
+    /// Parse [`Info`] from a local manifest
     ///
     /// # Errors
     /// - If the local manifest is missing
@@ -44,8 +44,7 @@ impl StatusInfo {
             .into_iter()
             .filter(|reference| {
                 debug!("Checking if {} is installed.", reference.name());
-                !reference::Package::installed(reference)
-                    .expect("failed to check if package is installed")
+                !reference::Package::installed(reference).contains_truth()
             })
             .collect_vec();
 
@@ -58,7 +57,7 @@ impl StatusInfo {
             info += "Held package";
         }
 
-        Ok(StatusInfo {
+        Ok(Info {
             name: remote_manifest.name.clone(),
             current: local_manifest.version.clone(),
             available: remote_manifest.version.clone(),
