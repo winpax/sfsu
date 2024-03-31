@@ -94,6 +94,7 @@ impl Repo {
     /// - No active branch
     /// - No reference "`FETCH_HEAD`"
     pub fn outdated(&self) -> Result<bool> {
+        // TODO: Use ls-remote (https://github.com/rust-lang/git2-rs/blob/master/examples/ls-remote.rs) instead of fetch and download
         self.fetch()?;
 
         // Get the local and remote HEADs
