@@ -81,6 +81,12 @@ impl Package {
                 .collect()
         }
     }
+
+    pub fn installed(&self) -> std::io::Result<bool> {
+        let name = self.name();
+
+        crate::Scoop::app_installed(name)
+    }
 }
 
 impl fmt::Display for Package {

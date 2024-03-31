@@ -38,6 +38,7 @@ impl log::Log for Logger {
     }
 
     fn log(&self, record: &log::Record<'_>) {
+        // TODO: Add a queue of sorts because this doesn't work well with multiple threads
         if record.metadata().level() == log::Level::Trace {
             eprintln!("{}: {}", record.level(), record.args());
         } else {

@@ -29,6 +29,7 @@ pub mod install;
 pub mod manifest;
 pub mod outdated;
 pub mod reference;
+pub mod status;
 
 pub use install::Manifest as InstallManifest;
 pub use manifest::Manifest;
@@ -150,6 +151,8 @@ pub enum PackageError {
     InvalidTimeZone,
     #[error("Git provided no output")]
     MissingGitOutput,
+    #[error("Missing local manifest for package")]
+    MissingLocalManifest,
 }
 
 #[derive(Debug, Default, Copy, Clone, ValueEnum, Display, Parser, PartialEq, Eq)]
@@ -618,6 +621,22 @@ impl Manifest {
 
             Ok(info)
         }
+    }
+
+    /// Get [`InstallManifest`] for [`Manifest`]
+    ///
+    /// # Errors
+    /// - Missing or invalid [`InstallManifest`]
+    pub fn install_manifest(&self) -> Result<InstallManifest> {
+        let apps_path = Scoop::apps_path();
+        let install_path = apps_path
+            .join(&self.name)
+            .join("current")
+            .join("install.json");
+
+        debug!("Getting install manifest for {}", install_path.display());
+
+        InstallManifest::from_path(install_path)
     }
 }
 

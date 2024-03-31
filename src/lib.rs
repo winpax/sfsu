@@ -228,4 +228,10 @@ impl Scoop {
             }
         }
     }
+
+    pub fn app_installed(name: &str) -> std::io::Result<bool> {
+        Ok(Self::installed_apps()?
+            .iter()
+            .any(|path| path.file_name() == Some(OsStr::new(name))))
+    }
 }

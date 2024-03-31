@@ -5,7 +5,6 @@ use colored::Colorize as _;
 use parking_lot::Mutex;
 use quork::prelude::*;
 use rayon::prelude::*;
-use serde::Serialize;
 use serde_json::Value;
 
 use sfsu::{
@@ -15,38 +14,11 @@ use sfsu::{
         sectioned::{Children, Section},
         structured::Structured,
     },
-    packages::{install, outdated, Manifest},
+    packages::{install, status::StatusInfo},
     progress::style,
 };
 
-#[derive(Debug, Clone, Serialize, PartialEq, Eq, Hash)]
-#[serde(rename_all = "PascalCase")]
-pub struct StatusInfo {
-    pub name: String,
-    pub current: String,
-    pub available: String,
-    pub missing_dependencies: String,
-    pub info: String,
-}
-
-impl StatusInfo {
-    /// Get the outdated info from a local and remote manifest combo
-    ///
-    /// Returns [`None`] if they have the same version
-    #[must_use]
-    pub fn from_manifests(local: &Manifest, remote: &Manifest) -> Option<Self> {
-        if local.version == remote.version {
-            None
-        } else {
-            // Some(StatusInfo {
-            //     name: remote.name.clone(),
-            //     current: local.version.clone(),
-            //     available: remote.version.clone(),
-            // })
-            todo!()
-        }
-    }
-}
+use crate::commands::info;
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
@@ -187,28 +159,29 @@ impl Args {
     fn handle_packages(&self, value: &Mutex<Value>, output: &mut dyn Write) -> anyhow::Result<()> {
         let apps = install::Manifest::list_all_unchecked()?;
 
-        let mut outdated: Vec<outdated::Info> = apps
+        debug!("Checking {} apps", apps.len());
+
+        let mut outdated = apps
             .par_iter()
-            .flat_map(|app| -> anyhow::Result<outdated::Info> {
+            .flat_map(|app| -> anyhow::Result<StatusInfo> {
                 if let Some(bucket) = &app.bucket {
                     let local_manifest = app.get_manifest()?;
                     // TODO: Add the option to check all buckets and find the highest version (will require semver to order versions)
                     let bucket = Bucket::from_name(bucket)?;
 
-                    let remote_manifest = bucket.get_manifest(&app.name)?;
-
-                    if let Some(info) =
-                        outdated::Info::from_manifests(&local_manifest, &remote_manifest)
-                    {
-                        Ok(info)
-                    } else {
-                        anyhow::bail!("no update available")
+                    match StatusInfo::from_manifests(&local_manifest, &bucket) {
+                        Ok(info) => Ok(info),
+                        Err(err) => {
+                            error!("Failed to get status for {}: {:?}", app.name, err);
+                            anyhow::bail!("Failed to get status for {}: {:?}", app.name, err)
+                        }
                     }
                 } else {
+                    error!("no bucket specified");
                     anyhow::bail!("no bucket specified")
                 }
             })
-            .collect();
+            .collect::<Vec<_>>();
 
         if self.json {
             outdated.dedup();
