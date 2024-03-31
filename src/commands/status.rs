@@ -5,6 +5,7 @@ use colored::Colorize as _;
 use parking_lot::Mutex;
 use quork::prelude::*;
 use rayon::prelude::*;
+use serde::Serialize;
 use serde_json::Value;
 
 use sfsu::{
@@ -14,9 +15,38 @@ use sfsu::{
         sectioned::{Children, Section},
         structured::Structured,
     },
-    packages::{install, outdated},
+    packages::{install, outdated, Manifest},
     progress::style,
 };
+
+#[derive(Debug, Clone, Serialize, PartialEq, Eq, Hash)]
+#[serde(rename_all = "PascalCase")]
+pub struct StatusInfo {
+    pub name: String,
+    pub current: String,
+    pub available: String,
+    pub missing_dependencies: String,
+    pub info: String,
+}
+
+impl StatusInfo {
+    /// Get the outdated info from a local and remote manifest combo
+    ///
+    /// Returns [`None`] if they have the same version
+    #[must_use]
+    pub fn from_manifests(local: &Manifest, remote: &Manifest) -> Option<Self> {
+        if local.version == remote.version {
+            None
+        } else {
+            // Some(StatusInfo {
+            //     name: remote.name.clone(),
+            //     current: local.version.clone(),
+            //     available: remote.version.clone(),
+            // })
+            todo!()
+        }
+    }
+}
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
