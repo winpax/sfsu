@@ -7,13 +7,15 @@ use sfsu::{
     packages::InstallManifest,
 };
 
+use crate::commands;
+
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
     #[clap(from_global)]
     json: bool,
 }
 
-impl super::Command for Args {
+impl commands::Command for Args {
     fn runner(self) -> Result<(), anyhow::Error> {
         // TODO: Refactor
         let used_buckets = InstallManifest::list_all_unchecked()?

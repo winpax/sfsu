@@ -2,7 +2,7 @@ use clap::{Parser, Subcommand};
 use serde_json::Map;
 use sfsu_derive::Runnable;
 
-use super::Command;
+use super::{Command, DeprecationMessage, DeprecationWarning};
 
 mod apps;
 mod buckets;
@@ -25,6 +25,13 @@ pub struct Args {
 }
 
 impl Command for Args {
+    fn deprecated() -> Option<DeprecationWarning> {
+        Some(DeprecationWarning {
+            message: DeprecationMessage::Replacement("sfsu status"),
+            version: Some(2.0),
+        })
+    }
+
     fn runner(self) -> anyhow::Result<()> {
         if let Some(command) = self.command {
             command.run()

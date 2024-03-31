@@ -17,6 +17,10 @@ pub mod stream;
 mod opt;
 /// Currently this is mostly an internal api
 pub mod output;
+pub mod progress;
+
+#[macro_use]
+extern crate log;
 
 pub struct SimIter<A, B>(A, B);
 
@@ -206,7 +210,11 @@ impl Scoop {
     /// # Errors
     /// - Creating the directory fails
     pub fn logging_dir() -> std::io::Result<PathBuf> {
+        #[cfg(not(debug_assertions))]
         let logs_path = Scoop::apps_path().join("sfsu").join("current").join("logs");
+
+        #[cfg(debug_assertions)]
+        let logs_path = std::env::current_dir()?.join("logs");
 
         if !logs_path.exists() {
             std::fs::create_dir_all(&logs_path)?;
@@ -234,5 +242,23 @@ impl Scoop {
                 break File::create(&log_path);
             }
         }
+    }
+
+    /// Checks if the app is installed by its name
+    ///
+    /// # Errors
+    /// - Reading app dir fails
+    pub fn app_installed(name: impl AsRef<str>) -> std::io::Result<bool> {
+        Ok(Self::installed_apps()?
+            .iter()
+            .any(|path| path.file_name() == Some(OsStr::new(name.as_ref()))))
+    }
+
+    /// Open Scoop app repository
+    ///
+    /// # Errors
+    /// - The Scoop app could not be opened as a repository
+    pub fn open_repo() -> git::Result<git::Repo> {
+        git::Repo::scoop_app()
     }
 }

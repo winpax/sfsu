@@ -10,6 +10,10 @@ use crate::buckets::Bucket;
 pub enum Error {
     #[error("Attempted to set bucket on a file path or url. This is not supported.")]
     BucketOnDirectRef,
+    #[error("Invalid app name in manifest ref")]
+    MissingAppName,
+    #[error("IO Error")]
+    Io(#[from] std::io::Error),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -136,6 +140,17 @@ impl Package {
                 })
                 .collect()
         }
+    }
+
+    /// Checks if the package is installed
+    ///
+    /// # Errors
+    /// - Reading app dir fails
+    /// - Missing app name
+    pub fn installed(&self) -> Result<bool, Error> {
+        let name = self.name().ok_or(Error::MissingAppName)?;
+
+        Ok(crate::Scoop::app_installed(name)?)
     }
 }
 

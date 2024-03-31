@@ -100,8 +100,8 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: |
-            .exe$
-            .exe.sha256$
+            release/*.exe
+            release/*.exe.sha256
 
       - name: VirusTotal Scan
         uses: crazy-max/ghaction-virustotal@v4
