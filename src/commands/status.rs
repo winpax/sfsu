@@ -180,26 +180,10 @@ impl Args {
                 }
             })
             .filter(|app| {
-                debug!(
-                    "{}: Current: {} | Available: {}",
-                    app.name, app.current, app.available
-                );
                 // Filter out apps that are okay
-                if app.name == "archwsl" {
-                    debug!("App info: {:?}", app.info);
-                    debug!("App missing deps: {:?}", app.missing_dependencies);
-                    debug!("Current == Available: {}", app.current == app.available);
-                }
-
-                let good = app.info.is_none()
-                    && app.missing_dependencies.is_empty()
-                    && app.current == app.available;
-
-                if app.name == "archwsl" {
-                    assert!(!good);
-                }
-
-                !good
+                app.info.is_some()
+                    || !app.missing_dependencies.is_empty()
+                    || app.current != app.available
             })
             .collect::<Vec<_>>();
 
