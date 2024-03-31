@@ -51,6 +51,7 @@ impl Repo {
         Ok(Self(repo))
     }
 
+    #[must_use]
     /// Get the origin remote
     pub fn origin(&self) -> Option<Remote<'_>> {
         self.find_remote("origin").into_option()
