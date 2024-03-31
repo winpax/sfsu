@@ -37,7 +37,6 @@ pub use manifest::Manifest;
 use manifest::StringOrArrayOfStringsOrAnArrayOfArrayOfStrings;
 
 #[derive(Debug, Serialize)]
-#[serde(rename_all = "PascalCase")]
 pub struct MinInfo {
     pub name: String,
     pub version: String,
