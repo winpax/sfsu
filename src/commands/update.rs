@@ -36,8 +36,8 @@ impl super::Command for Args {
             .with_finish(ProgressFinish::WithMessage(FINISH_MESSAGE.into()));
 
         if scoop_repo.outdated()? {
-            scoop_repo.pull(Some(&|stats, finished| {
-                if finished {
+            scoop_repo.pull(Some(&|stats, thin| {
+                if thin {
                     pb.set_position(stats.indexed_objects() as u64);
                     pb.set_length(stats.total_objects() as u64);
 
@@ -93,10 +93,10 @@ impl super::Command for Args {
 
                 debug!("Beggining pull for {}", bucket.name());
 
-                repo.pull(Some(&|stats, finished| {
+                repo.pull(Some(&|stats, thin| {
                     debug!("Callback for outdated backup pull");
 
-                    if finished {
+                    if thin {
                         pb.set_position(stats.indexed_objects() as u64);
                         pb.set_length(stats.total_objects() as u64);
 
