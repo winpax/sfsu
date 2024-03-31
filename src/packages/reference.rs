@@ -30,6 +30,16 @@ pub enum ManifestRef {
     Url(Url),
 }
 
+impl ManifestRef {
+    #[must_use]
+    pub fn into_package_ref(self) -> Package {
+        Package {
+            manifest: self,
+            version: None,
+        }
+    }
+}
+
 impl Package {
     /// Update the bucket string in the package reference
     ///

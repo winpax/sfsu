@@ -2,7 +2,7 @@ use itertools::Itertools as _;
 use quork::traits::truthy::ContainsTruth;
 use serde::Serialize;
 
-use crate::{buckets::Bucket, Scoop};
+use crate::{buckets::Bucket, packages::reference::ManifestRef, Scoop};
 
 use super::{reference, Manifest, Result};
 
@@ -21,6 +21,9 @@ impl Info {
     /// # Errors
     /// - If the local manifest is missing
     /// - If the install manifest is missing
+    ///
+    /// # Panics
+    /// - Invalid package reference name
     pub fn from_manifests(local_manifest: &Manifest, bucket: &Bucket) -> Result<Self> {
         let failed = {
             let installed = Scoop::app_installed(&local_manifest.name)?;
@@ -42,9 +45,13 @@ impl Info {
         let missing_dependencies = local_manifest
             .depends()
             .into_iter()
+            .map(ManifestRef::into_package_ref)
             .filter(|reference| {
-                debug!("Checking if {} is installed.", reference.name());
-                !reference::Package::installed(reference).contains_truth()
+                debug!(
+                    "Checking if {} is installed.",
+                    reference.name().expect("valid name")
+                );
+                !reference.installed().contains_truth()
             })
             .collect_vec();
 
