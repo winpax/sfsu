@@ -17,8 +17,6 @@ pub struct Args;
 
 impl super::Command for Args {
     fn runner(self) -> Result<(), anyhow::Error> {
-        // TODO: Add update time to bucket so scoop doesn't do it again
-
         const FINISH_MESSAGE: &str = "✅";
 
         let buckets = Bucket::list_all()?;
