@@ -1,6 +1,9 @@
+use std::fmt::Write;
+
 use clap::Parser;
 use colored::Colorize as _;
-use indicatif::ParallelProgressIterator;
+use parking_lot::Mutex;
+use quork::prelude::*;
 use rayon::prelude::*;
 use serde_json::Value;
 
@@ -12,7 +15,7 @@ use sfsu::{
         structured::Structured,
     },
     packages::{install, outdated},
-    progress::{style, ProgressOptions},
+    progress::style,
 };
 
 #[derive(Debug, Clone, Parser)]
@@ -26,21 +29,43 @@ pub struct Args {
 
 impl super::Command for Args {
     fn runner(self) -> anyhow::Result<()> {
-        let mut value = Value::default();
+        #[derive(ListVariants)]
+        enum Command {
+            Scoop,
+            Buckets,
+            Packages,
+        }
 
-        self.handle_scoop(&mut value)?;
-        if !self.json {
-            println!();
-        }
-        self.handle_buckets(&mut value)?;
-        if !self.json {
-            println!();
-        }
-        self.handle_packages(&mut value)?;
+        let value = Mutex::new(Value::default());
+
+        let pb = indicatif::ProgressBar::new(3).with_style(style(None, None));
+
+        let outputs = Command::VARIANTS
+            .into_par_iter()
+            .map(|command| {
+                let mut output = String::new();
+
+                match command {
+                    Command::Scoop => self.handle_scoop(&value, &mut output)?,
+                    Command::Buckets => self.handle_buckets(&value, &mut output)?,
+                    Command::Packages => self.handle_packages(&value, &mut output)?,
+                };
+
+                pb.inc(1);
+
+                anyhow::Ok(output)
+            })
+            .collect::<anyhow::Result<Vec<_>>>()?;
+
+        pb.finish_and_clear();
 
         if self.json {
-            let output = serde_json::to_string(&value)?;
+            let output = serde_json::to_string(&value.lock().clone())?;
             println!("{output}");
+        } else {
+            for output in outputs {
+                print!("{output}");
+            }
         }
 
         Ok(())
@@ -48,27 +73,28 @@ impl super::Command for Args {
 }
 
 impl Args {
-    fn handle_scoop(&self, value: &mut Value) -> anyhow::Result<()> {
+    fn handle_scoop(&self, value: &Mutex<Value>, output: &mut dyn Write) -> anyhow::Result<()> {
         let scoop_repo = Repo::scoop_app()?;
 
         let is_outdated = scoop_repo.outdated()?;
 
         if self.json {
-            value["scoop"] = serde_json::to_value(is_outdated)?;
+            value.lock()["scoop"] = serde_json::to_value(is_outdated)?;
             return Ok(());
         } else if is_outdated {
-            eprintln!(
+            writeln!(
+                output,
                 "{}",
                 "Scoop is out of date. Run `scoop update` to get the latest changes.".yellow()
-            );
+            )?;
         } else {
-            eprintln!("Scoop app is up to date.");
+            writeln!(output, "Scoop app is up to date.")?;
         }
 
         Ok(())
     }
 
-    fn handle_buckets(&self, value: &mut Value) -> anyhow::Result<()> {
+    fn handle_buckets(&self, value: &Mutex<Value>, output: &mut dyn Write) -> anyhow::Result<()> {
         let buckets = Bucket::list_all()?;
 
         // Handle buckets
@@ -87,18 +113,18 @@ impl Args {
                 .collect::<Vec<_>>();
 
             if self.json {
-                value["buckets"] = serde_json::to_value(&outdated_buckets)?;
+                value.lock()["buckets"] = serde_json::to_value(&outdated_buckets)?;
                 return Ok(());
             }
 
             if outdated_buckets.is_empty() {
-                eprintln!("All buckets up to date.");
+                writeln!(output, "All buckets up to date.")?;
             } else {
                 let title = format!("{} outdated buckets:", outdated_buckets.len());
 
                 let section = Section::new(Children::from(outdated_buckets)).with_title(title);
 
-                println!("{section}");
+                writeln!(output, "{section}")?;
             }
         } else {
             let buckets_outdated = buckets.par_iter().any(|bucket| {
@@ -109,20 +135,21 @@ impl Args {
             });
 
             if buckets_outdated {
-                eprintln!(
+                writeln!(
+                    output,
                     "{}",
                     "Bucket(s) are out of date. Run `scoop update` to get the latest changes."
                         .yellow()
-                );
+                )?;
             } else {
-                eprintln!("All buckets up to date.");
+                writeln!(output, "All buckets up to date.")?;
             }
         }
 
         Ok(())
     }
 
-    fn handle_packages(&self, value: &mut Value) -> anyhow::Result<()> {
+    fn handle_packages(&self, value: &Mutex<Value>, output: &mut dyn Write) -> anyhow::Result<()> {
         let apps = install::Manifest::list_all_unchecked()?;
 
         let mut outdated: Vec<outdated::Info> = apps
@@ -150,12 +177,12 @@ impl Args {
 
         if self.json {
             outdated.dedup();
-            value["packages"] = serde_json::to_value(&outdated)?;
+            value.lock()["packages"] = serde_json::to_value(&outdated)?;
             return Ok(());
         }
 
         if outdated.is_empty() {
-            println!("No outdated packages.");
+            writeln!(output, "No outdated packages.")?;
         } else {
             outdated.dedup();
             outdated.par_sort_by(|a, b| a.name.cmp(&b.name));
@@ -191,7 +218,7 @@ impl Args {
             let outputs =
                 Structured::new(&["Name", "Current", "Available"], &values).with_max_length(30);
 
-            print!("{outputs}");
+            write!(output, "{outputs}")?;
             // }
         }
 

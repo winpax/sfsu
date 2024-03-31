@@ -27,13 +27,13 @@ pub fn style(
     progress_opts: Option<ProgressOptions>,
     message_position: Option<MessagePosition>,
 ) -> ProgressStyle {
-    const PROGRESS_CHARS: &str = "#>-";
+    const PROGRESS_CHARS: &str = "=> ";
 
     let progress_opts = progress_opts.unwrap_or_default();
     let message_position = message_position.unwrap_or_default();
 
     ProgressStyle::with_template(&format!(
-        "{prefix} {{prefix}} {{spinner:.green}} [{{wide_bar:.cyan/blue}}] {progress} ({{eta}}) {suffix}",
+        "{prefix} {{prefix}} [{{wide_bar}}] {progress} ({{eta}}) {suffix}",
         prefix = match message_position {
             MessagePosition::Prefix => "{msg}",
             MessagePosition::Suffix => "",
