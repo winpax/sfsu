@@ -18,8 +18,6 @@ use sfsu::{
     progress::style,
 };
 
-use crate::commands::info;
-
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
     #[clap(from_global)]
@@ -161,7 +159,7 @@ impl Args {
 
         debug!("Checking {} apps", apps.len());
 
-        let mut outdated = apps
+        let mut invalid_apps = apps
             .par_iter()
             .flat_map(|app| -> anyhow::Result<StatusInfo> {
                 if let Some(bucket) = &app.bucket {
@@ -181,21 +179,27 @@ impl Args {
                     anyhow::bail!("no bucket specified")
                 }
             })
+            .filter(|app| {
+                // Filter out apps that are okay
+                app.info.is_none()
+                    && app.missing_dependencies.is_empty()
+                    && app.current != app.available
+            })
             .collect::<Vec<_>>();
 
+        invalid_apps.dedup();
+
         if self.json {
-            outdated.dedup();
-            value.lock()["packages"] = serde_json::to_value(&outdated)?;
+            value.lock()["packages"] = serde_json::to_value(&invalid_apps)?;
             return Ok(());
         }
 
-        if outdated.is_empty() {
-            writeln!(output, "No outdated packages.")?;
+        if invalid_apps.is_empty() {
+            writeln!(output, "All packages are okay and up to date.")?;
         } else {
-            outdated.dedup();
-            outdated.par_sort_by(|a, b| a.name.cmp(&b.name));
+            invalid_apps.par_sort_by(|a, b| a.name.cmp(&b.name));
 
-            let values = outdated
+            let values = invalid_apps
                 .par_iter()
                 .map(serde_json::to_value)
                 .collect::<Result<Vec<_>, _>>()?;
@@ -223,8 +227,17 @@ impl Args {
             //     })
             //     .collect::<Vec<_>>();
 
-            let outputs =
-                Structured::new(&["Name", "Current", "Available"], &values).with_max_length(30);
+            let outputs = Structured::new(
+                &[
+                    "Name",
+                    "Current",
+                    "Available",
+                    "Missing Dependencies",
+                    "Info",
+                ],
+                &values,
+            )
+            .with_max_length(30);
 
             write!(output, "{outputs}")?;
             // }

@@ -80,7 +80,7 @@ impl Manifest {
             .join("current")
             .join("manifest.json");
 
-        super::manifest::Manifest::from_path(manifest_path)
+        Ok(super::manifest::Manifest::from_path(manifest_path)?.with_name(&self.name))
     }
 }
 

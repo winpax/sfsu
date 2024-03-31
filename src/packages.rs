@@ -282,12 +282,13 @@ where
     }
 
     #[must_use]
-    fn with_name(self, path: &Path) -> Self;
+    fn with_name(self, path: impl AsRef<Path>) -> Self;
 }
 
 impl CreateManifest for Manifest {
-    fn with_name(mut self, path: &Path) -> Self {
+    fn with_name(mut self, path: impl AsRef<Path>) -> Self {
         self.name = path
+            .as_ref()
             .with_extension("")
             .file_name()
             .map(|f| f.to_string_lossy())
@@ -299,8 +300,9 @@ impl CreateManifest for Manifest {
 }
 
 impl CreateManifest for InstallManifest {
-    fn with_name(mut self, path: &Path) -> Self {
+    fn with_name(mut self, path: impl AsRef<Path>) -> Self {
         self.name = path
+            .as_ref()
             .with_extension("")
             .file_name()
             .map(|f| f.to_string_lossy())

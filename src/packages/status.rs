@@ -13,7 +13,7 @@ pub struct StatusInfo {
     pub current: String,
     pub available: String,
     pub missing_dependencies: Vec<reference::Package>,
-    pub info: String,
+    pub info: Option<String>,
 }
 
 impl StatusInfo {
@@ -33,6 +33,7 @@ impl StatusInfo {
             !app_path.exists() && installed
         };
 
+        debug!("Local manifest name: {}", local_manifest.name);
         let remote_manifest = bucket.get_manifest(&local_manifest.name)?;
 
         let install_manifest = local_manifest.install_manifest()?;
@@ -63,7 +64,7 @@ impl StatusInfo {
             current: local_manifest.version.clone(),
             available: remote_manifest.version.clone(),
             missing_dependencies,
-            info,
+            info: info.is_empty().then(|| info),
         })
     }
 }
