@@ -1,7 +1,6 @@
 use clap::Parser;
 use indicatif::{MultiProgress, ProgressBar, ProgressFinish};
 use itertools::Itertools;
-use parking_lot::Mutex;
 use rayon::prelude::*;
 
 use sfsu::{
@@ -68,18 +67,15 @@ impl super::Command for Args {
         let outdated_buckets = buckets
             .into_iter()
             .map(|bucket| {
-                let pb = Mutex::new(
-                    mp.add(
-                        ProgressBar::new(1)
-                            .with_position(0)
-                            .with_style(progress_style.clone())
-                            .with_message("Checking updates")
-                            .with_prefix(format!("{:<longest_bucket_name$}", bucket.name()))
-                            .with_finish(ProgressFinish::WithMessage(FINISH_MESSAGE.into())),
-                    ),
+                let pb = mp.add(
+                    ProgressBar::new(1)
+                        .with_style(progress_style.clone())
+                        .with_message("Checking updates")
+                        .with_prefix(format!("{:<longest_bucket_name$}", bucket.name()))
+                        .with_finish(ProgressFinish::WithMessage(FINISH_MESSAGE.into())),
                 );
 
-                pb.lock().set_position(0);
+                pb.set_position(0);
 
                 (bucket, pb)
             })
@@ -91,7 +87,7 @@ impl super::Command for Args {
                 let repo = bucket.open_repo()?;
 
                 if !repo.outdated()? {
-                    pb.lock().finish_with_message("✅ No updates available");
+                    pb.finish_with_message("✅ No updates available");
                     return Ok(());
                 }
 
@@ -99,7 +95,6 @@ impl super::Command for Args {
 
                 repo.pull(Some(&|stats, finished| {
                     debug!("Callback for outdated backup pull");
-                    let pb = pb.lock();
 
                     if finished {
                         pb.set_position(stats.indexed_objects() as u64);
