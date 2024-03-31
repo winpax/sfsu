@@ -64,7 +64,7 @@ impl StatusInfo {
             current: local_manifest.version.clone(),
             available: remote_manifest.version.clone(),
             missing_dependencies,
-            info: info.is_empty().then(|| info),
+            info: info.is_empty().then_some(info),
         })
     }
 }

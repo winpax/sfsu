@@ -9,6 +9,8 @@ pub enum ProgressOptions {
     #[default]
     /// Show pos/len as progress
     PosLen,
+    /// Hide progress
+    Hide,
 }
 
 #[derive(Debug, Copy, Clone, Default)]
@@ -45,7 +47,8 @@ pub fn style(
         progress = match progress_opts {
             ProgressOptions::Bytes => "{bytes}/{total_bytes}",
             ProgressOptions::PosLen => "{pos}/{len}",
-        }
+            ProgressOptions::Hide => "",
+        },
     ))
     .unwrap()
     .progress_chars(PROGRESS_CHARS)

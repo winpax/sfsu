@@ -1,3 +1,5 @@
+use std::sync::atomic::{AtomicBool, Ordering};
+
 use clap::Parser;
 use indicatif::{MultiProgress, ProgressBar, ProgressFinish};
 use itertools::Itertools;
@@ -6,7 +8,7 @@ use rayon::prelude::*;
 
 use sfsu::{
     buckets::{self, Bucket},
-    progress::{style, MessagePosition},
+    progress::{style, MessagePosition, ProgressOptions},
 };
 
 use crate::commands;
@@ -57,6 +59,8 @@ impl commands::Command for Args {
 
                 debug!("Beggining pull for {}", bucket.path().display());
 
+                let immediate = AtomicBool::new(true);
+
                 repo.pull(Some(&|stats, finished| {
                     debug!("Callback for outdated backup pull");
                     let pb = pb.lock();
@@ -65,6 +69,13 @@ impl commands::Command for Args {
                         // Thin pack
                         pb.set_position(stats.indexed_objects() as u64);
                         pb.set_length(stats.total_objects() as u64);
+
+                        if immediate.load(Ordering::Relaxed) {
+                            pb.set_style(style(
+                                Some(ProgressOptions::Hide),
+                                Some(MessagePosition::Suffix),
+                            ));
+                        }
 
                         return true;
                     }
@@ -78,6 +89,8 @@ impl commands::Command for Args {
                         pb.set_length(stats.total_objects() as u64);
                         pb.set_message("Receiving objects");
                     }
+
+                    immediate.store(false, Ordering::Relaxed);
 
                     true
                 }))?;
