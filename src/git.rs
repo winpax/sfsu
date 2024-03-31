@@ -89,12 +89,7 @@ impl Repo {
     ///
     /// # Errors
     /// - No remote named "origin"
-    /// - No active branch
-    /// - No reference "`FETCH_HEAD`"
     pub fn outdated(&self) -> Result<bool> {
-        // TODO: Use ls-remote (https://github.com/rust-lang/git2-rs/blob/master/examples/ls-remote.rs) instead of fetch and download
-        self.fetch()?;
-
         let mut remote = self
             .origin()
             .ok_or(RepoError::MissingRemote("origin".to_string()))?;
@@ -102,11 +97,16 @@ impl Repo {
         let connection = remote.connect_auth(Direction::Fetch, None, None)?;
 
         let head = connection.list()?.first().ok_or(RepoError::MissingHead)?;
-        debug!("{}\t{}", head.oid(), head.name());
 
-        // Get the local and remote HEADs
+        debug!(
+            "{}\t{} from repo '{}'",
+            head.oid(),
+            head.name(),
+            self.path().display()
+        );
+
         let local_head = self.latest_commit()?;
-        let fetch_head = self.0.find_reference("FETCH_HEAD")?.peel_to_commit()?;
+        let fetch_head = self.0.find_commit(head.oid())?;
 
         Ok(local_head.id() != fetch_head.id())
     }

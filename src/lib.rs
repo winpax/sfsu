@@ -16,6 +16,9 @@ mod opt;
 pub mod output;
 pub mod progress;
 
+#[macro_use]
+extern crate log;
+
 pub struct SimIter<A, B>(A, B);
 
 impl<A: Iterator<Item = AI>, AI, B: Iterator<Item = BI>, BI> Iterator for SimIter<A, B> {
