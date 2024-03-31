@@ -92,6 +92,7 @@ pub enum Commands {
     Depends(depends::Args),
     /// Show status and check for new app versions
     Status(status::Args),
+    #[cfg_attr(not(feature = "v2"), no_hook)]
     /// Update Scoop and Scoop buckets
     Update(update::Args),
 }
