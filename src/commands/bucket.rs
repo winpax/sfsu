@@ -1,6 +1,5 @@
 pub mod outdated;
 pub mod unused;
-pub mod update;
 
 use clap::{Parser, Subcommand};
 
@@ -12,8 +11,6 @@ use super::Command;
 pub enum Commands {
     /// Find buckets that do not have any installed packages
     Unused(unused::Args),
-    /// Update buckets
-    Update(update::Args),
     #[cfg(not(feature = "v2"))]
     /// List outdated buckets
     Outdated(outdated::Args),
