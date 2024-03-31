@@ -1,5 +1,3 @@
-use std::sync::atomic::{AtomicBool, Ordering};
-
 use clap::Parser;
 use indicatif::{MultiProgress, ProgressBar, ProgressFinish};
 use itertools::Itertools;
@@ -20,7 +18,7 @@ impl super::Command for Args {
     fn runner(self) -> Result<(), anyhow::Error> {
         const FINISH_MESSAGE: &str = "✅";
 
-        let progress_style = style(None, Some(MessagePosition::Suffix));
+        let progress_style = style(Some(ProgressOptions::Hide), Some(MessagePosition::Suffix));
 
         let buckets = Bucket::list_all()?;
 
@@ -43,10 +41,6 @@ impl super::Command for Args {
                 if finished {
                     pb.set_position(stats.indexed_objects() as u64);
                     pb.set_length(stats.total_objects() as u64);
-                    pb.set_style(style(
-                        Some(ProgressOptions::Hide),
-                        Some(MessagePosition::Suffix),
-                    ));
 
                     return true;
                 }
@@ -103,23 +97,13 @@ impl super::Command for Args {
 
                 debug!("Beggining pull for {}", bucket.name());
 
-                let immediate = AtomicBool::new(true);
-
                 repo.pull(Some(&|stats, finished| {
                     debug!("Callback for outdated backup pull");
                     let pb = pb.lock();
 
                     if finished {
-                        // Thin pack
                         pb.set_position(stats.indexed_objects() as u64);
                         pb.set_length(stats.total_objects() as u64);
-
-                        if immediate.load(Ordering::Relaxed) {
-                            pb.set_style(style(
-                                Some(ProgressOptions::Hide),
-                                Some(MessagePosition::Suffix),
-                            ));
-                        }
 
                         return true;
                     }
@@ -133,8 +117,6 @@ impl super::Command for Args {
                         pb.set_length(stats.total_objects() as u64);
                         pb.set_message("Receiving objects");
                     }
-
-                    immediate.store(false, Ordering::Relaxed);
 
                     true
                 }))?;
