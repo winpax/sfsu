@@ -1,10 +1,13 @@
 use clap::Parser;
-use indicatif::{MultiProgress, ProgressBar, ProgressFinish, ProgressStyle};
+use indicatif::{MultiProgress, ProgressBar, ProgressFinish};
 use itertools::Itertools;
 use parking_lot::Mutex;
 use rayon::prelude::*;
 
-use sfsu::buckets::{self, Bucket};
+use sfsu::{
+    buckets::{self, Bucket},
+    progress::{style, MessagePosition},
+};
 
 use crate::commands;
 
@@ -17,11 +20,7 @@ impl commands::Command for Args {
 
         let buckets = Bucket::list_all()?;
 
-        let progress_style = ProgressStyle::with_template(
-            "{prefix} {spinner:.green} [{wide_bar:.cyan/blue}] {pos}/{len} ({eta}) {msg}",
-        )
-        .unwrap()
-        .progress_chars("#>-");
+        let progress_style = style(None, Some(MessagePosition::Suffix));
 
         let mp = MultiProgress::new();
 

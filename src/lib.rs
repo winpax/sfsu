@@ -14,6 +14,7 @@ pub mod packages;
 mod opt;
 /// Currently this is mostly an internal api
 pub mod output;
+pub mod progress;
 
 pub struct SimIter<A, B>(A, B);
 

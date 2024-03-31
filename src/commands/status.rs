@@ -1,5 +1,6 @@
 use clap::Parser;
 use colored::Colorize as _;
+use indicatif::ParallelProgressIterator;
 use rayon::prelude::*;
 use serde_json::Value;
 
@@ -11,6 +12,7 @@ use sfsu::{
         structured::Structured,
     },
     packages::{install, outdated},
+    progress::{style, ProgressOptions},
 };
 
 #[derive(Debug, Clone, Parser)]
@@ -27,9 +29,13 @@ impl super::Command for Args {
         let mut value = Value::default();
 
         self.handle_scoop(&mut value)?;
-
+        if !self.json {
+            println!();
+        }
         self.handle_buckets(&mut value)?;
-
+        if !self.json {
+            println!();
+        }
         self.handle_packages(&mut value)?;
 
         if self.json {
@@ -68,7 +74,7 @@ impl Args {
         // Handle buckets
         if self.verbose || self.json {
             let outdated_buckets = buckets
-                .into_par_iter()
+                .par_iter()
                 .filter_map(|bucket| {
                     bucket.outdated().ok().and_then(|outdated| {
                         if outdated {
@@ -95,7 +101,7 @@ impl Args {
                 println!("{section}");
             }
         } else {
-            let buckets_outdated = buckets.into_par_iter().any(|bucket| {
+            let buckets_outdated = buckets.par_iter().any(|bucket| {
                 bucket.outdated().unwrap_or_else(|_| {
                     eprintln!("Failed to check bucket: {}", bucket.name());
                     false

@@ -21,6 +21,8 @@ pub struct DeprecationWarning {
     version: Option<f32>,
 }
 
+#[allow(dead_code)]
+#[derive(Debug, Copy, Clone)]
 pub enum DeprecationMessage {
     /// Replacement info
     Replacement(&'static str),
