@@ -14,6 +14,7 @@ pub enum Commands {
     Unused(unused::Args),
     /// Update buckets
     Update(update::Args),
+    #[cfg(not(feature = "v2"))]
     /// List outdated buckets
     Outdated(outdated::Args),
 }

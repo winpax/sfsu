@@ -5,7 +5,7 @@ use sfsu::{
     output::sectioned::{Children, Section},
 };
 
-use crate::commands;
+use crate::commands::{self, DeprecationMessage, DeprecationWarning};
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
@@ -14,6 +14,13 @@ pub struct Args {
 }
 
 impl commands::Command for Args {
+    fn deprecated() -> Option<commands::DeprecationWarning> {
+        Some(DeprecationWarning {
+            message: DeprecationMessage::Replacement("sfsu status"),
+            version: Some(2.0),
+        })
+    }
+
     fn runner(self) -> anyhow::Result<()> {
         let buckets = Bucket::list_all()?;
 
