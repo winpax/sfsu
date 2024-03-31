@@ -44,7 +44,7 @@ impl StatusInfo {
             .into_iter()
             .filter(|reference| {
                 debug!("Checking if {} is installed.", reference.name());
-                reference::Package::installed(reference)
+                !reference::Package::installed(reference)
                     .expect("failed to check if package is installed")
             })
             .collect_vec();
