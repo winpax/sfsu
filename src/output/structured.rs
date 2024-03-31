@@ -1,5 +1,6 @@
 use std::fmt::Display;
 
+use itertools::Itertools;
 use rayon::prelude::*;
 use serde_json::Value;
 
@@ -163,9 +164,26 @@ impl<'a> Display for Structured<'a> {
         for row in &data {
             for (i, header) in self.headers.iter().enumerate() {
                 let value_size = access_lengths[i];
+
                 let element = row
-                    .get(*header)
-                    .and_then(|v| v.as_str())
+                    .get(&heck::AsSnakeCase(header).to_string())
+                    .and_then(|v| {
+                        if let Some(s) = v.as_str() {
+                            Some(s.to_string())
+                        } else {
+                            v.as_array().map(|array| {
+                                array
+                                    .iter()
+                                    .map(|v| {
+                                        v.as_str()
+                                            .map(std::string::ToString::to_string)
+                                            .unwrap_or_default()
+                                    })
+                                    .collect::<Vec<String>>()
+                                    .join(", ")
+                            })
+                        }
+                    })
                     .unwrap_or_default();
 
                 let with_suffix = match element.len().cmp(&value_size) {

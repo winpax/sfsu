@@ -1278,6 +1278,7 @@ dependencies = [
  "directories",
  "dunce",
  "git2",
+ "heck 0.5.0",
  "human-panic",
  "indicatif",
  "itertools 0.12.1",

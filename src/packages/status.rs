@@ -7,7 +7,6 @@ use crate::{buckets::Bucket, Scoop};
 use super::{reference, Manifest, Result};
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq, Hash)]
-#[serde(rename_all = "PascalCase")]
 pub struct StatusInfo {
     pub name: String,
     pub current: String,
@@ -64,7 +63,7 @@ impl StatusInfo {
             current: local_manifest.version.clone(),
             available: remote_manifest.version.clone(),
             missing_dependencies,
-            info: info.is_empty().then_some(info),
+            info: (!info.is_empty()).then_some(info),
         })
     }
 }
