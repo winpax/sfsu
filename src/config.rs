@@ -54,7 +54,7 @@ impl Scoop {
 
     /// Update the last time the scoop was updated
     pub fn update_last_update_time(&mut self) {
-        let date_time = chrono::Local::now();
+        let date_time = chrono::Local::now().to_rfc3339_opts(chrono::SecondsFormat::Micros, false);
 
         self.last_update = Some(date_time.to_string());
     }

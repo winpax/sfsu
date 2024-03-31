@@ -81,6 +81,16 @@ impl Package {
                 .collect()
         }
     }
+
+    /// Checks if the package is installed
+    ///
+    /// # Errors
+    /// - Reading app dir fails
+    pub fn installed(&self) -> std::io::Result<bool> {
+        let name = self.name();
+
+        crate::Scoop::app_installed(name)
+    }
 }
 
 impl fmt::Display for Package {

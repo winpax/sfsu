@@ -1,42 +1,47 @@
 use std::{fs::File, io::Write};
 
+use log::LevelFilter;
+
 pub mod panics;
 
 pub struct Logger {
     file: File,
+    verbose: bool,
 }
 
 impl Logger {
-    pub fn new(file: File) -> Self {
-        Self { file }
+    pub fn new(verbose: bool) -> Self {
+        Self::from_file(sfsu::Scoop::new_log().expect("new log"), verbose)
     }
 
-    pub fn init() -> Result<(), log::SetLoggerError> {
-        let logger = Box::<Logger>::default();
-        let logger = Box::leak(logger);
+    pub fn from_file(file: File, verbose: bool) -> Self {
+        Self { file, verbose }
+    }
 
-        log::set_logger(logger)?;
+    pub fn init(verbose: bool) -> Result<(), log::SetLoggerError> {
+        log::set_boxed_logger(Box::new(Logger::new(verbose)))?;
+        log::set_max_level(LevelFilter::Trace);
 
-        trace!("Initialized logger");
+        debug!("Initialized logger");
 
         Ok(())
     }
 }
 
-impl Default for Logger {
-    fn default() -> Self {
-        Self::new(sfsu::Scoop::new_log().expect("new log"))
-    }
-}
-
 impl log::Log for Logger {
-    fn enabled(&self, _metadata: &log::Metadata<'_>) -> bool {
-        // metadata.level() <= log::Level::Info
-        true
+    fn enabled(&self, metadata: &log::Metadata<'_>) -> bool {
+        if self.verbose {
+            true
+        } else {
+            metadata.level() > log::Level::Trace
+        }
     }
 
     fn log(&self, record: &log::Record<'_>) {
-        if self.enabled(record.metadata()) {
+        // TODO: Add a queue of sorts because this doesn't work well with multiple threads
+        if record.metadata().level() == log::Level::Trace {
+            eprintln!("{}: {}", record.level(), record.args());
+        } else {
             writeln!(&self.file, "{}: {}", record.level(), record.args())
                 .expect("writing to log file");
         }
