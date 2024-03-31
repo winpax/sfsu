@@ -238,4 +238,12 @@ impl Scoop {
             .iter()
             .any(|path| path.file_name() == Some(OsStr::new(name.as_ref()))))
     }
+
+    /// Open Scoop app repository
+    ///
+    /// # Errors
+    /// - The Scoop app could not be opened as a repository
+    pub fn open_repo() -> git::Result<git::Repo> {
+        git::Repo::scoop_app()
+    }
 }
