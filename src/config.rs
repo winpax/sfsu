@@ -1,6 +1,7 @@
 use std::{env, path::PathBuf};
 
 use serde::{Deserialize, Serialize};
+use serde_json::{Map, Value};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Scoop {
@@ -12,6 +13,9 @@ pub struct Scoop {
     pub scoop_branch: Option<String>,
     // Scoop path
     pub root_path: Option<String>,
+
+    #[serde(flatten)]
+    other: Map<String, Value>,
 }
 
 impl Scoop {
