@@ -39,7 +39,6 @@ use downloading::DownloadUrl;
 use manifest::{InstallConfig, StringOrArrayOfStringsOrAnArrayOfArrayOfStrings};
 
 #[derive(Debug, Serialize)]
-#[serde(rename_all = "PascalCase")]
 pub struct MinInfo {
     pub name: String,
     pub version: String,

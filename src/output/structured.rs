@@ -130,7 +130,7 @@ impl<'a> Display for Structured<'a> {
                     .enumerate()
                     .map(|(i, header)| {
                         let element = row
-                            .get(*header)
+                            .get(&heck::AsSnakeCase(header).to_string())
                             .and_then(|v| v.as_str())
                             .unwrap_or_default();
 

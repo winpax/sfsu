@@ -1,6 +1,6 @@
 use std::fmt::Write;
 
-use clap::Parser;
+use clap::{Parser, ValueEnum};
 use colored::Colorize as _;
 use parking_lot::Mutex;
 use quork::prelude::*;
@@ -18,6 +18,13 @@ use sfsu::{
     progress::style,
 };
 
+#[derive(Debug, Copy, Clone, ValueEnum, ListVariants)]
+enum Command {
+    Scoop,
+    Buckets,
+    Apps,
+}
+
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
     #[clap(from_global)]
@@ -25,22 +32,26 @@ pub struct Args {
 
     #[clap(from_global)]
     verbose: bool,
+
+    #[clap(short = 'O', long, help = "Only check the provided sections of Scoop")]
+    only: Vec<Command>,
 }
 
 impl super::Command for Args {
     fn runner(self) -> anyhow::Result<()> {
-        #[derive(ListVariants)]
-        enum Command {
-            Scoop,
-            Buckets,
-            Packages,
-        }
-
         let value = Mutex::new(Value::default());
 
         let pb = indicatif::ProgressBar::new(3).with_style(style(None, None));
 
-        let outputs = Command::VARIANTS
+        let commands: &[Command] = {
+            if self.only.is_empty() {
+                &Command::VARIANTS
+            } else {
+                &self.only
+            }
+        };
+
+        let outputs = commands
             .into_par_iter()
             .map(|command| {
                 let mut output = String::new();
@@ -48,7 +59,7 @@ impl super::Command for Args {
                 match command {
                     Command::Scoop => self.handle_scoop(&value, &mut output)?,
                     Command::Buckets => self.handle_buckets(&value, &mut output)?,
-                    Command::Packages => self.handle_packages(&value, &mut output)?,
+                    Command::Apps => self.handle_packages(&value, &mut output)?,
                 };
 
                 pb.inc(1);

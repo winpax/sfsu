@@ -2,7 +2,7 @@
 description = "Stupid Fast Scoop Utils"
 edition     = "2021"
 name        = "sfsu"
-version     = "1.9.0"
+version     = "1.9.1"
 
 [workspace]
 members = ["crates/*"]

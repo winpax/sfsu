@@ -3,7 +3,6 @@ use serde::Serialize;
 use super::Manifest;
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq, Hash)]
-#[serde(rename_all = "PascalCase")]
 pub struct Info {
     pub name: String,
     pub current: String,

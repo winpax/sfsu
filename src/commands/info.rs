@@ -24,7 +24,6 @@ use sfsu::{
 };
 
 #[derive(Debug, Clone, Serialize, sfsu_derive::KeyValue)]
-#[serde(rename_all = "PascalCase")]
 struct PackageInfo {
     name: String,
     description: Option<String>,
