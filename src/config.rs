@@ -5,12 +5,19 @@ use serde_json::{Map, Value};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Scoop {
+    #[serde(skip_serializing_if = "Option::is_none")]
     // The timestamp of the last scoop update
     pub last_update: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     // The virustotal api key (removed as unused, and shouldn't be read if it doesn't need to be)
     // pub virustotal_api_key: Option<String>,
     pub scoop_repo: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub scoop_branch: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     // Scoop path
     pub root_path: Option<String>,
 
