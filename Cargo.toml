@@ -1,22 +1,22 @@
 [package]
 description = "Stupid Fast Scoop Utils"
-edition     = "2021"
-name        = "sfsu"
-version     = "1.9.2"
+edition = "2021"
+name = "sfsu"
+version = "1.9.2"
 
 [workspace]
 members = ["sfsu-derive"]
 
 [[bench]]
 harness = false
-name    = "searching"
+name = "searching"
 
 [profile.release]
 codegen-units = 1
-lto           = true
+lto = true
 
 [features]
-default        = ["info-difftrees"]
+default = ["info-difftrees"]
 info-difftrees = []
 # Breaking changes are locked behind this feature flag
 v2 = []
@@ -56,7 +56,7 @@ thiserror = "1.0"
 which = "6.0"
 
 [dev-dependencies]
-chrono    = ">=0.4.20"
+chrono = ">=0.4.20"
 criterion = { version = "0.5", features = ["html_reports"] }
 
 [build-dependencies]
