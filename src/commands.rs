@@ -1,16 +1,16 @@
 pub mod bucket;
+pub mod cat;
 pub mod depends;
 pub mod describe;
 pub mod download;
 pub mod hook;
 pub mod info;
 pub mod list;
+#[cfg(not(feature = "v2"))]
+pub mod outdated;
 pub mod search;
 pub mod status;
 pub mod update;
-
-#[cfg(not(feature = "v2"))]
-pub mod outdated;
 
 use clap::Subcommand;
 
@@ -100,4 +100,6 @@ pub enum Commands {
     #[cfg_attr(not(feature = "v2"), no_hook)]
     /// Update Scoop and Scoop buckets
     Update(update::Args),
+    /// Show content of specified manifest
+    Cat(cat::Args),
 }

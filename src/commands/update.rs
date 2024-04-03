@@ -45,15 +45,14 @@ impl super::Command for Args {
             .iter()
             .map(|bucket| bucket.name().len())
             .max()
-            .unwrap_or(0)
-            + '🪣'.len_utf8();
+            .unwrap_or(0);
 
         let scoop_repo = Scoop::open_repo()?;
 
         let pb = ProgressBar::new(1)
             .with_style(progress_style.clone())
             .with_message("Checking for updates")
-            .with_prefix(format!("{:<longest_bucket_name$}", "🍨 Scoop"))
+            .with_prefix(format!("🍨 {:<longest_bucket_name$}", "Scoop"))
             .with_finish(ProgressFinish::WithMessage(FINISH_MESSAGE.into()));
 
         if scoop_repo.outdated()? {
@@ -76,10 +75,7 @@ impl super::Command for Args {
                     ProgressBar::new(1)
                         .with_style(progress_style.clone())
                         .with_message("Checking updates")
-                        .with_prefix(format!(
-                            "{:<longest_bucket_name$}",
-                            format!("🪣 {}", bucket.name())
-                        ))
+                        .with_prefix(format!("🪣 {:<longest_bucket_name$}", bucket.name()))
                         .with_finish(ProgressFinish::WithMessage(FINISH_MESSAGE.into())),
                 );
 

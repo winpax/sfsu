@@ -236,7 +236,7 @@ impl Scoop {
             i += 1;
 
             let log_path =
-                logs_dir.join(format!("sfsu-{}-{i}.txt", date.format("%Y-%m-%d-%H-%M-%S")));
+                logs_dir.join(format!("sfsu-{}-{i}.log", date.format("%Y-%m-%d-%H-%M-%S")));
 
             if !log_path.exists() {
                 break File::create(&log_path);
