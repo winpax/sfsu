@@ -18,12 +18,18 @@ use crate::{
 pub enum BucketError {
     #[error("Interacting with repo: {0}")]
     RepoError(#[from] RepoError),
-
     #[error("IO Error: {0}")]
     IOError(#[from] std::io::Error),
-
     #[error("The bucket \"{0}\" does not exist")]
     InvalidBucket(PathBuf),
+    #[error("Missing or invalid git output")]
+    MissingGitOutput,
+    #[error("Could not find executable in path: {0}")]
+    MissingInPath(#[from] which::Error),
+    #[error("Invalid time. (time went backwards or way way way too far forwards (hello future! whats it like?))")]
+    InvalidTime,
+    #[error("Invalid timezone provided. (where are you?)")]
+    InvalidTimeZone,
 }
 
 pub type Result<T> = std::result::Result<T, BucketError>;
@@ -261,5 +267,30 @@ impl Bucket {
     /// - No reference "`FETCH_HEAD`"
     pub fn outdated(&self) -> Result<bool> {
         Ok(self.open_repo()?.outdated()?)
+    }
+
+    /// Get the number of manifests in the bucket
+    ///
+    /// # Errors
+    /// - Could not read the bucket directory
+    pub fn manifests(&self) -> Result<usize> {
+        Ok(std::fs::read_dir(self.path().join("bucket"))?.count())
+    }
+
+    /// Get the bucket's source url
+    ///
+    /// # Errors
+    /// - The bucket could not be opened as a repository
+    /// - The bucket's origin remote could not be found
+    /// - The remote's url is not utf8
+    /// - The remote's url is not set
+    pub fn source(&self) -> Result<String> {
+        Ok(self
+            .open_repo()?
+            .origin()
+            .ok_or(RepoError::MissingRemote("origin".to_string()))?
+            .url()
+            .map(std::string::ToString::to_string)
+            .ok_or(RepoError::NonUtf8)?)
     }
 }

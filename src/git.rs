@@ -1,7 +1,9 @@
+use std::{ffi::OsStr, fmt::Display, path::Path, process::Command};
+
 use derive_more::Deref;
 use git2::{Commit, DiffOptions, Direction, FetchOptions, Remote, Repository};
 
-use crate::{buckets::Bucket, opt::ResultIntoOption};
+use crate::{buckets::Bucket, opt::ResultIntoOption, Scoop};
 
 use self::pull::ProgressCallback;
 
@@ -20,6 +22,9 @@ pub enum RepoError {
 
     #[error("Missing head in remote")]
     MissingHead,
+
+    #[error("Invalid utf8")]
+    NonUtf8,
 }
 
 pub type Result<T> = std::result::Result<T, RepoError>;
@@ -170,5 +175,27 @@ impl Repo {
         pull::pull(self, None, Some(current_branch.as_str()), stats_cb)?;
 
         Ok(())
+    }
+
+    pub fn log(
+        &self,
+        cd: impl AsRef<OsStr>,
+        n: usize,
+        format: impl Display,
+    ) -> which::Result<Command> {
+        let git_path = Scoop::git_path()?;
+
+        let mut command = Command::new(git_path);
+
+        command
+            .current_dir(self.path())
+            .arg("-C")
+            .arg(cd)
+            .arg("log")
+            .arg(format!("-n {n}"))
+            .arg("-s")
+            .arg(format!("--format='{format}'"));
+
+        Ok(command)
     }
 }

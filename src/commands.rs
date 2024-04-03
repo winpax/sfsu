@@ -2,6 +2,7 @@ pub mod bucket;
 pub mod cat;
 pub mod depends;
 pub mod describe;
+pub mod export;
 pub mod home;
 pub mod hook;
 pub mod info;
@@ -100,4 +101,6 @@ pub enum Commands {
     Home(home::Args),
     /// Show content of specified manifest
     Cat(cat::Args),
+    /// Exports installed apps, buckets (and optionally configs) in JSON format
+    Export(export::Args),
 }

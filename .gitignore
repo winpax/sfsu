@@ -5,3 +5,5 @@
 proc-macro-out.rs
 
 logs/
+
+scoop-export.json
