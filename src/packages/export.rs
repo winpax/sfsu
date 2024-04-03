@@ -1,4 +1,4 @@
-use chrono::{DateTime, FixedOffset, SecondsFormat};
+use chrono::{DateTime, FixedOffset, Local, SecondsFormat};
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -42,7 +42,8 @@ impl Export {
             .into_iter()
             .map(Bucket::try_from)
             .collect::<Result<Vec<_>, _>>()?;
-        let apps = MinInfo::list_installed(None)?;
+        let mut apps = MinInfo::list_installed(None)?;
+        apps.par_sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
 
         Ok(Self {
             buckets,
@@ -77,15 +78,13 @@ impl TryFrom<SfsuBucket> for Bucket {
             let latest_commit = repo.latest_commit()?;
             let time = latest_commit.time();
             let secs = time.seconds();
-            let offset = time.offset_minutes() * 60;
+            // let offset = time.offset_minutes() * 60;
 
             let utc_time = DateTime::from_timestamp(secs, 0).ok_or(BucketError::InvalidTime)?;
 
-            let offset = FixedOffset::east_opt(offset).ok_or(BucketError::InvalidTimeZone)?;
+            // let offset = FixedOffset::east_opt(offset).ok_or(BucketError::InvalidTimeZone)?;
 
-            utc_time
-                .with_timezone(&offset)
-                .to_rfc3339_opts(SecondsFormat::Micros, false)
+            utc_time.with_timezone(&Local).to_rfc3339()
         };
 
         Ok(Self {
