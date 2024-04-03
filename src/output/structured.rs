@@ -58,6 +58,53 @@ impl<T: Display> Display for OptionalTruncate<T> {
     }
 }
 
+fn print_headers<'a>(
+    f: &mut std::fmt::Formatter<'_>,
+    headers: &'a [&'a str],
+    max_length: Option<usize>,
+    access_lengths: &[usize],
+) -> std::fmt::Result {
+    #[cfg(feature = "v2")]
+    {
+        use colored::Colorize as _;
+
+        let header_lengths = headers
+            .iter()
+            .enumerate()
+            .map(|(i, header)| -> Result<usize, std::fmt::Error> {
+                let header_size = access_lengths[i];
+
+                let truncated = OptionalTruncate::new(header)
+                    .with_length(max_length)
+                    .to_string();
+                write!(f, "{:header_size$} ", truncated.bright_green())?;
+
+                Ok(truncated.len())
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+
+        writeln!(f)?;
+
+        for (i, length) in header_lengths.into_iter().enumerate() {
+            let header_size = access_lengths[i];
+
+            let underscores = "-".repeat(length);
+
+            write!(f, "{:header_size$} ", underscores.bright_green())?;
+        }
+    }
+
+    #[cfg(not(feature = "v2"))]
+    for (i, header) in headers.iter().enumerate() {
+        let header_size = access_lengths[i];
+
+        let truncated = OptionalTruncate::new(header).with_length(max_length);
+        write!(f, "{truncated:header_size$} | ")?;
+    }
+
+    Ok(())
+}
+
 #[must_use = "Structured is lazy, and only takes effect when used in formatting"]
 /// A table of data
 ///
@@ -150,12 +197,7 @@ impl<'a> Display for Structured<'a> {
                     .collect()
             });
 
-        for (i, header) in self.headers.iter().enumerate() {
-            let header_size = access_lengths[i];
-
-            let truncated = OptionalTruncate::new(header).with_length(self.max_length);
-            write!(f, "{truncated:header_size$} | ")?;
-        }
+        print_headers(f, self.headers, self.max_length, &access_lengths)?;
 
         // Enter new row
         writeln!(f)?;
@@ -191,7 +233,7 @@ impl<'a> Display for Structured<'a> {
                     std::cmp::Ordering::Less => format!("{element:value_size$}"),
                 };
 
-                write!(f, "{with_suffix} | ")?;
+                write!(f, "{with_suffix} ")?;
             }
 
             // Enter new row
