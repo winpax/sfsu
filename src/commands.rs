@@ -2,6 +2,7 @@ pub mod bucket;
 pub mod cat;
 pub mod depends;
 pub mod describe;
+pub mod home;
 pub mod hook;
 pub mod info;
 pub mod list;
@@ -95,6 +96,8 @@ pub enum Commands {
     #[cfg_attr(not(feature = "v2"), no_hook)]
     /// Update Scoop and Scoop buckets
     Update(update::Args),
+    /// Opens the app homepage
+    Home(home::Args),
     /// Show content of specified manifest
     Cat(cat::Args),
 }
