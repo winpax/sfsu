@@ -11,6 +11,10 @@ members = ["sfsu-derive"]
 harness = false
 name = "searching"
 
+[[bench]]
+harness = false
+name = "ref-matching"
+
 [profile.release]
 codegen-units = 1
 lto = true
