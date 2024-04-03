@@ -10,10 +10,10 @@ use crate::{
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Export {
-    pub buckets: Vec<Bucket>,
-    pub apps: Vec<App>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub config: Option<config::Scoop>,
+    pub apps: Vec<App>,
+    pub buckets: Vec<Bucket>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
