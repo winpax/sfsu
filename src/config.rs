@@ -3,7 +3,7 @@ use std::{env, path::PathBuf};
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Scoop {
     #[serde(skip_serializing_if = "Option::is_none")]
     // The timestamp of the last scoop update
