@@ -23,6 +23,7 @@ v2 = []
 
 [dependencies]
 anyhow = "1.0"
+bat = "0.24"
 cfg-if = "1.0"
 chrono = { version = ">=0.4.20", features = [
     "clock",
