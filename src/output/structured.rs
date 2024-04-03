@@ -233,7 +233,10 @@ impl<'a> Display for Structured<'a> {
                     std::cmp::Ordering::Less => format!("{element:value_size$}"),
                 };
 
+                #[cfg(feature = "v2")]
                 write!(f, "{with_suffix} ")?;
+                #[cfg(not(feature = "v2"))]
+                write!(f, "{with_suffix} | ")?;
             }
 
             // Enter new row
