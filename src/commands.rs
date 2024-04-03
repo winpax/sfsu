@@ -1,16 +1,16 @@
 pub mod bucket;
+pub mod cat;
 pub mod depends;
 pub mod describe;
+pub mod home;
 pub mod hook;
 pub mod info;
 pub mod list;
+#[cfg(not(feature = "v2"))]
+pub mod outdated;
 pub mod search;
 pub mod status;
 pub mod update;
-
-pub mod home;
-#[cfg(not(feature = "v2"))]
-pub mod outdated;
 
 use clap::Subcommand;
 
@@ -98,4 +98,6 @@ pub enum Commands {
     Update(update::Args),
     /// Opens the app homepage
     Home(home::Args),
+    /// Show content of specified manifest
+    Cat(cat::Args),
 }
