@@ -1,8 +1,8 @@
-use std::{fmt, str::FromStr};
+use std::{fmt, path::PathBuf, str::FromStr};
 
 use itertools::Itertools as _;
 
-use super::Manifest;
+use super::{CreateManifest, Manifest};
 use crate::buckets::Bucket;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -45,6 +45,20 @@ impl Package {
     }
 
     #[must_use]
+    /// Parse the bucket and package to get the manifest path
+    ///
+    /// Returns [`None`] if the bucket is not valid or the manifest does not exist
+    pub fn manifest_path(&self) -> Option<PathBuf> {
+        if let Some(bucket_name) = self.bucket() {
+            let bucket = Bucket::from_name(bucket_name).ok()?;
+
+            Some(bucket.get_manifest_path(self.name()))
+        } else {
+            None
+        }
+    }
+
+    #[must_use]
     /// Parse the bucket and package to get the manifest
     ///
     /// Returns [`None`] if the bucket is not valid or the manifest does not exist
@@ -59,14 +73,14 @@ impl Package {
     }
 
     #[must_use]
-    /// Parse the bucket and package to get the manifest, or search for all matches in local buckets
+    /// Parse the bucket and package to get the manifest path, or search for all matches in local buckets
     ///
-    /// Returns a [`Vec`] with a single manifest if the reference is valid
+    /// Returns a [`Vec`] with a single manifest path if the reference is valid
     ///
-    /// Otherwise returns a [`Vec`] containing each matching manifest found in each local bucket
-    pub fn list_manifests(&self) -> Vec<Manifest> {
-        if let Some(manifest) = self.manifest() {
-            vec![manifest]
+    /// Otherwise returns a [`Vec`] containing each matching manifest path found in each local bucket
+    pub fn list_manifest_paths(&self) -> Vec<PathBuf> {
+        if let Some(manifest_path) = self.manifest_path() {
+            vec![manifest_path]
         } else {
             let Ok(buckets) = Bucket::list_all() else {
                 return vec![];
@@ -74,12 +88,29 @@ impl Package {
 
             buckets
                 .into_iter()
-                .filter_map(|bucket| match bucket.get_manifest(self.name()) {
-                    Ok(manifest) => Some(manifest),
-                    Err(_) => None,
+                .filter_map(|bucket| {
+                    let manifest_path = bucket.get_manifest_path(self.name());
+                    if manifest_path.exists() {
+                        Some(manifest_path)
+                    } else {
+                        None
+                    }
                 })
                 .collect()
         }
+    }
+
+    #[must_use]
+    /// Parse the bucket and package to get the manifest, or search for all matches in local buckets
+    ///
+    /// Returns a [`Vec`] with a single manifest if the reference is valid
+    ///
+    /// Otherwise returns a [`Vec`] containing each matching manifest found in each local bucket
+    pub fn list_manifests(&self) -> Vec<Manifest> {
+        self.list_manifest_paths()
+            .into_iter()
+            .filter_map(|path| Manifest::from_path(path).ok())
+            .collect()
     }
 
     /// Checks if the package is installed

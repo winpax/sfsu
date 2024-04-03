@@ -163,17 +163,21 @@ impl Bucket {
             .collect())
     }
 
-    /// Gets the manifest that represents the given package name
-    ///
-    /// # Errors
-    /// - Could not load the manifest from the path
-    pub fn get_manifest(&self, name: impl AsRef<str>) -> packages::Result<Manifest> {
+    pub fn get_manifest_path(&self, name: impl AsRef<str>) -> PathBuf {
         let buckets_path = self.path();
         let manifests_path = buckets_path.join("bucket");
 
         let file_name = format!("{}.json", name.as_ref());
 
-        let manifest_path = manifests_path.join(file_name);
+        manifests_path.join(file_name)
+    }
+
+    /// Gets the manifest that represents the given package name
+    ///
+    /// # Errors
+    /// - Could not load the manifest from the path
+    pub fn get_manifest(&self, name: impl AsRef<str>) -> packages::Result<Manifest> {
+        let manifest_path = self.get_manifest_path(name);
 
         Manifest::from_path(manifest_path).map(|manifest| manifest.with_bucket(self))
     }
