@@ -1,4 +1,4 @@
-use std::{ffi::OsStr, fmt::Display, path::Path, process::Command};
+use std::{ffi::OsStr, fmt::Display, process::Command};
 
 use derive_more::Deref;
 use git2::{Commit, DiffOptions, Direction, FetchOptions, Remote, Repository};
@@ -48,8 +48,6 @@ impl Repo {
     /// # Errors
     /// - The Scoop app could not be opened as a repository
     pub fn scoop_app() -> Result<Self> {
-        use crate::Scoop;
-
         let scoop_path = Scoop::apps_path().join("scoop").join("current");
         let repo = Repository::open(scoop_path)?;
 
@@ -177,6 +175,10 @@ impl Repo {
         Ok(())
     }
 
+    /// Equivalent of `git log -n {n} -s --format='{format}'`
+    ///
+    /// # Errors
+    /// - Git path could not be found
     pub fn log(
         &self,
         cd: impl AsRef<OsStr>,

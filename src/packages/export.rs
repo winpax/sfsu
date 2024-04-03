@@ -1,4 +1,4 @@
-use chrono::{DateTime, FixedOffset, Local, SecondsFormat};
+use chrono::{DateTime, Local, SecondsFormat};
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -36,6 +36,13 @@ pub struct Bucket {
 }
 
 impl Export {
+    /// Load the export data
+    ///
+    /// # Errors
+    /// - The Scoop configuration could not be loaded
+    /// - The buckets could not be listed
+    /// - The installed apps could not be listed
+    /// - The buckets could not be converted
     pub fn load() -> anyhow::Result<Self> {
         let config = config::Scoop::load()?;
         let buckets = SfsuBucket::list_all()?
