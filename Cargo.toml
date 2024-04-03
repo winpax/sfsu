@@ -42,6 +42,7 @@ indicatif = { version = "0.17", features = ["improved_unicode", "rayon"] }
 itertools = "0.12"
 lazy_static = "1.4"
 log = { version = "0.4", features = ["std"] }
+open = "5.1"
 parking_lot = "0.12"
 quork = "0.6"
 rayon = "1.10"

@@ -8,6 +8,7 @@ pub mod search;
 pub mod status;
 pub mod update;
 
+pub mod home;
 #[cfg(not(feature = "v2"))]
 pub mod outdated;
 
@@ -95,4 +96,6 @@ pub enum Commands {
     #[cfg_attr(not(feature = "v2"), no_hook)]
     /// Update Scoop and Scoop buckets
     Update(update::Args),
+    /// Opens the app homepage
+    Home(home::Args),
 }
