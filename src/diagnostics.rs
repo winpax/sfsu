@@ -1,5 +1,3 @@
-use std::mem::MaybeUninit;
-
 use crate::buckets::{Bucket, BucketError};
 
 pub fn check_windows_defender() {
@@ -31,6 +29,7 @@ pub enum LongPathsResult {
 /// - Unable to read the registry
 /// - Unable to read the OS version
 pub fn check_long_paths() -> windows::core::Result<LongPathsResult> {
+    use std::mem::MaybeUninit;
     use windows::Win32::System::SystemInformation;
     use winreg::{enums::HKEY_LOCAL_MACHINE, RegKey};
 
