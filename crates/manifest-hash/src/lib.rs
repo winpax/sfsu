@@ -45,7 +45,9 @@ impl Hash {
         substitutions: HashMap<String, String>,
         regex: String,
     ) -> Vec<(String, Self)> {
+        unimplemented!(
+            "fuck this its so hard and for what like just provide your hashes its so fucking easy LOOKING AT YOU MYSQL FUCK YOU"
+        );
         formats::text::parse_text(source, substitutions, regex);
-        todo!()
     }
 }

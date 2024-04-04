@@ -1909,6 +1909,7 @@ dependencies = [
  "reqwest",
  "strum",
  "thiserror",
+ "url",
 ]
 
 [[package]]

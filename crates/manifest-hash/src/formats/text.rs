@@ -48,9 +48,10 @@ impl RegexTemplates {
         let mut map = HashMap::new();
 
         for field in Self::iter() {
+            let field_name = format!("${field}");
             let regex: &'static str = field.into();
 
-            map.insert(field.to_string(), regex.to_string());
+            map.insert(field_name, regex.to_string());
         }
 
         map
@@ -90,6 +91,8 @@ pub fn parse_text(
         .map(|hash| hash.as_str().replace(' ', ""))
         .collect_vec();
 
+    eprintln!("Hashes length after subbing searching: {}", hashes.len());
+
     // Convert base64 encoded hashes
     let hash = if let Some(hash) = hashes.get_mut(1) {
         let base64_regex = Regex::new(
@@ -125,6 +128,7 @@ pub fn parse_text(
             None
         }
     } else {
+        println!("Didn't find first regex");
         let filename_regex = {
             let regex = r"([a-fA-F0-9]{32,128})[\x20\t]+.*`$basename(?:[\x20\t]+\d+)?"
                 .to_string()
@@ -132,6 +136,8 @@ pub fn parse_text(
 
             Regex::new(&regex)?
         };
+
+        dbg!(&filename_regex);
 
         let mut temp_hash = filename_regex
             .find_iter(source.as_ref())
@@ -161,16 +167,35 @@ pub fn parse_text(
 mod tests {
     use std::collections::HashMap;
 
+    use url::Url;
+
     use super::*;
 
     #[test]
     fn test_finding_mysql_hashes() {
-        const TEXT_URL: &str = "https://dev.mysql.com/downloads/mysql/";
-        const FIND_REGEX: &str = "md5\">([A-Fa-f\\d]{32})";
+        let mut text_url: String = "https://dev.mysql.com/downloads/mysql/".to_string();
+        const FIND_REGEX: &str = "md5\">$md5";
 
-        let text_file = reqwest::blocking::get(TEXT_URL).unwrap().text().unwrap();
+        let url = Url::parse(&text_url).unwrap();
 
-        let hash = parse_text(text_file, HashMap::new(), FIND_REGEX.to_string())
+        if let Some(fragment) = url.fragment() {
+            text_url = text_url.replace(&format!("#{}", fragment), "");
+        }
+
+        let mut subs = HashMap::new();
+
+        let no_fragment = if let Some(fragment) = url.fragment() {
+            text_url.replace(&format!("#{}", fragment), "")
+        } else {
+            text_url.clone()
+        };
+
+        subs.insert("$url".to_string(), no_fragment.clone());
+        subs.insert("$baseurl".to_string(), no_fragment);
+
+        let text_file = reqwest::blocking::get(text_url).unwrap().text().unwrap();
+
+        let hash = parse_text(text_file, subs, FIND_REGEX.to_string())
             .unwrap()
             .expect("found hash");
 
