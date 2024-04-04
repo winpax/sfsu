@@ -1907,6 +1907,7 @@ dependencies = [
  "quick-xml",
  "regex",
  "reqwest",
+ "serde_json",
  "strum",
  "thiserror",
  "url",
