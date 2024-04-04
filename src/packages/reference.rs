@@ -153,7 +153,7 @@ impl Package {
 
         buckets
             .into_iter()
-            .find_map(|bucket| match bucket.get_manifest(self.name()) {
+            .find_map(|bucket| match bucket.get_manifest(self.name()?) {
                 Ok(manifest) => Some(manifest),
                 Err(_) => None,
             })
