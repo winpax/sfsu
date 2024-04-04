@@ -143,6 +143,23 @@ impl Package {
     }
 
     #[must_use]
+    /// Find the first matching manifest in local buckets
+    ///
+    /// Returns [`None`] if no matching manifest is found
+    pub fn first(&self) -> Option<Manifest> {
+        let Ok(buckets) = Bucket::list_all() else {
+            return None;
+        };
+
+        buckets
+            .into_iter()
+            .find_map(|bucket| match bucket.get_manifest(self.name()) {
+                Ok(manifest) => Some(manifest),
+                Err(_) => None,
+            })
+    }
+
+    #[must_use]
     /// Parse the bucket and package to get the manifest path, or search for all matches in local buckets
     ///
     /// Returns a [`Vec`] with a single manifest path if the reference is valid

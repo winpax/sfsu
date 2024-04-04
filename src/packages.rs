@@ -1,6 +1,6 @@
 use std::{
     path::Path,
-    process::{Command, Stdio},
+    process::Stdio,
     time::{SystemTimeError, UNIX_EPOCH},
 };
 
@@ -26,6 +26,7 @@ use crate::{
 };
 
 pub mod downloading;
+pub mod export;
 pub mod install;
 pub mod manifest;
 pub mod outdated;
@@ -633,16 +634,9 @@ impl Manifest {
                 Some(author_wrapped.to_string()),
             ))
         } else {
-            let git_path = Scoop::git_path()?;
-
-            let output = Command::new(git_path)
-                .current_dir(bucket.path())
-                .arg("-C")
-                .arg("bucket")
-                .arg("log")
-                .arg("-1")
-                .arg("-s")
-                .arg("--format='%aD#%an'")
+            let output = bucket
+                .open_repo()?
+                .log("bucket", 1, "%aD#%an")?
                 .arg(self.name.clone() + ".json")
                 .stderr(Stdio::null())
                 .output()
