@@ -8,13 +8,14 @@ use rayon::prelude::*;
 pub mod buckets;
 pub mod calm_panic;
 pub mod config;
+pub mod diagnostics;
 pub mod git;
-pub mod packages;
-
-mod opt;
 /// Currently this is mostly an internal api
 pub mod output;
+pub mod packages;
 pub mod progress;
+
+mod opt;
 
 #[macro_use]
 extern crate log;
