@@ -33,7 +33,7 @@ struct Args {
     )]
     json: bool,
 
-    #[clap(long, global = true, help = "Enable verbose logging")]
+    #[clap(short, long, global = true, help = "Enable verbose logging")]
     verbose: bool,
 
     #[clap(
