@@ -33,7 +33,7 @@ impl log::Log for Logger {
         if self.verbose {
             true
         } else {
-            metadata.level() > log::Level::Trace
+            metadata.level() > log::Level::Debug
         }
     }
 
