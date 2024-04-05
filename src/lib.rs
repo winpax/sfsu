@@ -14,6 +14,7 @@ pub mod git;
 pub mod output;
 pub mod packages;
 pub mod progress;
+pub mod win;
 
 mod opt;
 

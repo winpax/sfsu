@@ -2,6 +2,7 @@ pub mod bucket;
 pub mod cat;
 pub mod depends;
 pub mod describe;
+pub mod doctor;
 pub mod export;
 pub mod home;
 pub mod hook;
@@ -110,4 +111,6 @@ pub enum Commands {
     Cat(cat::Args),
     /// Exports installed apps, buckets (and optionally configs) in JSON format
     Export(export::Args),
+    /// Check for common issues
+    Doctor(doctor::Args),
 }
