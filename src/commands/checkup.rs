@@ -31,6 +31,7 @@ impl super::Command for Args {
             println!("\tRun `scoop bucket add main` to install it");
         }
 
+        // I've disabled this because it's highly insecure to disable Windows Defender for Scoop
         // if !sfsu::is_elevated()? {
         //     println!("❓ Windows Defender status could not be checked");
         //     println!("\tRun this command as admin to check Windows Defender status");
