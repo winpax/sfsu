@@ -15,6 +15,7 @@ pub mod update;
 
 use clap::Subcommand;
 
+use sfsu::calm_panic::calm_panic;
 use sfsu_derive::{Hooks, Runnable};
 
 pub struct DeprecationWarning {
@@ -35,6 +36,8 @@ pub enum DeprecationMessage {
 
 // TODO: Run command could return `impl Display` and print that itself
 pub trait Command {
+    const NEEDS_ELEVATION: bool = false;
+
     fn deprecated() -> Option<DeprecationWarning> {
         None
     }
@@ -62,6 +65,10 @@ pub trait Command {
             }
 
             println!("{}\n", output.yellow());
+        }
+
+        if Self::NEEDS_ELEVATION && !sfsu::is_elevated()? {
+            calm_panic("This command requires elevation. Please run as an administrator.");
         }
 
         self.runner()
