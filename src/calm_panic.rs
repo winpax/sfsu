@@ -39,6 +39,7 @@ impl<T> CalmUnwrap<T> for Option<T> {
 }
 
 pub fn calm_panic(msg: impl Display) -> ! {
-    eprintln!("{msg}");
+    use colored::Colorize as _;
+    eprintln!("{}", msg.to_string().red());
     std::process::exit(1);
 }

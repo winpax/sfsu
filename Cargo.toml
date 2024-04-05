@@ -56,6 +56,8 @@ shadow-rs = "0.27"
 strum = { version = "0.26", features = ["derive"] }
 thiserror = "1.0"
 which = "6.0"
+windows = { version = "0.54", features = ["Win32_System_SystemInformation", "Win32_Storage_FileSystem"] }
+winreg = "0.52"
 
 [dev-dependencies]
 chrono = ">=0.4.20"
@@ -63,3 +65,4 @@ criterion = { version = "0.5", features = ["html_reports"] }
 
 [build-dependencies]
 shadow-rs = "0.27"
+winres = "0.1"
