@@ -1,10 +1,7 @@
 use clap::Parser;
 
 use itertools::Itertools;
-use sfsu::{
-    diagnostics::{Diagnostics, LongPathsStatus},
-    Scoop,
-};
+use sfsu::diagnostics::{Diagnostics, LongPathsStatus};
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
@@ -15,6 +12,11 @@ pub struct Args {
 impl super::Command for Args {
     fn runner(self) -> Result<(), anyhow::Error> {
         let diagnostics = Diagnostics::collect()?;
+
+        if self.json {
+            println!("{}", serde_json::to_string_pretty(&diagnostics)?);
+            return Ok(());
+        }
 
         if diagnostics.git_installed {
             println!("✅ Git is installed");

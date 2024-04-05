@@ -1,6 +1,7 @@
 use std::{ffi::OsString, os::windows::ffi::OsStringExt};
 
 use itertools::Itertools;
+use serde::Serialize;
 
 use crate::{
     buckets::{Bucket, BucketError},
@@ -17,7 +18,7 @@ pub enum Error {
     Quork(#[from] quork::root::Error),
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Serialize)]
 pub enum LongPathsStatus {
     /// Long paths are enabled
     Enabled,
@@ -27,7 +28,7 @@ pub enum LongPathsStatus {
     Disabled,
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Serialize)]
 pub struct Helper {
     pub exe: &'static str,
     pub name: &'static str,
@@ -57,7 +58,7 @@ const EXPECTED_HELPERS: &[Helper] = &[
 ];
 
 #[allow(clippy::struct_excessive_bools)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct Diagnostics {
     pub git_installed: bool,
     pub long_paths: LongPathsStatus,
