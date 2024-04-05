@@ -33,11 +33,7 @@ struct Args {
     )]
     json: bool,
 
-    #[clap(
-        long,
-        global = true,
-        help = "Enable verbose logging, and additional information in output"
-    )]
+    #[clap(long, global = true, help = "Enable verbose logging")]
     verbose: bool,
 
     #[clap(
@@ -53,7 +49,11 @@ fn main() -> anyhow::Result<()> {
 
     let args = Args::parse();
 
-    logging::Logger::init(args.verbose)?;
+    logging::Logger::init(if cfg!(debug_assertions) {
+        true
+    } else {
+        args.verbose
+    })?;
 
     if args.no_color {
         debug!("Colour disabled globally");
