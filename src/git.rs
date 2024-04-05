@@ -1,7 +1,7 @@
 use std::{ffi::OsStr, fmt::Display, process::Command};
 
 use derive_more::Deref;
-use git2::{Commit, DiffOptions, Direction, FetchOptions, Remote, Repository};
+use git2::{Commit, DiffOptions, Direction, FetchOptions, Remote, Repository, Sort};
 
 use crate::{buckets::Bucket, opt::ResultIntoOption, Scoop};
 
@@ -173,6 +173,53 @@ impl Repo {
         pull::pull(self, None, Some(current_branch.as_str()), stats_cb)?;
 
         Ok(())
+    }
+
+    /// Pull the latest changes from the remote repository
+    ///
+    /// # Errors
+    /// - No active branch
+    /// - No remote named "origin"
+    /// - No reference "`FETCH_HEAD`"
+    /// - Missing head
+    /// - Missing latest commit
+    /// - Git error
+    pub fn pull_with_changelog(
+        &self,
+        stats_cb: Option<ProgressCallback<'_>>,
+    ) -> Result<Vec<String>> {
+        let current_branch = self.current_branch()?;
+
+        let current_commit = self.latest_commit()?;
+
+        pull::pull(self, None, Some(current_branch.as_str()), stats_cb)?;
+
+        // let post_pull_commit = self.latest_commit()?;
+
+        let mut revwalk = self.revwalk()?;
+        revwalk.push_head()?;
+        revwalk.set_sorting(Sort::TOPOLOGICAL)?;
+
+        let mut changelog = Vec::new();
+        for oid in revwalk {
+            let oid = oid?;
+
+            if oid == current_commit.id() {
+                break;
+            }
+
+            let commmit = self.find_commit(oid)?;
+
+            if let Some(msg) = commmit.message() {
+                if let Some(first_line) = msg.lines().next() {
+                    changelog.push(first_line.trim().to_string());
+                }
+            }
+        }
+
+        changelog.reverse();
+
+        Ok(changelog)
     }
 
     /// Equivalent of `git log -n {n} -s --format='{format}'`

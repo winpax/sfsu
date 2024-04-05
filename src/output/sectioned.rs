@@ -66,6 +66,7 @@ impl<T: Display> Display for Sections<T> {
 
 /// Sectioned data (i.e buckets)
 #[must_use = "does nothing unless printed"]
+#[derive(Debug)]
 pub struct Section<T> {
     pub title: Option<String>,
     pub child: Children<T>,
@@ -84,6 +85,7 @@ impl<T> Section<T> {
 }
 
 #[must_use = "does nothing unless printed"]
+#[derive(Debug)]
 pub enum Children<T> {
     Single(T),
     Multiple(Vec<T>),
