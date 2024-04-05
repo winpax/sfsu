@@ -43,6 +43,6 @@ impl super::Command for Args {
             }
         }
 
-        todo!()
+        Ok(())
     }
 }
