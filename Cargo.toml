@@ -2,7 +2,7 @@
 description = "Stupid Fast Scoop Utils"
 edition = "2021"
 name = "sfsu"
-version = "1.9.2"
+version = "1.10.0"
 
 [workspace]
 members = ["sfsu-derive"]
@@ -56,7 +56,10 @@ shadow-rs = "0.27"
 strum = { version = "0.26", features = ["derive"] }
 thiserror = "1.0"
 which = "6.0"
-windows = { version = "0.54", features = ["Win32_System_SystemInformation", "Win32_Storage_FileSystem"] }
+windows = { version = "0.54", features = [
+    "Win32_Storage_FileSystem",
+    "Win32_System_SystemInformation",
+] }
 winreg = "0.52"
 
 [dev-dependencies]
