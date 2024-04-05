@@ -1,3 +1,7 @@
+use std::{ffi::OsString, os::windows::ffi::OsStringExt};
+
+use itertools::Itertools;
+
 use crate::{
     buckets::{Bucket, BucketError},
     Scoop,
@@ -7,11 +11,13 @@ use crate::{
 pub enum Error {
     #[error("Internal Windows API Error: {0}")]
     Windows(#[from] windows::core::Error),
-
     #[error("Interacting with buckets: {0}")]
     Bucket(#[from] BucketError),
+    #[error("Error checking root privelages: {0}")]
+    Quork(#[from] quork::root::Error),
 }
 
+#[derive(Debug, Copy, Clone)]
 pub enum LongPathsStatus {
     /// Long paths are enabled
     Enabled,
@@ -21,11 +27,45 @@ pub enum LongPathsStatus {
     Disabled,
 }
 
+#[derive(Debug, Copy, Clone)]
+pub struct Helper {
+    pub exe: &'static str,
+    pub name: &'static str,
+    pub reason: &'static str,
+    pub packages: &'static [&'static str],
+}
+
+const EXPECTED_HELPERS: &[Helper] = &[
+    Helper {
+        exe: "7z",
+        name: "7-Zip",
+        reason: "unpacking most programs",
+        packages: &["7zip", "7zip-std"],
+    },
+    Helper {
+        exe: "innounp",
+        name: "Inno Setup Unpacker",
+        reason: "unpacking InnoSetup files",
+        packages: &["innounp"],
+    },
+    Helper {
+        exe: "dark",
+        name: "Dark",
+        reason: "unpacking installers created with the WiX toolkit",
+        packages: &["dark", "wixtoolset"],
+    },
+];
+
+#[allow(clippy::struct_excessive_bools)]
+#[derive(Debug, Clone)]
 pub struct Diagnostics {
+    pub git_installed: bool,
     pub long_paths: LongPathsStatus,
     pub main_bucket: bool,
     pub windows_developer: bool,
     pub windows_defender: bool,
+    pub missing_helpers: Vec<Helper>,
+    pub scoop_ntfs: bool,
 }
 
 impl Diagnostics {
@@ -37,20 +77,38 @@ impl Diagnostics {
     /// - Unable to check windows developer status
     /// - Unable to check windows defender status
     pub fn collect() -> Result<Self, Error> {
+        let git_installed = Self::git_installed();
+        debug!("Check git is installed");
         let main_bucket = Self::check_main_bucket()?;
         debug!("Checked main bucket");
         let long_paths = Self::check_long_paths()?;
         debug!("Checked long paths");
         let windows_developer = Self::get_windows_developer_status()?;
         debug!("Checked developer mode");
-        let windows_defender = false /* Self::check_windows_defender()? */;
-        debug!("Checked defender");
+
+        let windows_defender = if crate::is_elevated()? {
+            Self::check_windows_defender()?
+        } else {
+            false
+        };
+        debug!("Checked windows defender");
+
+        let missing_helpers = EXPECTED_HELPERS
+            .iter()
+            .filter(|helper| which::which(helper.exe).is_err())
+            .copied()
+            .collect();
+
+        let scoop_ntfs = Self::is_ntfs()?;
 
         Ok(Self {
+            git_installed,
             long_paths,
             main_bucket,
             windows_developer,
             windows_defender,
+            missing_helpers,
+            scoop_ntfs,
         })
     }
 
@@ -63,8 +121,6 @@ impl Diagnostics {
     /// - Unable to check if the key exists
     pub fn check_windows_defender() -> windows::core::Result<bool> {
         use winreg::{enums::HKEY_LOCAL_MACHINE, RegKey};
-
-        unimplemented!("requires elevation");
 
         let scoop_dir = Scoop::path();
         let key = RegKey::predef(HKEY_LOCAL_MACHINE)
@@ -135,5 +191,57 @@ impl Diagnostics {
         let key = hlkm.open_subkey(r"SOFTWARE\Microsoft\Windows\CurrentVersion\AppModelUnlock")?;
 
         Ok(key.get_value::<u32, _>("AllowDevelopmentWithoutDevLicense")? == 1)
+    }
+
+    /// Check if the Scoop directory is on an NTFS filesystem
+    ///
+    /// # Errors
+    /// - Unable to get the volume information
+    /// - Unable to check the filesystem
+    /// - Unable to get the root path
+    pub fn is_ntfs() -> windows::core::Result<bool> {
+        use windows::{
+            core::HSTRING,
+            Win32::{Foundation::MAX_PATH, Storage::FileSystem::GetVolumeInformationW},
+        };
+
+        let path = Scoop::path();
+
+        let root = {
+            let mut current = path.as_path();
+
+            while let Some(parent) = current.parent() {
+                current = parent;
+            }
+
+            debug!("Checking filesystem of: {}", current.display());
+
+            current
+        };
+
+        let mut fs_name = [0u16; MAX_PATH as usize];
+
+        unsafe {
+            GetVolumeInformationW(
+                &HSTRING::from(root),
+                None,
+                None,
+                // &mut max_component_length,
+                None,
+                // &mut flags,
+                None,
+                Some(&mut fs_name),
+            )?;
+        }
+
+        debug!("Filesystem: {:?}", OsString::from_wide(&fs_name));
+
+        Ok(fs_name.starts_with(&"NTFS".encode_utf16().collect_vec()))
+    }
+
+    #[must_use]
+    /// Check if the user has git installed
+    pub fn git_installed() -> bool {
+        which::which("git").is_ok()
     }
 }
