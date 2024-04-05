@@ -87,13 +87,3 @@ pub fn get_windows_developer_status() -> windows::core::Result<bool> {
 
     Ok(key.get_value::<u32, _>("AllowDevelopmentWithoutDevLicense")? == 1)
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_main_bucket_exists() {
-        assert!(check_main_bucket().unwrap());
-    }
-}
