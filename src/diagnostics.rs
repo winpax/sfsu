@@ -1,7 +1,3 @@
-use std::os::raw::c_void;
-
-use windows::Win32::System::SystemInformation::{OSVERSIONINFOEXW, OSVERSIONINFOW};
-
 use crate::{
     buckets::{Bucket, BucketError},
     Scoop,
@@ -93,25 +89,27 @@ impl Diagnostics {
     /// - Unable to read the registry
     /// - Unable to read the OS version
     pub fn check_long_paths() -> windows::core::Result<LongPathsStatus> {
+        use windows::Win32::System::SystemInformation::{
+            GetVersionExW, OSVERSIONINFOEXW, OSVERSIONINFOW,
+        };
         use winreg::{enums::HKEY_LOCAL_MACHINE, RegKey};
 
-        // let os_version_info = unsafe {
-        //     IsWindows10OrGreater;
+        let version_info = unsafe {
+            let mut version_info = OSVERSIONINFOEXW {
+                #[allow(clippy::cast_possible_truncation)]
+                dwOSVersionInfoSize: std::mem::size_of::<OSVERSIONINFOEXW>() as u32,
+                ..std::mem::zeroed()
+            };
 
-        //     os_version_info
-        // };
+            GetVersionExW(std::ptr::addr_of_mut!(version_info).cast::<OSVERSIONINFOW>())?;
 
-        let is_windows_10 = unsafe { crate::win::version::is_windows_10_or_later() };
-        debug!(
-            "Windows version: {}",
-            if is_windows_10 {
-                "10 or later"
-            } else {
-                "earlier than 10"
-            }
-        );
+            version_info
+        };
 
-        if !is_windows_10 {
+        let major_version = version_info.dwMajorVersion;
+        debug!("Windows Major Version: {major_version}");
+
+        if major_version < 10 {
             return Ok(LongPathsStatus::OldWindows);
         }
 
