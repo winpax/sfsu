@@ -31,19 +31,19 @@ impl super::Command for Args {
             println!("\tRun `scoop bucket add main` to install it");
         }
 
-        if !sfsu::is_elevated()? {
-            println!("❓ Windows Defender status could not be checked");
-            println!("\tRun this command as admin to check Windows Defender status");
-        } else if diagnostics.windows_defender {
-            println!("✅ Windows Defender is ignoring the Scoop directory");
-        } else {
-            println!("❌ Windows Defender is not ignoring the Scoop directory");
-            println!("\tWindows Defender may slow down or disrupt installs with realtime scanning");
-            println!(
-                "\tConsider running: `sudo Add-MpPreference -ExclusionPath '{}'`",
-                Scoop::path().display()
-            );
-        }
+        // if !sfsu::is_elevated()? {
+        //     println!("❓ Windows Defender status could not be checked");
+        //     println!("\tRun this command as admin to check Windows Defender status");
+        // } else if diagnostics.windows_defender {
+        //     println!("✅ Windows Defender is ignoring the Scoop directory");
+        // } else {
+        //     println!("❌ Windows Defender is not ignoring the Scoop directory");
+        //     println!("\tWindows Defender may slow down or disrupt installs with realtime scanning");
+        //     println!(
+        //         "\tConsider running: `sudo Add-MpPreference -ExclusionPath '{}'`",
+        //         Scoop::path().display()
+        //     );
+        // }
 
         if diagnostics.windows_developer {
             println!("✅ Windows Developer Mode is enabled");
