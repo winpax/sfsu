@@ -1,7 +1,25 @@
-use crate::buckets::{Bucket, BucketError};
+use crate::{
+    buckets::{Bucket, BucketError},
+    Scoop,
+};
 
-pub fn check_windows_defender() {
-    unimplemented!("Check if Windows Defender exclused Scoop install path")
+#[allow(unreachable_code)]
+/// Check if Windows Defender is ignoring the Scoop directory
+///
+/// # Errors
+/// - Unable to read the registry
+/// - Unable to open the registry key
+/// - Unable to check if the key exists
+pub fn check_windows_defender() -> windows::core::Result<bool> {
+    use winreg::{enums::HKEY_LOCAL_MACHINE, RegKey};
+
+    unimplemented!("requires elevation");
+
+    let scoop_dir = Scoop::path();
+    let key = RegKey::predef(HKEY_LOCAL_MACHINE)
+        .open_subkey(r"SOFTWARE\Microsoft\Windows Defender\Exclusions\Paths")?;
+
+    Ok(key.open_subkey(scoop_dir).is_ok())
 }
 
 /// Check if the main bucket exists
@@ -72,8 +90,10 @@ pub fn get_windows_developer_status() -> windows::core::Result<bool> {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+
     #[test]
     fn test_main_bucket_exists() {
-        assert!(crate::diagnostics::check_main_bucket().unwrap());
+        assert!(check_main_bucket().unwrap());
     }
 }
