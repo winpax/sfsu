@@ -1610,7 +1610,6 @@ version = "1.9.2"
 dependencies = [
  "anyhow",
  "bat",
- "cc",
  "cfg-if",
  "chrono",
  "clap",

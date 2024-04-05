@@ -64,6 +64,5 @@ chrono = ">=0.4.20"
 criterion = { version = "0.5", features = ["html_reports"] }
 
 [build-dependencies]
-cc = "1.0.90"
 shadow-rs = "0.27"
-winres = "0.1.12"
+winres = "0.1"
