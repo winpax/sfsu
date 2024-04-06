@@ -1,5 +1,4 @@
 pub mod bucket;
-pub mod buckets;
 pub mod cat;
 pub mod checkup;
 pub mod depends;
@@ -79,8 +78,6 @@ pub trait Command {
 
 #[derive(Debug, Clone, Subcommand, Hooks, Runnable)]
 pub enum Commands {
-    /// Commands to manage scoop buckets
-    Buckets(buckets::Args),
     /// Search for a package
     Search(search::Args),
     /// List all installed packages
@@ -91,7 +88,7 @@ pub enum Commands {
     /// Find buckets that do not have any installed packages
     UnusedBuckets(bucket::unused::Args),
     #[cfg_attr(not(feature = "v2"), no_hook)]
-    /// Manages buckets
+    /// Commands to manage buckets
     Bucket(bucket::Args),
     #[cfg(not(feature = "v2"))]
     /// Describe a package
