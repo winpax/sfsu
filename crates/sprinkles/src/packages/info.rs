@@ -8,15 +8,22 @@ use crate::{
 #[derive(Debug, Clone, Serialize, sfsu_derive::KeyValue)]
 pub struct PackageInfo {
     pub name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
     pub version: String,
     pub bucket: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub website: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub license: Option<PackageLicense>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub updated_at: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub updated_by: Option<String>,
     pub installed: NicerBool,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub binaries: Option<String>,
-    pub notes: Option<String>,
+    pub notes: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub shortcuts: Option<AliasVec<String>>,
 }

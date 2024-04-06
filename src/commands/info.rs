@@ -126,7 +126,10 @@ impl super::Command for Args {
                         })
                         .join(" | "),
                 }),
-                notes: manifest.notes.map(|notes| notes.to_string()),
+                notes: manifest
+                    .notes
+                    .map(|notes| notes.to_string())
+                    .unwrap_or_default(),
                 installed: wrap_bool!(install_path.is_some()),
                 shortcuts: manifest.install_config.shortcuts.map(AliasVec::from_vec),
                 updated_at,
@@ -138,11 +141,11 @@ impl super::Command for Args {
 
                 println!("{output}");
             } else {
-                let (keys, values) = pkg_info.into_pairs();
+                // let (keys, values) = pkg_info.into_pairs();
 
-                let keys = keys.into_iter().map(Key::wrap).collect_vec();
+                // let keys = keys.into_iter().map(Key::wrap).collect_vec();
 
-                let table = VTable::new(&keys, &values);
+                let table = VTable::from_value(serde_json::to_value(pkg_info)?);
                 println!("{table}");
             }
         }
