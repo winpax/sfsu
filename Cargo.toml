@@ -11,6 +11,10 @@ members = ["crates/*"]
 harness = false
 name = "searching"
 
+[[bench]]
+harness = false
+name = "serde"
+
 [profile.release]
 codegen-units = 1
 lto = true

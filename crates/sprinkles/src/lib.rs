@@ -1,4 +1,5 @@
 #![warn(clippy::all, clippy::pedantic, rust_2018_idioms)]
+#![allow(clippy::module_name_repetitions)]
 
 use std::{ffi::OsStr, fmt, fs::File, path::PathBuf};
 

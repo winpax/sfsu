@@ -238,17 +238,7 @@ impl Args {
             //     })
             //     .collect::<Vec<_>>();
 
-            let outputs = Structured::new(
-                &[
-                    "Name",
-                    "Current",
-                    "Available",
-                    "Missing Dependencies",
-                    "Info",
-                ],
-                &values,
-            )
-            .with_max_length(30);
+            let outputs = Structured::new(&values).with_max_length(30);
 
             write!(output, "{outputs}")?;
             // }

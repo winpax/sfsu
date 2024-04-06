@@ -9,7 +9,6 @@ use sprinkles::{
         wrappers::{
             alias_vec::AliasVec,
             bool::{wrap_bool, NicerBool},
-            keys::Key,
             time::NicerTime,
         },
     },
@@ -18,7 +17,7 @@ use sprinkles::{
         manifest::{StringOrArrayOfStrings, StringOrArrayOfStringsOrAnArrayOfArrayOfStrings},
         reference,
     },
-    KeyValue, Scoop,
+    Scoop,
 };
 
 #[derive(Debug, Clone, Parser)]
@@ -109,8 +108,6 @@ impl super::Command for Args {
                 version: manifest.version,
                 website: manifest.homepage,
                 license: manifest.license,
-                // TODO: Fix binaries display
-                // NOTE: Run `sfsu info inkscape` to know what I mean 😬
                 binaries: manifest.bin.map(|b| match b {
                     StringOrArrayOfStringsOrAnArrayOfArrayOfStrings::String(bin) => bin.to_string(),
                     StringOrArrayOfStringsOrAnArrayOfArrayOfStrings::StringArray(bins) => {
@@ -126,23 +123,22 @@ impl super::Command for Args {
                         })
                         .join(" | "),
                 }),
-                notes: manifest.notes.map(|notes| notes.to_string()),
+                notes: manifest
+                    .notes
+                    .map(|notes| notes.to_string())
+                    .unwrap_or_default(),
                 installed: wrap_bool!(install_path.is_some()),
                 shortcuts: manifest.install_config.shortcuts.map(AliasVec::from_vec),
                 updated_at,
                 updated_by,
             };
 
+            let value = serde_json::to_value(pkg_info)?;
             if self.json {
-                let output = serde_json::to_string_pretty(&pkg_info)?;
-
+                let output = serde_json::to_string_pretty(&value)?;
                 println!("{output}");
             } else {
-                let (keys, values) = pkg_info.into_pairs();
-
-                let keys = keys.into_iter().map(Key::wrap).collect_vec();
-
-                let table = VTable::new(&keys, &values);
+                let table = VTable::new(&value);
                 println!("{table}");
             }
         }

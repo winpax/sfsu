@@ -1,7 +1,9 @@
 use std::fmt::Display;
 
-use rayon::prelude::*;
-use serde_json::Value;
+use itertools::Itertools;
+use serde_json::{Map, Value};
+
+use super::wrappers::header::Header;
 
 pub mod vertical;
 
@@ -58,9 +60,9 @@ impl<T: Display> Display for OptionalTruncate<T> {
     }
 }
 
-fn print_headers<'a>(
+fn print_headers(
     f: &mut std::fmt::Formatter<'_>,
-    headers: &'a [&'a str],
+    headers: &[&String],
     max_length: Option<usize>,
     access_lengths: &[usize],
 ) -> std::fmt::Result {
@@ -74,7 +76,7 @@ fn print_headers<'a>(
             .map(|(i, header)| -> Result<usize, std::fmt::Error> {
                 let header_size = access_lengths[i];
 
-                let truncated = OptionalTruncate::new(header)
+                let truncated = OptionalTruncate::new(Header::new(header))
                     .with_length(max_length)
                     .to_string();
                 write!(f, "{:header_size$} ", truncated.bright_green())?;
@@ -98,7 +100,7 @@ fn print_headers<'a>(
     for (i, header) in headers.iter().enumerate() {
         let header_size = access_lengths[i];
 
-        let truncated = OptionalTruncate::new(header).with_length(max_length);
+        let truncated = OptionalTruncate::new(Header::new(header)).with_length(max_length);
         write!(f, "{truncated:header_size$} | ")?;
     }
 
@@ -111,8 +113,7 @@ fn print_headers<'a>(
 /// Takes a single named lifetime, given that this is intended
 /// to be constructed and used within the same function.
 pub struct Structured<'a> {
-    headers: &'a [&'a str],
-    values: &'a [Value],
+    objects: Vec<&'a Map<String, Value>>,
     max_length: Option<usize>,
 }
 
@@ -122,16 +123,14 @@ impl<'a> Structured<'a> {
     /// # Panics
     /// - If the length of headers is not equal to the length of values
     /// - If the values provided are not objects
-    pub fn new(headers: &'a [&'a str], values: &'a [Value]) -> Self {
-        assert_eq!(
-            headers.len(),
-            // TODO: Do not panic here
-            values[0].as_object().unwrap().keys().len(),
-            "The number of column headers must match quantity data for said columns"
-        );
+    pub fn new(values: &'a [Value]) -> Self {
+        let objects = values
+            .iter()
+            .map(|v| v.as_object().expect("object"))
+            .collect::<Vec<_>>();
+
         Structured {
-            headers,
-            values,
+            objects,
             max_length: None,
         }
     }
@@ -146,64 +145,57 @@ impl<'a> Structured<'a> {
 
 impl<'a> Display for Structured<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let data = {
-            let mut data = vec![];
-            self.values
-                .par_iter()
-                // TODO: Do not panic here
-                .map(|row| row.as_object().expect("object"))
-                .collect_into_vec(&mut data);
-
-            data
-        };
+        let headers = self.objects[0].keys().collect_vec();
 
         let contestants = {
             // TODO: Make this dynamic largest header
             let default_width = "Updated".len();
 
             let mut v = vec![default_width];
-            v.extend(self.headers.iter().map(|s| s.len()));
+            v.extend(headers.iter().map(|s| s.len()));
 
             v
         };
 
         // TODO: Imeplement max length with truncation
         let access_lengths: Vec<usize> =
-            data.iter().fold(vec![0; self.headers.len()], |base, row| {
-                // TODO: Simultaneous iterators
+            self.objects
+                .iter()
+                .fold(vec![0; headers.len()], |base, row| {
+                    // TODO: Simultaneous iterators
 
-                self.headers
-                    .iter()
-                    .enumerate()
-                    .map(|(i, header)| {
-                        let element = row
-                            .get(&heck::AsSnakeCase(header).to_string())
-                            .and_then(|v| v.as_str())
-                            .unwrap_or_default();
+                    headers
+                        .iter()
+                        .enumerate()
+                        .map(|(i, header)| {
+                            let element = row
+                                .get(&heck::AsSnakeCase(header).to_string())
+                                .and_then(|v| v.as_str())
+                                .unwrap_or_default();
 
-                        let mut contestants = contestants.clone();
-                        contestants.push(base[i]);
-                        contestants.push(
-                            OptionalTruncate::new(element)
-                                .with_length(self.max_length)
-                                // TODO: Fix suffix
-                                .with_suffix("...")
-                                .to_string()
-                                .len(),
-                        );
+                            let mut contestants = contestants.clone();
+                            contestants.push(base[i]);
+                            contestants.push(
+                                OptionalTruncate::new(element)
+                                    .with_length(self.max_length)
+                                    // TODO: Fix suffix
+                                    .with_suffix("...")
+                                    .to_string()
+                                    .len(),
+                            );
 
-                        *contestants.iter().max().unwrap()
-                    })
-                    .collect()
-            });
+                            *contestants.iter().max().unwrap()
+                        })
+                        .collect()
+                });
 
-        print_headers(f, self.headers, self.max_length, &access_lengths)?;
+        print_headers(f, &headers, self.max_length, &access_lengths)?;
 
         // Enter new row
         writeln!(f)?;
 
-        for row in &data {
-            for (i, header) in self.headers.iter().enumerate() {
+        for row in &self.objects {
+            for (i, header) in headers.iter().enumerate() {
                 let value_size = access_lengths[i];
 
                 let element = row
