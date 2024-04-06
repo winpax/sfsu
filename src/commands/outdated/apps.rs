@@ -1,7 +1,7 @@
 use clap::Parser;
 use rayon::prelude::*;
 use serde_json::Value;
-use sfsu::{
+use sprinkles::{
     buckets::Bucket,
     output::structured::Structured,
     packages::{install, outdated},

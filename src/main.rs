@@ -4,7 +4,6 @@
 
 mod commands;
 mod logging;
-mod opt;
 
 use clap::Parser;
 

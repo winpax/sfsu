@@ -1,7 +1,7 @@
 use std::{fs::File, io::Read};
 
 use clap::Parser;
-use sfsu::{calm_panic::calm_panic, packages::reference};
+use sprinkles::{calm_panic::calm_panic, packages::reference};
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {

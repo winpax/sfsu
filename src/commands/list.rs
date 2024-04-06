@@ -2,7 +2,7 @@ use clap::{Parser, ValueEnum};
 use colored::Colorize;
 use rayon::prelude::*;
 
-use sfsu::{output::structured::Structured, packages::MinInfo};
+use sprinkles::{output::structured::Structured, packages::MinInfo};
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {

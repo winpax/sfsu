@@ -1,7 +1,7 @@
 use clap::Parser;
 use itertools::Itertools;
 use rayon::prelude::*;
-use sfsu::buckets::Bucket;
+use sprinkles::buckets::Bucket;
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {

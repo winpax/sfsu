@@ -1614,33 +1614,22 @@ dependencies = [
  "chrono",
  "clap",
  "colored",
- "const-str",
  "criterion",
- "derive_more",
- "directories",
- "dunce",
  "git2",
- "heck 0.5.0",
  "human-panic",
  "indicatif",
  "itertools 0.12.1",
- "lazy_static",
  "log",
  "open",
  "parking_lot",
  "quork",
  "rayon",
  "regex",
- "semver",
- "serde",
  "serde_json",
  "sfsu-derive",
  "shadow-rs",
+ "sprinkles",
  "strum",
- "thiserror",
- "which",
- "windows 0.54.0",
- "winreg",
  "winres",
 ]
 
@@ -1688,6 +1677,44 @@ name = "smallvec"
 version = "1.13.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3c5e1a9a646d36c3599cd173a41282daf47c44583ad367b8e6837255952e5c67"
+
+[[package]]
+name = "sprinkles"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "bat",
+ "cfg-if",
+ "chrono",
+ "clap",
+ "colored",
+ "const-str",
+ "derive_more",
+ "directories",
+ "dunce",
+ "git2",
+ "heck 0.5.0",
+ "human-panic",
+ "indicatif",
+ "itertools 0.12.1",
+ "lazy_static",
+ "log",
+ "open",
+ "parking_lot",
+ "quork",
+ "rayon",
+ "regex",
+ "semver",
+ "serde",
+ "serde_json",
+ "sfsu-derive",
+ "shadow-rs",
+ "strum",
+ "thiserror",
+ "which",
+ "windows 0.54.0",
+ "winreg",
+]
 
 [[package]]
 name = "std_prelude"

@@ -1,6 +1,6 @@
 use clap::Parser;
 
-use sfsu::{
+use sprinkles::{
     buckets::Bucket,
     output::sectioned::{Children, Section, Sections, Text},
     packages::Manifest,

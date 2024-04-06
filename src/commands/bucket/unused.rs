@@ -1,7 +1,7 @@
 use clap::Parser;
 
 use rayon::prelude::*;
-use sfsu::{
+use sprinkles::{
     buckets::Bucket,
     output::sectioned::{Children, Section},
     packages::InstallManifest,
