@@ -1,7 +1,7 @@
 use clap::Parser;
 
 use itertools::Itertools;
-use sfsu::diagnostics::{Diagnostics, LongPathsStatus};
+use sprinkles::diagnostics::{Diagnostics, LongPathsStatus};
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
@@ -34,7 +34,7 @@ impl super::Command for Args {
         }
 
         // I've disabled this because it's highly insecure to disable Windows Defender for Scoop
-        // if !sfsu::is_elevated()? {
+        // if !sprinkles::is_elevated()? {
         //     println!("❓ Windows Defender status could not be checked");
         //     println!("\tRun this command as admin to check Windows Defender status");
         // } else if diagnostics.windows_defender {

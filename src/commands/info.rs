@@ -3,7 +3,7 @@ use colored::Colorize;
 use itertools::Itertools;
 use serde::Serialize;
 
-use sfsu::{
+use sprinkles::{
     calm_panic::calm_panic,
     output::{
         structured::vertical::VTable,

@@ -1,24 +1,14 @@
 [package]
-description = "Stupid Fast Scoop Utils"
 edition = "2021"
-name = "sfsu"
-version = "1.10.0"
+name = "sprinkles"
+version = "0.1.0"
 
-[workspace]
-members = ["sfsu-derive", "sprinkles"]
-
-[[bench]]
-harness = false
-name = "searching"
-
-[profile.release]
-codegen-units = 1
-lto = true
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-default = []
-# Breaking changes are locked behind this feature flag
-v2 = ["sprinkles/v2"]
+default = ["info-difftrees"]
+info-difftrees = []
+v2 = []
 
 [dependencies]
 anyhow = "1.0"
@@ -50,9 +40,7 @@ regex = "1.10"
 semver = { version = "1.0", features = ["serde"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0", features = ["preserve_order"] }
-sfsu-derive = { path = "./sfsu-derive" }
 shadow-rs = "0.27"
-sprinkles = { version = "0.1.0", path = "sprinkles" }
 strum = { version = "0.26", features = ["derive"] }
 thiserror = "1.0"
 which = "6.0"
@@ -61,11 +49,3 @@ windows = { version = "0.54", features = [
     "Win32_System_SystemInformation",
 ] }
 winreg = "0.52"
-
-[dev-dependencies]
-chrono = ">=0.4.20"
-criterion = { version = "0.5", features = ["html_reports"] }
-
-[build-dependencies]
-shadow-rs = "0.27"
-winres = "0.1"

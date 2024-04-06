@@ -7,7 +7,7 @@ use quork::prelude::*;
 use rayon::prelude::*;
 use serde_json::Value;
 
-use sfsu::{
+use sprinkles::{
     buckets::Bucket,
     git::Repo,
     output::{

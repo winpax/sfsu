@@ -44,7 +44,7 @@ pub fn keyvalue(input: DeriveInput) -> TokenStream {
     };
 
     quote! {
-        impl sfsu::KeyValue for #ident {
+        impl sprinkles::KeyValue for #ident {
             fn into_pairs(self) -> (Vec<&'static str>, Vec<String>) {
                 let mut keys = vec![];
                 let mut values = vec![];

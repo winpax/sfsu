@@ -1,5 +1,5 @@
 use clap::Parser;
-use sfsu::{
+use sprinkles::{
     calm_panic::calm_panic,
     output::sectioned::{Children, Section, Sections},
     packages::reference::{self, Package},

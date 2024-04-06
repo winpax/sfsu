@@ -3,7 +3,7 @@ use rayon::prelude::*;
 use clap::Parser;
 use regex::Regex;
 
-use sfsu::{
+use sprinkles::{
     buckets::Bucket, calm_panic::CalmUnwrap, output::sectioned::Sections, packages::SearchMode,
 };
 

@@ -4,7 +4,7 @@ use indicatif::{MultiProgress, ProgressBar, ProgressFinish};
 use itertools::Itertools;
 use rayon::prelude::*;
 
-use sfsu::{
+use sprinkles::{
     buckets::{self, Bucket},
     config::Scoop as ScoopConfig,
     output::sectioned::{Children, Section},
