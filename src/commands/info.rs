@@ -1,37 +1,24 @@
 use clap::Parser;
+use colored::Colorize;
 use itertools::Itertools;
-use serde::Serialize;
-use sfsu::{
+
+use sprinkles::{
     calm_panic::calm_panic,
     output::{
         structured::vertical::VTable,
         wrappers::{
             alias_vec::AliasVec,
             bool::{wrap_bool, NicerBool},
-            keys::Key,
             time::NicerTime,
         },
     },
-    packages::{manifest::PackageLicense, reference},
-    KeyValue, Scoop,
+    packages::{
+        info::PackageInfo,
+        manifest::{StringOrArrayOfStrings, StringOrArrayOfStringsOrAnArrayOfArrayOfStrings},
+        reference,
+    },
+    Scoop,
 };
-
-#[derive(Debug, Clone, Serialize, sfsu_derive::KeyValue)]
-#[serde(rename_all = "PascalCase")]
-struct PackageInfo {
-    name: String,
-    description: Option<String>,
-    version: String,
-    bucket: String,
-    website: Option<String>,
-    license: Option<PackageLicense>,
-    updated_at: Option<String>,
-    updated_by: Option<String>,
-    installed: NicerBool,
-    binaries: Option<String>,
-    notes: Option<String>,
-    shortcuts: Option<AliasVec<String>>,
-}
 
 #[derive(Debug, Clone, Parser)]
 #[allow(clippy::struct_excessive_bools)]
@@ -43,15 +30,12 @@ pub struct Args {
     #[clap(
         short,
         long,
-        help = "The bucket to exclusively search in. Deprecated: use <bucket>/<package> syntax instead"
+        help = format!("The bucket to exclusively search in. {}", "DEPRECATED: Use <bucket>/<package> syntax instead".yellow())
     )]
     bucket: Option<String>,
 
     #[clap(short = 'E', long, help = "Show `Updated by` user emails")]
     hide_emails: bool,
-
-    #[clap(long, help = "Display more information about the package")]
-    verbose: bool,
 
     #[clap(from_global)]
     json: bool,
@@ -124,26 +108,37 @@ impl super::Command for Args {
                 version: manifest.version,
                 website: manifest.homepage,
                 license: manifest.license,
-                // TODO: Fix binaries display
-                // NOTE: Run `sfsu info inkscape` to know what I mean 😬
-                binaries: manifest.bin.map(|b| b.into_vec().join(",")),
-                notes: manifest.notes.map(|notes| notes.to_string()),
+                binaries: manifest.bin.map(|b| match b {
+                    StringOrArrayOfStringsOrAnArrayOfArrayOfStrings::String(bin) => bin.to_string(),
+                    StringOrArrayOfStringsOrAnArrayOfArrayOfStrings::StringArray(bins) => {
+                        bins.join(" | ")
+                    }
+                    StringOrArrayOfStringsOrAnArrayOfArrayOfStrings::UnionArray(bins) => bins
+                        .into_iter()
+                        .map(|bin_union| match bin_union {
+                            StringOrArrayOfStrings::String(bin) => bin,
+                            StringOrArrayOfStrings::StringArray(mut bin_alias) => {
+                                bin_alias.remove(0)
+                            }
+                        })
+                        .join(" | "),
+                }),
+                notes: manifest
+                    .notes
+                    .map(|notes| notes.to_string())
+                    .unwrap_or_default(),
                 installed: wrap_bool!(install_path.is_some()),
                 shortcuts: manifest.install_config.shortcuts.map(AliasVec::from_vec),
                 updated_at,
                 updated_by,
             };
 
+            let value = serde_json::to_value(pkg_info)?;
             if self.json {
-                let output = serde_json::to_string_pretty(&pkg_info)?;
-
+                let output = serde_json::to_string_pretty(&value)?;
                 println!("{output}");
             } else {
-                let (keys, values) = pkg_info.into_pairs();
-
-                let keys = keys.into_iter().map(Key::wrap).collect_vec();
-
-                let table = VTable::new(&keys, &values);
+                let table = VTable::new(&value);
                 println!("{table}");
             }
         }

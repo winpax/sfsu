@@ -2,7 +2,7 @@ use criterion::{black_box, criterion_group, criterion_main, BatchSize, Criterion
 
 use rayon::prelude::*;
 use regex::Regex;
-use sfsu::{buckets::Bucket, packages::SearchMode};
+use sprinkles::{buckets::Bucket, packages::SearchMode};
 
 fn criterion_benchmark(c: &mut Criterion) {
     // let all_buckets = Bucket::list_all().unwrap();

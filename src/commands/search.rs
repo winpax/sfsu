@@ -3,7 +3,9 @@ use rayon::prelude::*;
 use clap::Parser;
 use regex::Regex;
 
-use sfsu::{buckets::Bucket, output::sectioned::Sections, packages::SearchMode};
+use sprinkles::{
+    buckets::Bucket, calm_panic::CalmUnwrap, output::sectioned::Sections, packages::SearchMode,
+};
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
@@ -48,7 +50,9 @@ impl super::Command for Args {
                 "{}{raw_pattern}",
                 if self.case_sensitive { "" } else { "(?i)" },
             ))
-            .expect("Invalid Regex provided. See https://docs.rs/regex/latest/regex/ for more info")
+            .calm_expect(
+                "Invalid Regex provided. See https://docs.rs/regex/latest/regex/ for more info",
+            )
         };
 
         let matching_buckets: Vec<Bucket> = if let Some(Ok(bucket)) = bucket.map(Bucket::from_name)

@@ -1,0 +1,52 @@
+[package]
+edition = "2021"
+name = "sprinkles"
+version = { workspace = true }
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+default = ["info-difftrees"]
+info-difftrees = []
+v2 = []
+
+[dependencies]
+anyhow = "1.0"
+bat = "0.24"
+cfg-if = "1.0"
+chrono = { version = ">=0.4.20", features = [
+    "clock",
+    "serde",
+    "std",
+], default-features = false }
+clap = { version = "4.5", features = ["derive"] }
+colored = "2.1"
+const-str = { version = "0.5", features = ["all"] }
+derive_more = "0.99"
+directories = "5.0"
+dunce = "1.0"
+git2 = "0.18"
+heck = "0.5"
+human-panic = "1.2"
+indicatif = { version = "0.17", features = ["improved_unicode", "rayon"] }
+itertools = "0.12"
+lazy_static = "1.4"
+log = { version = "0.4", features = ["std"] }
+open = "5.1"
+parking_lot = "0.12"
+quork = "0.6"
+rayon = "1.10"
+regex = "1.10"
+semver = { version = "1.0", features = ["serde"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = { version = "1.0", features = ["preserve_order"] }
+sfsu-derive = { path = "../derive" }
+shadow-rs = "0.27"
+strum = { version = "0.26", features = ["derive"] }
+thiserror = "1.0"
+which = "6.0"
+windows = { version = "0.54", features = [
+    "Win32_Storage_FileSystem",
+    "Win32_System_SystemInformation",
+] }
+winreg = "0.52"

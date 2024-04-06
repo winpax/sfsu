@@ -1,7 +1,7 @@
 use clap::Parser;
 use itertools::Itertools;
 use rayon::prelude::*;
-use sfsu::buckets::Bucket;
+use sprinkles::buckets::Bucket;
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
@@ -27,6 +27,7 @@ impl Args {
     // TODO: where the is a seperate command trait for those which (can) return data
     // TODO: and those which cant
     // TODO: alongside seperate impls with a where bound where needed
+
     pub fn run_direct(self, is_subcommand: bool) -> Result<Option<Vec<String>>, anyhow::Error> {
         let outdated_buckets = Bucket::list_all()?
             .into_par_iter()

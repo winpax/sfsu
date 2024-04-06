@@ -1,7 +1,7 @@
 use clap::Parser;
 use rayon::prelude::*;
 use serde_json::Value;
-use sfsu::{
+use sprinkles::{
     buckets::Bucket,
     output::structured::Structured,
     packages::{install, outdated},
@@ -90,8 +90,7 @@ impl Args {
                 //     })
                 //     .collect::<Vec<_>>();
 
-                let outputs =
-                    Structured::new(&["Name", "Current", "Available"], &values).with_max_length(30);
+                let outputs = Structured::new(&values).with_max_length(30);
 
                 print!("{outputs}");
             }
