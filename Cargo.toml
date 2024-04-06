@@ -2,10 +2,11 @@
 description = "Stupid Fast Scoop Utils"
 edition = "2021"
 name = "sfsu"
-version = "1.10.0"
+version = { workspace = true }
 
 [workspace]
 members = ["crates/*"]
+package.version = "1.10.0"
 
 [[bench]]
 harness = false
@@ -43,7 +44,7 @@ regex = "1.10"
 serde_json = { version = "1.0", features = ["preserve_order"] }
 sfsu-derive = { path = "crates/derive" }
 shadow-rs = "0.27"
-sprinkles = { version = "0.1.0", path = "crates/sprinkles" }
+sprinkles = { version = "1", path = "crates/sprinkles" }
 strum = { version = "0.26", features = ["derive"] }
 
 [dev-dependencies]
