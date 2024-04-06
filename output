@@ -1,0 +1,24 @@
+Scoop app is up to date.
+Bucket(s) are out of date. Run `scoop update` to get the latest changes.
+Name                  | Current                   | Available                  | Missing Dependencies | Info                 | 
+act                   | 0.2.60                    | 0.2.61                     |                      |                      | 
+archwsl               | 24.3.11.0                 | 24.3.31.0                  |                      |                      | 
+chromium              | 123.0.6312.87-r1262506    | 123.0.6312.107-r1262506    |                      |                      | 
+cmake                 | 3.29.0                    | 3.29.1                     |                      |                      | 
+curl                  | 8.7.1_2                   | 8.7.1_7                    |                      |                      | 
+ffmpeg                | 6.1.1                     | 7.0                        |                      |                      | 
+fzf                   | 0.48.1                    | 0.49.0                     |                      |                      | 
+github                | 3.3.12                    | 3.3.13                     |                      |                      | 
+go                    | 1.22.1                    | 1.22.2                     |                      |                      | 
+node-compiler         | 1.5.0                     | 1.5.0                      | versions/python27    |                      | 
+notepadplusplus       | 8.6.4                     | 8.6.5                      |                      |                      | 
+nu                    | 0.91.0                    | 0.92.1                     |                      |                      | 
+obsidian              | 1.5.11                    | 1.5.12                     |                      |                      | 
+podman                | 5.0.0                     | 5.0.1                      |                      |                      | 
+rpcs3                 | 0.0.31-16272              | 0.0.31-16295               |                      |                      | 
+ruffle-nightly        | 2024-03-30                | 2024-04-06                 |                      |                      | 
+rust-analyzer         | 2024-03-25                | 2024-04-01                 |                      |                      | 
+ryujinx               | 1.1.1248                  | 1.1.1254                   |                      |                      | 
+signalbackup-tools    | 20240328-1                | 20240404-4                 |                      |                      | 
+twilio-cli            | 5.19.1                    | 5.19.3                     |                      |                      | 
+zstd                  | 1.5.5                     | 1.5.6                      |                      |                      | 
