@@ -69,26 +69,11 @@ pub struct VTable {
 }
 
 impl VTable {
-    // /// Construct a new [`VTable`] formatter
-    // ///
-    // /// # Panics
-    // /// - If the length of headers is not equal to the length of values
-    // /// - If the values provided are not objects
-    // pub fn new(headers: &'a [H], values: &'a [V]) -> Self {
-    //     assert_eq!(
-    //         headers.len(),
-    //         // TODO: Do not panic here
-    //         values.len(),
-    //         "The number of column headers must match quantity data for said columns"
-    //     );
-    //     Self {
-    //         headers,
-    //         values,
-    //         max_length: None,
-    //     }
-    // }
-
-    pub fn from_value(value: Value) -> Self {
+    /// Construct a new [`VTable`] formatter
+    ///
+    /// # Panics
+    /// - If the values provided are not objects
+    pub fn new(value: &Value) -> Self {
         let object = value.as_object().expect("Value must be an object").clone();
 
         Self {
