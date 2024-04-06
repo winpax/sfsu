@@ -108,8 +108,6 @@ impl super::Command for Args {
                 version: manifest.version,
                 website: manifest.homepage,
                 license: manifest.license,
-                // TODO: Fix binaries display
-                // NOTE: Run `sfsu info inkscape` to know what I mean 😬
                 binaries: manifest.bin.map(|b| match b {
                     StringOrArrayOfStringsOrAnArrayOfArrayOfStrings::String(bin) => bin.to_string(),
                     StringOrArrayOfStringsOrAnArrayOfArrayOfStrings::StringArray(bins) => {
