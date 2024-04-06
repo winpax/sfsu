@@ -9,7 +9,6 @@ use sprinkles::{
         wrappers::{
             alias_vec::AliasVec,
             bool::{wrap_bool, NicerBool},
-            keys::Key,
             time::NicerTime,
         },
     },
@@ -18,7 +17,7 @@ use sprinkles::{
         manifest::{StringOrArrayOfStrings, StringOrArrayOfStringsOrAnArrayOfArrayOfStrings},
         reference,
     },
-    KeyValue, Scoop,
+    Scoop,
 };
 
 #[derive(Debug, Clone, Parser)]
@@ -141,11 +140,7 @@ impl super::Command for Args {
 
                 println!("{output}");
             } else {
-                // let (keys, values) = pkg_info.into_pairs();
-
-                // let keys = keys.into_iter().map(Key::wrap).collect_vec();
-
-                let table = VTable::from_value(serde_json::to_value(pkg_info)?);
+                let table = VTable::new(&serde_json::to_value(pkg_info)?);
                 println!("{table}");
             }
         }
