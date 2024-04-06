@@ -1,7 +1,6 @@
 use clap::Parser;
 use colored::Colorize;
 use itertools::Itertools;
-use serde::Serialize;
 
 use sprinkles::{
     calm_panic::calm_panic,
@@ -15,29 +14,12 @@ use sprinkles::{
         },
     },
     packages::{
-        manifest::{
-            PackageLicense, StringOrArrayOfStrings, StringOrArrayOfStringsOrAnArrayOfArrayOfStrings,
-        },
+        info::PackageInfo,
+        manifest::{StringOrArrayOfStrings, StringOrArrayOfStringsOrAnArrayOfArrayOfStrings},
         reference,
     },
     KeyValue, Scoop,
 };
-
-#[derive(Debug, Clone, Serialize, sfsu_derive::KeyValue)]
-struct PackageInfo {
-    name: String,
-    description: Option<String>,
-    version: String,
-    bucket: String,
-    website: Option<String>,
-    license: Option<PackageLicense>,
-    updated_at: Option<String>,
-    updated_by: Option<String>,
-    installed: NicerBool,
-    binaries: Option<String>,
-    notes: Option<String>,
-    shortcuts: Option<AliasVec<String>>,
-}
 
 #[derive(Debug, Clone, Parser)]
 #[allow(clippy::struct_excessive_bools)]

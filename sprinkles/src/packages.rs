@@ -26,6 +26,7 @@ use crate::{
 };
 
 pub mod export;
+pub mod info;
 pub mod install;
 pub mod manifest;
 pub mod outdated;

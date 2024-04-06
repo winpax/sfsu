@@ -1,7 +1,7 @@
-use proc_macro2::TokenStream;
+use proc_macro2::{Span, TokenStream};
 use proc_macro_error::abort_call_site;
 use quote::quote;
-use syn::{DataStruct, DeriveInput};
+use syn::{DataStruct, DeriveInput, Ident};
 
 pub fn keyvalue(input: DeriveInput) -> TokenStream {
     let ident = input.ident;
@@ -43,8 +43,17 @@ pub fn keyvalue(input: DeriveInput) -> TokenStream {
         _ => abort_call_site!("Can only be derived on structs with fields"),
     };
 
+    let sprinkles =
+        match proc_macro_crate::crate_name("sprinkles").expect("sprinkles library to exist") {
+            proc_macro_crate::FoundCrate::Itself => quote! { crate },
+            proc_macro_crate::FoundCrate::Name(name) => {
+                let ident = Ident::new(&name, Span::call_site());
+                quote!( #ident )
+            }
+        };
+
     quote! {
-        impl sprinkles::KeyValue for #ident {
+        impl #sprinkles::KeyValue for #ident {
             fn into_pairs(self) -> (Vec<&'static str>, Vec<String>) {
                 let mut keys = vec![];
                 let mut values = vec![];
