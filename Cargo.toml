@@ -5,7 +5,7 @@ name = "sfsu"
 version = "1.10.0"
 
 [workspace]
-members = ["sfsu-derive", "sprinkles"]
+members = ["crates/*"]
 
 [[bench]]
 harness = false
@@ -37,9 +37,9 @@ quork = "0.6"
 rayon = "1.10"
 regex = "1.10"
 serde_json = { version = "1.0", features = ["preserve_order"] }
-sfsu-derive = { path = "./sfsu-derive" }
+sfsu-derive = { path = "crates/derive" }
 shadow-rs = "0.27"
-sprinkles = { version = "0.1.0", path = "sprinkles" }
+sprinkles = { version = "0.1.0", path = "crates/sprinkles" }
 strum = { version = "0.26", features = ["derive"] }
 
 [dev-dependencies]
