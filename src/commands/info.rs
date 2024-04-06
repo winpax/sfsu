@@ -135,12 +135,12 @@ impl super::Command for Args {
                 updated_by,
             };
 
+            let value = serde_json::to_value(pkg_info)?;
             if self.json {
-                let output = serde_json::to_string_pretty(&pkg_info)?;
-
+                let output = serde_json::to_string_pretty(&value)?;
                 println!("{output}");
             } else {
-                let table = VTable::new(&serde_json::to_value(pkg_info)?);
+                let table = VTable::new(&value);
                 println!("{table}");
             }
         }
