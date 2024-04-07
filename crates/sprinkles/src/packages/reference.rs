@@ -1,6 +1,6 @@
 use std::{fmt, path::PathBuf, str::FromStr};
 
-use itertools::Itertools as _;
+use itertools::Itertools;
 use url::Url;
 
 use super::{CreateManifest, Manifest};

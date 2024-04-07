@@ -2050,7 +2050,6 @@ dependencies = [
  "quork",
  "rayon",
  "regex",
- "reqwest",
  "scoop-manifest-hash",
  "serde",
  "serde_json",
@@ -2059,7 +2058,6 @@ dependencies = [
  "sprinkles",
  "strum",
  "thiserror",
- "url",
  "which",
  "winres",
 ]
@@ -2139,6 +2137,7 @@ dependencies = [
  "clap",
  "colored",
  "const-str",
+ "const_format",
  "derive_more",
  "directories",
  "dunce",
@@ -2154,6 +2153,7 @@ dependencies = [
  "quork",
  "rayon",
  "regex",
+ "reqwest",
  "semver",
  "serde",
  "serde_json",
@@ -2161,6 +2161,7 @@ dependencies = [
  "shadow-rs",
  "strum",
  "thiserror",
+ "url",
  "which",
  "windows 0.54.0",
  "winreg",
@@ -2631,6 +2632,7 @@ dependencies = [
  "form_urlencoded",
  "idna",
  "percent-encoding",
+ "serde",
 ]
 
 [[package]]

@@ -2,7 +2,7 @@ use anyhow::Context;
 use clap::Parser;
 
 use indicatif::MultiProgress;
-use sfsu::{
+use sprinkles::{
     cache::{Downloader, Handle},
     packages::reference::Package,
     requests::BlockingClient,

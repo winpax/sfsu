@@ -12,14 +12,12 @@ pub mod calm_panic;
 pub mod config;
 pub mod diagnostics;
 pub mod git;
-pub mod packages;
-pub mod requests;
-pub mod stream;
-
 /// Currently this is mostly an internal api
 pub mod output;
 pub mod packages;
 pub mod progress;
+pub mod requests;
+pub mod stream;
 pub mod win;
 
 mod opt;
@@ -120,16 +118,6 @@ impl Default for SupportedArch {
     fn default() -> Self {
         Self::from_env()
     }
-}
-
-/// Ensure supported environment
-mod const_assertions {
-    use super::Scoop;
-
-    #[allow(unused)]
-    const fn eval<T>(_: &T) {}
-
-    const _: () = eval(&Scoop::arch());
 }
 
 pub struct Scoop;

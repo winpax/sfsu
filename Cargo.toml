@@ -26,7 +26,6 @@ default = []
 v2 = ["sprinkles/v2"]
 
 [dependencies]
-
 anyhow = "1.0"
 bat = "0.24"
 cfg-if = "1.0"
@@ -49,7 +48,6 @@ parking_lot = "0.12"
 quork = "0.6"
 rayon = "1.10"
 regex = "1.10"
-reqwest = { version = "0.12", features = ["blocking"] }
 scoop-manifest-hash = { version = "0.1.0", path = "crates/manifest-hash", optional = true }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0", features = ["preserve_order"] }
@@ -58,7 +56,6 @@ shadow-rs = "0.27"
 sprinkles = { version = "1", path = "crates/sprinkles" }
 strum = { version = "0.26", features = ["derive"] }
 thiserror = "1.0"
-url = { version = "2.5" }
 which = "6.0"
 
 [build-dependencies]
