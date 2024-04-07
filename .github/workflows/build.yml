@@ -62,6 +62,11 @@ jobs:
       - uses: actions/checkout@v4
       - uses: Swatinem/rust-cache@v2.7.3
 
+      - name: Install and setup Scoop
+        uses: MinoruSekine/setup-scoop@v3
+        with:
+          buckets: extras java lemon
+
       - name: Install latest stable
         uses: actions-rs/toolchain@v1
         with:
