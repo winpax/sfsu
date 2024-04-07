@@ -65,6 +65,38 @@ impl TryFrom<&String> for HashType {
 }
 
 impl Hash {
+    /// Compute a hash from a source
+    pub fn compute(source: impl AsRef<[u8]>, hash_type: HashType) -> Hash {
+        use sha2::Digest;
+
+        let hash: Vec<u8> = match hash_type {
+            HashType::Sha512 => {
+                let mut hasher = sha2::Sha512::new();
+                hasher.update(source.as_ref());
+                hasher.finalize()[..].to_vec()
+            }
+            HashType::Sha256 => {
+                let mut hasher = sha2::Sha256::new();
+                hasher.update(source.as_ref());
+                hasher.finalize()[..].to_vec()
+            }
+            HashType::Sha1 => {
+                let mut hasher = sha1::Sha1::new();
+                hasher.update(source.as_ref());
+                hasher.finalize()[..].to_vec()
+            }
+            HashType::MD5 => {
+                let mut hasher = md5::Md5::new();
+                hasher.update(source.as_ref());
+                hasher.finalize()[..].to_vec()
+            }
+        };
+
+        let hash = format!("{:x?}", &hash);
+
+        Hash { hash, hash_type }
+    }
+
     pub fn from_rdf(
         source: impl AsRef<str>,
         file_names: &[impl AsRef<str>],

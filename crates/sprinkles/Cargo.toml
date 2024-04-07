@@ -36,6 +36,7 @@ indicatif = { version = "0.17", features = ["improved_unicode", "rayon"] }
 itertools = "0.12"
 lazy_static = "1.4"
 log = { version = "0.4", features = ["std"] }
+md-5 = "0.10.6"
 open = "5.1"
 parking_lot = "0.12"
 quick-xml = { version = "0.31.0", optional = true }
@@ -48,6 +49,8 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0", features = ["preserve_order"] }
 serde_json_path = { version = "0.6.7", optional = true }
 sfsu-derive = { path = "../derive" }
+sha1 = "0.10.6"
+sha2 = "0.10.8"
 shadow-rs = "0.27"
 strum = { version = "0.26", features = ["derive"] }
 thiserror = "1.0"
