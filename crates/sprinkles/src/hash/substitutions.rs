@@ -1,6 +1,9 @@
 use std::collections::HashMap;
 
 use derive_more::{Deref, DerefMut};
+use url::Url;
+
+use crate::hash::url::{leaf, remote_filename, strip_ext, strip_filename, strip_fragment};
 
 #[derive(Debug, Clone, Deref, DerefMut)]
 pub struct SubstitutionMap(HashMap<String, String>);
@@ -12,6 +15,35 @@ impl SubstitutionMap {
 
     pub fn substitute(&self, builder: SubstituteBuilder, regex_escape: bool) -> String {
         builder.substitute(self, regex_escape)
+    }
+}
+
+impl From<&Url> for SubstitutionMap {
+    fn from(url: &Url) -> Self {
+        let stripped_url = {
+            let mut url = url.clone();
+            strip_fragment(&mut url);
+            url
+        };
+
+        let basename = remote_filename(url);
+
+        let mut map = SubstitutionMap::new();
+
+        map.insert("$url".into(), stripped_url.to_string());
+        map.insert("$baseurl".into(), {
+            let mut base_url = stripped_url.clone();
+            strip_filename(&mut base_url);
+            base_url.to_string()
+        });
+        map.insert("$basenameNoExt".into(), strip_ext(&basename).to_string());
+        map.insert("$basename".into(), basename);
+
+        if let Some(url_no_ext) = leaf(&stripped_url).as_ref().map(|fname| strip_ext(fname)) {
+            map.insert("$urlNoExt".into(), url_no_ext.to_string());
+        }
+
+        todo!()
     }
 }
 

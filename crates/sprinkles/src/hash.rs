@@ -3,6 +3,7 @@ use substitutions::SubstitutionMap;
 
 mod formats;
 mod substitutions;
+mod url;
 
 #[derive(Debug, thiserror::Error)]
 pub enum HashError {
