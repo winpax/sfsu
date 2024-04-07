@@ -11,7 +11,7 @@ pub struct Logger {
 
 impl Logger {
     pub fn new(verbose: bool) -> Self {
-        Self::from_file(sfsu::Scoop::new_log().expect("new log"), verbose)
+        Self::from_file(sprinkles::Scoop::new_log().expect("new log"), verbose)
     }
 
     pub fn from_file(file: File, verbose: bool) -> Self {
@@ -33,15 +33,13 @@ impl log::Log for Logger {
         if self.verbose {
             true
         } else {
-            metadata.level() > log::Level::Trace
+            metadata.level() < log::Level::Debug
         }
     }
 
     fn log(&self, record: &log::Record<'_>) {
-        // TODO: Add a queue of sorts because this doesn't work well with multiple threads
-        if record.metadata().level() == log::Level::Trace {
-            eprintln!("{}: {}", record.level(), record.args());
-        } else {
+        if self.enabled(record.metadata()) {
+            // TODO: Add a queue of sorts because this doesn't work well with multiple threads
             writeln!(&self.file, "{}: {}", record.level(), record.args())
                 .expect("writing to log file");
         }

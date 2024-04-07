@@ -1,5 +1,6 @@
 pub mod bucket;
 pub mod cat;
+pub mod checkup;
 pub mod depends;
 pub mod describe;
 pub mod download;
@@ -17,6 +18,7 @@ pub mod update;
 use clap::Subcommand;
 
 use sfsu_derive::{Hooks, Runnable};
+use sprinkles::calm_panic::calm_panic;
 
 pub struct DeprecationWarning {
     /// Deprecation message
@@ -36,6 +38,8 @@ pub enum DeprecationMessage {
 
 // TODO: Run command could return `impl Display` and print that itself
 pub trait Command {
+    const NEEDS_ELEVATION: bool = false;
+
     fn deprecated() -> Option<DeprecationWarning> {
         None
     }
@@ -63,6 +67,10 @@ pub trait Command {
             }
 
             println!("{}\n", output.yellow());
+        }
+
+        if Self::NEEDS_ELEVATION && !sprinkles::is_elevated()? {
+            calm_panic("This command requires elevation. Please run as an administrator.");
         }
 
         self.runner()
@@ -108,4 +116,6 @@ pub enum Commands {
     Cat(cat::Args),
     /// Exports installed apps, buckets (and optionally configs) in JSON format
     Export(export::Args),
+    /// Check for common issues
+    Checkup(checkup::Args),
 }

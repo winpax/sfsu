@@ -1,6 +1,6 @@
 use clap::Parser;
 
-use sfsu::packages::export::Export;
+use sprinkles::packages::export::Export;
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {

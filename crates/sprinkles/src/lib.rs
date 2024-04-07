@@ -1,4 +1,5 @@
 #![warn(clippy::all, clippy::pedantic, rust_2018_idioms)]
+#![allow(clippy::module_name_repetitions)]
 
 use std::{ffi::OsStr, fmt, fs::File, path::PathBuf};
 
@@ -9,18 +10,42 @@ pub mod buckets;
 pub mod cache;
 pub mod calm_panic;
 pub mod config;
+pub mod diagnostics;
 pub mod git;
 pub mod packages;
 pub mod requests;
 pub mod stream;
 
-mod opt;
 /// Currently this is mostly an internal api
 pub mod output;
+pub mod packages;
 pub mod progress;
+pub mod win;
+
+mod opt;
 
 #[macro_use]
 extern crate log;
+
+/// Ensure supported environment
+mod const_assertions {
+    use super::Scoop;
+
+    #[allow(unused)]
+    const fn eval<T>(_: &T) {}
+
+    const _: () = eval(&Scoop::arch());
+}
+
+/// Check if the process is elevated
+///
+/// # Errors
+/// - Internal Windows API error
+pub fn is_elevated() -> Result<bool, quork::root::Error> {
+    use quork::root::is_root;
+
+    is_root()
+}
 
 pub struct SimIter<A, B>(A, B);
 

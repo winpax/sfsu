@@ -111,7 +111,7 @@ impl Bucket {
 
         bucket_dir
             .filter(|entry| entry.as_ref().is_ok_and(|entry| entry.path().is_dir()))
-            .map(|entry| Self::from_name(entry?.path()))
+            .map(|entry| Self::from_path(entry?.path()))
             .collect()
     }
 

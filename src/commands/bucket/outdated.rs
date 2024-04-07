@@ -1,6 +1,6 @@
 use clap::Parser;
 use itertools::Itertools;
-use sfsu::{
+use sprinkles::{
     buckets::Bucket,
     output::sectioned::{Children, Section},
 };
