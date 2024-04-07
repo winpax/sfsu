@@ -74,7 +74,7 @@ jobs:
           override: true
 
       - name: Build and Test
-        run: cargo test
+        run: cargo test --all
 
   build:
     name: Build
