@@ -84,50 +84,54 @@ pub fn parse_text(
         Regex::new(&regex)?
     };
 
-    let hashes = substituted
-        .find_iter(source.as_ref())
-        .map(|hash| hash.as_str().replace(' ', ""))
-        .collect_vec();
-
-    eprintln!("Hashes length after subbing searching: {}", hashes.len());
+    let hash = substituted
+        .captures(source.as_ref())
+        .and_then(|capture| {
+            // Get the first capture group (i.e the actual hash value)
+            capture.get(1)
+        })
+        .map(|hash| dbg!(hash.as_str()).replace(' ', ""));
 
     // Convert base64 encoded hashes
-    let hash = if let Some(hash) = hashes.first() {
+    let hash = if let Some(hash) = hash {
         let base64_regex = Regex::new(
             r"^(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=|[A-Za-z0-9+\/]{4})$",
         )
         .expect("valid base64 regex");
 
-        base64_regex.find(hash).map(|base64_hash| {
-            let invalid_base64 =
-                Regex::new(r"^[a-fA-F0-9]+$").expect("valid \"invalid base64\" regex");
+        base64_regex
+            .find(&hash)
+            .map(|base64_hash| {
+                let invalid_base64 =
+                    Regex::new(r"^[a-fA-F0-9]+$").expect("valid \"invalid base64\" regex");
 
-            let base64_hash = base64_hash.as_str();
+                let base64_hash = base64_hash.as_str();
 
-            // Detects an invalid base64 string
-            if !(invalid_base64.is_match(base64_hash)
-                && [32, 40, 64, 128].contains(&base64_hash.len()))
-            {
-                use base64::prelude::*;
+                // Detects an invalid base64 string
+                if !(invalid_base64.is_match(base64_hash)
+                    && [32, 40, 64, 128].contains(&base64_hash.len()))
+                {
+                    use base64::prelude::*;
 
-                let decoded_hash =
-                    if let Ok(decoded) = BASE64_STANDARD.decode(base64_hash.as_bytes()) {
-                        let mut decoded_hash = String::new();
+                    let decoded_hash =
+                        if let Ok(decoded) = BASE64_STANDARD.decode(base64_hash.as_bytes()) {
+                            let mut decoded_hash = String::new();
 
-                        decoded
-                            .into_iter()
-                            .for_each(|byte| decoded_hash += &format!("{byte:x}"));
+                            decoded
+                                .into_iter()
+                                .for_each(|byte| decoded_hash += &format!("{byte:x}"));
 
-                        decoded_hash
-                    } else {
-                        hash.clone()
-                    };
+                            decoded_hash
+                        } else {
+                            hash.clone()
+                        };
 
-                decoded_hash
-            } else {
-                hash.clone()
-            }
-        })
+                    decoded_hash
+                } else {
+                    hash.clone()
+                }
+            })
+            .or_else(|| Some(hash.clone()))
     } else {
         println!("Didn't find first regex");
         let filename_regex = {
@@ -232,12 +236,10 @@ mod tests {
         let response = BlockingClient::new().get(text_url).send().unwrap();
         let text_file = response.text().unwrap();
 
-        std::fs::write("pp.html", &text_file).unwrap();
-
         let hash = parse_text(text_file, subs, FIND_REGEX.to_string())
             .unwrap()
             .expect("found hash");
 
-        assert_eq!("186efc230e44ded93b5aa89193a6fcbf", hash);
+        assert_eq!("3ff5680aae7a0399caaf3466e3b25b27", hash);
     }
 }
