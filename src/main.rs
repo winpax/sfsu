@@ -10,7 +10,7 @@ use clap::Parser;
 use commands::Commands;
 
 mod shadow {
-    #![allow(clippy::all)]
+    #![allow(clippy::needless_raw_string_hashes)]
     include!(concat!(env!("OUT_DIR"), "/shadow.rs"));
 }
 
