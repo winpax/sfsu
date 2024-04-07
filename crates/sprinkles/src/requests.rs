@@ -2,21 +2,28 @@ use derive_more::Deref;
 use reqwest::header::HeaderMap;
 
 #[must_use]
-pub fn user_agent() -> String {
-    use std::env::consts::{ARCH, OS};
-
-    const VERSION: &str = env!("CARGO_PKG_VERSION");
-
-    format!("Scoop/1.0 (+https://scoop.sh/) sfsu/{VERSION} ({ARCH}) ({OS})",)
-}
-
-#[must_use]
 /// Construct default headers for requests
 ///
 /// # Panics
 /// - Invalid headers
 pub fn default_headers() -> HeaderMap {
+    use reqwest::header::{HeaderValue, ACCEPT, USER_AGENT};
+
     let mut headers = HeaderMap::new();
+
+    headers.insert(ACCEPT, HeaderValue::from_static("*/*"));
+    headers.insert(
+        USER_AGENT,
+        {
+            use std::env::consts::{ARCH, OS};
+
+            const VERSION: &str = env!("CARGO_PKG_VERSION");
+
+            format!("Scoop/1.0 (+https://scoop.sh/) sfsu/{VERSION} ({ARCH}) ({OS})")
+        }
+        .parse()
+        .unwrap(),
+    );
 
     headers
 }
@@ -35,7 +42,6 @@ impl Default for BlockingClient {
     fn default() -> Self {
         Self(
             reqwest::blocking::Client::builder()
-                .user_agent(user_agent())
                 .default_headers(default_headers())
                 .build()
                 .unwrap(),
@@ -57,7 +63,6 @@ impl Default for AsyncClient {
     fn default() -> Self {
         Self(
             reqwest::Client::builder()
-                .user_agent(user_agent())
                 .default_headers(default_headers())
                 .build()
                 .unwrap(),
