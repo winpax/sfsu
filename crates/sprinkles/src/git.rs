@@ -7,7 +7,7 @@ use crate::{buckets::Bucket, opt::ResultIntoOption, Scoop};
 
 use self::pull::ProgressCallback;
 
-mod pull;
+pub mod pull;
 
 #[derive(Debug, thiserror::Error)]
 pub enum RepoError {

@@ -14,9 +14,29 @@
  * Adapted by me (Juliette Cordor)
  */
 
-use git2::Repository;
+use git2::{Progress, Repository};
+use indicatif::ProgressBar;
 use log::trace;
 use std::str;
+
+pub fn stats_callback(stats: &Progress<'_>, thin: bool, pb: &ProgressBar) {
+    if thin {
+        pb.set_position(stats.indexed_objects() as u64);
+        pb.set_length(stats.total_objects() as u64);
+
+        return;
+    }
+
+    if stats.received_objects() == stats.total_objects() {
+        pb.set_position(stats.indexed_deltas() as u64);
+        pb.set_length(stats.total_deltas() as u64);
+        pb.set_message("Resolving deltas");
+    } else if stats.total_objects() > 0 {
+        pb.set_position(stats.received_objects() as u64);
+        pb.set_length(stats.total_objects() as u64);
+        pb.set_message("Receiving objects");
+    }
+}
 
 pub type ProgressCallback<'a> = &'a dyn Fn(git2::Progress<'_>, bool) -> bool;
 

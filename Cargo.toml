@@ -34,17 +34,8 @@ v2 = ["sprinkles/v2"]
 [dependencies]
 anyhow = "1.0"
 bat = "0.24"
-cfg-if = "1.0"
-chrono = ">=0.4.20"
 clap = { version = "4.5", features = ["derive"] }
 colored = "2.1"
-const-str = { version = "0.5", features = ["all"] }
-const_format = { version = "0.2.32", features = [] }
-criterion = { version = "0.5", features = ["html_reports"] }
-derive_more = "0.99"
-directories = "5.0"
-dunce = "1.0"
-git2 = "0.18"
 human-panic = "1.2"
 indicatif = { version = "0.17", features = ["improved_unicode", "rayon"] }
 itertools = "0.12"
@@ -54,14 +45,13 @@ parking_lot = "0.12"
 quork = "0.6"
 rayon = "1.10"
 regex = "1.10"
-serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0", features = ["preserve_order"] }
 sfsu-derive = { path = "./crates/derive" }
-shadow-rs = "0.27"
 sprinkles = { version = "1", path = "crates/sprinkles" }
 strum = { version = "0.26", features = ["derive"] }
-thiserror = "1.0"
-which = "6.0"
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
 
 [build-dependencies]
 shadow-rs = "0.27"

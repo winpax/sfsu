@@ -286,10 +286,8 @@ checksum = "8a0d04d43504c61aa6c7531f1871dd0d418d91130162063b789da00fd7057a5e"
 dependencies = [
  "android-tzdata",
  "iana-time-zone",
- "js-sys",
  "num-traits",
  "serde",
- "wasm-bindgen",
  "windows-targets 0.52.4",
 ]
 
@@ -2146,17 +2144,9 @@ version = "1.10.0"
 dependencies = [
  "anyhow",
  "bat",
- "cfg-if",
- "chrono",
  "clap",
  "colored",
- "const-str",
- "const_format",
  "criterion",
- "derive_more",
- "directories",
- "dunce",
- "git2",
  "human-panic",
  "indicatif",
  "itertools 0.12.1",
@@ -2166,14 +2156,11 @@ dependencies = [
  "quork",
  "rayon",
  "regex",
- "serde",
  "serde_json",
  "sfsu-derive",
  "shadow-rs",
  "sprinkles",
  "strum",
- "thiserror",
- "which",
  "winres",
 ]
 

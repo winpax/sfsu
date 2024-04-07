@@ -1,5 +1,4 @@
 use clap::Parser;
-use git2::Progress;
 use indicatif::{MultiProgress, ProgressBar, ProgressFinish};
 use itertools::Itertools;
 use rayon::prelude::*;
@@ -7,29 +6,11 @@ use rayon::prelude::*;
 use sprinkles::{
     buckets::{self, Bucket},
     config::Scoop as ScoopConfig,
+    git::pull::stats_callback,
     output::sectioned::{Children, Section},
     progress::{style, MessagePosition, ProgressOptions},
     Scoop,
 };
-
-fn stats_callback(stats: &Progress<'_>, thin: bool, pb: &ProgressBar) {
-    if thin {
-        pb.set_position(stats.indexed_objects() as u64);
-        pb.set_length(stats.total_objects() as u64);
-
-        return;
-    }
-
-    if stats.received_objects() == stats.total_objects() {
-        pb.set_position(stats.indexed_deltas() as u64);
-        pb.set_length(stats.total_deltas() as u64);
-        pb.set_message("Resolving deltas");
-    } else if stats.total_objects() > 0 {
-        pb.set_position(stats.received_objects() as u64);
-        pb.set_length(stats.total_objects() as u64);
-        pb.set_message("Receiving objects");
-    }
-}
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
