@@ -108,8 +108,8 @@ pub fn parse_text(
                 let base64_hash = base64_hash.as_str();
 
                 // Detects an invalid base64 string
-                (invalid_base64.is_match(base64_hash)
-                    && [32, 40, 64, 128].contains(&base64_hash.len()))
+                (!(invalid_base64.is_match(base64_hash)
+                    && [32, 40, 64, 128].contains(&base64_hash.len())))
                 .then(|| {
                     use base64::prelude::*;
 
@@ -172,13 +172,13 @@ mod tests {
 
     use super::*;
 
-    use crate::requests::BlockingClient;
+    use crate::{buckets::Bucket, requests::BlockingClient};
 
     #[test]
     fn test_finding_pixelflasher_hashes() {
         const FIND_REGEX: &str = "$sha256";
 
-        let  text_url: String = "https://github.com/badabing2005/PixelFlasher/releases/download/v6.9.1.0/PixelFlasher.exe.sha256".to_string();
+        let text_url: String = "https://github.com/badabing2005/PixelFlasher/releases/download/v6.9.1.0/PixelFlasher.exe.sha256".to_string();
 
         let url = Url::parse(&text_url).unwrap();
 
@@ -204,10 +204,21 @@ mod tests {
             .unwrap()
             .expect("found hash");
 
-        assert_eq!(
-            "8a0d9ab83478a6389d6ac0a6294136f9e81b8f5a9c312cfc7a855ef9f9a2f0da",
-            hash
-        );
+        let actual_hash = {
+            Bucket::from_name("lemon")
+                .unwrap()
+                .get_manifest("pixelflasher")
+                .unwrap()
+                .architecture
+                .unwrap()
+                .x64
+                .unwrap()
+                .hash
+                .unwrap()
+                .to_string()
+        };
+
+        assert_eq!(actual_hash, hash);
     }
 
     #[test]
@@ -235,10 +246,25 @@ mod tests {
         let response = BlockingClient::new().get(text_url).send().unwrap();
         let text_file = response.text().unwrap();
 
-        let hash = parse_text(text_file, &subs, FIND_REGEX.to_string())
-            .unwrap()
-            .expect("found hash");
+        let hash = "md5:".to_string()
+            + &parse_text(text_file, &subs, FIND_REGEX.to_string())
+                .unwrap()
+                .expect("found hash");
 
-        assert_eq!("3ff5680aae7a0399caaf3466e3b25b27", hash);
+        let actual_hash = {
+            Bucket::from_name("main")
+                .unwrap()
+                .get_manifest("mysql")
+                .unwrap()
+                .architecture
+                .unwrap()
+                .x64
+                .unwrap()
+                .hash
+                .unwrap()
+                .to_string()
+        };
+
+        assert_eq!(actual_hash, hash);
     }
 }

@@ -27,6 +27,20 @@ pub struct Hash {
     hash_type: HashType,
 }
 
+impl std::fmt::Display for Hash {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let prefix = match self.hash_type {
+            HashType::Sha512 => "sha512:",
+            HashType::Sha256 => "",
+            HashType::Sha1 => "sha1:",
+            HashType::MD5 => "md5:",
+        };
+
+        write!(f, "{prefix}")?;
+        write!(f, "{}", self.hash)
+    }
+}
+
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq)]
 pub enum HashType {
     Sha512,
