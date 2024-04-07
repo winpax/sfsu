@@ -208,8 +208,6 @@ mod tests {
             .text()
             .unwrap();
 
-        std::fs::write("pp.html", &text_file).unwrap();
-
         let mut subs = HashMap::new();
 
         subs.insert(
