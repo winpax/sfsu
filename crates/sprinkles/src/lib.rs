@@ -6,6 +6,8 @@ use std::{ffi::OsStr, fmt, fs::File, path::PathBuf};
 use chrono::Local;
 use rayon::prelude::*;
 
+pub use semver;
+
 pub mod buckets;
 pub mod calm_panic;
 pub mod config;
@@ -15,7 +17,6 @@ pub mod git;
 pub mod output;
 pub mod packages;
 pub mod progress;
-pub mod win;
 
 mod opt;
 

@@ -326,6 +326,7 @@ pub enum AutoupdateLicense {
 pub enum PackageLicense {
     License(License),
     String(String),
+    Object(LicenseObject),
 }
 
 impl std::fmt::Display for PackageLicense {
@@ -340,8 +341,19 @@ impl std::fmt::Display for PackageLicense {
                 Ok(())
             }
             PackageLicense::String(license) => write!(f, "{license}"),
+            PackageLicense::Object(LicenseObject {
+                identifier: Some(identifier),
+                ..
+            }) => write!(f, "{identifier}",),
+            PackageLicense::Object(LicenseObject { url: Some(url), .. }) => write!(f, "{url}",),
+            PackageLicense::Object(_) => write!(f, "Unknown"),
         }
     }
+}
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct LicenseObject {
+    identifier: Option<String>,
+    url: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
