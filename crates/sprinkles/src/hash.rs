@@ -3,11 +3,6 @@ use std::collections::HashMap;
 mod formats;
 mod ops;
 
-pub mod requests;
-
-#[macro_use]
-extern crate log;
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Hash {
     hash: String,
@@ -50,7 +45,7 @@ impl Hash {
         unimplemented!(
             "fuck this its so hard and for what like just provide your hashes its so fucking easy LOOKING AT YOU MYSQL FUCK YOU"
         );
-        formats::text::parse_text(source, substitutions, regex);
+        formats::text::parse_text(source, &substitutions, regex);
     }
 
     pub fn from_json(

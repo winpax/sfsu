@@ -1926,26 +1926,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "scoop-manifest-hash"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "base64 0.22.0",
- "const_format",
- "derive_more",
- "itertools 0.12.1",
- "log",
- "quick-xml",
- "regex",
- "reqwest",
- "serde_json",
- "serde_json_path",
- "strum",
- "thiserror",
- "url",
-]
-
-[[package]]
 name = "scopeguard"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2208,6 +2188,7 @@ name = "sprinkles"
 version = "1.10.0"
 dependencies = [
  "anyhow",
+ "base64 0.22.0",
  "bat",
  "cfg-if",
  "chrono",
@@ -2227,14 +2208,15 @@ dependencies = [
  "log",
  "open",
  "parking_lot",
+ "quick-xml",
  "quork",
  "rayon",
  "regex",
  "reqwest",
- "scoop-manifest-hash",
  "semver",
  "serde",
  "serde_json",
+ "serde_json_path",
  "sfsu-derive",
  "shadow-rs",
  "strum",

@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use serde_json::Value;
 use serde_json_path::{JsonPath, NodeList};
 
-use crate::ops::Substitute;
+use crate::hash::ops::Substitute;
 
 #[derive(Debug, thiserror::Error)]
 pub enum JsonError {

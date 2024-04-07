@@ -4,7 +4,7 @@ use itertools::Itertools as _;
 use regex::Regex;
 use strum::{Display, EnumIter};
 
-use crate::ops::Substitute;
+use crate::hash::ops::Substitute;
 
 #[derive(Debug, thiserror::Error)]
 pub enum TextError {
@@ -60,7 +60,7 @@ impl RegexTemplates {
 
 pub fn parse_text(
     source: impl AsRef<str>,
-    substitutions: HashMap<String, String>,
+    substitutions: &HashMap<String, String>,
     regex: String,
 ) -> Result<Option<String>, TextError> {
     // TODO: Incorporate file_names
@@ -77,7 +77,7 @@ pub fn parse_text(
         // Substitute regex templates for finding hashes
         regex.substitute(&RegexTemplates::into_substitute_map(), false);
         // Substitute provided substitutions (i.e url, basename, etc.)
-        regex.substitute(&substitutions, true);
+        regex.substitute(substitutions, true);
 
         debug!("{regex}");
 
@@ -201,7 +201,7 @@ mod tests {
             .text()
             .unwrap();
 
-        let hash = parse_text(text_file, subs, FIND_REGEX.to_string())
+        let hash = parse_text(text_file, &subs, FIND_REGEX.to_string())
             .unwrap()
             .expect("found hash");
 
@@ -236,7 +236,7 @@ mod tests {
         let response = BlockingClient::new().get(text_url).send().unwrap();
         let text_file = response.text().unwrap();
 
-        let hash = parse_text(text_file, subs, FIND_REGEX.to_string())
+        let hash = parse_text(text_file, &subs, FIND_REGEX.to_string())
             .unwrap()
             .expect("found hash");
 
