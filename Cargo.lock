@@ -401,29 +401,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "const-str"
-version = "0.5.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3618cccc083bb987a415d85c02ca6c9994ea5b44731ec28b9ecf09658655fba9"
-dependencies = [
- "const-str-proc-macro",
-]
-
-[[package]]
-name = "const-str-proc-macro"
-version = "0.5.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3d3007177ccd2435eef6de9e7471365c36bc35c0b31773e27b4fe797f39f84bf"
-dependencies = [
- "heck 0.4.1",
- "http",
- "proc-macro2",
- "quote",
- "regex",
- "syn 2.0.58",
-]
-
-[[package]]
 name = "const_fn"
 version = "0.4.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -913,9 +890,6 @@ name = "heck"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "95505c38b4572b2d910cecb0281560f54b440a19336cbbcb27bf6ce6adc6f5a8"
-dependencies = [
- "unicode-segmentation",
-]
 
 [[package]]
 name = "heck"
@@ -2144,9 +2118,11 @@ version = "1.10.0"
 dependencies = [
  "anyhow",
  "bat",
+ "chrono",
  "clap",
  "colored",
  "criterion",
+ "git2",
  "human-panic",
  "indicatif",
  "itertools 0.12.1",
@@ -2256,26 +2232,19 @@ version = "1.10.0"
 dependencies = [
  "anyhow",
  "base64 0.22.0",
- "bat",
  "cfg-if",
  "chrono",
  "clap",
  "colored",
- "const-str",
- "const_format",
  "derive_more",
  "directories",
  "dunce",
  "git2",
  "heck 0.5.0",
- "human-panic",
  "indicatif",
  "itertools 0.12.1",
- "lazy_static",
  "log",
  "md-5",
- "open",
- "parking_lot",
  "quick-xml",
  "quork",
  "rayon",
@@ -2288,7 +2257,6 @@ dependencies = [
  "sfsu-derive",
  "sha1",
  "sha2",
- "shadow-rs",
  "strum",
  "thiserror",
  "url",

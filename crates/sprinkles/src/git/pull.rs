@@ -169,6 +169,10 @@ fn do_merge<'a>(
     Ok(())
 }
 
+/// Pulls the remote branch into the local branch.
+///
+/// # Errors
+/// - git2 errors
 pub fn pull(
     repo: &super::Repo,
     remote: Option<&str>,
