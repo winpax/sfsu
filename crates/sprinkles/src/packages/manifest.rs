@@ -26,14 +26,14 @@ pub struct Manifest {
     pub comment: Option<StringOrArrayOfStrings>,
     pub architecture: Option<Arch>,
     pub autoupdate: Option<Autoupdate>,
-    /// Undocumented: Found at https://github.com/se35710/scoop-java/search?l=JSON&q=cookie
+    /// Undocumented: Found at <https://github.com/se35710/scoop-java/search?l=JSON&q=cookie>
     pub cookie: Option<HashMap<String, Option<serde_json::Value>>>,
     pub depends: Option<TOrArrayOfTs<super::reference::ManifestRef>>,
     pub description: Option<String>,
     pub extract_to: Option<StringOrArrayOfStrings>,
     pub homepage: Option<String>,
-    /// True if the installer InnoSetup based. Found in
-    /// https://github.com/ScoopInstaller/Main/search?l=JSON&q=innosetup
+    /// True if the installer `InnoSetup` based. Found in
+    /// <https://github.com/ScoopInstaller/Main/search?l=JSON&q=innosetup>
     pub innosetup: Option<bool>,
     pub license: Option<PackageLicense>,
     /// Deprecated
@@ -107,7 +107,7 @@ pub struct CheckverClass {
     pub replace: Option<String>,
     /// Reverse the order of regex matches
     pub reverse: Option<bool>,
-    /// Custom PowerShell script to retrieve application version using more complex approach.
+    /// Custom `PowerShell` script to retrieve application version using more complex approach.
     pub script: Option<StringOrArrayOfStrings>,
     pub sourceforge: Option<SourceforgeUnion>,
     pub url: Option<String>,

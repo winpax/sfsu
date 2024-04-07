@@ -59,7 +59,7 @@ pub trait Command {
                 DeprecationMessage::Replacement(replacement) => {
                     output += &format!("Use `{replacement}` instead. ");
                 }
-                DeprecationMessage::Warning(warning) => output += &warning,
+                DeprecationMessage::Warning(warning) => output += warning,
             }
 
             if let Some(version) = deprecation_warning.version {

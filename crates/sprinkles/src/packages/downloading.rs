@@ -35,12 +35,6 @@ impl DownloadUrl {
     }
 }
 
-impl From<DownloadUrl> for PathBuf {
-    fn from(url: DownloadUrl) -> Self {
-        url.into()
-    }
-}
-
 impl From<&DownloadUrl> for PathBuf {
     fn from(url: &DownloadUrl) -> Self {
         let cache_path_regex = Regex::new(r"[^\w\.\-]+").expect("valid regex");

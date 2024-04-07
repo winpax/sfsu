@@ -189,6 +189,6 @@ impl Drop for Downloader {
     fn drop(&mut self) {
         // There is no code that would drop this message
         // As such this should be safe
-        drop(unsafe { Box::from_raw((self.message_ptr as *const str).cast_mut()) });
+        drop(unsafe { Box::from_raw(std::ptr::from_ref::<str>(self.message_ptr).cast_mut()) });
     }
 }
