@@ -1,7 +1,25 @@
 use std::collections::HashMap;
 
+use self::formats::{json::JsonError, text::TextError};
+
 mod formats;
 mod ops;
+
+#[derive(Debug, thiserror::Error)]
+pub enum HashError {
+    #[error("Text error: {0}")]
+    TextError(#[from] TextError),
+    #[error("Json error: {0}")]
+    JsonError(#[from] JsonError),
+    #[error("Error parsing json: {0}")]
+    SerdeJson(#[from] serde_json::Error),
+    #[error("Hash not found")]
+    NotFound,
+    #[error("Invalid hash")]
+    InvalidHash,
+}
+
+pub type Result<T> = std::result::Result<T, HashError>;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Hash {
@@ -16,6 +34,20 @@ pub enum HashType {
     Sha256,
     Sha1,
     MD5,
+}
+
+impl TryFrom<&String> for HashType {
+    type Error = HashError;
+
+    fn try_from(value: &String) -> Result<Self> {
+        match value.len() {
+            64 => Ok(HashType::Sha256),
+            40 => Ok(HashType::Sha1),
+            32 => Ok(HashType::MD5),
+            128 => Ok(HashType::Sha512),
+            _ => Err(HashError::InvalidHash),
+        }
+    }
 }
 
 impl Hash {
@@ -37,25 +69,36 @@ impl Hash {
             .collect()
     }
 
+    /// Parse a hash from a text source
+    ///
+    /// # Errors
+    /// - If the hash is not found
+    /// - If the hash is invalid
     pub fn from_text(
         source: impl AsRef<str>,
-        substitutions: HashMap<String, String>,
+        substitutions: &HashMap<String, String>,
         regex: String,
-    ) -> Vec<(String, Hash)> {
-        unimplemented!(
-            "fuck this its so hard and for what like just provide your hashes its so fucking easy LOOKING AT YOU MYSQL FUCK YOU"
-        );
-        formats::text::parse_text(source, &substitutions, regex);
+    ) -> Result<Hash> {
+        let hash =
+            formats::text::parse_text(source, substitutions, regex)?.ok_or(HashError::NotFound)?;
+        let hash_type = HashType::try_from(&hash)?;
+
+        Ok(Hash { hash, hash_type })
     }
 
+    /// Parse a hash from a json source
+    ///
+    /// # Errors
+    /// - If the hash is not found
+    /// - If the hash is invalid
     pub fn from_json(
         source: impl AsRef<[u8]>,
-        substitutions: HashMap<String, String>,
+        substitutions: &HashMap<String, String>,
         json_path: String,
-    ) -> Result<(), formats::json::JsonError> {
+    ) -> Result<()> {
         let json = serde_json::from_slice(source.as_ref())?;
 
-        formats::json::parse_json(&json, &substitutions, json_path)?;
+        formats::json::parse_json(&json, substitutions, json_path)?;
 
         todo!()
     }
