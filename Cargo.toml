@@ -20,6 +20,10 @@ name = "serde"
 codegen-units = 1
 lto = true
 
+[profile.profiling]
+inherits = "dev"
+opt-level = 3
+
 [features]
 default = []
 # Breaking changes are locked behind this feature flag
