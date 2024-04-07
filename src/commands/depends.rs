@@ -1,6 +1,6 @@
 use clap::Parser;
 use sprinkles::{
-    calm_panic::calm_panic,
+    calm_panic::abandon,
     output::sectioned::{Children, Section, Sections},
     packages::reference::{self, Package},
 };
@@ -28,10 +28,7 @@ impl super::Command for Args {
         let manifests = self.package.list_manifests();
 
         if manifests.is_empty() {
-            calm_panic(format!(
-                "Could not find any packages matching: {}",
-                self.package
-            ));
+            abandon!("Could not find any packages matching: {}", self.package);
         };
 
         if self.json {

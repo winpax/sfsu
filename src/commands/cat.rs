@@ -1,7 +1,7 @@
 use std::{fs::File, io::Read};
 
 use clap::Parser;
-use sprinkles::{calm_panic::calm_panic, packages::reference};
+use sprinkles::{calm_panic::abandon, packages::reference};
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
@@ -17,7 +17,7 @@ impl super::Command for Args {
         let manifests = self.package.list_manifest_paths();
 
         if manifests.is_empty() {
-            calm_panic(format!("No manifests found for {}", self.package));
+            abandon!("No manifests found for {}", self.package);
         }
 
         let manifest = &manifests[0];

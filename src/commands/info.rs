@@ -3,7 +3,7 @@ use colored::Colorize;
 use itertools::Itertools;
 
 use sprinkles::{
-    calm_panic::calm_panic,
+    calm_panic::abandon,
     output::{
         structured::vertical::VTable,
         wrappers::{
@@ -62,10 +62,7 @@ impl super::Command for Args {
         let manifests = self.package.list_manifests();
 
         if manifests.is_empty() {
-            calm_panic(format!(
-                "No package found with the name \"{}\"",
-                self.package
-            ));
+            abandon!("No package found with the name \"{}\"", self.package);
         }
 
         if manifests.len() > 1 && !self.single {
