@@ -58,13 +58,8 @@ impl Hash {
         formats::rdf::parse_xml(source, file_names)
             .into_iter()
             .map(|(hash_file, hash)| {
-                (
-                    hash_file,
-                    Hash {
-                        hash,
-                        hash_type: HashType::Sha256,
-                    },
-                )
+                let hash_type = HashType::try_from(&hash).unwrap_or_default();
+                (hash_file, Hash { hash, hash_type })
             })
             .collect()
     }
@@ -95,11 +90,12 @@ impl Hash {
         source: impl AsRef<[u8]>,
         substitutions: &HashMap<String, String>,
         json_path: String,
-    ) -> Result<()> {
+    ) -> Result<Hash> {
         let json = serde_json::from_slice(source.as_ref())?;
 
-        formats::json::parse_json(&json, substitutions, json_path)?;
+        let hash = formats::json::parse_json(&json, substitutions, json_path)?;
+        let hash_type = HashType::try_from(&hash)?;
 
-        todo!()
+        Ok(Hash { hash, hash_type })
     }
 }
