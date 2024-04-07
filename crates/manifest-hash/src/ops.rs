@@ -31,6 +31,7 @@ pub trait Substitute {
     where
         Self: Clone;
 
+    #[must_use]
     fn into_substituted(self, params: &HashMap<String, String>, regex_escape: bool) -> Self;
 }
 

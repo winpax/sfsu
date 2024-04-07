@@ -50,4 +50,16 @@ impl Hash {
         );
         formats::text::parse_text(source, substitutions, regex);
     }
+
+    pub fn from_json(
+        source: impl AsRef<[u8]>,
+        substitutions: HashMap<String, String>,
+        json_path: String,
+    ) -> Result<(), formats::json::JsonError> {
+        let json = serde_json::from_slice(source.as_ref())?;
+
+        formats::json::parse_json(json, substitutions, json_path)?;
+
+        todo!()
+    }
 }
