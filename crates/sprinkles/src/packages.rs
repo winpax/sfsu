@@ -270,7 +270,7 @@ where
 
         Self::from_str(contents)
             // TODO: Maybe figure out a better approach to this, but it works for now
-            .map(|s| s.with_name(path))
+            .map(|s| s.with_name(path).with_bucket(path))
             .map_err(|e| PackageError::ParsingManifest(path.display().to_string(), e))
     }
 
@@ -284,6 +284,9 @@ where
 
     #[must_use]
     fn with_name(self, path: impl AsRef<Path>) -> Self;
+
+    #[must_use]
+    fn with_bucket(self, path: impl AsRef<Path>) -> Self;
 }
 
 impl CreateManifest for Manifest {
@@ -295,6 +298,17 @@ impl CreateManifest for Manifest {
             .map(|f| f.to_string_lossy())
             .expect("File to have file name")
             .to_string();
+
+        self
+    }
+
+    fn with_bucket(mut self, path: impl AsRef<Path>) -> Self {
+        self.bucket = path
+            .as_ref()
+            .parent()
+            .and_then(|p| p.parent())
+            .and_then(|bucket| bucket.file_name().map(|f| f.to_string_lossy().to_string()))
+            .unwrap_or_default();
 
         self
     }
@@ -310,6 +324,10 @@ impl CreateManifest for InstallManifest {
             .expect("File to have name")
             .to_string();
 
+        self
+    }
+
+    fn with_bucket(self, _path: impl AsRef<Path>) -> Self {
         self
     }
 }

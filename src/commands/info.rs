@@ -68,7 +68,7 @@ impl super::Command for Args {
             ));
         }
 
-        if manifests.len() > 1 {
+        if manifests.len() > 1 && !self.single {
             println!(
                 "Found {} packages, matching \"{}\":",
                 manifests.len(),
@@ -81,7 +81,6 @@ impl super::Command for Args {
         if self.single {
             let latest = manifests
                 .into_iter()
-                // .flat_map(|m| semver::Version::parse(&m.version))
                 .max_by(|a_manifest, b_manifest| {
                     semver::Version::parse(&a_manifest.version)
                         .and_then(|a_version| {
@@ -107,6 +106,7 @@ impl Args {
         manifest: Manifest,
         installed_apps: &[std::path::PathBuf],
     ) -> anyhow::Result<()> {
+        // TODO: Remove this and just create the pathbuf from the package name
         let install_path = {
             let install_path = installed_apps.iter().find(|app| {
                 app.with_extension("").file_name()
