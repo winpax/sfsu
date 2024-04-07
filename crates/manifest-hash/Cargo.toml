@@ -6,6 +6,8 @@ version = "0.1.0"
 [dependencies]
 anyhow = "1.0"
 base64 = "0.22"
+const_format = "0.2.32"
+derive_more = "0.99.17"
 itertools = "0.12"
 log = "0.4"
 quick-xml = "0.31"
@@ -16,3 +18,7 @@ serde_json_path = "0.6.7"
 strum = { version = "0.26", features = ["derive"] }
 thiserror = "1.0"
 url = "2.5.0"
+
+[dev-dependencies]
+const_format = "0.2.32"
+derive_more = "0.99.17"

@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 mod formats;
 mod ops;
+
 pub mod requests;
 
 #[macro_use]
@@ -26,13 +27,13 @@ impl Hash {
     pub fn from_rdf(
         source: impl AsRef<str>,
         file_names: &[impl AsRef<str>],
-    ) -> Vec<(String, Self)> {
+    ) -> Vec<(String, Hash)> {
         formats::rdf::parse_xml(source, file_names)
             .into_iter()
             .map(|(hash_file, hash)| {
                 (
                     hash_file,
-                    Self {
+                    Hash {
                         hash,
                         hash_type: HashType::Sha256,
                     },
@@ -45,7 +46,7 @@ impl Hash {
         source: impl AsRef<str>,
         substitutions: HashMap<String, String>,
         regex: String,
-    ) -> Vec<(String, Self)> {
+    ) -> Vec<(String, Hash)> {
         unimplemented!(
             "fuck this its so hard and for what like just provide your hashes its so fucking easy LOOKING AT YOU MYSQL FUCK YOU"
         );

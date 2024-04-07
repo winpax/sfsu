@@ -170,9 +170,9 @@ mod tests {
 
     use url::Url;
 
-    use crate::requests::client;
-
     use super::*;
+
+    use crate::requests::BlockingClient;
 
     #[test]
     fn test_finding_pixelflasher_hashes() {
@@ -192,7 +192,12 @@ mod tests {
         subs.insert("$url".to_string(), no_fragment.clone());
         subs.insert("$baseurl".to_string(), no_fragment);
 
-        let text_file = client().get(text_url).send().unwrap().text().unwrap();
+        let text_file: String = BlockingClient::new()
+            .get(text_url)
+            .send()
+            .unwrap()
+            .text()
+            .unwrap();
 
         let hash = parse_text(text_file, subs, FIND_REGEX.to_string())
             .unwrap()
@@ -202,5 +207,39 @@ mod tests {
             "8a0d9ab83478a6389d6ac0a6294136f9e81b8f5a9c312cfc7a855ef9f9a2f0da",
             hash
         );
+    }
+
+    #[test]
+    fn test_finding_mysql_hashes() {
+        let mut text_url: String = "https://dev.mysql.com/downloads/mysql/".to_string();
+        const FIND_REGEX: &str = "md5\">$md5";
+
+        let url = Url::parse(&text_url).unwrap();
+
+        if let Some(fragment) = url.fragment() {
+            text_url = text_url.replace(&format!("#{}", fragment), "");
+        }
+
+        let mut subs = HashMap::new();
+
+        let no_fragment = if let Some(fragment) = url.fragment() {
+            text_url.replace(&format!("#{}", fragment), "")
+        } else {
+            text_url.clone()
+        };
+
+        subs.insert("$url".to_string(), no_fragment.clone());
+        subs.insert("$baseurl".to_string(), no_fragment);
+
+        let response = BlockingClient::new().get(text_url).send().unwrap();
+        let text_file = response.text().unwrap();
+
+        std::fs::write("pp.html", &text_file).unwrap();
+
+        let hash = parse_text(text_file, subs, FIND_REGEX.to_string())
+            .unwrap()
+            .expect("found hash");
+
+        assert_eq!("186efc230e44ded93b5aa89193a6fcbf", hash);
     }
 }

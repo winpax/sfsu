@@ -1,15 +1,65 @@
-use reqwest::blocking::{Client, ClientBuilder};
+use derive_more::Deref;
+use reqwest::header::HeaderMap;
 
 pub fn user_agent() -> String {
-    // PowerShell/$($PSVersionTable.PSVersion.Major).$($PSVersionTable.PSVersion.Minor)
-    // (Windows NT $([System.Environment]::OSVersion.Version.Major).$([System.Environment]::OSVersion.Version.Minor)
+    use std::env::consts::{ARCH, OS};
 
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0".to_string()
+    const VERSION: &str = env!("CARGO_PKG_VERSION");
+
+    format!("Scoop/1.0 (+https://scoop.sh/) sfsu/{VERSION} ({ARCH}) ({OS})",)
 }
 
-pub fn client() -> Client {
-    ClientBuilder::new()
-        .user_agent(user_agent())
-        .build()
-        .unwrap()
+#[must_use]
+/// Construct default headers for requests
+///
+/// # Panics
+/// - Invalid headers
+pub fn default_headers() -> HeaderMap {
+    let mut headers = HeaderMap::new();
+
+    headers
+}
+
+#[derive(Debug, Clone, Deref)]
+pub struct BlockingClient(reqwest::blocking::Client);
+
+impl BlockingClient {
+    #[must_use]
+    pub fn new() -> Self {
+        Self::default()
+    }
+}
+
+impl Default for BlockingClient {
+    fn default() -> Self {
+        Self(
+            reqwest::blocking::Client::builder()
+                .user_agent(user_agent())
+                .default_headers(default_headers())
+                .build()
+                .unwrap(),
+        )
+    }
+}
+
+#[derive(Debug, Clone, Deref)]
+pub struct AsyncClient(reqwest::Client);
+
+impl AsyncClient {
+    #[must_use]
+    pub fn new() -> Self {
+        Self::default()
+    }
+}
+
+impl Default for AsyncClient {
+    fn default() -> Self {
+        Self(
+            reqwest::Client::builder()
+                .user_agent(user_agent())
+                .default_headers(default_headers())
+                .build()
+                .unwrap(),
+        )
+    }
 }

@@ -16,9 +16,10 @@ pub mod git;
 pub mod output;
 pub mod packages;
 pub mod progress;
-pub mod requests;
 pub mod stream;
 pub mod win;
+
+pub use scoop_manifest_hash::requests;
 
 mod opt;
 
