@@ -101,16 +101,16 @@ pub fn parse_text(
 
         base64_regex
             .find(&hash)
-            .map(|base64_hash| {
+            .and_then(|base64_hash| {
                 let invalid_base64 =
                     Regex::new(r"^[a-fA-F0-9]+$").expect("valid \"invalid base64\" regex");
 
                 let base64_hash = base64_hash.as_str();
 
                 // Detects an invalid base64 string
-                if !(invalid_base64.is_match(base64_hash)
+                (invalid_base64.is_match(base64_hash)
                     && [32, 40, 64, 128].contains(&base64_hash.len()))
-                {
+                .then(|| {
                     use base64::prelude::*;
 
                     let decoded_hash =
@@ -127,9 +127,7 @@ pub fn parse_text(
                         };
 
                     decoded_hash
-                } else {
-                    hash.clone()
-                }
+                })
             })
             .or_else(|| Some(hash.clone()))
     } else {
@@ -137,7 +135,7 @@ pub fn parse_text(
         let filename_regex = {
             let regex = r"([a-fA-F0-9]{32,128})[\x20\t]+.*`$basename(?:[\x20\t]+\d+)?"
                 .to_string()
-                .into_substituted(&substitutions, true);
+                .into_substituted(substitutions, true);
 
             Regex::new(&regex)?
         };
@@ -178,15 +176,16 @@ mod tests {
 
     #[test]
     fn test_finding_pixelflasher_hashes() {
-        let  text_url: String = "https://github.com/badabing2005/PixelFlasher/releases/download/v6.9.1.0/PixelFlasher.exe.sha256".to_string();
         const FIND_REGEX: &str = "$sha256";
+
+        let  text_url: String = "https://github.com/badabing2005/PixelFlasher/releases/download/v6.9.1.0/PixelFlasher.exe.sha256".to_string();
 
         let url = Url::parse(&text_url).unwrap();
 
         let mut subs = HashMap::new();
 
         let no_fragment = if let Some(fragment) = url.fragment() {
-            text_url.replace(&format!("#{}", fragment), "")
+            text_url.replace(&format!("#{fragment}"), "")
         } else {
             text_url.clone()
         };
@@ -213,19 +212,19 @@ mod tests {
 
     #[test]
     fn test_finding_mysql_hashes() {
-        let mut text_url: String = "https://dev.mysql.com/downloads/mysql/".to_string();
         const FIND_REGEX: &str = "md5\">$md5";
+        let mut text_url: String = "https://dev.mysql.com/downloads/mysql/".to_string();
 
         let url = Url::parse(&text_url).unwrap();
 
         if let Some(fragment) = url.fragment() {
-            text_url = text_url.replace(&format!("#{}", fragment), "");
+            text_url = text_url.replace(&format!("#{fragment}"), "");
         }
 
         let mut subs = HashMap::new();
 
         let no_fragment = if let Some(fragment) = url.fragment() {
-            text_url.replace(&format!("#{}", fragment), "")
+            text_url.replace(&format!("#{fragment}"), "")
         } else {
             text_url.clone()
         };

@@ -29,9 +29,10 @@ pub fn parse_xml(input: impl AsRef<str>, file_names: &[impl AsRef<str>]) -> Vec<
             Ok(Event::Start(e)) => {
                 if about_tag.is_some() {
                     if e.name() == QName(b"digest:sha256") {
-                        if hash_tag.is_some() {
-                            panic!("woops something wasnt cleaned up properly");
-                        }
+                        assert!(
+                            hash_tag.is_none(),
+                            "woops something wasnt cleaned up properly"
+                        );
 
                         std::mem::swap(&mut about_tag, &mut hash_tag);
                     }

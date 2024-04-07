@@ -19,7 +19,7 @@ pub enum JsonError {
 
 pub fn parse_json(
     json: &Value,
-    substitutions: HashMap<String, String>,
+    substitutions: &HashMap<String, String>,
     jp: String,
 ) -> Result<String, JsonError> {
     // let json: Value = serde_json::from_slice(source)?;
@@ -29,18 +29,18 @@ pub fn parse_json(
     hashes
         .first()
         .and_then(|v| v.as_str())
-        .map(|s| s.to_string())
+        .map(std::string::ToString::to_string)
         .ok_or(JsonError::NotFound)
 }
 
-fn query_jp(
-    json: &Value,
+fn query_jp<'a>(
+    json: &'a Value,
     jp: String,
-    substitutions: HashMap<String, String>,
-) -> Result<NodeList<'_>, JsonError> {
+    substitutions: &HashMap<String, String>,
+) -> Result<NodeList<'a>, JsonError> {
     let jp = {
         let regex_escape = jp.contains("=~");
-        jp.into_substituted(&substitutions, regex_escape)
+        jp.into_substituted(substitutions, regex_escape)
     };
 
     let path = JsonPath::parse(&jp)?;
@@ -73,7 +73,7 @@ mod tests {
             .and_then(|v| v.as_str())
             .expect("sha256 hash in json download");
 
-        let hashes = parse_json(&json, substitutions, jp).unwrap();
+        let hashes = parse_json(&json, &substitutions, jp).unwrap();
 
         assert_eq!(actual_hash, hashes);
 

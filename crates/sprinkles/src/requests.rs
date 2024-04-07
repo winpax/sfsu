@@ -1,6 +1,7 @@
 use derive_more::Deref;
 use reqwest::header::HeaderMap;
 
+#[must_use]
 pub fn user_agent() -> String {
     use std::env::consts::{ARCH, OS};
 
