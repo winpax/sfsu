@@ -84,9 +84,7 @@ pub fn parse_text(
         Regex::new(&regex)?
     };
 
-    dbg!(&substituted);
-
-    let mut hashes = substituted
+    let hashes = substituted
         .find_iter(source.as_ref())
         .map(|hash| hash.as_str().replace(' ', ""))
         .collect_vec();
@@ -94,38 +92,43 @@ pub fn parse_text(
     eprintln!("Hashes length after subbing searching: {}", hashes.len());
 
     // Convert base64 encoded hashes
-    let hash = if let Some(hash) = hashes.get_mut(1) {
+    let hash = if let Some(hash) = hashes.first() {
         let base64_regex = Regex::new(
             r"^(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=|[A-Za-z0-9+\/]{4})$",
         )
         .expect("valid base64 regex");
 
-        if base64_regex.is_match(hash) {
+        if let Some(base64_hash) = base64_regex.find(hash) {
             let invalid_base64 =
                 Regex::new(r"^[a-fA-F0-9]+$").expect("valid \"invalid base64\" regex");
 
+            let base64_hash = base64_hash.as_str();
+
             // Detects an invalid base64 string
-            if !invalid_base64.is_match(hash) || [32, 40, 64, 128].contains(&hash.len()) {
+            if !(invalid_base64.is_match(base64_hash)
+                && [32, 40, 64, 128].contains(&base64_hash.len()))
+            {
                 use base64::prelude::*;
 
-                let decoded_hash = if let Ok(decoded) = BASE64_STANDARD.decode(hash.as_bytes()) {
-                    let mut decoded_hash = String::new();
+                let decoded_hash =
+                    if let Ok(decoded) = BASE64_STANDARD.decode(base64_hash.as_bytes()) {
+                        let mut decoded_hash = String::new();
 
-                    decoded
-                        .into_iter()
-                        .for_each(|byte| decoded_hash += &format!("{byte:x}"));
+                        decoded
+                            .into_iter()
+                            .for_each(|byte| decoded_hash += &format!("{byte:x}"));
 
-                    decoded_hash
-                } else {
-                    hash.clone()
-                };
+                        decoded_hash
+                    } else {
+                        hash.clone()
+                    };
 
                 Some(decoded_hash)
             } else {
-                None
+                Some(hash.clone())
             }
         } else {
-            None
+            Some(hash.clone())
         }
     } else {
         println!("Didn't find first regex");
@@ -137,13 +140,11 @@ pub fn parse_text(
             Regex::new(&regex)?
         };
 
-        dbg!(&filename_regex);
-
         let mut temp_hash = filename_regex
             .find_iter(source.as_ref())
             .map(|hash| hash.as_str().to_string())
             .collect_vec()
-            .get(1)
+            .first()
             .cloned();
 
         if temp_hash.is_none() {
@@ -153,7 +154,7 @@ pub fn parse_text(
                 .find_iter(source.as_ref())
                 .map(|hash| hash.as_str().to_string())
                 .collect_vec()
-                .get(1)
+                .first()
                 .cloned();
         }
 
@@ -169,18 +170,16 @@ mod tests {
 
     use url::Url;
 
+    use crate::requests::client;
+
     use super::*;
 
     #[test]
-    fn test_finding_mysql_hashes() {
-        let mut text_url: String = "https://dev.mysql.com/downloads/mysql/".to_string();
-        const FIND_REGEX: &str = "md5\">$md5";
+    fn test_finding_pixelflasher_hashes() {
+        let  text_url: String = "https://github.com/badabing2005/PixelFlasher/releases/download/v6.9.1.0/PixelFlasher.exe.sha256".to_string();
+        const FIND_REGEX: &str = "$sha256";
 
         let url = Url::parse(&text_url).unwrap();
-
-        if let Some(fragment) = url.fragment() {
-            text_url = text_url.replace(&format!("#{}", fragment), "");
-        }
 
         let mut subs = HashMap::new();
 
@@ -193,12 +192,15 @@ mod tests {
         subs.insert("$url".to_string(), no_fragment.clone());
         subs.insert("$baseurl".to_string(), no_fragment);
 
-        let text_file = reqwest::blocking::get(text_url).unwrap().text().unwrap();
+        let text_file = client().get(text_url).send().unwrap().text().unwrap();
 
         let hash = parse_text(text_file, subs, FIND_REGEX.to_string())
             .unwrap()
             .expect("found hash");
 
-        assert_eq!("186efc230e44ded93b5aa89193a6fcbf", hash);
+        assert_eq!(
+            "8a0d9ab83478a6389d6ac0a6294136f9e81b8f5a9c312cfc7a855ef9f9a2f0da",
+            hash
+        );
     }
 }

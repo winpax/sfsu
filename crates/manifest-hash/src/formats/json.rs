@@ -55,6 +55,7 @@ fn query_jp(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::requests::client;
 
     #[test]
     fn test_finding_json_hashes() -> anyhow::Result<()> {
@@ -63,7 +64,7 @@ mod tests {
         let substitutions = HashMap::new();
         let jp = "$.sha256_hash".to_string();
 
-        let source = reqwest::blocking::get(URL)?.bytes()?;
+        let source = client().get(URL).send()?.bytes()?;
         let json: Value = serde_json::from_slice(&source)?;
 
         let actual_hash = json

@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 mod formats;
 mod ops;
+pub mod requests;
 
 #[macro_use]
 extern crate log;
