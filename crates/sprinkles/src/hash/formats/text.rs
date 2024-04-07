@@ -84,6 +84,8 @@ pub fn parse_text(
         Regex::new(&regex)?
     };
 
+    dbg!(&substituted);
+
     let hash = substituted
         .captures(source.as_ref())
         .and_then(|capture| {
@@ -172,26 +174,33 @@ mod tests {
 
     use super::*;
 
-    use crate::{buckets::Bucket, requests::BlockingClient};
+    use crate::{
+        buckets::Bucket,
+        packages::manifest::{HashExtraction, HashExtractionOrArrayOfHashExtractions},
+        requests::BlockingClient,
+    };
 
     #[test]
-    fn test_finding_pixelflasher_hashes() {
-        const FIND_REGEX: &str = "$sha256";
+    fn test_finding_vcredistaio_hashes() {
+        let manifest = Bucket::from_name("extras")
+            .unwrap()
+            .get_manifest("vcredist-aio")
+            .unwrap();
 
-        let text_url: String = "https://github.com/badabing2005/PixelFlasher/releases/download/v6.9.1.0/PixelFlasher.exe.sha256".to_string();
-
-        let url = Url::parse(&text_url).unwrap();
-
-        let mut subs = HashMap::new();
-
-        let no_fragment = if let Some(fragment) = url.fragment() {
-            text_url.replace(&format!("#{fragment}"), "")
-        } else {
-            text_url.clone()
-        };
-
-        subs.insert("$url".to_string(), no_fragment.clone());
-        subs.insert("$baseurl".to_string(), no_fragment);
+        let (text_url, regex) =
+            if let HashExtractionOrArrayOfHashExtractions::HashExtraction(extraction) =
+                manifest.autoupdate.unwrap().hash.unwrap()
+            {
+                (
+                    extraction
+                        .url
+                        .unwrap()
+                        .replace("$version", &manifest.version),
+                    extraction.regex.unwrap(),
+                )
+            } else {
+                panic!("No hash extraction found");
+            };
 
         let text_file: String = BlockingClient::new()
             .get(text_url)
@@ -200,23 +209,20 @@ mod tests {
             .text()
             .unwrap();
 
-        let hash = parse_text(text_file, &subs, FIND_REGEX.to_string())
+        std::fs::write("pp.html", &text_file).unwrap();
+
+        let mut subs = HashMap::new();
+
+        subs.insert(
+            "$basename".into(),
+            "VisualCppRedist_AIO_x86_x64_80.zip".into(),
+        );
+
+        let hash = parse_text(text_file, &subs, regex.to_string())
             .unwrap()
             .expect("found hash");
 
-        let actual_hash = {
-            Bucket::from_name("lemon")
-                .unwrap()
-                .get_manifest("pixelflasher")
-                .unwrap()
-                .architecture
-                .unwrap()
-                .x64
-                .unwrap()
-                .hash
-                .unwrap()
-                .to_string()
-        };
+        let actual_hash = { manifest.hash.unwrap().to_string() };
 
         assert_eq!(actual_hash, hash);
     }

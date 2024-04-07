@@ -65,7 +65,7 @@ jobs:
       - name: Install and setup Scoop
         uses: MinoruSekine/setup-scoop@v3
         with:
-          buckets: extras java lemon
+          buckets: extras java
 
       - name: Install latest stable
         uses: actions-rs/toolchain@v1
