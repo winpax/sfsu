@@ -58,7 +58,7 @@ impl Hash {
     ) -> Result<(), formats::json::JsonError> {
         let json = serde_json::from_slice(source.as_ref())?;
 
-        formats::json::parse_json(json, substitutions, json_path)?;
+        formats::json::parse_json(&json, substitutions, json_path)?;
 
         todo!()
     }

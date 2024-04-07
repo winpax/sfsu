@@ -18,13 +18,13 @@ pub enum JsonError {
 }
 
 pub fn parse_json(
-    json: Value,
+    json: &Value,
     substitutions: HashMap<String, String>,
     jp: String,
 ) -> Result<String, JsonError> {
     // let json: Value = serde_json::from_slice(source)?;
 
-    let hashes = query_jp(&json, jp, substitutions)?;
+    let hashes = query_jp(json, jp, substitutions)?;
 
     hashes
         .first()
@@ -64,14 +64,16 @@ mod tests {
         let jp = "$.sha256_hash".to_string();
 
         let source = reqwest::blocking::get(URL)?.bytes()?;
-        let json = serde_json::from_slice(&source)?;
+        let json: Value = serde_json::from_slice(&source)?;
 
-        let hashes = parse_json(json, substitutions, jp).unwrap();
+        let actual_hash = json
+            .get("sha256_hash")
+            .and_then(|v| v.as_str())
+            .expect("sha256 hash in json download");
 
-        assert_eq!(
-            hashes,
-            "f7cc15ca17295e69c907402dfe8db240db446e75d3b150da7bf67243cded93de"
-        );
+        let hashes = parse_json(&json, substitutions, jp).unwrap();
+
+        assert_eq!(actual_hash, hashes);
 
         Ok(())
     }
