@@ -1,9 +1,7 @@
-use std::collections::HashMap;
-
 use serde_json::Value;
 use serde_json_path::{JsonPath, NodeList};
 
-use crate::hash::ops::Substitute;
+use crate::hash::substitutions::{Substitute, SubstitutionMap};
 
 #[derive(Debug, thiserror::Error)]
 pub enum JsonError {
@@ -19,7 +17,7 @@ pub enum JsonError {
 
 pub fn parse_json(
     json: &Value,
-    substitutions: &HashMap<String, String>,
+    substitutions: &SubstitutionMap,
     jp: String,
 ) -> Result<String, JsonError> {
     // let json: Value = serde_json::from_slice(source)?;
@@ -36,7 +34,7 @@ pub fn parse_json(
 fn query_jp<'a>(
     json: &'a Value,
     jp: String,
-    substitutions: &HashMap<String, String>,
+    substitutions: &SubstitutionMap,
 ) -> Result<NodeList<'a>, JsonError> {
     let jp = {
         let regex_escape = jp.contains("=~");
@@ -62,7 +60,7 @@ mod tests {
     fn test_finding_json_hashes() -> anyhow::Result<()> {
         const URL: &str = "https://api.azul.com/zulu/download/community/v1.0/bundles/latest/?jdk_version=&bundle_type=jdk&features=&javafx=false&ext=zip&os=windows&arch=x86&hw_bitness=64";
 
-        let substitutions = HashMap::new();
+        let substitutions = SubstitutionMap::new();
         let jp = "$.sha256_hash".to_string();
 
         let source = BlockingClient::new().get(URL).send()?.bytes()?;

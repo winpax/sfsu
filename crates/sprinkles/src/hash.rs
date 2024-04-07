@@ -1,9 +1,8 @@
-use std::collections::HashMap;
-
-use self::formats::{json::JsonError, text::TextError};
+use formats::{json::JsonError, text::TextError};
+use substitutions::SubstitutionMap;
 
 mod formats;
-mod ops;
+mod substitutions;
 
 #[derive(Debug, thiserror::Error)]
 pub enum HashError {
@@ -117,7 +116,7 @@ impl Hash {
     /// - If the hash is invalid
     pub fn from_text(
         source: impl AsRef<str>,
-        substitutions: &HashMap<String, String>,
+        substitutions: &SubstitutionMap,
         regex: String,
     ) -> Result<Hash> {
         let hash =
@@ -134,7 +133,7 @@ impl Hash {
     /// - If the hash is invalid
     pub fn from_json(
         source: impl AsRef<[u8]>,
-        substitutions: &HashMap<String, String>,
+        substitutions: &SubstitutionMap,
         json_path: String,
     ) -> Result<Hash> {
         let json = serde_json::from_slice(source.as_ref())?;

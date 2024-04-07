@@ -1,10 +1,8 @@
-use std::collections::HashMap;
-
 use itertools::Itertools as _;
 use regex::Regex;
 use strum::{Display, EnumIter};
 
-use crate::hash::ops::Substitute;
+use crate::hash::substitutions::{Substitute, SubstitutionMap};
 
 #[derive(Debug, thiserror::Error)]
 pub enum TextError {
@@ -42,10 +40,10 @@ impl From<RegexTemplates> for &'static str {
 }
 
 impl RegexTemplates {
-    fn into_substitute_map() -> HashMap<String, String> {
+    fn into_substitute_map() -> SubstitutionMap {
         use strum::IntoEnumIterator;
 
-        let mut map = HashMap::new();
+        let mut map = SubstitutionMap::new();
 
         for field in Self::iter() {
             let field_name = format!("${field}");
@@ -60,7 +58,7 @@ impl RegexTemplates {
 
 pub fn parse_text(
     source: impl AsRef<str>,
-    substitutions: &HashMap<String, String>,
+    substitutions: &SubstitutionMap,
     regex: String,
 ) -> Result<Option<String>, TextError> {
     // TODO: Incorporate file_names
@@ -84,15 +82,13 @@ pub fn parse_text(
         Regex::new(&regex)?
     };
 
-    dbg!(&substituted);
-
     let hash = substituted
         .captures(source.as_ref())
         .and_then(|capture| {
             // Get the first capture group (i.e the actual hash value)
             capture.get(1)
         })
-        .map(|hash| dbg!(hash.as_str()).replace(' ', ""));
+        .map(|hash| hash.as_str().replace(' ', ""));
 
     // Convert base64 encoded hashes
     let hash = if let Some(hash) = hash {
@@ -168,7 +164,6 @@ pub fn parse_text(
 
 #[cfg(test)]
 mod tests {
-    use std::collections::HashMap;
 
     use url::Url;
 
@@ -208,14 +203,14 @@ mod tests {
             .text()
             .unwrap();
 
-        let mut subs = HashMap::new();
+        let mut substitutions = SubstitutionMap::new();
 
-        subs.insert(
+        substitutions.insert(
             "$basename".into(),
             "VisualCppRedist_AIO_x86_x64_80.zip".into(),
         );
 
-        let hash = parse_text(text_file, &subs, regex.to_string())
+        let hash = parse_text(text_file, &substitutions, regex.to_string())
             .unwrap()
             .expect("found hash");
 
@@ -236,7 +231,7 @@ mod tests {
             text_url = text_url.replace(&format!("#{fragment}"), "");
         }
 
-        let mut subs = HashMap::new();
+        let mut substitutions = SubstitutionMap::new();
 
         let no_fragment = if let Some(fragment) = url.fragment() {
             text_url.replace(&format!("#{fragment}"), "")
@@ -244,14 +239,14 @@ mod tests {
             text_url.clone()
         };
 
-        subs.insert("$url".to_string(), no_fragment.clone());
-        subs.insert("$baseurl".to_string(), no_fragment);
+        substitutions.insert("$url".to_string(), no_fragment.clone());
+        substitutions.insert("$baseurl".to_string(), no_fragment);
 
         let response = BlockingClient::new().get(text_url).send().unwrap();
         let text_file = response.text().unwrap();
 
         let hash = "md5:".to_string()
-            + &parse_text(text_file, &subs, FIND_REGEX.to_string())
+            + &parse_text(text_file, &substitutions, FIND_REGEX.to_string())
                 .unwrap()
                 .expect("found hash");
 
