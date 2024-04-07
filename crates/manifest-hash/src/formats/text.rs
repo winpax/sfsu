@@ -98,7 +98,7 @@ pub fn parse_text(
         )
         .expect("valid base64 regex");
 
-        if let Some(base64_hash) = base64_regex.find(hash) {
+        base64_regex.find(hash).map(|base64_hash| {
             let invalid_base64 =
                 Regex::new(r"^[a-fA-F0-9]+$").expect("valid \"invalid base64\" regex");
 
@@ -123,13 +123,11 @@ pub fn parse_text(
                         hash.clone()
                     };
 
-                Some(decoded_hash)
+                decoded_hash
             } else {
-                Some(hash.clone())
+                hash.clone()
             }
-        } else {
-            Some(hash.clone())
-        }
+        })
     } else {
         println!("Didn't find first regex");
         let filename_regex = {
