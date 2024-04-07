@@ -255,6 +255,12 @@ impl MatchCriteria {
     }
 }
 
+impl Default for MatchCriteria {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 pub type Result<T> = std::result::Result<T, PackageError>;
 
 pub trait CreateManifest
