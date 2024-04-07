@@ -1,5 +1,5 @@
 use clap::Parser;
-use sprinkles::{calm_panic::calm_panic, packages::reference};
+use sprinkles::{calm_panic::abandon, packages::reference};
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
@@ -15,7 +15,7 @@ impl super::Command for Args {
             .ok_or(anyhow::anyhow!("Package not found"))?;
 
         let Some(homepage) = manifest.homepage else {
-            calm_panic("No homepage found for package");
+            abandon!("No homepage found for package");
         };
 
         open::that_detached(homepage)?;
