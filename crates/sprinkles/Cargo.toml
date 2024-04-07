@@ -1,5 +1,6 @@
 [package]
 edition = "2021"
+license = { workspace = true }
 name = "sprinkles"
 version = { workspace = true }
 
