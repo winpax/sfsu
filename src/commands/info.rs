@@ -105,7 +105,7 @@ impl super::Command for Args {
                 name: manifest.name,
                 bucket: manifest.bucket,
                 description: manifest.description,
-                version: manifest.version,
+                version: manifest.version.to_string(),
                 website: manifest.homepage,
                 license: manifest.license,
                 binaries: manifest.bin.map(|b| match b {

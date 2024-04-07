@@ -110,7 +110,7 @@ impl MinInfo {
 
         Ok(Self {
             name: package_name.to_string(),
-            version: manifest.version,
+            version: manifest.version.to_string(),
             source: install_manifest.get_source(),
             updated: updated_time.into(),
             notes: if install_manifest.hold.contains_truth() {
@@ -257,7 +257,7 @@ pub type Result<T> = std::result::Result<T, PackageError>;
 
 pub trait CreateManifest
 where
-    Self: Default + for<'a> Deserialize<'a>,
+    Self: for<'a> Deserialize<'a>,
 {
     /// Convert a path into a manifest
     ///
