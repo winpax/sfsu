@@ -2,10 +2,13 @@
 description = "Stupid Fast Scoop Utils"
 edition = "2021"
 name = "sfsu"
+publish = { workspace = true }
 version = { workspace = true }
 
 [workspace]
 members = ["crates/*"]
+package.license = "Apache-2.0"
+package.publish = false
 package.version = "1.10.0"
 
 [[bench]]
