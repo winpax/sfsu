@@ -3,15 +3,17 @@ description = "Stupid Fast Scoop Utils"
 edition = "2021"
 license = { workspace = true }
 name = "sfsu"
+publish = { workspace = true }
 version = { workspace = true }
 
 [workspace]
 members = ["crates/*"]
 package.license = "Apache-2.0"
+package.publish = false
 package.version = "1.10.0"
 
 [workspace.dependencies]
-chrono = { version = ">=0.4.20", features = [
+chrono = { version = ">=0.4.37", features = [
     "clock",
     "serde",
     "std",

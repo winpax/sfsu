@@ -66,8 +66,8 @@ impl Info {
 
         Ok(Info {
             name: remote_manifest.name.clone(),
-            current: local_manifest.version.clone(),
-            available: remote_manifest.version.clone(),
+            current: local_manifest.version.to_string(),
+            available: remote_manifest.version.to_string(),
             missing_dependencies,
             info: (!info.is_empty()).then_some(info),
         })

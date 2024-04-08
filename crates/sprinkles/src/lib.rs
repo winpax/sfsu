@@ -7,6 +7,8 @@ use std::{ffi::OsStr, fmt, fs::File, path::PathBuf};
 use chrono::Local;
 use rayon::prelude::*;
 
+pub use semver;
+
 pub mod buckets;
 pub mod cache;
 pub mod calm_panic;

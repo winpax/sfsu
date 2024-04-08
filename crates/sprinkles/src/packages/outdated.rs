@@ -20,8 +20,8 @@ impl Info {
         } else {
             Some(Info {
                 name: remote.name.clone(),
-                current: local.version.clone(),
-                available: remote.version.clone(),
+                current: local.version.to_string(),
+                available: remote.version.to_string(),
             })
         }
     }

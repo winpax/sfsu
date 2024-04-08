@@ -18,7 +18,7 @@ pub mod update;
 use clap::Subcommand;
 
 use sfsu_derive::{Hooks, Runnable};
-use sprinkles::calm_panic::calm_panic;
+use sprinkles::calm_panic::abandon;
 
 pub struct DeprecationWarning {
     /// Deprecation message
@@ -70,7 +70,7 @@ pub trait Command {
         }
 
         if Self::NEEDS_ELEVATION && !sprinkles::is_elevated()? {
-            calm_panic("This command requires elevation. Please run as an administrator.");
+            abandon!("This command requires elevation. Please run as an administrator.");
         }
 
         self.runner()
