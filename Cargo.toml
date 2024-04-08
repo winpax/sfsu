@@ -48,7 +48,7 @@ sprinkles = { version = "1", path = "crates/sprinkles" }
 strum = { version = "0.26", features = ["derive"] }
 
 [dev-dependencies]
-chrono = ">=0.4.20"
+chrono = ">=0.4.37"
 criterion = { version = "0.5", features = ["html_reports"] }
 
 [build-dependencies]
