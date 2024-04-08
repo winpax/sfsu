@@ -23,7 +23,6 @@ pub mod packages;
 pub mod progress;
 pub mod requests;
 pub mod stream;
-pub mod win;
 
 mod opt;
 
