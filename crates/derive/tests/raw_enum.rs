@@ -1,10 +1,8 @@
 #![allow(dead_code)]
 
-mod helpers;
-
 use sfsu_derive::Hooks;
 
-use helpers::enum_to_string;
+use strum::IntoEnumIterator;
 
 struct DummyStruct;
 
@@ -16,7 +14,9 @@ enum EnumWithData {
 
 #[test]
 fn has_all_variants() {
-    let variants = enum_to_string::<EnumWithDataHooks>();
+    let variants = EnumWithDataHooks::iter()
+        .map(|v| v.hook())
+        .collect::<String>();
 
     assert_eq!(variants, "test1test2");
 }
@@ -31,7 +31,9 @@ enum EnumExclude {
 
 #[test]
 fn excludes_no_hook_variant() {
-    let variants = enum_to_string::<EnumExcludeHooks>();
+    let variants = EnumExcludeHooks::iter()
+        .map(|v| v.hook())
+        .collect::<String>();
 
     assert_eq!(variants, "test1test3");
 }
