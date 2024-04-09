@@ -26,8 +26,9 @@ impl super::Command for Args {
                 // I would love to make this all one condition, but Powershell doesn't seem to support that elegantly
                 for command in enabled_hooks {
                     print!(
-                        "  '{command}' {{ return sfsu.exe {} }} ",
-                        command.command_name()
+                        "  '{hook}' {{ return sfsu.exe {command} }} ",
+                        hook = command.hook(),
+                        command = command.command()
                     );
                 }
 
@@ -46,8 +47,9 @@ impl super::Command for Args {
 
                 for command in enabled_hooks {
                     println!(
-                        "({command}) sfsu.exe {} ${{@:2}} ;;",
-                        command.command_name()
+                        "({hook}) sfsu.exe {command} ${{@:2}} ;;",
+                        hook = command.hook(),
+                        command = command.command()
                     );
                 }
 
@@ -62,8 +64,9 @@ impl super::Command for Args {
             Shell::Nu => {
                 for command in enabled_hooks {
                     println!(
-                        "def --wrapped \"scoop {command}\" [...rest] {{ sfsu {} ...$rest }}",
-                        command.command_name()
+                        "def --wrapped \"scoop {hook}\" [...rest] {{ sfsu {command} ...$rest }}",
+                        hook = command.hook(),
+                        command = command.command()
                     );
                 }
 

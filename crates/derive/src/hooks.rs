@@ -105,20 +105,24 @@ pub fn hook_enum(input: DeriveInput) -> TokenStream {
         }
 
         impl #struct_name {
-            pub fn command_name<'a>(self) -> &'a str {
+            pub fn command<'a>(self) -> &'a str {
                 match self {
                     #(#struct_name::#variants => #command_names,)*
                 }
             }
-        }
 
-        impl std::fmt::Display for #struct_name {
-            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            pub fn hook<'a>(self) -> &'a str {
                 match self {
-                    #(#struct_name::#variants => write!(f, "{}", stringify!(#hook_names)),)*
+                    #(#struct_name::#variants => #hook_names,)*
                 }
             }
         }
+
+        // impl std::fmt::Display for #struct_name {
+        //     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        //         write!(f, "{}", self.hook())
+        //     }
+        // }
 
         impl From<String> for #struct_name {
             fn from(string: String) -> Self {
