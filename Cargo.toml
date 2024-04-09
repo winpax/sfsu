@@ -1,49 +1,59 @@
 [package]
-name = "sfsu"
 description = "Stupid Fast Scoop Utils"
-version = "1.8.1"
 edition = "2021"
+name = "sfsu"
+publish = { workspace = true }
+version = { workspace = true }
 
 [workspace]
-members = ["sfsu-derive"]
+members = ["crates/*"]
+package.license = "Apache-2.0"
+package.publish = false
+package.version = "1.10.0"
 
 [[bench]]
-name = "searching"
 harness = false
+name = "searching"
+
+[[bench]]
+harness = false
+name = "serde"
 
 [profile.release]
 codegen-units = 1
 lto = true
 
+[features]
+default = []
+# Breaking changes are locked behind this feature flag
+v2 = ["sprinkles/v2"]
+
 [dependencies]
 anyhow = "1.0"
-chrono = { version = "0.4", features = [
-    "serde",
-    "clock",
-    "std",
-], default-features = false }
-clap = { version = "4.4", features = ["derive"] }
+bat = "0.24"
+cfg-if = "1.0"
+clap = { version = "4.5", features = ["derive"] }
 colored = "2.1"
-const-str = { version = "0.5", features = ["all"] }
-derive_more = "0.99"
-directories = "5.0"
-dunce = "1.0"
 git2 = "0.18"
 human-panic = "1.2"
+indicatif = { version = "0.17", features = ["improved_unicode", "rayon"] }
 itertools = "0.12"
+log = { version = "0.4", features = ["std"] }
+open = "5.1"
+parking_lot = "0.12"
 quork = "0.6"
-rayon = "1.8"
+rayon = "1.10"
 regex = "1.10"
-semver = { version = "1.0", features = ["serde"] }
-serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0", features = ["preserve_order"] }
-sfsu-derive = { path = "./sfsu-derive" }
-shadow-rs = "0.25"
-strum = { version = "0.25", features = ["derive"] }
-thiserror = "1.0"
+sfsu-derive = { path = "crates/derive" }
+shadow-rs = "0.27"
+sprinkles = { version = "1", path = "crates/sprinkles" }
+strum = { version = "0.26", features = ["derive"] }
 
 [dev-dependencies]
+chrono = ">=0.4.37"
 criterion = { version = "0.5", features = ["html_reports"] }
 
 [build-dependencies]
-shadow-rs = "0.25"
+shadow-rs = "0.27"
+winres = "0.1"

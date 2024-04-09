@@ -1,10 +1,12 @@
 use clap::Parser;
 
-use sfsu::{
+use sprinkles::{
     buckets::Bucket,
     output::sectioned::{Children, Section, Sections, Text},
     packages::Manifest,
 };
+
+use super::{DeprecationMessage, DeprecationWarning};
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
@@ -16,8 +18,11 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    fn deprecated() -> Option<&'static str> {
-        Some("Use `sfsu info` instead. Will be removed in v2")
+    fn deprecated() -> Option<DeprecationWarning> {
+        Some(DeprecationWarning {
+            message: DeprecationMessage::Replacement("sfsu info"),
+            version: Some(2.0),
+        })
     }
 
     fn runner(self) -> Result<(), anyhow::Error> {

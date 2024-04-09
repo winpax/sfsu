@@ -4,7 +4,6 @@
 
 mod commands;
 mod logging;
-mod opt;
 
 use clap::Parser;
 
@@ -12,9 +11,13 @@ use commands::Commands;
 
 shadow_rs::shadow!(build);
 
+#[macro_use]
+extern crate log;
+
 /// Scoop utilities that can replace the slowest parts of Scoop, and run anywhere from 30-100 times faster
 #[derive(Debug, Parser)]
 #[clap(about, long_about, version, long_version = build::CLAP_LONG_VERSION, author)]
+#[allow(clippy::struct_excessive_bools)]
 struct Args {
     #[command(subcommand)]
     command: Commands,
@@ -28,15 +31,35 @@ struct Args {
         help = "Print in the raw JSON output, rather than a human readable format"
     )]
     json: bool,
+
+    #[clap(short, long, global = true, help = "Enable verbose logging")]
+    verbose: bool,
+
+    #[clap(
+        long,
+        global = true,
+        help = "Disable using git commands for certain parts of the program. Allows sfsu to work entirely if you don't have git installed, but can negatively affect performance."
+    )]
+    disable_git: bool,
 }
 
 fn main() -> anyhow::Result<()> {
     logging::panics::handle();
 
     let args = Args::parse();
+
+    logging::Logger::init(if cfg!(debug_assertions) {
+        true
+    } else {
+        args.verbose
+    })?;
+
     if args.no_color {
+        debug!("Colour disabled globally");
         colored::control::set_override(false);
     }
+
+    debug!("Running command: {:?}", args.command);
 
     args.command.run()
 }

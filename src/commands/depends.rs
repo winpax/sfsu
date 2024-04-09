@@ -1,6 +1,6 @@
 use clap::Parser;
-use colored::Colorize as _;
-use sfsu::{
+use sprinkles::{
+    calm_panic::abandon,
     output::sectioned::{Children, Section, Sections},
     packages::reference::{self, Package},
 };
@@ -25,14 +25,10 @@ impl super::Command for Args {
             self.package.set_bucket(bucket);
         }
 
-        let manifests = self.package.search_manifest();
+        let manifests = self.package.list_manifests();
 
         if manifests.is_empty() {
-            eprintln!(
-                "Could not find any packages matching: {}",
-                self.package.to_string().red()
-            );
-            std::process::exit(1);
+            abandon!("Could not find any packages matching: {}", self.package);
         };
 
         if self.json {

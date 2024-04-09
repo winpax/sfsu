@@ -24,7 +24,7 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: Swatinem/rust-cache@v2.7.1
+      - uses: Swatinem/rust-cache@v2.7.3
 
       - uses: actions-rs/toolchain@v1
         with:
@@ -41,7 +41,7 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: Swatinem/rust-cache@v2.7.1
+      - uses: Swatinem/rust-cache@v2.7.3
 
       - name: Install latest stable
         uses: actions-rs/toolchain@v1
@@ -60,7 +60,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: Swatinem/rust-cache@v2.7.1
+      - uses: Swatinem/rust-cache@v2.7.3
+
+      - name: Install and setup Scoop
+        uses: MinoruSekine/setup-scoop@v3
+        with:
+          buckets: extras java
 
       - name: Install latest stable
         uses: actions-rs/toolchain@v1
@@ -77,8 +82,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: Swatinem/rust-cache@v2.7.1
-      - uses: extractions/setup-just@v1
+      - uses: Swatinem/rust-cache@v2.7.3
+        # Disable cache for release builds
+        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+      - uses: extractions/setup-just@v2
 
       - name: Install latest stable
         uses: actions-rs/toolchain@v1
@@ -86,32 +93,28 @@ jobs:
           toolchain: stable
           override: true
 
-      - name: Install cargo-auditable
-        run: cargo install cargo-auditable
-
       - name: Build and Package
-        run: just release
+        run: just release-all
 
       - name: Upload a Build Artifact
-        uses: actions/upload-artifact@v4.0.0
+        uses: actions/upload-artifact@v4.3.1
         with:
           name: package.zip
           path: release/*
 
       - name: Upload & Publish
-        uses: softprops/action-gh-release@v0.1.15
-        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2.0.4
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
         with:
-          files: release/*
+          files: |
+            release/*.exe
+            release/*.exe.sha256
 
       - name: VirusTotal Scan
         uses: crazy-max/ghaction-virustotal@v4
-        if: startsWith(github.ref, 'refs/tags/')
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
         with:
           update_release_body: true
           vt_api_key: ${{ secrets.VT_API_KEY }}
           files: |
-            dl-i686.7z
-            dl-x86_64.7z
-            sfsu-i686.exe
-            sfsu-x86_64.exe
+            .exe$
