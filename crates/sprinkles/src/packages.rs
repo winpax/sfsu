@@ -1,3 +1,5 @@
+//! Scoop package helpers
+
 use std::{
     path::Path,
     process::Stdio,

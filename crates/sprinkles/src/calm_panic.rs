@@ -1,3 +1,7 @@
+//! Calm Panic helpers
+//!
+//! This module provides ways to exit the program with an error message, without panicking
+
 use std::fmt::{Debug, Display};
 
 /// Trait for unwrapping `Result` and `Option` without panicking

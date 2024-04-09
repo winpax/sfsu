@@ -1,3 +1,5 @@
+//! Scoop git helpers
+
 use std::{ffi::OsStr, fmt::Display, process::Command};
 
 use derive_more::Deref;

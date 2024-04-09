@@ -1,3 +1,5 @@
+//! Scoop config helpers
+
 use std::{env, path::PathBuf};
 
 use serde::{Deserialize, Serialize};

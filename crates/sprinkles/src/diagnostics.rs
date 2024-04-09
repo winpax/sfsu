@@ -1,3 +1,5 @@
+//! Scoop diagnostics helpers
+
 use std::{ffi::OsString, os::windows::ffi::OsStringExt};
 
 use itertools::Itertools;

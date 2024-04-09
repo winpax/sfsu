@@ -36,11 +36,15 @@ mod const_assertions {
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+/// Supported architectures
 pub enum Architecture {
+    /// 64 bit Arm
     Arm64,
+    /// 64 bit
     #[serde(rename = "64bit")]
     X64,
     #[serde(rename = "32bit")]
+    /// 32 bit
     X86,
 }
 
@@ -92,6 +96,7 @@ impl fmt::Display for Architecture {
     }
 }
 
+/// The Scoop install reference
 pub struct Scoop;
 
 impl Scoop {

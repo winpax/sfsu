@@ -1,3 +1,5 @@
+//! Scoop bucket helpers
+
 use std::{
     borrow::Cow,
     collections::HashSet,

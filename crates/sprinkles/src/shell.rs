@@ -1,3 +1,5 @@
+//! Shell related utilities
+
 use clap::ValueEnum;
 use strum::Display;
 
