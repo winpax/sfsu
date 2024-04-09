@@ -22,7 +22,7 @@ use crate::{
     git::{self, Repo},
     output::{
         sectioned::{Children, Section, Text},
-        wrappers::{author::Author, time::NicerNaiveTime},
+        wrappers::{author::Author, time::NicerTime},
     },
     Scoop,
 };
@@ -50,7 +50,7 @@ pub struct MinInfo {
     /// The package's source (eg. bucket name)
     pub source: String,
     /// The last time the package was updated
-    pub updated: NicerNaiveTime<DateTime<Local>>,
+    pub updated: NicerTime<DateTime<Local>>,
     /// The package's notes
     pub notes: String,
 }
