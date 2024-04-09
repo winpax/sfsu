@@ -1,24 +1,29 @@
+//! Scoop diagnostics helpers
+
 use std::{ffi::OsString, os::windows::ffi::OsStringExt};
 
 use itertools::Itertools;
 use serde::Serialize;
 
 use crate::{
-    buckets::{Bucket, BucketError},
+    buckets::{self, Bucket},
     Scoop,
 };
 
 #[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
+/// Diagnostics errors
 pub enum Error {
     #[error("Internal Windows API Error: {0}")]
     Windows(#[from] windows::core::Error),
     #[error("Interacting with buckets: {0}")]
-    Bucket(#[from] BucketError),
+    Bucket(#[from] buckets::Error),
     #[error("Error checking root privelages: {0}")]
     Quork(#[from] quork::root::Error),
 }
 
 #[derive(Debug, Copy, Clone, Serialize)]
+/// The status of long paths
 pub enum LongPathsStatus {
     /// Long paths are enabled
     Enabled,
@@ -29,10 +34,15 @@ pub enum LongPathsStatus {
 }
 
 #[derive(Debug, Copy, Clone, Serialize)]
+/// A helper program
 pub struct Helper {
+    /// The executable name
     pub exe: &'static str,
+    /// The name of the program
     pub name: &'static str,
+    /// The reason the program is needed
     pub reason: &'static str,
+    /// The packages that provide the program
     pub packages: &'static [&'static str],
 }
 
@@ -59,13 +69,21 @@ const EXPECTED_HELPERS: &[Helper] = &[
 
 #[allow(clippy::struct_excessive_bools)]
 #[derive(Debug, Clone, Serialize)]
+/// Diagnostics information
 pub struct Diagnostics {
+    /// If git is installed
     pub git_installed: bool,
+    /// The status of long paths
     pub long_paths: LongPathsStatus,
+    /// If the main bucket exists
     pub main_bucket: bool,
+    /// If the user has developer mode enabled
     pub windows_developer: bool,
+    /// If Windows Defender is ignoring the Scoop directory
     pub windows_defender: bool,
+    /// The missing helper programs
     pub missing_helpers: Vec<Helper>,
+    /// If the Scoop directory is on an NTFS filesystem
     pub scoop_ntfs: bool,
 }
 
@@ -134,7 +152,7 @@ impl Diagnostics {
     ///
     /// # Errors
     /// - Unable to list buckets
-    pub fn check_main_bucket() -> Result<bool, BucketError> {
+    pub fn check_main_bucket() -> Result<bool, Error> {
         let buckets = Bucket::list_all()?;
 
         Ok(buckets.into_iter().any(|bucket| bucket.name() == "main"))

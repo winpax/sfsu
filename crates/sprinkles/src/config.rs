@@ -1,27 +1,34 @@
+//! Scoop config helpers
+
 use std::{env, path::PathBuf};
 
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+/// Scoop configuration
 pub struct Scoop {
     #[serde(skip_serializing_if = "Option::is_none")]
-    // The timestamp of the last scoop update
+    /// The timestamp of the last scoop update
     pub last_update: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    // The virustotal api key (removed as unused, and shouldn't be read if it doesn't need to be)
-    // pub virustotal_api_key: Option<String>,
+    /// The virustotal api key
+    pub virustotal_api_key: Option<String>,
+
+    /// The bucket to use for the scoop
     pub scoop_repo: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
+    /// The branch to use for the scoop
     pub scoop_branch: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    // Scoop path
+    /// Scoop path
     pub root_path: Option<String>,
 
     #[serde(flatten)]
+    /// Any other values in the config
     other: Map<String, Value>,
 }
 

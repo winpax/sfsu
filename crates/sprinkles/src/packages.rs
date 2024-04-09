@@ -1,3 +1,5 @@
+//! Scoop package helpers
+
 use std::{
     path::Path,
     process::Stdio,
@@ -20,7 +22,7 @@ use crate::{
     git::{self, Repo},
     output::{
         sectioned::{Children, Section, Text},
-        wrappers::{author::Author, time::NicerNaiveTime},
+        wrappers::{author::Author, time::NicerTime},
     },
     Scoop,
 };
@@ -39,11 +41,17 @@ pub use manifest::Manifest;
 use manifest::StringOrArrayOfStringsOrAnArrayOfArrayOfStrings;
 
 #[derive(Debug, Serialize)]
+/// Minimal package info
 pub struct MinInfo {
+    /// The name of the package
     pub name: String,
+    /// The version of the package
     pub version: String,
+    /// The package's source (eg. bucket name)
     pub source: String,
-    pub updated: NicerNaiveTime<DateTime<Local>>,
+    /// The last time the package was updated
+    pub updated: NicerTime<DateTime<Local>>,
+    /// The package's notes
     pub notes: String,
 }
 
@@ -86,7 +94,7 @@ impl MinInfo {
         let package_name = path
             .file_name()
             .map(|f| f.to_string_lossy())
-            .ok_or(PackageError::MissingFileName)?;
+            .ok_or(Error::MissingFileName)?;
 
         let updated_time = {
             let updated = {
@@ -123,7 +131,9 @@ impl MinInfo {
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum PackageError {
+#[allow(missing_docs)]
+/// Package error
+pub enum Error {
     #[error("Invalid utf8 found. This is not supported by sfsu")]
     NonUtf8,
     #[error("Missing or invalid file name. The path terminated in '..' or wasn't valid utf8")]
@@ -133,9 +143,9 @@ pub enum PackageError {
     #[error("Could not parse manifest \"{0}\". Failed with error: {1}")]
     ParsingManifest(String, serde_json::Error),
     #[error("Interacting with buckets: {0}")]
-    BucketError(#[from] buckets::BucketError),
+    BucketError(#[from] buckets::Error),
     #[error("Interacting with git2: {0}")]
-    RepoError(#[from] git::RepoError),
+    RepoError(#[from] git::Error),
     #[error("git2 internal error: {0}")]
     Git2Error(#[from] git2::Error),
     #[error("System Time: {0}")]
@@ -156,37 +166,51 @@ pub enum PackageError {
     MissingLocalManifest,
 }
 
+/// The result type for package operations
+pub type Result<T> = std::result::Result<T, Error>;
+
 #[derive(Debug, Default, Copy, Clone, ValueEnum, Display, Parser, PartialEq, Eq)]
 #[strum(serialize_all = "snake_case")]
+/// The search mode
 pub enum SearchMode {
     #[default]
+    /// Only search the name
     Name,
+    /// Only search the binaries
     Binary,
+    /// Search both the name and binaries
     Both,
 }
 
 impl SearchMode {
     #[must_use]
+    /// Check if the search mode matches names
     pub fn match_names(self) -> bool {
         matches!(self, SearchMode::Name | SearchMode::Both)
     }
 
     #[must_use]
+    /// Check if the search mode only matches names
     pub fn only_match_names(self) -> bool {
         self == SearchMode::Name
     }
 
     #[must_use]
+    /// Check if the search mode matches binaries
     pub fn match_binaries(self) -> bool {
         matches!(self, SearchMode::Binary | SearchMode::Both)
     }
 
     #[must_use]
+    /// Check if the search mode only matches binaries
     pub fn only_match_binaries(self) -> bool {
         self == SearchMode::Binary
     }
 
     #[must_use]
+    /// Check if the search mode matches both names and binaries
+    ///
+    /// Checks name first to avoid unnecessary binary checks
     pub fn eager_name_matches(self, manifest_name: &str, search_regex: &Regex) -> bool {
         if self.only_match_names() && search_regex.is_match(manifest_name) {
             return true;
@@ -201,12 +225,14 @@ impl SearchMode {
 
 #[derive(Debug, Clone)]
 #[must_use = "MatchCriteria has no side effects"]
+/// The criteria for a match
 pub struct MatchCriteria {
     name: bool,
     bins: Vec<String>,
 }
 
 impl MatchCriteria {
+    /// Create a new match criteria
     pub const fn new() -> Self {
         Self {
             name: false,
@@ -214,6 +240,7 @@ impl MatchCriteria {
         }
     }
 
+    /// Check if the name matches
     pub fn matches(
         file_name: &str,
         manifest: Option<&Manifest>,
@@ -253,9 +280,7 @@ impl MatchCriteria {
     }
 }
 
-pub type Result<T> = std::result::Result<T, PackageError>;
-
-pub trait CreateManifest
+pub(crate) trait CreateManifest
 where
     Self: for<'a> Deserialize<'a>,
 {
@@ -271,7 +296,7 @@ where
         Self::from_str(contents)
             // TODO: Maybe figure out a better approach to this, but it works for now
             .map(|s| s.with_name(path).with_bucket(path))
-            .map_err(|e| PackageError::ParsingManifest(path.display().to_string(), e))
+            .map_err(|e| Error::ParsingManifest(path.display().to_string(), e))
     }
 
     /// # Errors
@@ -364,6 +389,7 @@ impl InstallManifest {
 
 impl Manifest {
     #[must_use]
+    /// Apply a bucket to a manifest
     pub fn with_bucket(mut self, bucket: &Bucket) -> Self {
         self.bucket = bucket.name().to_string();
 
@@ -390,6 +416,7 @@ impl Manifest {
     }
 
     #[must_use]
+    /// Check if the manifest binaries matche the given regex
     pub fn binary_matches(&self, regex: &Regex) -> Option<Vec<String>> {
         match self.bin {
             Some(StringOrArrayOfStringsOrAnArrayOfArrayOfStrings::String(ref binary)) => {
@@ -432,7 +459,7 @@ impl Manifest {
                     manifest.name = path
                         .file_name()
                         .map(|f| f.to_string_lossy().to_string())
-                        .ok_or(PackageError::MissingFileName)?;
+                        .ok_or(Error::MissingFileName)?;
 
                     Ok(manifest)
                 })
@@ -440,6 +467,7 @@ impl Manifest {
             .collect::<Vec<_>>())
     }
 
+    #[doc(hidden)]
     pub fn parse_output(
         &self,
         bucket: impl AsRef<str>,
@@ -489,13 +517,7 @@ impl Manifest {
             let bins = match_output
                 .bins
                 .iter()
-                .map(|output| {
-                    Text::new(format!(
-                        "{}{}",
-                        crate::output::sectioned::WHITESPACE,
-                        output.bold()
-                    ))
-                })
+                .map(|output| Text::new(format!("{}{}", crate::output::WHITESPACE, output.bold())))
                 .collect_vec();
 
             Section::new(Children::from(bins))
@@ -508,6 +530,7 @@ impl Manifest {
     }
 
     #[must_use]
+    /// Check if the commit's message matches the name of the manifest
     pub fn commit_message_matches(&self, commit: &Commit<'_>) -> bool {
         if let Some(message) = commit.message() {
             message.starts_with(&self.name)
@@ -581,28 +604,27 @@ impl Manifest {
                             }
                         }
 
-                        Err(PackageError::NoUpdatedCommit)
+                        Err(Error::NoUpdatedCommit)
                     };
 
                     let result = find_commit();
 
                     match result {
                         Ok(commit) => Some(Ok(commit)),
-                        Err(PackageError::NoUpdatedCommit) => None,
+                        Err(Error::NoUpdatedCommit) => None,
                         Err(e) => Some(Err(e)),
                     }
                 })
-                .ok_or(PackageError::NoUpdatedCommit)??;
+                .ok_or(Error::NoUpdatedCommit)??;
 
             let date_time = {
                 let time = updated_commit.time();
                 let secs = time.seconds();
                 let offset = time.offset_minutes() * 60;
 
-                let utc_time =
-                    DateTime::from_timestamp(secs, 0).ok_or(PackageError::InvalidTime)?;
+                let utc_time = DateTime::from_timestamp(secs, 0).ok_or(Error::InvalidTime)?;
 
-                let offset = FixedOffset::east_opt(offset).ok_or(PackageError::InvalidTimeZone)?;
+                let offset = FixedOffset::east_opt(offset).ok_or(Error::InvalidTimeZone)?;
 
                 utc_time.with_timezone(&offset)
             };
@@ -621,10 +643,10 @@ impl Manifest {
                 .arg(self.name.clone() + ".json")
                 .stderr(Stdio::null())
                 .output()
-                .map_err(|_| PackageError::MissingGitOutput)?;
+                .map_err(|_| Error::MissingGitOutput)?;
 
             let info = String::from_utf8(output.stdout)
-                .map_err(|_| PackageError::NonUtf8)?
+                .map_err(|_| Error::NonUtf8)?
                 // Remove newline from end
                 .trim_end()
                 // Remove weird single quote from either end

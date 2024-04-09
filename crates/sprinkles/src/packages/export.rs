@@ -1,37 +1,54 @@
+//! Package export data
+
 use chrono::{DateTime, Local, SecondsFormat};
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    buckets::{Bucket as SfsuBucket, BucketError},
+    buckets::{Bucket as SfsuBucket, Error},
     config,
     packages::MinInfo,
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+/// The export data
 pub struct Export {
     #[serde(skip_serializing_if = "Option::is_none")]
+    /// The Scoop configuration
     pub config: Option<config::Scoop>,
+    /// The installed apps
     pub apps: Vec<App>,
+    /// The installed buckets
     pub buckets: Vec<Bucket>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
+/// An installed app
 pub struct App {
+    /// The name of the app
     pub name: String,
+    /// The source of the app, e.g. bucket name
     pub source: String,
+    /// The last time the app was updated
     pub updated: String,
+    /// The version of the app
     pub version: String,
+    /// Additional information about the app
     pub info: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
+/// An installed bucket
 pub struct Bucket {
+    /// The name of the bucket
     pub name: String,
+    /// The source of the bucket (e.g. git URL)
     pub source: String,
+    /// The last time the bucket was updated
     pub updated: String,
+    /// The number of manifests in the bucket
     pub manifests: usize,
 }
 
@@ -73,7 +90,7 @@ impl From<MinInfo> for App {
 }
 
 impl TryFrom<SfsuBucket> for Bucket {
-    type Error = BucketError;
+    type Error = Error;
 
     fn try_from(bucket: SfsuBucket) -> Result<Self, Self::Error> {
         let name = bucket.name();
@@ -87,7 +104,7 @@ impl TryFrom<SfsuBucket> for Bucket {
             let secs = time.seconds();
             // let offset = time.offset_minutes() * 60;
 
-            let utc_time = DateTime::from_timestamp(secs, 0).ok_or(BucketError::InvalidTime)?;
+            let utc_time = DateTime::from_timestamp(secs, 0).ok_or(Error::InvalidTime)?;
 
             // let offset = FixedOffset::east_opt(offset).ok_or(BucketError::InvalidTimeZone)?;
 

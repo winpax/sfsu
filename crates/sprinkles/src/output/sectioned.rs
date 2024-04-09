@@ -1,3 +1,7 @@
+//! Sectioned output
+//!
+//! Creates output with sections and children
+
 // TODO: Implement centralized output wrappers
 // TODO: Derive common traits
 
@@ -5,9 +9,7 @@ use std::fmt::Display;
 
 use rayon::prelude::*;
 
-pub const WHITESPACE: &str = "  ";
-
-pub trait SectionData: Display {}
+trait SectionData: Display {}
 
 /// Multiple sections
 #[must_use = "does nothing unless printed"]
@@ -29,19 +31,22 @@ impl<T> FromIterator<Section<T>> for Sections<T> {
 }
 
 impl<T> Sections<T> {
+    /// Create a section from a vector of children
     pub fn from_vec(vec: Vec<Section<T>>) -> Self {
         Self(vec)
     }
 
+    /// Sort the section by title
     pub fn sort(&mut self) {
-        self.0.sort_by(|a, b| a.title.cmp(&b.title));
+        self.0.sort_by(Section::cmp);
     }
 
+    /// Sort the section by title in parallel
     pub fn par_sort(&mut self)
     where
         T: Send,
     {
-        self.0.par_sort_by(|a, b| a.title.cmp(&b.title));
+        self.0.par_sort_by(Section::cmp);
     }
 }
 
@@ -68,31 +73,47 @@ impl<T: Display> Display for Sections<T> {
 #[must_use = "does nothing unless printed"]
 #[derive(Debug)]
 pub struct Section<T> {
+    /// Title of the section
     pub title: Option<String>,
-    pub child: Children<T>,
+    /// Children of the section
+    pub children: Children<T>,
 }
 
 impl<T> Section<T> {
-    pub fn new(child: Children<T>) -> Self {
-        Self { title: None, child }
+    /// Create a new section
+    pub fn new(children: Children<T>) -> Self {
+        Self {
+            title: None,
+            children,
+        }
     }
 
+    /// Apply title to a section
     pub fn with_title(mut self, title: impl Display) -> Self {
         self.title = Some(title.to_string());
 
         self
     }
+
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.title.cmp(&other.title)
+    }
 }
 
 #[must_use = "does nothing unless printed"]
 #[derive(Debug)]
+/// Children of a section
 pub enum Children<T> {
+    /// Single child
     Single(T),
+    /// Multiple children
     Multiple(Vec<T>),
+    /// No children (blank section)
     None,
 }
 
 impl<T> Children<T> {
+    /// Convert to an option
     pub fn into_option(self) -> Option<Self> {
         match self {
             Children::None => None,
@@ -138,6 +159,7 @@ impl<T> FromIterator<T> for Children<T> {
     }
 }
 
+/// Text data
 pub struct Text<T>(T);
 
 impl<T> From<T> for Text<T> {
@@ -148,14 +170,16 @@ impl<T> From<T> for Text<T> {
 
 impl<T: Display> Text<T> {
     #[must_use]
+    /// Create a new text section
     pub fn new(text: T) -> Self {
         Self(text)
     }
 
+    /// Convert to a section
     pub fn as_section(&self) -> Section<&T> {
         Section {
             title: None,
-            child: Children::Single(&self.0),
+            children: Children::Single(&self.0),
         }
     }
 }
@@ -169,13 +193,13 @@ impl<T: Display> Display for Text<T> {
 impl<T: Display> Display for Section<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if let Some(ref title) = self.title {
-            match self.child {
+            match self.children {
                 Children::None => write!(f, "{title}")?,
                 _ => writeln!(f, "{title}")?,
             }
         }
 
-        write!(f, "{}", self.child)?;
+        write!(f, "{}", self.children)?;
 
         Ok(())
     }
@@ -183,6 +207,8 @@ impl<T: Display> Display for Section<T> {
 
 impl<T: Display> Display for Children<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        use super::WHITESPACE;
+
         match self {
             // TODO: Indent children based on how nested they are
             Children::Single(child) => writeln!(f, "{WHITESPACE}{child}"),

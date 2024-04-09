@@ -1,13 +1,11 @@
-//! Sprinkles is a library for interacting with Scoop, a Windows package manager.
-//!
-//! It provides a high-level API for interacting with Scoop, such as installing, updating, and removing packages.
-
+#![doc = include_str!("../README.md")]
 #![warn(
     clippy::all,
     clippy::pedantic,
     rust_2018_idioms,
     rustdoc::all,
-    rust_2024_compatibility
+    rust_2024_compatibility,
+    missing_docs
 )]
 #![allow(clippy::module_name_repetitions)]
 
@@ -17,13 +15,13 @@ use chrono::Local;
 use rayon::prelude::*;
 
 pub use semver;
+use serde::{Deserialize, Serialize};
 
 pub mod buckets;
 pub mod calm_panic;
 pub mod config;
 pub mod diagnostics;
 pub mod git;
-/// Currently this is mostly an internal api
 pub mod output;
 pub mod packages;
 pub mod progress;
@@ -44,10 +42,16 @@ mod const_assertions {
     const _: () = eval(&Scoop::arch());
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+/// Supported architectures
 pub enum Architecture {
+    /// 64 bit Arm
     Arm64,
+    /// 64 bit
+    #[serde(rename = "64bit")]
     X64,
+    #[serde(rename = "32bit")]
+    /// 32 bit
     X86,
 }
 
@@ -99,6 +103,7 @@ impl fmt::Display for Architecture {
     }
 }
 
+/// The Scoop install reference
 pub struct Scoop;
 
 impl Scoop {

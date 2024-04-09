@@ -1,16 +1,22 @@
+//! A nicer way to display booleans that displays "Yes" or "No" for `true` and `false` respectively
+
 use std::fmt::Display;
 
 use derive_more::{AsMut, AsRef, Deref, DerefMut};
 use serde::{de::Visitor, Deserialize, Serialize};
 
 #[derive(Debug, Copy, Clone, AsRef, AsMut, Deref, DerefMut)]
+/// A nicer way to display booleans
 pub struct NicerBool(bool);
 
 impl NicerBool {
+    /// A nicer way to display `true`
     pub const TRUE: Self = Self::new(true);
+    /// A nicer way to display `false`
     pub const FALSE: Self = Self::new(false);
 
     #[must_use]
+    /// Create a new [`NicerBool`] from the provided boolean
     pub const fn new(b: bool) -> Self {
         Self(b)
     }

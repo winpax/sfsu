@@ -1,3 +1,5 @@
+//! Structured output for the CLI
+
 use std::fmt::Display;
 
 use itertools::Itertools;
@@ -9,7 +11,7 @@ pub mod vertical;
 
 #[derive(Debug)]
 #[must_use = "OptionalTruncate is lazy, and only takes effect when used in formatting"]
-pub struct OptionalTruncate<T> {
+struct OptionalTruncate<T> {
     data: T,
     length: Option<usize>,
     suffix: Option<&'static str>,

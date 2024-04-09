@@ -1,3 +1,7 @@
+//! Package manifest
+// TODO: Add documentation
+#![allow(missing_docs)]
+
 // Thanks to quicktype.io for saving me a lot of time.
 // The names are a bit weird at times but I'll work on that in future.
 
@@ -9,6 +13,7 @@ use serde::{Deserialize, Serialize};
 use crate::Architecture;
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
+/// The manifest for a package
 pub struct Manifest {
     /// This must be manually set
     #[serde(skip)]
@@ -20,45 +25,71 @@ pub struct Manifest {
     #[serde(rename = "##")]
     pub empty: Option<StringOrArrayOfStrings>,
     #[serde(rename = "$schema")]
+    /// The schema of the manifest
     pub schema: Option<String>,
-    #[deprecated(note = "Use ## instead")]
+    #[deprecated(since = "1.10.0", note = "Use ## instead")]
     #[serde(rename = "_comment")]
+    /// A comment.
     pub comment: Option<StringOrArrayOfStrings>,
+    /// The architecture of the package
     pub architecture: Option<ManifestArchitecture>,
+    /// The autoupdate configuration
     pub autoupdate: Option<Autoupdate>,
     /// Undocumented: Found at https://github.com/se35710/scoop-java/search?l=JSON&q=cookie
     pub cookie: Option<HashMap<String, Option<serde_json::Value>>>,
+    /// The dependencies of the package
     pub depends: Option<TOrArrayOfTs<super::reference::Package>>,
+    /// The description of the package
     pub description: Option<String>,
+    /// Extract to dir or dirs
     pub extract_to: Option<StringOrArrayOfStrings>,
+    /// The homepage of the package
     pub homepage: Option<String>,
     /// True if the installer InnoSetup based. Found in
     /// https://github.com/ScoopInstaller/Main/search?l=JSON&q=innosetup
     pub innosetup: Option<bool>,
+    /// The license of the package
     pub license: Option<PackageLicense>,
-    /// Deprecated
+    // Deprecated
+    /// The manifest notes
     pub notes: Option<StringOrArrayOfStrings>,
+    /// Directories to persist when updating
     pub persist: Option<StringOrArrayOfStringsOrAnArrayOfArrayOfStrings>,
+    /// The PowerShell module of the package
     pub psmodule: Option<Psmodule>,
-    pub suggest: Option<Suggest>,
+    /// The suggested dependencies of the package
+    pub suggest: Option<super::reference::Package>,
+    /// The version of the package
     pub version: String,
+    /// The package binaries
     pub bin: Option<StringOrArrayOfStringsOrAnArrayOfArrayOfStrings>,
+    /// The checkver configuration
     pub checkver: Option<Checkver>,
+    /// The environment variables to add to PATH
     pub env_add_path: Option<StringOrArrayOfStrings>,
+    /// The environment variables to set
     pub env_set: Option<HashMap<String, Option<serde_json::Value>>>,
+    /// The directories to extract to
     pub extract_dir: Option<StringOrArrayOfStrings>,
+    /// The hash of the package
     pub hash: Option<StringOrArrayOfStrings>,
+    /// The installer configuration
     pub installer: Option<Installer>,
     #[serde(flatten)]
+    /// The install configuration
     pub install_config: InstallConfig,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+/// Manifest architecture specific configuration
 pub struct ManifestArchitecture {
     #[serde(rename = "32bit")]
+    /// The 32-bit configuration
     pub x86: Option<InstallConfig>,
     #[serde(rename = "64bit")]
+    /// The 64-bit configuration
     pub x64: Option<InstallConfig>,
+    /// The ARM64 configuration
     pub arm64: Option<InstallConfig>,
 }
 
@@ -75,6 +106,7 @@ impl std::ops::Index<Architecture> for ManifestArchitecture {
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq, Eq)]
+/// The install configuration
 pub struct InstallConfig {
     pub bin: Option<StringOrArrayOfStringsOrAnArrayOfArrayOfStrings>,
     pub checkver: Option<Checkver>,
@@ -83,7 +115,7 @@ pub struct InstallConfig {
     pub extract_dir: Option<StringOrArrayOfStrings>,
     pub hash: Option<StringOrArrayOfStrings>,
     pub installer: Option<Installer>,
-    #[deprecated]
+    #[deprecated(since = "1.10.0")]
     pub msi: Option<StringOrArrayOfStrings>,
     pub post_install: Option<StringOrArrayOfStrings>,
     pub post_uninstall: Option<StringOrArrayOfStrings>,
@@ -186,7 +218,7 @@ pub struct HashExtraction {
     pub jsonpath: Option<String>,
     pub mode: Option<Mode>,
     pub regex: Option<String>,
-    #[deprecated(note = "hash type is determined automatically")]
+    #[deprecated(since = "1.10.0", note = "hash type is determined automatically")]
     #[serde(rename = "type")]
     pub hash_extraction_type: Option<Type>,
     pub url: Option<String>,

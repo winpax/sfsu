@@ -1,12 +1,16 @@
+//! A nicer way to display headers
+
 use std::fmt::Display;
 
 use itertools::Itertools;
 
 #[derive(Debug, Clone)]
 #[must_use = "Lazy. Does nothing until consumed"]
+/// A nicer way to display headers
 pub struct Header<T>(T);
 
 impl<T: Display> Header<T> {
+    /// Create a new [`Header`] from the provided value
     pub const fn new(value: T) -> Self {
         Self(value)
     }
