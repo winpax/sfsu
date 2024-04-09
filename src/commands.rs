@@ -10,7 +10,6 @@ pub mod info;
 pub mod list;
 #[cfg(not(feature = "v2"))]
 pub mod outdated;
-pub mod scoop_help;
 pub mod search;
 pub mod status;
 pub mod update;
@@ -101,9 +100,6 @@ pub enum Commands {
     Outdated(outdated::Args),
     /// List the dependencies of a given package, in the order that they will be installed
     Depends(depends::Args),
-    // TODO: Add help command for hooks that prints both sfsu help and scoop help
-    #[command_name = "help"]
-    ScoopHelp(scoop_help::Args),
     /// Show status and check for new app versions
     Status(status::Args),
     #[cfg_attr(not(feature = "v2"), no_hook)]
