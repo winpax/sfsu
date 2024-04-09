@@ -1,4 +1,14 @@
-#![warn(clippy::all, clippy::pedantic, rust_2018_idioms)]
+//! Sprinkles is a library for interacting with Scoop, a Windows package manager.
+//!
+//! It provides a high-level API for interacting with Scoop, such as installing, updating, and removing packages.
+
+#![warn(
+    clippy::all,
+    clippy::pedantic,
+    rust_2018_idioms,
+    rustdoc::all,
+    rust_2024_compatibility
+)]
 #![allow(clippy::module_name_repetitions)]
 
 use std::{ffi::OsStr, fmt, fs::File, path::PathBuf};
