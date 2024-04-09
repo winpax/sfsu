@@ -1,4 +1,5 @@
 use formats::{json::JsonError, text::TextError};
+use reqwest::header::{HeaderMap, HeaderValue};
 use substitutions::SubstitutionMap;
 
 mod formats;
@@ -143,5 +144,21 @@ impl Hash {
         let hash_type = HashType::try_from(&hash)?;
 
         Ok(Hash { hash, hash_type })
+    }
+
+    pub fn find_hash_in_xml(
+        source: impl AsRef<str>,
+        substitutions: &SubstitutionMap,
+        xpath: String,
+    ) -> Result<Hash> {
+        todo!()
+    }
+
+    /// Find a hash in the headers of a response
+    ///
+    /// # Errors
+    /// peepeepoopoo
+    pub fn find_hash_in_headers(_headers: &HeaderMap<HeaderValue>) -> Result<Hash> {
+        unimplemented!("I can't find a location where this is ever used")
     }
 }
