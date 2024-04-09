@@ -92,14 +92,17 @@ impl Hash {
             hasher.finalize()[..].to_vec()
         }
 
-        let hash = match hash_type {
+        let hash_bytes = match hash_type {
             HashType::Sha512 => compute_hash::<sha2::Sha512>(reader),
             HashType::Sha256 => compute_hash::<sha2::Sha256>(reader),
             HashType::Sha1 => compute_hash::<sha1::Sha1>(reader),
             HashType::MD5 => compute_hash::<md5::Md5>(reader),
         };
 
-        let hash = format!("{:x?}", hash);
+        let mut hash = String::new();
+        for byte in hash_bytes {
+            hash += &format!("{byte:02x}");
+        }
 
         Hash { hash, hash_type }
     }
