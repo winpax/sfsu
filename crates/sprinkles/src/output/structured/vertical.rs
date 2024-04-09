@@ -1,3 +1,5 @@
+//! Vertical sectioned output
+
 use std::fmt::Display;
 
 use itertools::Itertools;
@@ -7,7 +9,7 @@ use crate::{output::wrappers::header::Header, SimIter};
 
 #[derive(Debug)]
 #[must_use = "OptionalTruncate is lazy, and only takes effect when used in formatting"]
-pub struct OptionalTruncate<T> {
+struct OptionalTruncate<T> {
     data: T,
     length: Option<usize>,
     suffix: Option<&'static str>,

@@ -1,3 +1,7 @@
+//! Nicer ways to display times
+
+#![allow(deprecated)]
+
 use std::{
     fmt::Display,
     time::{SystemTime, UNIX_EPOCH},
@@ -25,6 +29,8 @@ fn system_time_to_date_time(time: SystemTime) -> LocalResult<DateTime<Local>> {
 }
 
 #[derive(Debug, Copy, Clone, AsRef, AsMut, Deref, DerefMut)]
+#[deprecated(note = "Use `NicerNaiveTime` instead")]
+/// A nicer way to display times
 pub struct NicerTime(DateTime<Local>);
 
 impl From<SystemTime> for NicerTime {
@@ -46,6 +52,7 @@ impl Serialize for NicerTime {
 }
 
 #[derive(Debug, Copy, Clone, AsRef, AsMut, Deref, DerefMut)]
+/// A nicer way to display times
 pub struct NicerNaiveTime<T: Datelike>(T);
 
 impl<T: Datelike> From<T> for NicerNaiveTime<T> {

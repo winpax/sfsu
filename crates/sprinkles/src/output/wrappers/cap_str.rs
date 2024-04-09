@@ -1,3 +1,6 @@
+//! String wrappers to automatically capitalize words
+#![allow(deprecated)]
+
 use std::fmt::Display;
 
 #[macro_export]
@@ -11,9 +14,12 @@ pub use wrap_str;
 
 #[derive(Debug, Clone)]
 #[must_use = "Lazy. Does nothing until consumed"]
+#[deprecated(note = "Use `Header` instead")]
+/// A nicer way to display strings
 pub struct CapitalizedStr<T>(T);
 
 impl<T: Display> CapitalizedStr<T> {
+    /// Create a new [`CapitalizedStr`] from the provided value
     pub const fn new(value: T) -> Self {
         Self(value)
     }

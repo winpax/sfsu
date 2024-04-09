@@ -489,13 +489,7 @@ impl Manifest {
             let bins = match_output
                 .bins
                 .iter()
-                .map(|output| {
-                    Text::new(format!(
-                        "{}{}",
-                        crate::output::sectioned::WHITESPACE,
-                        output.bold()
-                    ))
-                })
+                .map(|output| Text::new(format!("{}{}", crate::output::WHITESPACE, output.bold())))
                 .collect_vec();
 
             Section::new(Children::from(bins))

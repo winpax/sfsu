@@ -14,7 +14,6 @@ pub mod calm_panic;
 pub mod config;
 pub mod diagnostics;
 pub mod git;
-/// Currently this is mostly an internal api
 pub mod output;
 pub mod packages;
 pub mod progress;

@@ -1,3 +1,5 @@
+//! A wrapper around a git signature to display the author
+
 use std::fmt::Display;
 
 use derive_more::Deref;
@@ -5,6 +7,7 @@ use git2::Signature;
 
 #[derive(Deref)]
 #[must_use]
+/// A wrapper around a git signature to display the author
 pub struct Author<'a> {
     #[deref]
     signature: Signature<'a>,
@@ -21,6 +24,7 @@ impl<'a> From<Signature<'a>> for Author<'a> {
 }
 
 impl<'a> Author<'a> {
+    /// Create a new author from the provided signature
     pub fn from_signature(signature: Signature<'a>) -> Self {
         Self {
             signature,
@@ -28,6 +32,7 @@ impl<'a> Author<'a> {
         }
     }
 
+    /// Apply whether to show emails to the [`Author`]
     pub fn with_show_emails(mut self, show_emails: bool) -> Self {
         self.show_emails = show_emails;
         self
