@@ -5,7 +5,7 @@ use std::fmt::Display;
 
 #[derive(Debug, Clone)]
 #[must_use = "Lazy. Does nothing until consumed"]
-#[deprecated(note = "Use `Header` instead")]
+#[deprecated(since = "1.10.0", note = "Use `Header` instead")]
 /// A nicer way to display strings
 pub struct CapitalizedStr<T>(T);
 

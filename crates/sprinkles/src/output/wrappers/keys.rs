@@ -6,7 +6,7 @@ use std::fmt::Display;
 
 #[derive(Debug, Clone)]
 #[must_use]
-#[deprecated]
+#[deprecated(since = "1.10.0", note = "Use `Header` instead")]
 /// A nicer way to display keys
 pub struct Key<T>(T);
 
