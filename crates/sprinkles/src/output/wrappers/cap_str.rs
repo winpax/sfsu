@@ -1,14 +1,5 @@
 use std::fmt::Display;
 
-#[macro_export]
-macro_rules! wrap_str {
-    ($v:literal) => {
-        CapitalizedStr::new($v)
-    };
-}
-
-pub use wrap_str;
-
 #[derive(Debug, Clone)]
 #[must_use = "Lazy. Does nothing until consumed"]
 pub struct CapitalizedStr<T>(T);
