@@ -7,7 +7,7 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
-use chrono::{DateTime, Local, LocalResult, TimeZone};
+use chrono::{DateTime, Datelike, Local, LocalResult, TimeZone};
 use derive_more::{AsMut, AsRef, Deref, DerefMut};
 use serde::Serialize;
 
@@ -51,14 +51,9 @@ impl Serialize for NicerLocalTime {
     }
 }
 
-/// A trait for types that can be converted to a `DateTime`
-pub trait Date {}
-
-impl<Tz: TimeZone> Date for DateTime<Tz> {}
-
 #[derive(Debug, Copy, Clone, AsRef, AsMut, Deref, DerefMut)]
 /// A nicer way to display times
-pub struct NicerTime<T: Date>(T);
+pub struct NicerTime<T: Datelike>(T);
 
 impl From<SystemTime> for NicerTime<DateTime<Local>> {
     fn from(time: SystemTime) -> Self {
@@ -66,19 +61,19 @@ impl From<SystemTime> for NicerTime<DateTime<Local>> {
     }
 }
 
-impl<T: Date> From<T> for NicerTime<T> {
+impl<T: Datelike> From<T> for NicerTime<T> {
     fn from(time: T) -> Self {
         Self(time)
     }
 }
 
-impl<T: Date + Display> Display for NicerTime<T> {
+impl<T: Datelike + Display> Display for NicerTime<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.0.fmt(f)
     }
 }
 
-impl<T: Date + Display> Serialize for NicerTime<T> {
+impl<T: Datelike + Display> Serialize for NicerTime<T> {
     fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         self.to_string().serialize(serializer)
     }
