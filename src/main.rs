@@ -1,4 +1,9 @@
-#![warn(clippy::all, clippy::pedantic, rust_2018_idioms)]
+#![warn(
+    clippy::all,
+    clippy::pedantic,
+    rust_2018_idioms,
+    rust_2024_compatibility
+)]
 
 // TODO: Replace regex with glob
 
@@ -9,14 +14,17 @@ use clap::Parser;
 
 use commands::Commands;
 
-shadow_rs::shadow!(build);
+mod shadow {
+    #![allow(clippy::needless_raw_string_hashes)]
+    include!(concat!(env!("OUT_DIR"), "/shadow.rs"));
+}
 
 #[macro_use]
 extern crate log;
 
 /// Scoop utilities that can replace the slowest parts of Scoop, and run anywhere from 30-100 times faster
 #[derive(Debug, Parser)]
-#[clap(about, long_about, version, long_version = build::CLAP_LONG_VERSION, author)]
+#[clap(about, long_about, version, long_version = shadow::CLAP_LONG_VERSION, author)]
 #[allow(clippy::struct_excessive_bools)]
 struct Args {
     #[command(subcommand)]
