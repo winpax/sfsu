@@ -12,6 +12,8 @@ pub enum HashError {
     TextError(#[from] TextError),
     #[error("Json error: {0}")]
     JsonError(#[from] JsonError),
+    #[error("RDF error: {0}")]
+    RDFError(#[from] formats::rdf::RDFError),
     #[error("Error parsing json: {0}")]
     SerdeJson(#[from] serde_json::Error),
     #[error("Hash not found")]
@@ -98,17 +100,15 @@ impl Hash {
         Hash { hash, hash_type }
     }
 
-    pub fn from_rdf(
-        source: impl AsRef<str>,
-        file_names: &[impl AsRef<str>],
-    ) -> Vec<(String, Hash)> {
-        formats::rdf::parse_xml(source, file_names)
-            .into_iter()
-            .map(|(hash_file, hash)| {
-                let hash_type = HashType::try_from(&hash).unwrap_or_default();
-                (hash_file, Hash { hash, hash_type })
-            })
-            .collect()
+    /// Parse a hash from an RDF source
+    ///
+    /// # Errors
+    /// - If the hash is not found
+    pub fn from_rdf(source: impl AsRef<str>, file_name: impl AsRef<str>) -> Result<Hash> {
+        Ok(formats::rdf::parse_xml(source, file_name).map(|hash| {
+            let hash_type = HashType::try_from(&hash).unwrap_or_default();
+            Hash { hash, hash_type }
+        })?)
     }
 
     /// Parse a hash from a text source

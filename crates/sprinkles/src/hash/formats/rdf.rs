@@ -6,7 +6,13 @@ use quick_xml::name::QName;
 // As such I'm leaving it for the time being
 // fuck xml :P
 
-pub fn parse_xml(input: impl AsRef<str>, file_names: &[impl AsRef<str>]) -> Vec<(String, String)> {
+#[derive(Debug, thiserror::Error)]
+pub enum RDFError {
+    #[error("Hash could not be found in file")]
+    NotFound,
+}
+
+pub fn parse_xml(input: impl AsRef<str>, file_name: impl AsRef<str>) -> Result<String, RDFError> {
     use quick_xml::{events::Event, reader::Reader};
 
     let input = input.as_ref();
@@ -19,7 +25,7 @@ pub fn parse_xml(input: impl AsRef<str>, file_names: &[impl AsRef<str>]) -> Vec<
     let mut about_tag = None;
     let mut hash_tag = None;
 
-    let mut hashes = vec![];
+    let mut hash = None;
 
     loop {
         match reader.read_event_into(&mut buf) {
@@ -38,24 +44,21 @@ pub fn parse_xml(input: impl AsRef<str>, file_names: &[impl AsRef<str>]) -> Vec<
                     }
                 } else {
                     for attribute in e.attributes().flatten() {
-                        for file_name in file_names {
-                            let file_name = file_name.as_ref().to_string();
+                        let file_name = file_name.as_ref().to_string();
 
-                            if attribute.key == QName(b"rdf:about")
-                                && attribute.value.as_ref() == file_name.as_bytes()
-                            {
-                                about_tag = Some(file_name);
-                            }
+                        if attribute.key == QName(b"rdf:about")
+                            && attribute.value.as_ref() == file_name.as_bytes()
+                        {
+                            about_tag = Some(file_name);
                         }
                     }
                 }
             }
 
             Ok(Event::Text(e)) => {
-                if let Some(hash_file) = hash_tag {
-                    hashes.push((hash_file, e.unescape().unwrap().to_string()));
-                    about_tag = None;
-                    hash_tag = None;
+                if hash_tag.is_some() {
+                    hash = Some(e.unescape().unwrap().to_string());
+                    break;
                 }
             }
 
@@ -63,7 +66,7 @@ pub fn parse_xml(input: impl AsRef<str>, file_names: &[impl AsRef<str>]) -> Vec<
         }
     }
 
-    hashes
+    hash.ok_or(RDFError::NotFound)
 }
 
 #[cfg(test)]
@@ -83,16 +86,13 @@ mod tests {
             .text()
             .unwrap();
 
-        let hashes = parse_xml(
-            rdf_file,
-            &[
-                "ImageMagick-i686-pc-cygwin.tar.gz",
-                "ImageMagick-i386-pc-solaris2.11.tar.gz",
-            ],
-        );
+        for file_name in [
+            "ImageMagick-i686-pc-cygwin.tar.gz",
+            "ImageMagick-i386-pc-solaris2.11.tar.gz",
+        ] {
+            let hash = parse_xml(&rdf_file, file_name).unwrap();
 
-        for (hash_file, hash) in hashes {
-            match hash_file.as_str() {
+            match file_name {
                 "ImageMagick-i686-pc-cygwin.tar.gz" => assert_eq!(
                     hash,
                     "2eb106e7eda2b2c8300a19eebbe8258ece5624305a2e6248da98cfbb9cccbd62"
