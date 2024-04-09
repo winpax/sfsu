@@ -1,4 +1,5 @@
-#![warn(clippy::all, clippy::pedantic, rust_2018_idioms)]
+#![doc = include_str!("../README.md")]
+#![warn(clippy::all, clippy::pedantic, rust_2018_idioms, missing_docs)]
 #![allow(clippy::module_name_repetitions)]
 
 use std::{ffi::OsStr, fmt, fs::File, path::PathBuf};
