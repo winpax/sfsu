@@ -1,27 +1,7 @@
-use clap::{Parser, ValueEnum};
+use clap::Parser;
 use itertools::Itertools;
-use strum::{Display, IntoEnumIterator};
-
-#[derive(Debug, Default, ValueEnum, Copy, Clone, Display, PartialEq, Eq)]
-#[strum(serialize_all = "snake_case")]
-enum Shell {
-    #[default]
-    Powershell,
-    Bash,
-    Zsh,
-    Nu,
-}
-
-impl Shell {
-    pub fn config_path(self) -> &'static str {
-        match self {
-            Shell::Powershell => "$PROFILE",
-            Shell::Bash => "bashrc",
-            Shell::Zsh => "zshrc",
-            Shell::Nu => "$nu.config-path",
-        }
-    }
-}
+use sprinkles::shell::Shell;
+use strum::IntoEnumIterator;
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
@@ -35,6 +15,7 @@ pub struct Args {
 impl super::Command for Args {
     fn runner(self) -> Result<(), anyhow::Error> {
         let shell = self.shell;
+        let shell_config = shell.config();
         let enabled_hooks: Vec<super::CommandsHooks> = super::CommandsHooks::iter()
             .filter(|variant| !self.disable.contains(variant))
             .collect();
@@ -68,9 +49,8 @@ impl super::Command for Args {
                     (*) $SCOOP_EXEC $@ ;; \n\
                     esac \n\
                     }} \n\n\
-                    # Add the following to the end of your ~/.{} \n\
-                    #   source <(sfsu.exe hook --shell {shell})",
-                    shell.config_path()
+                    # Add the following to the end of your ~/.{shell_config} \n\
+                    #   source <(sfsu.exe hook --shell {shell})"
                 );
             }
             Shell::Nu => {
@@ -82,8 +62,8 @@ impl super::Command for Args {
 
                 println!(
                         "\n# To add this to your config, run `sfsu hook --shell {shell} | save ~/.cache/sfsu.nu`\n\
-                        # And then in your {} add the following line to the end:\n\
-                        #   source ~/.cache/sfsu.nu", shell.config_path()
+                        # And then in your {shell_config} add the following line to the end:\n\
+                        #   source ~/.cache/sfsu.nu"
                     );
             }
         }
