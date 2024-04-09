@@ -7,7 +7,7 @@
     clippy::pedantic,
     rust_2018_idioms,
     rustdoc::all,
-    unused_allocation
+    rust_2024_compatibility
 )]
 #![allow(clippy::module_name_repetitions)]
 

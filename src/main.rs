@@ -1,4 +1,9 @@
-#![warn(clippy::all, clippy::pedantic, rust_2018_idioms)]
+#![warn(
+    clippy::all,
+    clippy::pedantic,
+    rust_2018_idioms,
+    rust_2024_compatibility
+)]
 
 // TODO: Replace regex with glob
 
