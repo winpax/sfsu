@@ -115,7 +115,7 @@ pub fn hook_enum(input: DeriveInput) -> TokenStream {
         impl std::fmt::Display for #struct_name {
             fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
                 match self {
-                    #(#struct_name::#variants => write!(f, "{}", stringify!(#command_names)),)*
+                    #(#struct_name::#variants => write!(f, "{}", stringify!(#hook_names)),)*
                 }
             }
         }

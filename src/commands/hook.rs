@@ -1,5 +1,4 @@
 use clap::Parser;
-use itertools::Itertools;
 use sprinkles::shell::Shell;
 use strum::IntoEnumIterator;
 
@@ -39,14 +38,21 @@ impl super::Command for Args {
                 // println!("#     Invoke-Expression (&sfsu hook)");
             }
             Shell::Bash | Shell::Zsh => {
-                let hook_list = enabled_hooks.iter().format(" | ");
-
                 println!(
                     "SCOOP_EXEC=$(which scoop) \n\
                     scoop () {{ \n\
-                    case $1 in \n\
-                    ({hook_list}) sfsu.exe $@ ;; \n\
-                    (*) $SCOOP_EXEC $@ ;; \n\
+                    case $1 in"
+                );
+
+                for command in enabled_hooks {
+                    println!(
+                        "({command}) sfsu.exe {} ${{@:2}} ;;",
+                        command.command_name()
+                    );
+                }
+
+                println!(
+                    "(*) $SCOOP_EXEC $@ ;; \n\
                     esac \n\
                     }} \n\n\
                     # Add the following to the end of your ~/.{shell_config} \n\
@@ -56,7 +62,8 @@ impl super::Command for Args {
             Shell::Nu => {
                 for command in enabled_hooks {
                     println!(
-                        "def --wrapped \"scoop {command}\" [...rest] {{ sfsu {command} ...$rest }}"
+                        "def --wrapped \"scoop {command}\" [...rest] {{ sfsu {} ...$rest }}",
+                        command.command_name()
                     );
                 }
 
