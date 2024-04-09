@@ -34,10 +34,6 @@ mod const_assertions {
     const _: () = eval(&Scoop::arch());
 }
 
-pub trait KeyValue {
-    fn into_pairs(self) -> (Vec<&'static str>, Vec<String>);
-}
-
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum SupportedArch {
     Arm64,
