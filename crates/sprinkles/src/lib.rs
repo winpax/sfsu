@@ -34,16 +34,6 @@ mod const_assertions {
     const _: () = eval(&Scoop::arch());
 }
 
-/// Check if the process is elevated
-///
-/// # Errors
-/// - Internal Windows API error
-pub fn is_elevated() -> Result<bool, quork::root::Error> {
-    use quork::root::is_root;
-
-    is_root()
-}
-
 pub trait KeyValue {
     fn into_pairs(self) -> (Vec<&'static str>, Vec<String>);
 }

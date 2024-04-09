@@ -68,7 +68,7 @@ pub trait Command {
             println!("{}\n", output.yellow());
         }
 
-        if Self::NEEDS_ELEVATION && !sprinkles::is_elevated()? {
+        if Self::NEEDS_ELEVATION && !quork::root::is_root()? {
             abandon!("This command requires elevation. Please run as an administrator.");
         }
 
