@@ -5,7 +5,7 @@ use crate::{
     packages::manifest::PackageLicense,
 };
 
-#[derive(Debug, Clone, Serialize, sfsu_derive::KeyValue)]
+#[derive(Debug, Clone, Serialize)]
 /// Minimal package information
 pub struct PackageInfo {
     /// The name of the package

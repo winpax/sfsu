@@ -87,7 +87,7 @@ impl Diagnostics {
         let windows_developer = Self::get_windows_developer_status()?;
         debug!("Checked developer mode");
 
-        let windows_defender = if crate::is_elevated()? {
+        let windows_defender = if quork::root::is_root()? {
             Self::check_windows_defender()?
         } else {
             false

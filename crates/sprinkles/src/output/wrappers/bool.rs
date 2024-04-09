@@ -5,21 +5,6 @@ use std::fmt::Display;
 use derive_more::{AsMut, AsRef, Deref, DerefMut};
 use serde::{de::Visitor, Deserialize, Serialize};
 
-#[macro_export]
-macro_rules! wrap_bool {
-    (true) => {
-        NicerBool::TRUE
-    };
-    (false) => {
-        NicerBool::FALSE
-    };
-    ($b:expr) => {
-        NicerBool::new($b)
-    };
-}
-
-pub use wrap_bool;
-
 #[derive(Debug, Copy, Clone, AsRef, AsMut, Deref, DerefMut)]
 /// A nicer way to display booleans
 pub struct NicerBool(bool);
