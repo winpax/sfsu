@@ -22,6 +22,7 @@ chrono = { workspace = true }
 clap = { version = "4.5", features = ["derive"] }
 colored = "2.1"
 derive_more = "0.99"
+digest = { version = "0.10.7", features = ["std"] }
 directories = "5.0"
 dunce = "1.0"
 git2 = { workspace = true }

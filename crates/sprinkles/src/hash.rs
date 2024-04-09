@@ -1,3 +1,5 @@
+use std::io::{BufRead, Read};
+
 use formats::{json::JsonError, text::TextError};
 use reqwest::header::{HeaderMap, HeaderValue};
 use substitutions::SubstitutionMap;
@@ -69,33 +71,35 @@ impl TryFrom<&String> for HashType {
 
 impl Hash {
     /// Compute a hash from a source
-    pub fn compute(source: impl AsRef<[u8]>, hash_type: HashType) -> Hash {
-        use sha2::Digest;
+    pub fn compute(reader: impl BufRead, hash_type: HashType) -> Hash {
+        use digest::Digest;
 
-        let hash: Vec<u8> = match hash_type {
-            HashType::Sha512 => {
-                let mut hasher = sha2::Sha512::new();
-                hasher.update(source.as_ref());
-                hasher.finalize()[..].to_vec()
+        fn compute_hash<D: Digest>(mut reader: impl BufRead) -> Vec<u8> {
+            let mut hasher = D::new();
+
+            loop {
+                let bytes = reader.fill_buf().unwrap();
+                if bytes.is_empty() {
+                    break;
+                }
+
+                hasher.update(bytes);
+
+                let len = bytes.len();
+                reader.consume(len);
             }
-            HashType::Sha256 => {
-                let mut hasher = sha2::Sha256::new();
-                hasher.update(source.as_ref());
-                hasher.finalize()[..].to_vec()
-            }
-            HashType::Sha1 => {
-                let mut hasher = sha1::Sha1::new();
-                hasher.update(source.as_ref());
-                hasher.finalize()[..].to_vec()
-            }
-            HashType::MD5 => {
-                let mut hasher = md5::Md5::new();
-                hasher.update(source.as_ref());
-                hasher.finalize()[..].to_vec()
-            }
+
+            hasher.finalize()[..].to_vec()
+        }
+
+        let hash = match hash_type {
+            HashType::Sha512 => compute_hash::<sha2::Sha512>(reader),
+            HashType::Sha256 => compute_hash::<sha2::Sha256>(reader),
+            HashType::Sha1 => compute_hash::<sha1::Sha1>(reader),
+            HashType::MD5 => compute_hash::<md5::Md5>(reader),
         };
 
-        let hash = format!("{:x?}", &hash);
+        let hash = format!("{hash:x?}");
 
         Hash { hash, hash_type }
     }
