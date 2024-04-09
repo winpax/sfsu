@@ -35,13 +35,13 @@ mod const_assertions {
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-pub enum SupportedArch {
+pub enum Architecture {
     Arm64,
     X64,
     X86,
 }
 
-impl SupportedArch {
+impl Architecture {
     /// Get the architecture of the current environment
     pub const ARCH: Self = {
         if cfg!(target_arch = "x86_64") {
@@ -79,7 +79,7 @@ impl SupportedArch {
     }
 }
 
-impl fmt::Display for SupportedArch {
+impl fmt::Display for Architecture {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Arm64 => write!(f, "arm64"),
@@ -94,8 +94,8 @@ pub struct Scoop;
 impl Scoop {
     #[must_use]
     /// Get the system architecture
-    pub const fn arch() -> SupportedArch {
-        SupportedArch::from_env()
+    pub const fn arch() -> Architecture {
+        Architecture::from_env()
     }
 
     /// Get the git executable path
