@@ -99,7 +99,7 @@ impl Hash {
             HashType::MD5 => compute_hash::<md5::Md5>(reader),
         };
 
-        let hash = format!("{hash:x?}");
+        let hash = format!("{:x?}", hash);
 
         Hash { hash, hash_type }
     }
@@ -164,5 +164,35 @@ impl Hash {
     /// peepeepoopoo
     pub fn find_hash_in_headers(_headers: &HeaderMap<HeaderValue>) -> Result<Hash> {
         unimplemented!("I can't find a location where this is ever used")
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::io::BufReader;
+
+    use super::*;
+
+    #[test]
+    fn test_compute_hashes() {
+        let data = b"hello world";
+
+        let md5 = Hash::compute(BufReader::new(&data[..]), HashType::MD5);
+        assert_eq!(md5.hash, "5eb63bbbe01eeed093cb22bb8f5acdc3");
+
+        let sha1 = Hash::compute(BufReader::new(&data[..]), HashType::Sha1);
+        assert_eq!(sha1.hash, "2aae6c35c94fcfb415dbe95f408b9ce91ee846ed");
+
+        let sha256 = Hash::compute(BufReader::new(&data[..]), HashType::Sha256);
+        assert_eq!(
+            sha256.hash,
+            "b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9"
+        );
+
+        let sha512 = Hash::compute(BufReader::new(&data[..]), HashType::Sha512);
+        assert_eq!(
+            sha512.hash,
+            "309ecc489c12d6eb4cc40f50c902f2b4d0ed77ee511a7c7a9bcd3ca86d4cd86f989dd35bc5ff499670da34255b45b0cfd830e81f605dcf7dc5542e93ae9cd76f"
+        );
     }
 }
