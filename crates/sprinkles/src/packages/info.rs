@@ -5,7 +5,7 @@ use crate::{
     packages::manifest::PackageLicense,
 };
 
-#[derive(Debug, Clone, Serialize, sfsu_derive::KeyValue)]
+#[derive(Debug, Clone, Serialize)]
 pub struct PackageInfo {
     pub name: String,
     #[serde(skip_serializing_if = "Option::is_none")]

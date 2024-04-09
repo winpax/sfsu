@@ -6,7 +6,7 @@ use std::{collections::HashMap, fmt::Display};
 use itertools::Itertools as _;
 use serde::{Deserialize, Serialize};
 
-use crate::SupportedArch;
+use crate::Architecture;
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Manifest {
@@ -24,7 +24,7 @@ pub struct Manifest {
     #[deprecated(note = "Use ## instead")]
     #[serde(rename = "_comment")]
     pub comment: Option<StringOrArrayOfStrings>,
-    pub architecture: Option<Arch>,
+    pub architecture: Option<ManifestArchitecture>,
     pub autoupdate: Option<Autoupdate>,
     /// Undocumented: Found at https://github.com/se35710/scoop-java/search?l=JSON&q=cookie
     pub cookie: Option<HashMap<String, Option<serde_json::Value>>>,
@@ -54,7 +54,7 @@ pub struct Manifest {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct Arch {
+pub struct ManifestArchitecture {
     #[serde(rename = "32bit")]
     pub x86: Option<InstallConfig>,
     #[serde(rename = "64bit")]
@@ -62,14 +62,14 @@ pub struct Arch {
     pub arm64: Option<InstallConfig>,
 }
 
-impl std::ops::Index<SupportedArch> for Arch {
+impl std::ops::Index<Architecture> for ManifestArchitecture {
     type Output = Option<InstallConfig>;
 
-    fn index(&self, index: SupportedArch) -> &Self::Output {
+    fn index(&self, index: Architecture) -> &Self::Output {
         match index {
-            SupportedArch::Arm64 => &self.arm64,
-            SupportedArch::X64 => &self.x64,
-            SupportedArch::X86 => &self.x86,
+            Architecture::Arm64 => &self.arm64,
+            Architecture::X64 => &self.x64,
+            Architecture::X86 => &self.x86,
         }
     }
 }

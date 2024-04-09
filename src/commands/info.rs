@@ -6,11 +6,7 @@ use sprinkles::{
     calm_panic::abandon,
     output::{
         structured::vertical::VTable,
-        wrappers::{
-            alias_vec::AliasVec,
-            bool::{wrap_bool, NicerBool},
-            time::NicerTime,
-        },
+        wrappers::{alias_vec::AliasVec, bool::NicerBool, time::NicerTime},
     },
     packages::{
         info::PackageInfo,
@@ -153,7 +149,7 @@ impl Args {
                 .notes
                 .map(|notes| notes.to_string())
                 .unwrap_or_default(),
-            installed: wrap_bool!(install_path.is_some()),
+            installed: NicerBool::new(install_path.is_some()),
             shortcuts: manifest.install_config.shortcuts.map(AliasVec::from_vec),
             updated_at,
             updated_by,
