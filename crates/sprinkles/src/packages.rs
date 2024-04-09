@@ -133,9 +133,9 @@ pub enum PackageError {
     #[error("Could not parse manifest \"{0}\". Failed with error: {1}")]
     ParsingManifest(String, serde_json::Error),
     #[error("Interacting with buckets: {0}")]
-    BucketError(#[from] buckets::BucketError),
+    BucketError(#[from] buckets::Error),
     #[error("Interacting with git2: {0}")]
-    RepoError(#[from] git::RepoError),
+    RepoError(#[from] git::Error),
     #[error("git2 internal error: {0}")]
     Git2Error(#[from] git2::Error),
     #[error("System Time: {0}")]

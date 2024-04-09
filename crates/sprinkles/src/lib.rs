@@ -8,6 +8,7 @@ use chrono::Local;
 use rayon::prelude::*;
 
 pub use semver;
+use serde::{Deserialize, Serialize};
 
 pub mod buckets;
 pub mod calm_panic;
@@ -34,10 +35,12 @@ mod const_assertions {
     const _: () = eval(&Scoop::arch());
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Architecture {
     Arm64,
+    #[serde(rename = "64bit")]
     X64,
+    #[serde(rename = "32bit")]
     X86,
 }
 

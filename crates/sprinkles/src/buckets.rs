@@ -8,16 +8,18 @@ use rayon::prelude::*;
 use regex::Regex;
 
 use crate::{
-    git::{Repo, RepoError},
+    git::{self, Repo},
     output::sectioned::{Children, Section, Text},
     packages::{self, CreateManifest, InstallManifest, Manifest, SearchMode},
     Scoop,
 };
 
 #[derive(Debug, thiserror::Error)]
-pub enum BucketError {
+#[allow(missing_docs)]
+/// Bucket errors
+pub enum Error {
     #[error("Interacting with repo: {0}")]
-    RepoError(#[from] RepoError),
+    RepoError(#[from] git::Error),
     #[error("IO Error: {0}")]
     IOError(#[from] std::io::Error),
     #[error("The bucket \"{0}\" does not exist")]
@@ -32,9 +34,11 @@ pub enum BucketError {
     InvalidTimeZone,
 }
 
-pub type Result<T> = std::result::Result<T, BucketError>;
+/// Bucket result type
+pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Debug, Clone)]
+/// A bucket
 pub struct Bucket {
     bucket_path: PathBuf,
 }
@@ -58,7 +62,7 @@ impl Bucket {
         if bucket_path.exists() {
             Ok(Self { bucket_path })
         } else {
-            Err(BucketError::InvalidBucket(path.as_ref().to_path_buf()))
+            Err(Error::InvalidBucket(path.as_ref().to_path_buf()))
         }
     }
 
@@ -97,6 +101,7 @@ impl Bucket {
     }
 
     #[must_use]
+    /// Gets the bucket's path
     pub fn path(&self) -> &Path {
         &self.bucket_path
     }
@@ -169,6 +174,7 @@ impl Bucket {
             .collect())
     }
 
+    /// Get the path to the manifest for the given package name
     pub fn get_manifest_path(&self, name: impl AsRef<str>) -> PathBuf {
         let buckets_path = self.path();
         let manifests_path = buckets_path.join("bucket");
@@ -288,9 +294,9 @@ impl Bucket {
         Ok(self
             .open_repo()?
             .origin()
-            .ok_or(RepoError::MissingRemote("origin".to_string()))?
+            .ok_or(git::Error::MissingRemote("origin".to_string()))?
             .url()
             .map(std::string::ToString::to_string)
-            .ok_or(RepoError::NonUtf8)?)
+            .ok_or(git::Error::NonUtf8)?)
     }
 }

@@ -6,8 +6,16 @@ use super::{CreateManifest, Manifest};
 use crate::buckets::Bucket;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+/// A reference to a package
 pub enum Package {
-    BucketNamePair { bucket: String, name: String },
+    /// A package reference with a bucket and name
+    BucketNamePair {
+        /// The package bucket
+        bucket: String,
+        /// The package name
+        name: String,
+    },
+    /// A package reference with just a name
     Name(String),
 }
 
@@ -151,7 +159,9 @@ impl fmt::Display for Package {
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum PackageRefParseError {
+#[allow(missing_docs)]
+/// The error type for package references
+pub enum Error {
     #[error("Package name was not provided")]
     MissingPackageName,
     #[error(
@@ -161,7 +171,7 @@ pub enum PackageRefParseError {
 }
 
 impl FromStr for Package {
-    type Err = PackageRefParseError;
+    type Err = Error;
 
     fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
         let parts = s.split('/').collect_vec();
@@ -173,9 +183,9 @@ impl FromStr for Package {
                 name: parts[1].to_string(),
             })
         } else if parts.len() > 2 {
-            Err(PackageRefParseError::TooManySegments)
+            Err(Error::TooManySegments)
         } else if parts.is_empty() {
-            Err(PackageRefParseError::MissingPackageName)
+            Err(Error::MissingPackageName)
         } else {
             unreachable!()
         }

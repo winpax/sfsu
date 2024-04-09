@@ -3,7 +3,7 @@ use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    buckets::{Bucket as SfsuBucket, BucketError},
+    buckets::{Bucket as SfsuBucket, Error},
     config,
     packages::MinInfo,
 };
@@ -88,7 +88,7 @@ impl From<MinInfo> for App {
 }
 
 impl TryFrom<SfsuBucket> for Bucket {
-    type Error = BucketError;
+    type Error = Error;
 
     fn try_from(bucket: SfsuBucket) -> Result<Self, Self::Error> {
         let name = bucket.name();
@@ -102,7 +102,7 @@ impl TryFrom<SfsuBucket> for Bucket {
             let secs = time.seconds();
             // let offset = time.offset_minutes() * 60;
 
-            let utc_time = DateTime::from_timestamp(secs, 0).ok_or(BucketError::InvalidTime)?;
+            let utc_time = DateTime::from_timestamp(secs, 0).ok_or(Error::InvalidTime)?;
 
             // let offset = FixedOffset::east_opt(offset).ok_or(BucketError::InvalidTimeZone)?;
 

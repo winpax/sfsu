@@ -7,11 +7,17 @@ use crate::{buckets::Bucket, Scoop};
 use super::{reference, Manifest, Result};
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq, Hash)]
+/// The status info
 pub struct Info {
+    /// The name of the package
     pub name: String,
+    /// The current version
     pub current: String,
+    /// The available version
     pub available: String,
+    /// The missing dependencies
     pub missing_dependencies: Vec<reference::Package>,
+    /// Additional information
     pub info: Option<String>,
 }
 

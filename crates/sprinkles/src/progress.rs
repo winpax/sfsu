@@ -3,6 +3,7 @@
 use indicatif::ProgressStyle;
 
 #[derive(Debug, Copy, Clone, Default)]
+/// Progress bar options
 pub enum ProgressOptions {
     /// Show bytes/total bytes as progress
     Bytes,
@@ -14,9 +15,12 @@ pub enum ProgressOptions {
 }
 
 #[derive(Debug, Copy, Clone, Default)]
+/// Message position
 pub enum MessagePosition {
     #[default]
+    /// Before progress bar
     Prefix,
+    /// After progress bar
     Suffix,
 }
 

@@ -1,11 +1,11 @@
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 
-use crate::Scoop;
+use crate::{Architecture, Scoop};
 
 use super::CreateManifest;
 
 #[derive(Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+/// The install manifest
 pub struct Manifest {
     /// This must be manually set
     #[serde(skip)]
@@ -14,54 +14,19 @@ pub struct Manifest {
     /// The bucket the package was installed from
     pub bucket: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    /// Whether the package is held
     pub hold: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    /// The URL the package was installed from
     pub url: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    /// The architecture of the package
     pub architecture: Option<Architecture>,
-}
-
-#[derive(Debug, Default, PartialEq, Eq)]
-pub enum Architecture {
-    #[default]
-    Unknown,
-    X86,
-    X64,
-}
-
-impl Serialize for Architecture {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        match self {
-            Architecture::Unknown => serializer.serialize_none(),
-            Architecture::X86 => serializer.serialize_str("32bit"),
-            Architecture::X64 => serializer.serialize_str("64bit"),
-        }
-    }
-}
-
-impl<'de> Deserialize<'de> for Architecture {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let v: Value = Deserialize::deserialize(deserializer)?;
-
-        match v {
-            Value::String(s) => match s.as_str() {
-                "32bit" => Ok(Architecture::X86),
-                "64bit" => Ok(Architecture::X64),
-                _ => Ok(Architecture::Unknown),
-            },
-            _ => Ok(Architecture::Unknown),
-        }
-    }
 }
 
 impl Manifest {
     #[must_use]
+    /// Get the source of the manifest
     pub fn get_source(&self) -> String {
         match (&self.bucket, &self.url) {
             (Some(bucket), None) => bucket.to_string(),

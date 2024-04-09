@@ -10,26 +10,26 @@ use self::pull::ProgressCallback;
 mod pull;
 
 #[derive(Debug, thiserror::Error)]
-pub enum RepoError {
+#[allow(missing_docs)]
+/// Repo error
+pub enum Error {
     #[error("Could not find the active branch (HEAD)")]
     NoActiveBranch,
-
     #[error("Git error: {0}")]
     Git2(#[from] git2::Error),
-
     #[error("No remote named {0}")]
     MissingRemote(String),
-
     #[error("Missing head in remote")]
     MissingHead,
-
     #[error("Invalid utf8")]
     NonUtf8,
 }
 
-pub type Result<T> = std::result::Result<T, RepoError>;
+/// Repo result type
+pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Deref)]
+/// A git repository
 pub struct Repo(Repository);
 
 impl Repo {
@@ -68,7 +68,7 @@ impl Repo {
         self.0
             .head()?
             .shorthand()
-            .ok_or(RepoError::NoActiveBranch)
+            .ok_or(Error::NoActiveBranch)
             .map(std::string::ToString::to_string)
     }
 
@@ -96,11 +96,11 @@ impl Repo {
     pub fn outdated(&self) -> Result<bool> {
         let mut remote = self
             .origin()
-            .ok_or(RepoError::MissingRemote("origin".to_string()))?;
+            .ok_or(Error::MissingRemote("origin".to_string()))?;
 
         let connection = remote.connect_auth(Direction::Fetch, None, None)?;
 
-        let head = connection.list()?.first().ok_or(RepoError::MissingHead)?;
+        let head = connection.list()?.first().ok_or(Error::MissingHead)?;
 
         debug!(
             "{}\t{} from repo '{}'",
