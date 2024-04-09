@@ -1,3 +1,5 @@
+//! Summary info for a package
+
 use serde::Serialize;
 
 use crate::{
@@ -6,7 +8,7 @@ use crate::{
 };
 
 #[derive(Debug, Clone, Serialize)]
-/// Minimal package information
+/// Summary package information
 pub struct PackageInfo {
     /// The name of the package
     pub name: String,

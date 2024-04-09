@@ -1,3 +1,5 @@
+//! The install manifest
+
 use serde::{Deserialize, Serialize};
 
 use crate::{Architecture, Scoop};

@@ -1,3 +1,5 @@
+//! Package export data
+
 use chrono::{DateTime, Local, SecondsFormat};
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};

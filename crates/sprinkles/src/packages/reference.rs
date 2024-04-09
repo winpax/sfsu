@@ -1,3 +1,5 @@
+//! Reference to a package
+
 use std::{fmt, path::PathBuf, str::FromStr};
 
 use itertools::Itertools as _;

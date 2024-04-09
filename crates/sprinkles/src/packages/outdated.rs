@@ -1,3 +1,5 @@
+//! Outdated package information
+
 use serde::Serialize;
 
 use super::Manifest;

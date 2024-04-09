@@ -1,3 +1,4 @@
+//! Package manifest
 // TODO: Add documentation
 #![allow(missing_docs)]
 
