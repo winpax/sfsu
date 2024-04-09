@@ -44,16 +44,6 @@ pub fn is_elevated() -> Result<bool, quork::root::Error> {
     is_root()
 }
 
-pub struct SimIter<A, B>(A, B);
-
-impl<A: Iterator<Item = AI>, AI, B: Iterator<Item = BI>, BI> Iterator for SimIter<A, B> {
-    type Item = (AI, BI);
-
-    fn next(&mut self) -> Option<Self::Item> {
-        Some((self.0.next()?, self.1.next()?))
-    }
-}
-
 pub trait KeyValue {
     fn into_pairs(self) -> (Vec<&'static str>, Vec<String>);
 }
