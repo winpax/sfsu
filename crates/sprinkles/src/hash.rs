@@ -1,4 +1,4 @@
-use std::io::{BufRead, Read};
+use std::io::BufRead;
 
 use formats::{json::JsonError, text::TextError};
 use reqwest::header::{HeaderMap, HeaderValue};
@@ -16,6 +16,8 @@ pub enum HashError {
     JsonError(#[from] JsonError),
     #[error("RDF error: {0}")]
     RDFError(#[from] formats::rdf::RDFError),
+    #[error("XML error: {0}")]
+    XMLError(#[from] formats::xml::XMLError),
     #[error("Error parsing json: {0}")]
     SerdeJson(#[from] serde_json::Error),
     #[error("Hash not found")]
@@ -153,14 +155,22 @@ impl Hash {
         Ok(Hash { hash, hash_type })
     }
 
+    /// Parse a hash from an XML source
+    ///
+    /// # Errors
+    /// - If the hash is not found
+    /// - If the hash is invalid
+    /// - If the XML is invalid
+    /// - If the `XPath` is invalid
     pub fn find_hash_in_xml(
-        source: impl AsRef<[u8]>,
+        source: impl AsRef<str>,
         substitutions: &SubstitutionMap,
         xpath: impl AsRef<str>,
     ) -> Result<Hash> {
-        // TODO: Parse into serde_json value
-        // and then use recursive function to go over each section of the xpath
-        todo!()
+        let hash = formats::xml::parse_xml(source, substitutions, xpath)?;
+        let hash_type = HashType::try_from(&hash)?;
+
+        Ok(Hash { hash, hash_type })
     }
 
     /// Find a hash in the headers of a response
