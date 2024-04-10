@@ -18,8 +18,8 @@ pub enum Error {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Package {
-    manifest: ManifestRef,
-    version: Option<String>,
+    pub manifest: ManifestRef,
+    pub version: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
