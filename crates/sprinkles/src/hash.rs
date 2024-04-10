@@ -4,6 +4,8 @@ use formats::{json::JsonError, text::TextError};
 use reqwest::header::{HeaderMap, HeaderValue};
 use substitutions::SubstitutionMap;
 
+use crate::packages::Manifest;
+
 mod formats;
 mod substitutions;
 mod url;
@@ -72,6 +74,11 @@ impl TryFrom<&String> for HashType {
 }
 
 impl Hash {
+    pub fn get_for_app(manifest: Manifest) -> Result<Vec<Hash>> {
+        // manifest.install_config;
+        // let submap = SubstitutionMap::try_from({});
+    }
+
     /// Compute a hash from a source
     pub fn compute(reader: impl BufRead, hash_type: HashType) -> Hash {
         use digest::Digest;
