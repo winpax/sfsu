@@ -3,12 +3,13 @@ use std::io::BufRead;
 use formats::{json::JsonError, text::TextError};
 use reqwest::header::{HeaderMap, HeaderValue};
 use substitutions::SubstitutionMap;
+use url::Url;
 
 use crate::packages::{arch_field, Manifest};
 
 mod formats;
 mod substitutions;
-mod url;
+mod url_ext;
 
 #[derive(Debug, thiserror::Error)]
 pub enum HashError {
@@ -93,7 +94,13 @@ impl Hash {
                 .clone()
         };
 
-        // let submap = SubstitutionMap::try_from({});
+        let submap = if let Some(urls) = autoupdate_config.url {
+            let urls = urls
+                .into_vec()
+                .iter()
+                .map(|url: &String| Url::parse(url))
+                .collect::<Result<Vec<_>>>();
+        };
 
         todo!()
     }
@@ -216,7 +223,7 @@ mod tests {
 
     use crate::{
         buckets::Bucket,
-        packages::manifest::{HashExtractionOrArrayOfHashExtractions, NestedStringArray},
+        packages::manifest::{HashExtractionOrArrayOfHashExtractions, StringArray},
     };
 
     use super::*;
@@ -270,7 +277,7 @@ mod tests {
 
         let source = reqwest::blocking::get(url).unwrap().text().unwrap();
 
-        let NestedStringArray::String(url) = autoupdate.url.unwrap() else {
+        let StringArray::String(url) = autoupdate.url.unwrap() else {
             unreachable!()
         };
 
@@ -281,7 +288,7 @@ mod tests {
 
         let hash = Hash::find_hash_in_xml(source, &submap, xpath).unwrap();
 
-        let NestedStringArray::String(actual_hash) =
+        let StringArray::String(actual_hash) =
             manifest.architecture.unwrap().x64.unwrap().hash.unwrap()
         else {
             unreachable!();

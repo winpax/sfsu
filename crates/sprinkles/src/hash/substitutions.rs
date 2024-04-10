@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use derive_more::{Deref, DerefMut};
 use url::Url;
 
-use crate::hash::url::{strip_ext, UrlExt};
+use crate::hash::url_ext::{strip_ext, UrlExt};
 
 #[derive(Debug, Clone, Deref, DerefMut)]
 pub struct SubstitutionMap(HashMap<String, String>);

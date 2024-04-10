@@ -14,7 +14,7 @@ use sprinkles::{
     },
     packages::{
         info::PackageInfo,
-        manifest::{AliasArray, NestedStringArray},
+        manifest::{AliasArray, StringArray},
         reference, Manifest,
     },
     semver, Scoop,
@@ -137,13 +137,13 @@ impl Args {
             website: manifest.homepage,
             license: manifest.license,
             binaries: manifest.bin.map(|b| match b {
-                AliasArray::NestedArray(NestedStringArray::String(bin)) => bin.to_string(),
-                AliasArray::NestedArray(NestedStringArray::StringArray(bins)) => bins.join(" | "),
+                AliasArray::NestedArray(StringArray::String(bin)) => bin.to_string(),
+                AliasArray::NestedArray(StringArray::StringArray(bins)) => bins.join(" | "),
                 AliasArray::AliasArray(bins) => bins
                     .into_iter()
                     .map(|bin_union| match bin_union {
-                        NestedStringArray::String(bin) => bin,
-                        NestedStringArray::StringArray(mut bin_alias) => bin_alias.remove(0),
+                        StringArray::String(bin) => bin,
+                        StringArray::StringArray(mut bin_alias) => bin_alias.remove(0),
                     })
                     .join(" | "),
             }),
