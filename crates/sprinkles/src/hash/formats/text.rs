@@ -59,14 +59,14 @@ impl RegexTemplates {
 pub fn parse_text(
     source: impl AsRef<str>,
     substitutions: &SubstitutionMap,
-    regex: String,
+    regex: impl AsRef<str>,
 ) -> Result<Option<String>, TextError> {
     // TODO: Incorporate file_names
 
-    let regex = if regex.is_empty() {
+    let regex = if regex.as_ref().is_empty() {
         r"^\s*([a-fA-F0-9]+)\s*$".to_string()
     } else {
-        regex
+        regex.as_ref().to_string()
     };
 
     let substituted = {
@@ -210,7 +210,7 @@ mod tests {
             "VisualCppRedist_AIO_x86_x64_80.zip".into(),
         );
 
-        let hash = parse_text(text_file, &substitutions, regex.to_string())
+        let hash = parse_text(text_file, &substitutions, regex)
             .unwrap()
             .expect("found hash");
 
@@ -246,7 +246,7 @@ mod tests {
         let text_file = response.text().unwrap();
 
         let hash = "md5:".to_string()
-            + &parse_text(text_file, &substitutions, FIND_REGEX.to_string())
+            + &parse_text(text_file, &substitutions, FIND_REGEX)
                 .unwrap()
                 .expect("found hash");
 

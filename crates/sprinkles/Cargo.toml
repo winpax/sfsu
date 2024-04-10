@@ -31,7 +31,7 @@ indicatif = { version = "0.17", features = ["improved_unicode", "rayon"] }
 itertools = "0.12"
 log = { workspace = true }
 md-5 = "0.10.6"
-quick-xml = { version = "0.31.0", optional = true }
+quick-xml = { version = "0.31.0", optional = true, features = ["serialize"] }
 quork = "0.6"
 rayon = "1.10"
 regex = "1.10"
@@ -44,6 +44,8 @@ sfsu-derive = { path = "../derive" }
 sha1 = "0.10.6"
 sha2 = "0.10.8"
 strum = { version = "0.26", features = ["derive"] }
+sxd-document = "0.3.2"
+sxd-xpath = "0.4.2"
 thiserror = "1.0"
 url = { version = "2.5.0", features = ["serde"] }
 which = "6.0"

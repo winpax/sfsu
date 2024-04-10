@@ -18,11 +18,11 @@ pub enum JsonError {
 pub fn parse_json(
     json: &Value,
     substitutions: &SubstitutionMap,
-    jp: String,
+    jp: impl AsRef<str>,
 ) -> Result<String, JsonError> {
     // let json: Value = serde_json::from_slice(source)?;
 
-    let hashes = query_jp(json, jp, substitutions)?;
+    let hashes = query_jp(json, jp.as_ref(), substitutions)?;
 
     hashes
         .first()
@@ -33,12 +33,12 @@ pub fn parse_json(
 
 fn query_jp<'a>(
     json: &'a Value,
-    jp: String,
+    jp: &str,
     substitutions: &SubstitutionMap,
 ) -> Result<NodeList<'a>, JsonError> {
     let jp = {
         let regex_escape = jp.contains("=~");
-        jp.into_substituted(substitutions, regex_escape)
+        jp.to_string().into_substituted(substitutions, regex_escape)
     };
 
     let path = JsonPath::parse(&jp)?;

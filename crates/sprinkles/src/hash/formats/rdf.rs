@@ -12,12 +12,10 @@ pub enum RDFError {
     NotFound,
 }
 
-pub fn parse_xml(input: impl AsRef<str>, file_name: impl AsRef<str>) -> Result<String, RDFError> {
+pub fn parse_xml(input: impl AsRef<[u8]>, file_name: impl AsRef<str>) -> Result<String, RDFError> {
     use quick_xml::{events::Event, reader::Reader};
 
-    let input = input.as_ref();
-
-    let mut reader = Reader::from_str(input);
+    let mut reader = Reader::from_reader(input.as_ref());
     reader.trim_text(true);
 
     let mut buf = vec![];

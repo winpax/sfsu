@@ -111,7 +111,7 @@ impl Hash {
     ///
     /// # Errors
     /// - If the hash is not found
-    pub fn from_rdf(source: impl AsRef<str>, file_name: impl AsRef<str>) -> Result<Hash> {
+    pub fn from_rdf(source: impl AsRef<[u8]>, file_name: impl AsRef<str>) -> Result<Hash> {
         Ok(formats::rdf::parse_xml(source, file_name).map(|hash| {
             let hash_type = HashType::try_from(&hash).unwrap_or_default();
             Hash { hash, hash_type }
@@ -126,7 +126,7 @@ impl Hash {
     pub fn from_text(
         source: impl AsRef<str>,
         substitutions: &SubstitutionMap,
-        regex: String,
+        regex: impl AsRef<str>,
     ) -> Result<Hash> {
         let hash =
             formats::text::parse_text(source, substitutions, regex)?.ok_or(HashError::NotFound)?;
@@ -143,7 +143,7 @@ impl Hash {
     pub fn from_json(
         source: impl AsRef<[u8]>,
         substitutions: &SubstitutionMap,
-        json_path: String,
+        json_path: impl AsRef<str>,
     ) -> Result<Hash> {
         let json = serde_json::from_slice(source.as_ref())?;
 
@@ -154,10 +154,12 @@ impl Hash {
     }
 
     pub fn find_hash_in_xml(
-        source: impl AsRef<str>,
+        source: impl AsRef<[u8]>,
         substitutions: &SubstitutionMap,
-        xpath: String,
+        xpath: impl AsRef<str>,
     ) -> Result<Hash> {
+        // TODO: Parse into serde_json value
+        // and then use recursive function to go over each section of the xpath
         todo!()
     }
 
