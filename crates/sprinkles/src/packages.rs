@@ -530,7 +530,7 @@ impl Manifest {
     }
 
     #[must_use]
-    #[cfg(feature = "scoop-manifest-hash")]
+    #[cfg(feature = "manifest-hashes")]
     pub fn set_version(&mut self, version: String) -> std::result::Result<(), SetVersionError> {
         // self.version = version;
 
@@ -541,7 +541,7 @@ impl Manifest {
 
         if let Some(architecture) = autoupdate.architecture.as_mut() {
             let autoupdate_arch = match Scoop::arch() {
-                SupportedArch::Arm64 => architecture.aarch64.as_mut(),
+                SupportedArch::Arm64 => architecture.arm64.as_mut(),
                 SupportedArch::X64 => architecture.x64.as_mut(),
                 SupportedArch::X86 => architecture.x86.as_mut(),
             }

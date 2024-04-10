@@ -51,7 +51,7 @@ mod tests {
 
     #[test]
     fn test_finding_xml_hashes() -> anyhow::Result<()> {
-        const APP_MANIFEST: &str = r#"
+        const EXAMPLE_XML: &str = r#"
             <assembly>
                 <description>sfsu</description>
                 <compatibility>
@@ -76,7 +76,7 @@ mod tests {
         submap.insert("$finalKey".to_string(), "supportedOS".to_string());
 
         let hash = parse_xml(
-            APP_MANIFEST,
+            EXAMPLE_XML,
             &submap,
             "/assembly/compatibility/application/$finalKey[last() - 1]/@Id",
         )?;

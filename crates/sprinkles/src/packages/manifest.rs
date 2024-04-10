@@ -162,7 +162,7 @@ pub struct AutoupdateArchitecture {
     pub x86: Option<AutoupdateArch>,
     #[serde(rename = "64bit")]
     pub x64: Option<AutoupdateArch>,
-    pub aarch64: Option<AutoupdateArch>,
+    pub arm64: Option<AutoupdateArch>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
