@@ -4,7 +4,7 @@ use formats::{json::JsonError, text::TextError};
 use reqwest::header::{HeaderMap, HeaderValue};
 use substitutions::SubstitutionMap;
 
-use crate::packages::Manifest;
+use crate::packages::{arch_field, Manifest};
 
 mod formats;
 mod substitutions;
@@ -26,6 +26,8 @@ pub enum HashError {
     NotFound,
     #[error("Invalid hash")]
     InvalidHash,
+    #[error("Missing autoupdate filter")]
+    MissingAutoupdate,
 }
 
 pub type Result<T> = std::result::Result<T, HashError>;
@@ -75,8 +77,25 @@ impl TryFrom<&String> for HashType {
 
 impl Hash {
     pub fn get_for_app(manifest: Manifest) -> Result<Vec<Hash>> {
-        // manifest.install_config;
+        let autoupdate_config = if let Some(ref arch) = manifest
+            .autoupdate
+            .as_ref()
+            .and_then(|autoupdate| autoupdate.architecture.clone())
+        {
+            arch_field!(arch)
+                .ok_or(HashError::MissingAutoupdate)?
+                .clone()
+        } else {
+            manifest
+                .autoupdate
+                .ok_or(HashError::MissingAutoupdate)?
+                .autoupdate_config
+                .clone()
+        };
+
         // let submap = SubstitutionMap::try_from({});
+
+        todo!()
     }
 
     /// Compute a hash from a source

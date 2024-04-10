@@ -183,7 +183,7 @@ mod tests {
 
         let (text_url, regex) =
             if let HashExtractionOrArrayOfHashExtractions::HashExtraction(extraction) =
-                manifest.autoupdate.unwrap().hash.unwrap()
+                manifest.autoupdate.unwrap().autoupdate_config.hash.unwrap()
             {
                 (
                     extraction

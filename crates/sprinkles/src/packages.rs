@@ -40,6 +40,34 @@ pub use manifest::Manifest;
 use downloading::DownloadUrl;
 use manifest::{InstallConfig, StringOrArrayOfStringsOrAnArrayOfArrayOfStrings};
 
+// #[macro_export]
+macro_rules! arch_field {
+    ($field:ident.$arch:expr) => {{
+        let arch = match $arch {
+            $crate::SupportedArch::Arm64 => &$field.arm64,
+            $crate::SupportedArch::X64 => &$field.x64,
+            $crate::SupportedArch::X86 => &$field.x86,
+        }.clone();
+
+        if let Some(arch) = arch {
+            Some(arch)
+        } else {
+            match $crate::SupportedArch::ARCH {
+                // Find alternative options for the other architectures
+                // For arm64 and x86 there are no alternatives so we can just return None
+                $crate::SupportedArch::X64 => $field.x86.clone(),
+                _ => None,
+            }
+        }
+    }};
+
+    ($field:ident) => {
+        arch_field!($field.$crate::SupportedArch::ARCH)
+    };
+}
+
+pub(crate) use arch_field;
+
 #[derive(Debug, Serialize)]
 pub struct MinInfo {
     pub name: String,

@@ -142,31 +142,25 @@ pub struct Uninstaller {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Autoupdate {
     pub architecture: Option<AutoupdateArchitecture>,
-    pub bin: Option<StringOrArrayOfStringsOrAnArrayOfArrayOfStrings>,
-    pub env_add_path: Option<StringOrArrayOfStrings>,
-    pub env_set: Option<HashMap<String, Option<serde_json::Value>>>,
-    pub extract_dir: Option<StringOrArrayOfStrings>,
-    pub hash: Option<HashExtractionOrArrayOfHashExtractions>,
-    pub installer: Option<AutoupdateInstaller>,
     pub license: Option<AutoupdateLicense>,
     pub notes: Option<StringOrArrayOfStrings>,
     pub persist: Option<StringOrArrayOfStringsOrAnArrayOfArrayOfStrings>,
     pub psmodule: Option<AutoupdatePsmodule>,
-    pub shortcuts: Option<Vec<Vec<String>>>,
-    pub url: Option<StringOrArrayOfStrings>,
+    #[serde(flatten)]
+    pub autoupdate_config: AutoupdateConfig,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct AutoupdateArchitecture {
     #[serde(rename = "32bit")]
-    pub x86: Option<AutoupdateArch>,
+    pub x86: Option<AutoupdateConfig>,
     #[serde(rename = "64bit")]
-    pub x64: Option<AutoupdateArch>,
-    pub arm64: Option<AutoupdateArch>,
+    pub x64: Option<AutoupdateConfig>,
+    pub arm64: Option<AutoupdateConfig>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct AutoupdateArch {
+pub struct AutoupdateConfig {
     pub bin: Option<StringOrArrayOfStringsOrAnArrayOfArrayOfStrings>,
     pub env_add_path: Option<StringOrArrayOfStrings>,
     pub env_set: Option<HashMap<String, Option<serde_json::Value>>>,
