@@ -216,7 +216,7 @@ mod tests {
 
     use crate::{
         buckets::Bucket,
-        packages::manifest::{HashExtractionOrArrayOfHashExtractions, StringOrArrayOfStrings},
+        packages::manifest::{HashExtractionOrArrayOfHashExtractions, NestedStringArray},
     };
 
     use super::*;
@@ -270,7 +270,7 @@ mod tests {
 
         let source = reqwest::blocking::get(url).unwrap().text().unwrap();
 
-        let StringOrArrayOfStrings::String(url) = autoupdate.url.unwrap() else {
+        let NestedStringArray::String(url) = autoupdate.url.unwrap() else {
             unreachable!()
         };
 
@@ -281,7 +281,7 @@ mod tests {
 
         let hash = Hash::find_hash_in_xml(source, &submap, xpath).unwrap();
 
-        let StringOrArrayOfStrings::String(actual_hash) =
+        let NestedStringArray::String(actual_hash) =
             manifest.architecture.unwrap().x64.unwrap().hash.unwrap()
         else {
             unreachable!();

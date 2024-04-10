@@ -38,7 +38,7 @@ pub use install::Manifest as InstallManifest;
 pub use manifest::Manifest;
 
 use downloading::DownloadUrl;
-use manifest::{InstallConfig, StringOrArrayOfStringsOrAnArrayOfArrayOfStrings};
+use manifest::{InstallConfig, NestedStringArray};
 
 // #[macro_export]
 macro_rules! arch_field {
@@ -67,6 +67,8 @@ macro_rules! arch_field {
 }
 
 pub(crate) use arch_field;
+
+use self::manifest::AliasArray;
 
 #[derive(Debug, Serialize)]
 pub struct MinInfo {
@@ -442,14 +444,14 @@ impl Manifest {
     #[must_use]
     pub fn binary_matches(&self, regex: &Regex) -> Option<Vec<String>> {
         match self.bin {
-            Some(StringOrArrayOfStringsOrAnArrayOfArrayOfStrings::String(ref binary)) => {
+            Some(AliasArray::NestedArray(NestedStringArray::String(ref binary))) => {
                 if regex.is_match(binary) {
                     Some(vec![binary.clone()])
                 } else {
                     None
                 }
             }
-            Some(StringOrArrayOfStringsOrAnArrayOfArrayOfStrings::StringArray(ref binaries)) => {
+            Some(AliasArray::NestedArray(NestedStringArray::StringArray(ref binaries))) => {
                 let matched: Vec<_> = binaries
                     .iter()
                     .filter(|binary| regex.is_match(binary))
@@ -557,7 +559,6 @@ impl Manifest {
         Some(package)
     }
 
-    #[must_use]
     #[cfg(feature = "manifest-hashes")]
     pub fn set_version(&mut self, version: String) -> std::result::Result<(), SetVersionError> {
         // self.version = version;

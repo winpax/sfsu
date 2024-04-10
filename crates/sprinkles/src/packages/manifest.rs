@@ -18,36 +18,36 @@ pub struct Manifest {
     pub name: String,
     /// A comment.
     #[serde(rename = "##")]
-    pub empty: Option<StringOrArrayOfStrings>,
+    pub empty: Option<NestedStringArray>,
     #[serde(rename = "$schema")]
     pub schema: Option<String>,
     #[deprecated(note = "Use ## instead")]
     #[serde(rename = "_comment")]
-    pub comment: Option<StringOrArrayOfStrings>,
+    pub comment: Option<NestedStringArray>,
     pub architecture: Option<Arch>,
     pub autoupdate: Option<Autoupdate>,
     /// Undocumented: Found at <https://github.com/se35710/scoop-java/search?l=JSON&q=cookie>
     pub cookie: Option<HashMap<String, Option<serde_json::Value>>>,
     pub depends: Option<TOrArrayOfTs<super::reference::ManifestRef>>,
     pub description: Option<String>,
-    pub extract_to: Option<StringOrArrayOfStrings>,
+    pub extract_to: Option<NestedStringArray>,
     pub homepage: Option<String>,
     /// True if the installer `InnoSetup` based. Found in
     /// <https://github.com/ScoopInstaller/Main/search?l=JSON&q=innosetup>
     pub innosetup: Option<bool>,
     pub license: Option<PackageLicense>,
     /// Deprecated
-    pub notes: Option<StringOrArrayOfStrings>,
-    pub persist: Option<StringOrArrayOfStringsOrAnArrayOfArrayOfStrings>,
+    pub notes: Option<NestedStringArray>,
+    pub persist: Option<AliasArray>,
     pub psmodule: Option<Psmodule>,
     pub suggest: Option<Suggest>,
     pub version: String,
-    pub bin: Option<StringOrArrayOfStringsOrAnArrayOfArrayOfStrings>,
+    pub bin: Option<AliasArray>,
     pub checkver: Option<Checkver>,
-    pub env_add_path: Option<StringOrArrayOfStrings>,
+    pub env_add_path: Option<NestedStringArray>,
     pub env_set: Option<HashMap<String, Option<serde_json::Value>>>,
-    pub extract_dir: Option<StringOrArrayOfStrings>,
-    pub hash: Option<StringOrArrayOfStrings>,
+    pub extract_dir: Option<NestedStringArray>,
+    pub hash: Option<NestedStringArray>,
     pub installer: Option<Installer>,
     #[serde(flatten)]
     pub install_config: InstallConfig,
@@ -76,22 +76,22 @@ impl std::ops::Index<SupportedArch> for Arch {
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct InstallConfig {
-    pub bin: Option<StringOrArrayOfStringsOrAnArrayOfArrayOfStrings>,
+    pub bin: Option<AliasArray>,
     pub checkver: Option<Checkver>,
-    pub env_add_path: Option<StringOrArrayOfStrings>,
+    pub env_add_path: Option<NestedStringArray>,
     pub env_set: Option<HashMap<String, Option<serde_json::Value>>>,
-    pub extract_dir: Option<StringOrArrayOfStrings>,
-    pub hash: Option<StringOrArrayOfStrings>,
+    pub extract_dir: Option<NestedStringArray>,
+    pub hash: Option<NestedStringArray>,
     pub installer: Option<Installer>,
     #[deprecated]
-    pub msi: Option<StringOrArrayOfStrings>,
-    pub post_install: Option<StringOrArrayOfStrings>,
-    pub post_uninstall: Option<StringOrArrayOfStrings>,
-    pub pre_install: Option<StringOrArrayOfStrings>,
-    pub pre_uninstall: Option<StringOrArrayOfStrings>,
+    pub msi: Option<NestedStringArray>,
+    pub post_install: Option<NestedStringArray>,
+    pub post_uninstall: Option<NestedStringArray>,
+    pub pre_install: Option<NestedStringArray>,
+    pub pre_uninstall: Option<NestedStringArray>,
     pub shortcuts: Option<Vec<Vec<String>>>,
     pub uninstaller: Option<Uninstaller>,
-    pub url: Option<StringOrArrayOfStrings>,
+    pub url: Option<NestedStringArray>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -108,7 +108,7 @@ pub struct CheckverClass {
     /// Reverse the order of regex matches
     pub reverse: Option<bool>,
     /// Custom `PowerShell` script to retrieve application version using more complex approach.
-    pub script: Option<StringOrArrayOfStrings>,
+    pub script: Option<NestedStringArray>,
     pub sourceforge: Option<SourceforgeUnion>,
     pub url: Option<String>,
     pub useragent: Option<String>,
@@ -126,25 +126,25 @@ pub struct Installer {
     /// Undocumented: only used in scoop-extras/oraclejdk* and scoop-extras/appengine-go
     #[serde(rename = "_comment")]
     pub comment: Option<String>,
-    pub args: Option<StringOrArrayOfStrings>,
+    pub args: Option<NestedStringArray>,
     pub file: Option<String>,
     pub keep: Option<bool>,
-    pub script: Option<StringOrArrayOfStrings>,
+    pub script: Option<NestedStringArray>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Uninstaller {
-    pub args: Option<StringOrArrayOfStrings>,
+    pub args: Option<NestedStringArray>,
     pub file: Option<String>,
-    pub script: Option<StringOrArrayOfStrings>,
+    pub script: Option<NestedStringArray>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Autoupdate {
     pub architecture: Option<AutoupdateArchitecture>,
     pub license: Option<AutoupdateLicense>,
-    pub notes: Option<StringOrArrayOfStrings>,
-    pub persist: Option<StringOrArrayOfStringsOrAnArrayOfArrayOfStrings>,
+    pub notes: Option<NestedStringArray>,
+    pub persist: Option<AliasArray>,
     pub psmodule: Option<AutoupdatePsmodule>,
     #[serde(flatten)]
     pub autoupdate_config: AutoupdateConfig,
@@ -161,14 +161,14 @@ pub struct AutoupdateArchitecture {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct AutoupdateConfig {
-    pub bin: Option<StringOrArrayOfStringsOrAnArrayOfArrayOfStrings>,
-    pub env_add_path: Option<StringOrArrayOfStrings>,
+    pub bin: Option<AliasArray>,
+    pub env_add_path: Option<NestedStringArray>,
     pub env_set: Option<HashMap<String, Option<serde_json::Value>>>,
-    pub extract_dir: Option<StringOrArrayOfStrings>,
+    pub extract_dir: Option<NestedStringArray>,
     pub hash: Option<HashExtractionOrArrayOfHashExtractions>,
     pub installer: Option<PurpleInstaller>,
     pub shortcuts: Option<Vec<Vec<String>>>,
-    pub url: Option<StringOrArrayOfStrings>,
+    pub url: Option<NestedStringArray>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -218,40 +218,39 @@ pub struct Suggest {}
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(untagged)]
-pub enum StringOrArrayOfStringsOrAnArrayOfArrayOfStrings {
-    String(String),
-    StringArray(Vec<String>),
-    UnionArray(Vec<StringOrArrayOfStrings>),
+pub enum AliasArray {
+    NestedArray(NestedStringArray),
+    AliasArray(Vec<NestedStringArray>),
 }
 
-impl StringOrArrayOfStrings {
+impl NestedStringArray {
     #[must_use]
     pub fn into_vec(&self) -> Vec<String> {
         match self {
-            StringOrArrayOfStrings::String(s) => vec![s.clone()],
-            StringOrArrayOfStrings::StringArray(string_array) => string_array.clone(),
+            NestedStringArray::String(s) => vec![s.clone()],
+            NestedStringArray::StringArray(string_array) => string_array.clone(),
         }
     }
 }
 
-impl StringOrArrayOfStringsOrAnArrayOfArrayOfStrings {
+impl AliasArray {
     #[must_use]
     pub fn into_vec(&self) -> Vec<String> {
         match self {
-            StringOrArrayOfStringsOrAnArrayOfArrayOfStrings::String(s) => vec![s.clone()],
-            StringOrArrayOfStringsOrAnArrayOfArrayOfStrings::StringArray(s) => s.clone(),
-            StringOrArrayOfStringsOrAnArrayOfArrayOfStrings::UnionArray(s) => s
+            AliasArray::NestedArray(NestedStringArray::String(s)) => vec![s.clone()],
+            AliasArray::NestedArray(NestedStringArray::StringArray(s)) => s.clone(),
+            AliasArray::AliasArray(s) => s
                 .iter()
                 .flat_map(|s| match s {
-                    StringOrArrayOfStrings::String(s) => vec![s.clone()],
-                    StringOrArrayOfStrings::StringArray(s) => s.clone(),
+                    NestedStringArray::String(s) => vec![s.clone()],
+                    NestedStringArray::StringArray(s) => s.clone(),
                 })
                 .collect(),
         }
     }
 }
 
-impl Display for StringOrArrayOfStringsOrAnArrayOfArrayOfStrings {
+impl Display for AliasArray {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.into_vec().iter().format(", ").fmt(f)
     }
@@ -282,12 +281,12 @@ impl<T> TOrArrayOfTs<T> {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(untagged)]
-pub enum StringOrArrayOfStrings {
+pub enum NestedStringArray {
     String(String),
     StringArray(Vec<String>),
 }
 
-impl Display for StringOrArrayOfStrings {
+impl Display for NestedStringArray {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.into_vec().iter().format(", ").fmt(f)
     }
