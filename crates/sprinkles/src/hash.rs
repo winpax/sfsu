@@ -186,6 +186,13 @@ impl Hash {
 mod tests {
     use std::io::BufReader;
 
+    use ::url::Url;
+
+    use crate::{
+        buckets::Bucket,
+        packages::manifest::{HashExtractionOrArrayOfHashExtractions, StringOrArrayOfStrings},
+    };
+
     use super::*;
 
     #[test]
@@ -209,5 +216,51 @@ mod tests {
             sha512.hash,
             "309ecc489c12d6eb4cc40f50c902f2b4d0ed77ee511a7c7a9bcd3ca86d4cd86f989dd35bc5ff499670da34255b45b0cfd830e81f605dcf7dc5542e93ae9cd76f"
         );
+    }
+
+    #[test]
+    fn test_google_chrome_hashes() {
+        let manifest = Bucket::from_name("extras")
+            .unwrap()
+            .get_manifest("googlechrome")
+            .unwrap();
+
+        let autoupdate = manifest
+            .autoupdate
+            .unwrap()
+            .architecture
+            .unwrap()
+            .x64
+            .unwrap();
+
+        let HashExtractionOrArrayOfHashExtractions::HashExtraction(x64_cfg) =
+            autoupdate.hash.unwrap()
+        else {
+            unreachable!()
+        };
+
+        let url = x64_cfg.url.unwrap().to_string();
+        let xpath = x64_cfg.xpath.unwrap().to_string();
+
+        let source = reqwest::blocking::get(url).unwrap().text().unwrap();
+
+        let StringOrArrayOfStrings::String(url) = autoupdate.url.unwrap() else {
+            unreachable!()
+        };
+
+        let url = Url::parse(&url).unwrap();
+
+        let mut submap = SubstitutionMap::from(&url);
+        submap.insert("$version".into(), manifest.version);
+
+        let hash = Hash::find_hash_in_xml(source, &submap, xpath).unwrap();
+
+        let StringOrArrayOfStrings::String(actual_hash) =
+            manifest.architecture.unwrap().x64.unwrap().hash.unwrap()
+        else {
+            unreachable!();
+        };
+
+        assert_eq!(actual_hash, hash.hash);
     }
 }
