@@ -70,7 +70,7 @@ fn print_headers(
 ) -> std::fmt::Result {
     #[cfg(feature = "v2")]
     {
-        use colored::Colorize as _;
+        use owo_colors::OwoColorize;
 
         let header_lengths = headers
             .iter()

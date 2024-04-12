@@ -74,7 +74,7 @@ impl Args {
             } else {
                 // TODO: Add a better way to add colours than this
                 // TODO: p.s this doesnt work atm
-                // use colored::Colorize;
+                // use owo_colors::OwoColorize;
                 // let values = values
                 //     .into_par_iter()
                 //     .map(|mut value| {
