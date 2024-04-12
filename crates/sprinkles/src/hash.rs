@@ -108,7 +108,7 @@ impl Hash {
             urls.into_iter()
                 .map(|url| {
                     let mut submap = SubstitutionMap::from(&url);
-                    // TODO: Add the rest of the substitutions
+                    // TODO: Add the rest of the substitutions <https://github.com/ScoopInstaller/Scoop/wiki/App-Manifest-Autoupdate#captured-variables>
                     submap.insert("$version".into(), manifest.version.clone());
                     submap
                 })
