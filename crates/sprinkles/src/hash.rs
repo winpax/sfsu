@@ -23,6 +23,8 @@ pub enum HashError {
     XMLError(#[from] formats::xml::XMLError),
     #[error("Error parsing json: {0}")]
     SerdeJson(#[from] serde_json::Error),
+    #[error("Failed to parse url: {0}")]
+    InvalidUrl(#[from] url::ParseError),
     #[error("Hash not found")]
     NotFound,
     #[error("Invalid hash")]
@@ -98,8 +100,8 @@ impl Hash {
             let urls = urls
                 .into_vec()
                 .iter()
-                .map(|url: &String| Url::parse(url))
-                .collect::<Result<Vec<_>>>();
+                .map(|url: &String| Ok(Url::parse(url)?))
+                .collect::<Result<Vec<_>>>()?;
         };
 
         todo!()
