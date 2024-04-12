@@ -1,7 +1,7 @@
 use std::fmt::Write;
 
 use clap::{Parser, ValueEnum};
-use colored::Colorize as _;
+use owo_colors::OwoColorize;
 use parking_lot::Mutex;
 use quork::prelude::*;
 use rayon::prelude::*;
@@ -222,7 +222,7 @@ impl Args {
             // } else {
             // TODO: Add a better way to add colours than this
             // TODO: p.s this doesnt work atm
-            // use colored::Colorize;
+            // use owo_colors::OwoColorize;
             // let values = values
             //     .into_par_iter()
             //     .map(|mut value| {

@@ -50,7 +50,7 @@ pub trait Command {
         Self: Sized,
     {
         if let Some(deprecation_warning) = Self::deprecated() {
-            use colored::Colorize as _;
+            use owo_colors::OwoColorize;
 
             let mut output = String::from("DEPRECATED: ");
 
@@ -58,7 +58,7 @@ pub trait Command {
                 DeprecationMessage::Replacement(replacement) => {
                     output += &format!("Use `{replacement}` instead. ");
                 }
-                DeprecationMessage::Warning(warning) => output += &warning,
+                DeprecationMessage::Warning(warning) => output += warning,
             }
 
             if let Some(version) = deprecation_warning.version {

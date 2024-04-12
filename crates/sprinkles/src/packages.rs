@@ -8,9 +8,9 @@ use std::{
 
 use chrono::{DateTime, FixedOffset, Local};
 use clap::{Parser, ValueEnum};
-use colored::Colorize as _;
 use git2::Commit;
 use itertools::Itertools;
+use owo_colors::OwoColorize;
 use quork::traits::truthy::ContainsTruth as _;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use regex::Regex;
