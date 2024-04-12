@@ -46,7 +46,7 @@ shadow-rs = "0.27"
 strum = { version = "0.26", features = ["derive"] }
 thiserror = "1.0"
 which = "6.0"
-windows = { version = "0.54", features = [
+windows = { version = "0.56", features = [
     "Win32_Storage_FileSystem",
     "Win32_System_SystemInformation",
 ] }
