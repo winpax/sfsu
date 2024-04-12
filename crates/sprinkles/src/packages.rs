@@ -261,11 +261,7 @@ impl MatchCriteria {
         }
 
         if let Some(manifest) = manifest {
-            let binaries = manifest
-                .bin
-                .clone()
-                .map(|b| b.into_vec())
-                .unwrap_or_default();
+            let binaries = manifest.bin.clone().map(|b| b.to_vec()).unwrap_or_default();
 
             let binary_matches = binaries
                 .into_iter()
@@ -410,7 +406,7 @@ impl Manifest {
     }
 
     pub fn download_urls(&self, arch: SupportedArch) -> Option<Vec<DownloadUrl>> {
-        let urls = self.install_config(arch).url?.into_vec();
+        let urls = self.install_config(arch).url?.to_vec();
 
         Some(urls.into_iter().map(DownloadUrl::from_string).collect())
     }
@@ -429,7 +425,7 @@ impl Manifest {
     pub fn depends(&self) -> Vec<reference::ManifestRef> {
         self.depends
             .clone()
-            .map(manifest::TOrArrayOfTs::into_vec)
+            .map(manifest::TOrArrayOfTs::to_vec)
             .unwrap_or_default()
     }
 

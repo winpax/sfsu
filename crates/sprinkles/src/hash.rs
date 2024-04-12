@@ -1,6 +1,7 @@
 use std::io::BufRead;
 
 use formats::{json::JsonError, text::TextError};
+use itertools::Itertools;
 use reqwest::header::{HeaderMap, HeaderValue};
 use substitutions::SubstitutionMap;
 use url::Url;
@@ -96,12 +97,22 @@ impl Hash {
                 .clone()
         };
 
-        let submap = if let Some(urls) = autoupdate_config.url {
-            let urls = urls
-                .into_vec()
+        let submaps = {
+            let urls = autoupdate_config
+                .url
+                .to_vec()
                 .iter()
                 .map(|url: &String| Ok(Url::parse(url)?))
                 .collect::<Result<Vec<_>>>()?;
+
+            urls.into_iter()
+                .map(|url| {
+                    let mut submap = SubstitutionMap::from(&url);
+                    // TODO: Add the rest of the substitutions
+                    submap.insert("$version".into(), manifest.version.clone());
+                    submap
+                })
+                .collect_vec()
         };
 
         todo!()
@@ -279,7 +290,7 @@ mod tests {
 
         let source = reqwest::blocking::get(url).unwrap().text().unwrap();
 
-        let StringArray::String(url) = autoupdate.url.unwrap() else {
+        let StringArray::String(url) = autoupdate.url else {
             unreachable!()
         };
 

@@ -168,7 +168,7 @@ pub struct AutoupdateConfig {
     pub hash: Option<HashExtractionOrArrayOfHashExtractions>,
     pub installer: Option<PurpleInstaller>,
     pub shortcuts: Option<Vec<Vec<String>>>,
-    pub url: Option<StringArray>,
+    pub url: StringArray,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -225,7 +225,7 @@ pub enum AliasArray {
 
 impl StringArray {
     #[must_use]
-    pub fn into_vec(&self) -> Vec<String> {
+    pub fn to_vec(&self) -> Vec<String> {
         match self {
             StringArray::String(s) => vec![s.clone()],
             StringArray::StringArray(string_array) => string_array.clone(),
@@ -235,7 +235,7 @@ impl StringArray {
 
 impl AliasArray {
     #[must_use]
-    pub fn into_vec(&self) -> Vec<String> {
+    pub fn to_vec(&self) -> Vec<String> {
         match self {
             AliasArray::NestedArray(StringArray::String(s)) => vec![s.clone()],
             AliasArray::NestedArray(StringArray::StringArray(s)) => s.clone(),
@@ -252,7 +252,7 @@ impl AliasArray {
 
 impl Display for AliasArray {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.into_vec().iter().format(", ").fmt(f)
+        self.to_vec().iter().format(", ").fmt(f)
     }
 }
 
@@ -271,7 +271,7 @@ pub enum TOrArrayOfTs<T> {
 }
 
 impl<T> TOrArrayOfTs<T> {
-    pub fn into_vec(self) -> Vec<T> {
+    pub fn to_vec(self) -> Vec<T> {
         match self {
             TOrArrayOfTs::T(t) => vec![t],
             TOrArrayOfTs::Array(array) => array,
@@ -288,7 +288,7 @@ pub enum StringArray {
 
 impl Display for StringArray {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.into_vec().iter().format(", ").fmt(f)
+        self.to_vec().iter().format(", ").fmt(f)
     }
 }
 
