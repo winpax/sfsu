@@ -365,16 +365,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "acbf1af155f9b9ef647e42cdc158db4b64a1b61f743629225fde6f3e0be2a7c7"
 
 [[package]]
-name = "colored"
-version = "2.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cbf2150cce219b664a8a70df7a1f933836724b503f8a413af9365b4dcc4d90b8"
-dependencies = [
- "lazy_static",
- "windows-sys 0.48.0",
-]
-
-[[package]]
 name = "console"
 version = "0.15.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -911,6 +901,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "is_ci"
+version = "1.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7655c9839580ee829dfacba1d1278c2b7883e50a277ff7541299489d6bdfdc45"
+
+[[package]]
 name = "is_debug"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1206,6 +1202,15 @@ dependencies = [
  "log",
  "serde",
  "windows-sys 0.52.0",
+]
+
+[[package]]
+name = "owo-colors"
+version = "4.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "caff54706df99d2a78a5a4e3455ff45448d81ef1bb63c22cd14052ca0e993a3f"
+dependencies = [
+ "supports-color",
 ]
 
 [[package]]
@@ -1613,7 +1618,6 @@ dependencies = [
  "cfg-if",
  "chrono",
  "clap",
- "colored",
  "criterion",
  "git2",
  "human-panic",
@@ -1621,6 +1625,7 @@ dependencies = [
  "itertools 0.12.1",
  "log",
  "open",
+ "owo-colors",
  "parking_lot",
  "quork",
  "rayon",
@@ -1687,7 +1692,6 @@ dependencies = [
  "cfg-if",
  "chrono",
  "clap",
- "colored",
  "const-str",
  "derive_more",
  "directories",
@@ -1700,6 +1704,7 @@ dependencies = [
  "lazy_static",
  "log",
  "open",
+ "owo-colors",
  "parking_lot",
  "quork",
  "rayon",
@@ -1748,6 +1753,16 @@ dependencies = [
  "quote",
  "rustversion",
  "syn 2.0.58",
+]
+
+[[package]]
+name = "supports-color"
+version = "2.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d6398cde53adc3c4557306a96ce67b302968513830a77a95b2b17305d9719a89"
+dependencies = [
+ "is-terminal",
+ "is_ci",
 ]
 
 [[package]]
