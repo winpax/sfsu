@@ -48,7 +48,7 @@ impl<T> CalmUnwrap<T> for Option<T> {
 #[doc(hidden)]
 // TODO: Add option to not pass any message
 pub fn __calm_panic(msg: impl Display) -> ! {
-    use colored::Colorize as _;
+    use owo_colors::OwoColorize;
     eprintln!("{}", msg.to_string().red());
     std::process::exit(1);
 }

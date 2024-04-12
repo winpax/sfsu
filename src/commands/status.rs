@@ -1,7 +1,7 @@
 use std::fmt::Write;
 
 use clap::{Parser, ValueEnum};
-use colored::Colorize as _;
+use owo_colors::OwoColorize;
 use parking_lot::Mutex;
 use quork::prelude::*;
 use rayon::prelude::*;

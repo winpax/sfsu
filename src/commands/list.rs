@@ -1,5 +1,5 @@
 use clap::{Parser, ValueEnum};
-use colored::Colorize;
+use owo_colors::OwoColorize;
 use rayon::prelude::*;
 
 use sprinkles::{output::structured::Structured, packages::MinInfo};

@@ -1,6 +1,6 @@
 use clap::Parser;
-use colored::Colorize;
 use itertools::Itertools;
+use owo_colors::OwoColorize;
 
 use sprinkles::{
     calm_panic::abandon,
