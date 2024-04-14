@@ -1718,6 +1718,7 @@ dependencies = [
  "thiserror",
  "which",
  "windows 0.56.0",
+ "windows-version",
  "winreg",
 ]
 
@@ -2343,6 +2344,15 @@ dependencies = [
  "windows_x86_64_gnu 0.52.5",
  "windows_x86_64_gnullvm 0.52.5",
  "windows_x86_64_msvc 0.52.5",
+]
+
+[[package]]
+name = "windows-version"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6998aa457c9ba8ff2fb9f13e9d2a930dabcea28f1d0ab94d687d8b3654844515"
+dependencies = [
+ "windows-targets 0.52.5",
 ]
 
 [[package]]
