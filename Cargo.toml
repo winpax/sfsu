@@ -2,8 +2,8 @@
 description = "Stupid Fast Scoop Utils"
 edition = "2021"
 name = "sfsu"
-publish = { workspace = true }
-version = { workspace = true }
+publish.workspace = true
+version.workspace = true
 
 [workspace]
 members = ["crates/*"]
@@ -35,7 +35,6 @@ v2 = ["sprinkles/v2"]
 [dependencies]
 anyhow = "1.0"
 bat = "0.24"
-cfg-if = "1.0"
 clap = { version = "4.5", features = ["derive"] }
 git2 = "0.18"
 human-panic = "1.2"
@@ -43,16 +42,15 @@ indicatif = { version = "0.17", features = ["improved_unicode", "rayon"] }
 itertools = "0.12"
 log = { version = "0.4", features = ["std"] }
 open = "5.1"
-owo-colors = { workspace = true }
+owo-colors.workspace = true
 parking_lot = "0.12"
-quork = { workspace = true }
+quork.workspace = true
 rayon = "1.10"
 regex = "1.10"
 serde_json = { version = "1.0", features = ["preserve_order"] }
 sfsu-derive = { path = "crates/derive" }
 shadow-rs = "0.27"
 sprinkles = { version = "1", path = "crates/sprinkles" }
-strum = { version = "0.26", features = ["derive"] }
 
 [dev-dependencies]
 chrono = ">=0.4.37"

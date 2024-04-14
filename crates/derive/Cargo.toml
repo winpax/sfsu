@@ -1,8 +1,8 @@
 [package]
-name = "sfsu-derive"
-publish = { workspace = true }
-version = "0.1.0"
 edition = "2021"
+name = "sfsu-derive"
+publish.workspace = true
+version = "0.1.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -19,4 +19,5 @@ syn = { version = "2.0", features = ["full"] }
 
 [dev-dependencies]
 anyhow = "1.0"
+quork.workspace = true
 strum = { version = "0.26", features = ["derive"] }

@@ -1,6 +1,6 @@
 use clap::Parser;
+use quork::traits::list::ListVariants;
 use sprinkles::shell::Shell;
-use strum::IntoEnumIterator;
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
@@ -15,7 +15,8 @@ impl super::Command for Args {
     fn runner(self) -> Result<(), anyhow::Error> {
         let shell = self.shell;
         let shell_config = shell.config();
-        let enabled_hooks: Vec<super::CommandsHooks> = super::CommandsHooks::iter()
+        let enabled_hooks: Vec<super::CommandsHooks> = super::CommandsHooks::VARIANTS
+            .into_iter()
             .filter(|variant| !self.disable.contains(variant))
             .collect();
 
