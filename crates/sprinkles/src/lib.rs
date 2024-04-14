@@ -9,7 +9,7 @@
 )]
 #![allow(clippy::module_name_repetitions)]
 
-use std::{ffi::OsStr, fmt, fs::File, path::PathBuf};
+use std::{ffi::OsStr, fmt, fs::File, path::PathBuf, time::Duration};
 
 use chrono::Local;
 use rayon::prelude::*;
@@ -101,6 +101,14 @@ impl fmt::Display for Architecture {
             Self::X86 => write!(f, "32bit"),
         }
     }
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum Error {
+    #[error("Timeout creating new log file. This is a bug, please report it.")]
+    TimeoutCreatingLog,
+    #[error("Error creating log file: {0}")]
+    CreatingLog(#[from] std::io::Error),
 }
 
 /// The Scoop install reference
@@ -218,21 +226,49 @@ impl Scoop {
     ///
     /// # Errors
     /// - Creating the file fails
-    pub fn new_log() -> std::io::Result<File> {
+    ///
+    /// # Panics
+    /// - Could not convert tokio file into std file
+    pub fn new_log() -> Result<File, Error> {
         let logs_dir = Self::logging_dir()?;
         let date = Local::now();
 
-        let mut i = 0;
-        loop {
-            i += 1;
+        let log_file = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .unwrap()
+            .block_on(async {
+                let new_file = async {
+                    use tokio::fs::File;
 
-            let log_path =
-                logs_dir.join(format!("sfsu-{}-{i}.log", date.format("%Y-%m-%d-%H-%M-%S")));
+                    let mut i = 0;
+                    loop {
+                        i += 1;
 
-            if !log_path.exists() {
-                break File::create(&log_path);
-            }
-        }
+                        let log_path = logs_dir
+                            .join(format!("sfsu-{}-{i}.log", date.format("%Y-%m-%d-%H-%M-%S")));
+
+                        if !log_path.exists() {
+                            break File::create(log_path).await;
+                        }
+                    }
+                };
+                let timeout = async {
+                    use std::time::Duration;
+                    use tokio::time;
+
+                    time::sleep(Duration::from_secs(5)).await;
+                };
+
+                tokio::select! {
+                    res = new_file => Ok(res),
+                    () = timeout => Err(Error::TimeoutCreatingLog),
+                }
+            })??;
+
+        Ok(log_file
+            .try_into_std()
+            .expect("converted tokio file into std file"))
     }
 
     /// Checks if the app is installed by its name
