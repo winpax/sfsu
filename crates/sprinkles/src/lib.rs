@@ -253,3 +253,22 @@ impl Scoop {
         git::Repo::scoop_app()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use itertools::Itertools;
+
+    use self::packages::{CreateManifest, InstallManifest};
+
+    use super::*;
+
+    #[test]
+    fn test_list_install_manifests() {
+        let app_paths = Scoop::installed_apps().unwrap();
+
+        app_paths
+            .into_iter()
+            .map(|path| InstallManifest::from_path(path.join("current/install.json")).unwrap())
+            .collect_vec();
+    }
+}
