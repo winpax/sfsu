@@ -92,14 +92,14 @@ pub fn hook_enum(input: DeriveInput) -> TokenStream {
 
     let (variants, command_names, hook_names) = Variant::unzip(variants.into_iter());
 
-    let strum = match crate_name("strum").expect("strum is present in `Cargo.toml`") {
-        FoundCrate::Itself => Ident::new("strum", Span::call_site()),
+    let quork = match crate_name("quork").expect("quork is present in `Cargo.toml`") {
+        FoundCrate::Itself => Ident::new("quork", Span::call_site()),
         FoundCrate::Name(name) => Ident::new(&name, Span::call_site()),
     };
 
     quote! {
         // TODO: Better way of doing this? or add support for meta in proc macro
-        #[derive(Debug, Copy, Clone, #strum::EnumIter, PartialEq, Eq)]
+        #[derive(Debug, Copy, Clone, #quork::macros::ListVariants, PartialEq, Eq)]
         pub enum #struct_name {
             #(#variants),*
         }

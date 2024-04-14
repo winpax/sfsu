@@ -1,8 +1,7 @@
 #![allow(dead_code)]
 
+use quork::traits::list::ListVariants;
 use sfsu_derive::Hooks;
-
-use strum::IntoEnumIterator;
 
 struct DummyStruct;
 
@@ -14,7 +13,8 @@ enum EnumWithData {
 
 #[test]
 fn has_all_variants() {
-    let variants = EnumWithDataHooks::iter()
+    let variants = EnumWithDataHooks::VARIANTS
+        .iter()
         .map(|v| v.hook())
         .collect::<String>();
 
@@ -31,7 +31,8 @@ enum EnumExclude {
 
 #[test]
 fn excludes_no_hook_variant() {
-    let variants = EnumExcludeHooks::iter()
+    let variants = EnumExcludeHooks::VARIANTS
+        .iter()
         .map(|v| v.hook())
         .collect::<String>();
 

@@ -1572,7 +1572,6 @@ version = "1.10.0"
 dependencies = [
  "anyhow",
  "bat",
- "cfg-if",
  "chrono",
  "clap",
  "criterion",
@@ -1591,7 +1590,6 @@ dependencies = [
  "sfsu-derive",
  "shadow-rs",
  "sprinkles",
- "strum",
  "winres",
 ]
 
@@ -1604,6 +1602,7 @@ dependencies = [
  "proc-macro-crate 3.1.0",
  "proc-macro-error",
  "proc-macro2",
+ "quork",
  "quote",
  "strum",
  "syn 2.0.58",
@@ -1645,7 +1644,6 @@ name = "sprinkles"
 version = "1.10.0"
 dependencies = [
  "anyhow",
- "cfg-if",
  "chrono",
  "clap",
  "derive_more",
