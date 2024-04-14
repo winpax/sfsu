@@ -189,7 +189,7 @@ mod tests {
                     extraction
                         .url
                         .unwrap()
-                        .replace("$version", &manifest.version),
+                        .replace("$version", manifest.version.as_str()),
                     extraction.regex.unwrap(),
                 )
             } else {

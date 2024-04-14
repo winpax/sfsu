@@ -6,7 +6,7 @@ use std::{collections::HashMap, fmt::Display};
 use itertools::Itertools as _;
 use serde::{Deserialize, Serialize};
 
-use crate::SupportedArch;
+use crate::{version::Version, SupportedArch};
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Manifest {
@@ -41,7 +41,7 @@ pub struct Manifest {
     pub persist: Option<AliasArray>,
     pub psmodule: Option<Psmodule>,
     pub suggest: Option<Suggest>,
-    pub version: String,
+    pub version: Version,
     pub bin: Option<AliasArray>,
     pub checkver: Option<Checkver>,
     pub env_add_path: Option<StringArray>,

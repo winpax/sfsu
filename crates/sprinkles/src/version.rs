@@ -1,9 +1,15 @@
-use std::{borrow::Cow, num::ParseIntError};
+use std::{
+    borrow::Cow,
+    fmt::{Display, Formatter},
+    num::ParseIntError,
+};
 
 use getset::Getters;
 use regex::Regex;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq, Hash)]
+#[serde(transparent)]
 pub struct Version(String);
 
 impl Version {
@@ -70,6 +76,12 @@ impl Version {
     }
 }
 
+impl Display for Version {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
 #[derive(Debug, thiserror::Error)]
 pub enum ParseError {
     #[error("Failed to parse integer: {0}")]
@@ -87,4 +99,35 @@ pub struct ParsedVersion {
     patch: Option<u64>,
     build: Option<String>,
     pre_release: Option<String>,
+}
+
+impl ParsedVersion {
+    #[must_use]
+    pub fn to_unparsed(&self) -> Version {
+        Version(self.to_string())
+    }
+}
+
+impl Display for ParsedVersion {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.major)?;
+
+        if let Some(minor) = self.minor {
+            write!(f, ".{minor}")?;
+        }
+
+        if let Some(patch) = self.patch {
+            write!(f, ".{patch}")?;
+        }
+
+        if let Some(build) = &self.build {
+            write!(f, ".{build}")?;
+        }
+
+        if let Some(pre_release) = &self.pre_release {
+            write!(f, "-{pre_release}")?;
+        }
+
+        Ok(())
+    }
 }

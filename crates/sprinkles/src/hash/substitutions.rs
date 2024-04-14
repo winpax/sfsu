@@ -3,7 +3,10 @@ use std::collections::HashMap;
 use derive_more::{Deref, DerefMut};
 use url::Url;
 
-use crate::hash::url_ext::{strip_ext, UrlExt};
+use crate::{
+    hash::url_ext::{strip_ext, UrlExt},
+    version::Version,
+};
 
 #[derive(Debug, Clone, Deref, DerefMut)]
 pub struct SubstitutionMap(HashMap<String, String>);
@@ -15,6 +18,40 @@ impl SubstitutionMap {
 
     pub fn substitute(&self, builder: SubstituteBuilder, regex_escape: bool) -> String {
         builder.substitute(self, regex_escape)
+    }
+
+    /// Append version information to the map
+    pub fn append_version(&mut self, version: &Version) {
+        self.insert("$version".into(), version.as_str().to_string());
+        self.insert("$dotVersion".into(), version.dot_version().to_string());
+        self.insert(
+            "$underscoreVersion".into(),
+            version.underscore_version().to_string(),
+        );
+        self.insert("$dashVersion".into(), version.dash_version().to_string());
+        self.insert("$cleanVersion".into(), version.clean_version().to_string());
+
+        if let Ok(parsed) = version.parse() {
+            self.insert("$majorVersion".into(), parsed.major().to_string());
+
+            if let Some(minor) = parsed.minor() {
+                self.insert("$minorVersion".into(), minor.to_string());
+            }
+            if let Some(patch) = parsed.patch() {
+                self.insert("$patchVersion".into(), patch.to_string());
+            }
+            if let Some(build) = parsed.build() {
+                self.insert("$buildVersion".into(), build.clone());
+            }
+            if let Some(pre_release) = parsed.pre_release() {
+                self.insert("$preReleaseVersion".into(), pre_release.clone());
+            }
+        }
+    }
+
+    pub fn append_url(&mut self, url: &Url) {
+        let map = SubstitutionMap::from(url);
+        self.extend(map.0);
     }
 }
 

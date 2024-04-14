@@ -105,11 +105,13 @@ impl Hash {
                 .map(|url: &String| Ok(Url::parse(url)?))
                 .collect::<Result<Vec<_>>>()?;
 
+            // let default_map = SubstitutionMap::from(&manifest.url);
+
             urls.into_iter()
                 .map(|url| {
                     let mut submap = SubstitutionMap::from(&url);
                     // TODO: Add the rest of the substitutions <https://github.com/ScoopInstaller/Scoop/wiki/App-Manifest-Autoupdate#captured-variables>
-                    submap.insert("$version".into(), manifest.version.clone());
+                    submap.insert("$version".into(), manifest.version.to_string());
                     submap
                 })
                 .collect_vec()
@@ -297,7 +299,7 @@ mod tests {
         let url = Url::parse(&url).unwrap();
 
         let mut submap = SubstitutionMap::from(&url);
-        submap.insert("$version".into(), manifest.version);
+        submap.insert("$version".into(), manifest.version.to_string());
 
         let hash = Hash::find_hash_in_xml(source, &submap, xpath).unwrap();
 
