@@ -9,6 +9,8 @@ use rayon::prelude::*;
 
 pub use semver;
 
+mod opt;
+
 pub mod buckets;
 pub mod cache;
 pub mod calm_panic;
@@ -23,8 +25,7 @@ pub mod packages;
 pub mod progress;
 pub mod requests;
 pub mod stream;
-
-mod opt;
+pub mod version;
 
 #[macro_use]
 extern crate log;
