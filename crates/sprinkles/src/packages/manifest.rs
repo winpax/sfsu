@@ -178,7 +178,7 @@ pub struct HashExtraction {
     /// Same as 'jsonpath'
     pub jp: Option<String>,
     pub jsonpath: Option<String>,
-    pub mode: Option<Mode>,
+    pub mode: Option<HashMode>,
     pub regex: Option<String>,
     #[deprecated(note = "hash type is determined automatically")]
     #[serde(rename = "type")]
@@ -349,7 +349,7 @@ pub struct LicenseObject {
     url: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum Type {
     #[serde(rename = "md5")]
     Md5,
@@ -361,8 +361,8 @@ pub enum Type {
     Sha512,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub enum Mode {
+#[derive(Debug, Copy, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub enum HashMode {
     #[serde(rename = "download")]
     Download,
     #[serde(rename = "extract")]

@@ -6,7 +6,11 @@ use reqwest::header::{HeaderMap, HeaderValue};
 use substitutions::SubstitutionMap;
 use url::Url;
 
-use crate::packages::{arch_field, Manifest};
+use crate::packages::{
+    arch_field,
+    manifest::{AutoupdateConfig, HashExtractionOrArrayOfHashExtractions, HashMode},
+    Manifest,
+};
 
 mod formats;
 mod substitutions;
@@ -78,6 +82,38 @@ impl TryFrom<&String> for HashType {
             128 => Ok(HashType::Sha512),
             _ => Err(HashError::InvalidHash),
         }
+    }
+}
+
+impl HashMode {
+    #[must_use]
+    /// Get a [`HashMode`] from an [`AutoupdateConfig`]
+    pub fn from_autoupdate_config(config: &AutoupdateConfig) -> Option<Self> {
+        let hash = config.hash.as_ref()?;
+
+        if let HashExtractionOrArrayOfHashExtractions::Url(_) = hash {
+            return Some(HashMode::Download);
+        }
+
+        if let HashExtractionOrArrayOfHashExtractions::HashExtraction(hash_cfg) = hash {
+            let mode = hash_cfg.mode.or_else(|| {
+                if hash_cfg.regex.is_some() || hash_cfg.find.is_some() {
+                    return Some(HashMode::Extract);
+                }
+                if hash_cfg.jp.is_some() || hash_cfg.jsonpath.is_some() {
+                    return Some(HashMode::Json);
+                }
+                if hash_cfg.xpath.is_some() {
+                    return Some(HashMode::Xpath);
+                }
+
+                None
+            });
+
+            return mode;
+        }
+
+        todo!("Handle array of hash extractions")
     }
 }
 
