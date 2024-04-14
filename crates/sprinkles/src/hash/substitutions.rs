@@ -62,6 +62,8 @@ impl SubstitutionMap {
                 self.insert("$matchTail".into(), tail.as_str().to_string());
             }
         }
+
+        // TODO: Add custom matches for version
     }
 
     pub fn append_url(&mut self, url: &Url) {
