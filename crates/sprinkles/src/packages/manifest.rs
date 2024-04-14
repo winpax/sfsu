@@ -159,6 +159,8 @@ pub struct AutoupdateArchitecture {
     pub arm64: Option<AutoupdateConfig>,
 }
 
+// TODO: Merge fields from AutoupdateConfig into and various Architectures
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct AutoupdateConfig {
     pub bin: Option<AliasArray>,

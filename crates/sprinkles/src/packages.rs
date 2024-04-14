@@ -40,7 +40,7 @@ pub use manifest::Manifest;
 use downloading::DownloadUrl;
 use manifest::{InstallConfig, StringArray};
 
-// #[macro_export]
+#[macro_export]
 macro_rules! arch_field {
     ($field:ident.$arch:expr) => {{
         let arch = match $arch {
@@ -64,9 +64,17 @@ macro_rules! arch_field {
     ($field:ident) => {
         arch_field!($field.$crate::SupportedArch::ARCH)
     };
+
+    // ($field:ident.$arch:expr => $default:expr) => {
+    //     arch_field!($field.$arch).unwrap_or($default)
+    // };
+
+    // ($field:ident => $default:expr) => {
+    //     arch_field!($field.$crate::SupportedArch::ARCH).unwrap_or($default)
+    // };
 }
 
-pub(crate) use arch_field;
+pub use arch_field;
 
 use self::manifest::AliasArray;
 
