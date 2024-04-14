@@ -58,7 +58,7 @@ pub struct Manifest {
     /// The PowerShell module of the package
     pub psmodule: Option<Psmodule>,
     /// The suggested dependencies of the package
-    pub suggest: Option<super::reference::Package>,
+    pub suggest: Option<Suggest>,
     /// The version of the package
     pub version: String,
     /// The package binaries
@@ -251,6 +251,7 @@ pub struct Psmodule {
     pub name: Option<String>,
 }
 
+// TODO: Conversions to package reference
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Suggest {}
 

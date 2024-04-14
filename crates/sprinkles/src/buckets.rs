@@ -302,3 +302,15 @@ impl Bucket {
             .ok_or(git::Error::NonUtf8)?)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_list_all_buckets() {
+        let buckets = Bucket::list_all().unwrap();
+
+        assert!(!buckets.is_empty());
+    }
+}
