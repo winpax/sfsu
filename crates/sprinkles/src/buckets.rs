@@ -313,4 +313,18 @@ mod tests {
 
         assert!(!buckets.is_empty());
     }
+
+    #[test]
+    fn test_main_bucket_update() {
+        let bucket = Bucket::from_name("main").unwrap();
+
+        bucket.open_repo().unwrap().pull(None).unwrap();
+    }
+
+    #[test]
+    fn test_extras_bucket_update() {
+        let bucket = Bucket::from_name("extras").unwrap();
+
+        bucket.open_repo().unwrap().pull(None).unwrap();
+    }
 }
