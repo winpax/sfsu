@@ -79,9 +79,9 @@ impl super::Command for Args {
             let latest = manifests
                 .into_iter()
                 .max_by(|a_manifest, b_manifest| {
-                    semver::Version::parse(&a_manifest.version)
+                    semver::Version::try_from(&a_manifest.version)
                         .and_then(|a_version| {
-                            Ok(a_version.cmp(&semver::Version::parse(&b_manifest.version)?))
+                            Ok(a_version.cmp(&semver::Version::try_from(&b_manifest.version)?))
                         })
                         .unwrap_or(std::cmp::Ordering::Equal)
                 }).expect("something went terribly wrong (no manifests found even though we just checked for manifests)");

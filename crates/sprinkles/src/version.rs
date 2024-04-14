@@ -82,6 +82,14 @@ impl Display for Version {
     }
 }
 
+impl TryFrom<&Version> for semver::Version {
+    type Error = semver::Error;
+
+    fn try_from(value: &Version) -> Result<Self, Self::Error> {
+        value.0.parse()
+    }
+}
+
 #[derive(Debug, thiserror::Error)]
 pub enum ParseError {
     #[error("Failed to parse integer: {0}")]
