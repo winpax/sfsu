@@ -167,21 +167,12 @@ impl Diagnostics {
         use windows::Win32::System::SystemInformation::{
             GetVersionExW, OSVERSIONINFOEXW, OSVERSIONINFOW,
         };
+        use windows_version::OsVersion;
         use winreg::{enums::HKEY_LOCAL_MACHINE, RegKey};
 
-        let version_info = unsafe {
-            let mut version_info = OSVERSIONINFOEXW {
-                #[allow(clippy::cast_possible_truncation)]
-                dwOSVersionInfoSize: std::mem::size_of::<OSVERSIONINFOEXW>() as u32,
-                ..std::mem::zeroed()
-            };
+        let version = OsVersion::current();
 
-            GetVersionExW(std::ptr::addr_of_mut!(version_info).cast::<OSVERSIONINFOW>())?;
-
-            version_info
-        };
-
-        let major_version = version_info.dwMajorVersion;
+        let major_version = version.major;
         debug!("Windows Major Version: {major_version}");
 
         if major_version < 10 {
