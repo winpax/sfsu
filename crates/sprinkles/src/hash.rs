@@ -28,6 +28,8 @@ pub enum HashError {
     InvalidUrl(#[from] url::ParseError),
     #[error("Hash not found")]
     NotFound,
+    #[error("Missing download url(s) in manifest")]
+    UrlNotFound,
     #[error("Invalid hash")]
     InvalidHash,
     #[error("Missing autoupdate filter")]
@@ -100,18 +102,19 @@ impl Hash {
         let submaps = {
             let urls = autoupdate_config
                 .url
+                .ok_or(HashError::UrlNotFound)?
                 .to_vec()
                 .iter()
                 .map(|url: &String| Ok(Url::parse(url)?))
                 .collect::<Result<Vec<_>>>()?;
 
-            // let default_map = SubstitutionMap::from(&manifest.url);
+            let mut submap = SubstitutionMap::new();
+            submap.append_version(&manifest.version);
 
             urls.into_iter()
                 .map(|url| {
-                    let mut submap = SubstitutionMap::from(&url);
-                    // TODO: Add the rest of the substitutions <https://github.com/ScoopInstaller/Scoop/wiki/App-Manifest-Autoupdate#captured-variables>
-                    submap.insert("$version".into(), manifest.version.to_string());
+                    let mut submap = submap.clone();
+                    submap.append_url(&url);
                     submap
                 })
                 .collect_vec()
@@ -234,8 +237,6 @@ impl Hash {
 mod tests {
     use std::io::BufReader;
 
-    use ::url::Url;
-
     use crate::{
         buckets::Bucket,
         packages::manifest::{HashExtractionOrArrayOfHashExtractions, StringArray},
@@ -292,14 +293,15 @@ mod tests {
 
         let source = reqwest::blocking::get(url).unwrap().text().unwrap();
 
-        let StringArray::String(url) = autoupdate.url else {
+        let Some(StringArray::String(url)) = autoupdate.url else {
             unreachable!()
         };
 
         let url = Url::parse(&url).unwrap();
 
-        let mut submap = SubstitutionMap::from(&url);
-        submap.insert("$version".into(), manifest.version.to_string());
+        let mut submap = SubstitutionMap::new();
+        submap.append_version(&manifest.version);
+        submap.append_url(&url);
 
         let hash = Hash::find_hash_in_xml(source, &submap, xpath).unwrap();
 

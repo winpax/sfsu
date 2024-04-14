@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use derive_more::{Deref, DerefMut};
+use regex::Regex;
 use url::Url;
 
 use crate::{
@@ -45,6 +46,20 @@ impl SubstitutionMap {
             }
             if let Some(pre_release) = parsed.pre_release() {
                 self.insert("$preReleaseVersion".into(), pre_release.clone());
+            }
+        }
+
+        let matches_regex = Regex::new(r"(?<head>\d+\.\d+(?:\.\d+)?)(?<tail>.*)").unwrap();
+        if let Some(captures) = matches_regex.captures(version.as_str()) {
+            // The following two `if let` statements in theory should always be true
+            // But to avoid a panic in case of a bug, we are using `if let` instead of `unwrap`
+
+            if let Some(head) = captures.name("head") {
+                self.insert("$matchHead".into(), head.as_str().to_string());
+            }
+
+            if let Some(tail) = captures.name("tail") {
+                self.insert("$matchTail".into(), tail.as_str().to_string());
             }
         }
     }
