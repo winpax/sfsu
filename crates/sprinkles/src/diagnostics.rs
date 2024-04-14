@@ -164,9 +164,6 @@ impl Diagnostics {
     /// - Unable to read the registry
     /// - Unable to read the OS version
     pub fn check_long_paths() -> windows::core::Result<LongPathsStatus> {
-        use windows::Win32::System::SystemInformation::{
-            GetVersionExW, OSVERSIONINFOEXW, OSVERSIONINFOW,
-        };
         use windows_version::OsVersion;
         use winreg::{enums::HKEY_LOCAL_MACHINE, RegKey};
 
