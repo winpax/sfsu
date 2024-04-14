@@ -2,8 +2,8 @@
 description = "Stupid Fast Scoop Utils"
 edition = "2021"
 name = "sfsu"
-publish = { workspace = true }
-version = { workspace = true }
+publish.workspace = true
+version.workspace = true
 
 [workspace]
 members = ["crates/*"]
@@ -42,9 +42,9 @@ indicatif = { version = "0.17", features = ["improved_unicode", "rayon"] }
 itertools = "0.12"
 log = { version = "0.4", features = ["std"] }
 open = "5.1"
-owo-colors = { workspace = true }
+owo-colors.workspace = true
 parking_lot = "0.12"
-quork = { workspace = true }
+quork.workspace = true
 rayon = "1.10"
 regex = "1.10"
 serde_json = { version = "1.0", features = ["preserve_order"] }
