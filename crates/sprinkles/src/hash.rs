@@ -124,9 +124,7 @@ impl Hash {
             .as_ref()
             .and_then(|autoupdate| autoupdate.architecture.clone())
         {
-            arch_field!(arch)
-                .ok_or(HashError::MissingAutoupdate)?
-                .clone()
+            arch_field!(arch).clone()
         } else {
             manifest
                 .autoupdate

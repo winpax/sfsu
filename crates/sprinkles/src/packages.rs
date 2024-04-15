@@ -44,13 +44,15 @@ use manifest::{InstallConfig, StringArray};
 #[macro_export]
 macro_rules! arch_field {
     ($field:ident.$arch:expr) => {{
+        use $crate::calm_panic::CalmUnwrap;
+
         let arch = match $arch {
             $crate::Architecture::Arm64 => &$field.arm64,
             $crate::Architecture::X64 => &$field.x64,
             $crate::Architecture::X86 => &$field.x86,
         }.clone();
 
-        if let Some(arch) = arch {
+        let config = if let Some(arch) = arch {
             Some(arch)
         } else {
             match $crate::Architecture::ARCH {
@@ -59,7 +61,9 @@ macro_rules! arch_field {
                 $crate::Architecture::X64 => $field.x86.clone(),
                 _ => None,
             }
-        }
+        };
+
+        config.calm_expect("Unsupported architecture")
     }};
 
     ($field:ident) => {
@@ -77,7 +81,7 @@ macro_rules! arch_field {
 
 pub use arch_field;
 
-use self::manifest::{AliasArray, Autoupdate, AutoupdateArchitecture};
+use self::manifest::{AliasArray, AutoupdateArchitecture, AutoupdateConfig};
 
 #[derive(Debug, Serialize)]
 /// Minimal package info
@@ -595,13 +599,19 @@ impl Manifest {
             .as_mut()
             .ok_or(SetVersionError::MissingAutoUpdate)?;
 
-        if let Some(architecture) = autoupdate.architecture.as_mut() {
-            let autoupdate_arch = match Scoop::arch() {
-                Architecture::Arm64 => architecture.arm64.as_mut(),
-                Architecture::X64 => architecture.x64.as_mut(),
-                Architecture::X86 => architecture.x86.as_mut(),
-            }
-            .ok_or(SetVersionError::MissingAutoUpdate)?;
+        if let Some(architecture) = &autoupdate.architecture {
+            let config = autoupdate
+                .architecture
+                .as_ref()
+                .map(|arch| arch.merge_default(autoupdate.autoupdate_config.clone()))
+                .unwrap_or(autoupdate.autoupdate_config.clone());
+
+            // let autoupdate_arch = match Scoop::arch() {
+            //     Architecture::Arm64 => architecture.arm64.as_mut(),
+            //     Architecture::X64 => architecture.x64.as_mut(),
+            //     Architecture::X86 => architecture.x86.as_mut(),
+            // }
+            // .ok_or(SetVersionError::MissingAutoUpdate)?;
 
             // TODO: Figure out hash extraction
             // autoupdate_arch.hash
@@ -784,6 +794,21 @@ pub fn is_installed(manifest_name: impl AsRef<Path>, bucket: Option<impl AsRef<s
     }
 }
 
-impl Autoupdate {
-    pub fn merge_arches(&mut self, arches: AutoupdateArchitecture) {}
+impl AutoupdateArchitecture {
+    #[must_use]
+    /// Merge the architecture specific autoupdate config with the arch agnostic one
+    pub fn merge_default(&self, default: AutoupdateConfig) -> AutoupdateConfig {
+        let config = arch_field!(self);
+
+        AutoupdateConfig {
+            bin: config.bin.or(default.bin),
+            env_add_path: config.env_add_path.or(default.env_add_path),
+            env_set: config.env_set.or(default.env_set),
+            extract_dir: config.extract_dir.or(default.extract_dir),
+            hash: config.hash.or(default.hash),
+            installer: config.installer.or(default.installer),
+            shortcuts: config.shortcuts.or(default.shortcuts),
+            url: config.url.or(default.url),
+        }
+    }
 }

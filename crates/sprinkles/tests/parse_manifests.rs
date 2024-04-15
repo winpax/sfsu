@@ -21,7 +21,7 @@ fn test_parse_all_manifests() -> Result<(), Box<dyn Error>> {
             let autoupdate_config = autoupdate
                 .architecture
                 .as_ref()
-                .and_then(|arch| arch_field!(arch))
+                .map(|arch| arch_field!(arch))
                 .unwrap_or(autoupdate.autoupdate_config.clone());
 
             assert!(
