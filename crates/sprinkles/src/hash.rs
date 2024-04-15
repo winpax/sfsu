@@ -193,8 +193,15 @@ impl Hash {
                 .clone()
         };
 
+        let hash_extraction = autoupdate_config
+            .hash
+            .as_ref()
+            .ok_or(HashError::MissingHashExtraction)?
+            .as_object()
+            .ok_or(HashError::HashExtractionUrl)?;
+
         let (url, submap) = {
-            let url = autoupdate_config
+            let url = hash_extraction
                 .url
                 .as_ref()
                 .ok_or(HashError::UrlNotFound)
