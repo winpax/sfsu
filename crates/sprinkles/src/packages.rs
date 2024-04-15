@@ -606,7 +606,7 @@ impl Manifest {
         if let Some(architecture) = &autoupdate.architecture {
             let config = autoupdate
                 .architecture
-                .merge_default(autoupdate.autoupdate_config.clone());
+                .merge_default(autoupdate.default_config.clone());
 
             // let autoupdate_arch = match Scoop::arch() {
             //     Architecture::Arm64 => architecture.arm64.as_mut(),
@@ -903,7 +903,7 @@ mod tests {
             if let Some(autoupdate) = &manifest.autoupdate {
                 let autoupdate_config = autoupdate
                     .architecture
-                    .merge_default(autoupdate.autoupdate_config.clone());
+                    .merge_default(autoupdate.default_config.clone());
 
                 assert!(
                     autoupdate_config.url.is_some(),

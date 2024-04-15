@@ -179,7 +179,7 @@ pub struct Autoupdate {
     pub persist: Option<AliasArray>,
     pub psmodule: Option<AutoupdatePsmodule>,
     #[serde(flatten)]
-    pub autoupdate_config: AutoupdateConfig,
+    pub default_config: AutoupdateConfig,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]

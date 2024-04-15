@@ -48,6 +48,8 @@ pub enum HashError {
     InvalidHash,
     #[error("Missing autoupdate filter")]
     MissingAutoupdate,
+    #[error("Missing autoupdate config")]
+    MissingAutoupdateConfig,
     #[error("Cannot determine hash mode")]
     HashMode,
     #[error("Missing hash extraction object")]
@@ -159,14 +161,7 @@ impl HashMode {
             .autoupdate
             .as_ref()
             .and_then(|autoupdate| autoupdate.architecture.clone())
-            .merge_default(
-                manifest
-                    .autoupdate
-                    .as_ref()
-                    .unwrap()
-                    .autoupdate_config
-                    .clone(),
-            );
+            .merge_default(manifest.autoupdate.as_ref().unwrap().default_config.clone());
 
         Self::from_autoupdate_config(&autoupdate_config)
     }
@@ -242,18 +237,17 @@ impl Hash {
     /// - If the hash is not found in the text
     /// - If the hash is not found in the JSON
     pub fn get_for_app(manifest: &Manifest) -> Result<Hash> {
-        let autoupdate_config = manifest
-            .autoupdate
-            .as_ref()
-            .and_then(|autoupdate| autoupdate.architecture.clone())
-            .merge_default(
-                manifest
-                    .autoupdate
-                    .as_ref()
-                    .unwrap()
-                    .autoupdate_config
-                    .clone(),
-            );
+        let autoupdate_config = {
+            let autoupdate = manifest
+                .autoupdate
+                .as_ref()
+                .ok_or(HashError::MissingAutoupdateConfig)?;
+
+            autoupdate
+                .architecture
+                .clone()
+                .merge_default(autoupdate.default_config.clone())
+        };
 
         let hash_mode =
             HashMode::from_manifest(manifest).ok_or(HashError::MissingHashExtraction)?;
