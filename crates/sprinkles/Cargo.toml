@@ -21,6 +21,7 @@ clap = { version = "4.5", features = ["derive"] }
 derive_more = "0.99"
 directories = "5.0"
 dunce = "1.0"
+futures = "0.3.30"
 git2 = "0.18"
 heck = "0.5"
 indicatif = { version = "0.17", features = ["improved_unicode", "rayon"] }

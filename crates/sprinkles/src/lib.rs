@@ -9,7 +9,7 @@
 )]
 #![allow(clippy::module_name_repetitions)]
 
-use std::{ffi::OsStr, fmt, fs::File, path::PathBuf, time::Duration};
+use std::{ffi::OsStr, fmt, fs::File, path::PathBuf};
 
 use chrono::Local;
 use rayon::prelude::*;
@@ -231,63 +231,68 @@ impl Scoop {
     ///
     /// # Panics
     /// - Could not convert tokio file into std file
-    pub fn new_log() -> Result<File, Error> {
+    pub async fn new_log() -> Result<File, Error> {
         let logs_dir = Self::logging_dir()?;
         let date = Local::now();
 
-        if let Ok(rt) = tokio::runtime::Builder::new_current_thread()
-            .enable_all()
-            .build()
-        {
-            let log_file = rt.block_on(async {
-                let new_file = async {
-                    use tokio::fs::File;
-
-                    let mut i = 0;
-                    loop {
-                        i += 1;
-
-                        let log_path = logs_dir
-                            .join(format!("sfsu-{}-{i}.log", date.format("%Y-%m-%d-%H-%M-%S")));
-
-                        if !log_path.exists() {
-                            break File::create(log_path).await;
-                        }
-                    }
-                };
-                let timeout = async {
-                    use std::time::Duration;
-                    use tokio::time;
-
-                    time::sleep(Duration::from_secs(5)).await;
-                };
-
-                tokio::select! {
-                    res = new_file => Ok(res),
-                    () = timeout => Err(Error::TimeoutCreatingLog),
-                }
-            })??;
-
-            Ok(log_file
-                .try_into_std()
-                .expect("converted tokio file into std file"))
-        } else {
-            use std::fs::File;
+        let log_file = async {
+            use tokio::fs::File;
 
             let mut i = 0;
-            let file = loop {
+            loop {
                 i += 1;
 
                 let log_path =
                     logs_dir.join(format!("sfsu-{}-{i}.log", date.format("%Y-%m-%d-%H-%M-%S")));
 
                 if !log_path.exists() {
-                    break File::create(log_path)?;
+                    break File::create(log_path).await;
                 }
-            };
+            }
+        };
+        let timeout = async {
+            use std::time::Duration;
+            use tokio::time;
 
-            Ok(file)
-        }
+            time::sleep(Duration::from_secs(5)).await;
+        };
+
+        let log_file = tokio::select! {
+            res = log_file => Ok(res),
+            () = timeout => Err(Error::TimeoutCreatingLog),
+        }??;
+
+        Ok(log_file
+            .try_into_std()
+            .expect("converted tokio file into std file"))
+    }
+
+    /// Create a new log file
+    ///
+    /// This function is synchronous and does not allow for timeouts.
+    /// If for some reason there are no available log files, this function will block indefinitely.
+    ///
+    /// # Errors
+    /// - Creating the file fails
+    pub fn new_log_sync() -> Result<File, Error> {
+        use std::fs::File;
+
+        let logs_dir = Self::logging_dir()?;
+        let date = Local::now();
+
+        let mut i = 0;
+        let file = loop {
+            i += 1;
+
+            let log_path =
+                logs_dir.join(format!("sfsu-{}-{i}.log", date.format("%Y-%m-%d-%H-%M-%S")));
+
+            if !log_path.exists() {
+                break File::create(log_path)?;
+            }
+        };
+
+        Ok(file)
     }
 
     /// Checks if the app is installed by its name
