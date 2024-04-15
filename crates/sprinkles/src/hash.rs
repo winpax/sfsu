@@ -250,6 +250,10 @@ impl Hash {
         let hash_mode =
             HashMode::from_manifest(manifest).ok_or(HashError::MissingHashExtraction)?;
 
+        if matches!(hash_mode, HashMode::Fosshub | HashMode::Sourceforge) {
+            todo!("Handle Fosshub and Sourceforge")
+        }
+
         let hash_extraction = autoupdate_config
             .hash
             .as_ref()
