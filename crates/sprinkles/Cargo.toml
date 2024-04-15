@@ -12,7 +12,7 @@ info-difftrees = []
 v2 = []
 
 [dependencies]
-chrono = { version = ">=0.4.37", features = [
+chrono = { version = ">=0.4.38", features = [
     "clock",
     "serde",
     "std",
