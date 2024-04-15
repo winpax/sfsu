@@ -1,7 +1,6 @@
-use std::io::{BufRead, Read};
+use std::io::BufRead;
 
 use formats::{json::JsonError, text::TextError};
-use itertools::Itertools;
 use regex::Regex;
 use reqwest::header::{HeaderMap, HeaderValue};
 use substitutions::SubstitutionMap;
@@ -10,7 +9,6 @@ use url::Url;
 use crate::{
     hash::url_ext::UrlExt,
     packages::{
-        arch_field,
         manifest::{
             AutoupdateConfig, HashExtractionOrArrayOfHashExtractions, HashMode as ManifestHashMode,
         },
