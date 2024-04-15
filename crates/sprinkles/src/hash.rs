@@ -226,7 +226,7 @@ impl Hash {
                 .url
                 .as_ref()
                 .ok_or(HashError::UrlNotFound)
-                .and_then(|url| Ok(Url::parse(&url)?))?;
+                .and_then(|url| Ok(Url::parse(url)?))?;
 
             let mut submap = SubstitutionMap::new();
             submap.append_version(&manifest.version);
