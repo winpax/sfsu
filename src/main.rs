@@ -14,9 +14,33 @@ use clap::Parser;
 
 use commands::Commands;
 
-mod shadow {
+mod versions {
     #![allow(clippy::needless_raw_string_hashes)]
     include!(concat!(env!("OUT_DIR"), "/shadow.rs"));
+
+    pub const SFSU_LONG_VERSION: &str = {
+        use shadow_rs::formatcp;
+
+        const LIBGIT2_VERSION: &str = env!("LIBGIT2_VERSION");
+
+        formatcp!(
+            r#"{}
+sprinkles {}
+branch:{}
+commit_hash:{}
+build_time:{}
+build_env:{},{}
+libgit2:{}"#,
+            PKG_VERSION,
+            sprinkles::versions::VERSION,
+            BRANCH,
+            SHORT_COMMIT,
+            BUILD_TIME,
+            RUST_VERSION,
+            RUST_CHANNEL,
+            LIBGIT2_VERSION
+        )
+    };
 }
 
 #[macro_use]
@@ -24,7 +48,7 @@ extern crate log;
 
 /// Scoop utilities that can replace the slowest parts of Scoop, and run anywhere from 30-100 times faster
 #[derive(Debug, Parser)]
-#[clap(about, long_about, version, long_version = shadow::CLAP_LONG_VERSION, author)]
+#[clap(about, long_about, version, long_version = versions::SFSU_LONG_VERSION, author)]
 #[allow(clippy::struct_excessive_bools)]
 struct Args {
     #[command(subcommand)]
