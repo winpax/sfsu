@@ -10,7 +10,7 @@ version.workspace = true
 members = ["crates/*"]
 package.license = "Apache-2.0"
 package.publish = false
-package.version = "1.10.0"
+package.version = "1.10.1"
 
 [workspace.dependencies]
 chrono = { version = ">=0.4.37", features = [
@@ -65,7 +65,7 @@ shadow-rs = "0.27"
 sprinkles = { version = "1", path = "crates/sprinkles" }
 
 [dev-dependencies]
-chrono = { workspace = true }
+chrono.workspace = true
 criterion = { version = "0.5", features = ["html_reports"] }
 git2 = { workspace = true }
 
