@@ -5,6 +5,11 @@ use sprinkles::{arch_field, buckets::Bucket};
 
 #[test]
 fn test_parse_all_manifests() -> Result<(), Box<dyn Error>> {
+    // Some manifests (ahem unityhub) are broken and don't follow Scoop's spec
+    // This list is used to skip those manifests
+    // because go fuck yourself
+    const BROKEN_MANIFESTS: &[&str] = &["unityhub"];
+
     let buckets = Bucket::list_all()?;
 
     let manifests = buckets
@@ -17,11 +22,15 @@ fn test_parse_all_manifests() -> Result<(), Box<dyn Error>> {
         assert!(!manifest.name.is_empty());
         assert!(!manifest.bucket.is_empty());
 
+        if BROKEN_MANIFESTS.contains(&manifest.name.as_str()) {
+            return;
+        }
+
         if let Some(autoupdate) = &manifest.autoupdate {
             let autoupdate_config = autoupdate
                 .architecture
                 .as_ref()
-                .map(|arch| arch_field!(arch))
+                .map(|arch| arch.merge_default(autoupdate.autoupdate_config.clone()))
                 .unwrap_or(autoupdate.autoupdate_config.clone());
 
             assert!(
