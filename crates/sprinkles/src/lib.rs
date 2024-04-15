@@ -8,7 +8,7 @@
     rust_2024_compatibility,
     missing_docs
 )]
-#![allow(clippy::module_name_repetitions)]
+#![allow(clippy::module_name_repetitions, missing_docs)]
 
 use std::{ffi::OsStr, fmt, fs::File, path::PathBuf};
 
