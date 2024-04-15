@@ -14,6 +14,7 @@ use crate::{
         },
         Manifest, MergeDefaults,
     },
+    requests::BlockingClient,
 };
 
 use self::substitutions::Substitute;
@@ -284,10 +285,10 @@ impl Hash {
             (url, submap)
         };
 
-        let source = reqwest::blocking::get(url.as_str())?;
+        let source = BlockingClient::new().get(url.as_str()).send()?;
 
         if hash_mode == HashMode::HashUrl {
-            let hash = reqwest::blocking::get(url)?.text()?;
+            let hash = source.text()?;
 
             return Ok(Hash {
                 hash,
@@ -480,7 +481,12 @@ mod tests {
         let url = x64_cfg.url.unwrap().to_string();
         let xpath = x64_cfg.xpath.unwrap().to_string();
 
-        let source = reqwest::blocking::get(url).unwrap().text().unwrap();
+        let source = BlockingClient::new()
+            .get(url)
+            .send()
+            .unwrap()
+            .text()
+            .unwrap();
 
         let Some(url) = autoupdate.url else {
             unreachable!()
