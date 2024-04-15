@@ -42,7 +42,7 @@ use downloading::DownloadUrl;
 use manifest::{InstallConfig, StringArray};
 
 #[macro_export]
-macro_rules! arch_field {
+macro_rules! arch_config {
     ($field:ident.$arch:expr) => {{
         use $crate::calm_panic::CalmUnwrap;
 
@@ -50,7 +50,7 @@ macro_rules! arch_field {
             $crate::Architecture::Arm64 => &$field.arm64,
             $crate::Architecture::X64 => &$field.x64,
             $crate::Architecture::X86 => &$field.x86,
-        }.clone();
+        };
 
         let config = if let Some(arch) = arch {
             Some(arch)
@@ -58,7 +58,7 @@ macro_rules! arch_field {
             match $crate::Architecture::ARCH {
                 // Find alternative options for the other architectures
                 // For arm64 and x86 there are no alternatives so we can just return None
-                $crate::Architecture::X64 => $field.x86.clone(),
+                $crate::Architecture::X64 => $field.x86.as_ref(),
                 _ => None,
             }
         };
@@ -67,19 +67,27 @@ macro_rules! arch_field {
     }};
 
     ($field:ident) => {
-        arch_field!($field.$crate::Architecture::ARCH)
+        arch_config!($field.$crate::Architecture::ARCH)
+    };
+
+    ($field:ident.$arch:expr => clone) => {
+        arch_config!($field.$arch).clone()
+    };
+
+    ($field:ident => clone) => {
+        arch_config!($field).clone()
     };
 
     // ($field:ident.$arch:expr => $default:expr) => {
-    //     arch_field!($field.$arch).unwrap_or($default)
+    //     arch_config!($field.$arch).unwrap_or($default)
     // };
 
     // ($field:ident => $default:expr) => {
-    //     arch_field!($field.$crate::Architecture::ARCH).unwrap_or($default)
+    //     arch_config!($field.$crate::Architecture::ARCH).unwrap_or($default)
     // };
 }
 
-pub use arch_field;
+pub use arch_config;
 
 use self::manifest::{
     AliasArray, AutoupdateArchitecture, AutoupdateConfig, HashExtraction,
@@ -605,7 +613,7 @@ impl Manifest {
 
     #[cfg(feature = "manifest-hashes")]
     pub fn set_version(&mut self, version: String) -> std::result::Result<(), SetVersionError> {
-        // self.version = version;
+        // self.version = version.into();
 
         let autoupdate = self
             .autoupdate
@@ -821,7 +829,7 @@ impl MergeDefaults for Option<AutoupdateArchitecture> {
             return default;
         };
 
-        let config = arch_field!(config);
+        let config = arch_config!(config => clone);
 
         AutoupdateConfig {
             bin: config.bin.or(default.bin),
@@ -847,7 +855,7 @@ impl MergeDefaults for Option<ManifestArchitecture> {
             return default;
         };
 
-        let config = arch_field!(config);
+        let config = arch_config!(config => clone);
 
         InstallConfig {
             bin: config.bin.or(default.bin),

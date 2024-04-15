@@ -12,6 +12,12 @@ use serde::{Deserialize, Serialize};
 #[serde(transparent)]
 pub struct Version(String);
 
+impl From<String> for Version {
+    fn from(value: String) -> Self {
+        Self(value)
+    }
+}
+
 impl Version {
     fn part_regex() -> Regex {
         Regex::new(r"[._-]").unwrap()
