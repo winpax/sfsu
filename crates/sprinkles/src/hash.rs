@@ -2,6 +2,7 @@ use std::io::{BufRead, Read};
 
 use formats::{json::JsonError, text::TextError};
 use itertools::Itertools;
+use regex::Regex;
 use reqwest::header::{HeaderMap, HeaderValue};
 use substitutions::SubstitutionMap;
 use url::Url;
@@ -129,7 +130,49 @@ pub enum HashMode {
 
 impl HashMode {
     #[must_use]
-    #[deprecated(note = "Does not handle Sourceforge or Fosshub")]
+    #[allow(deprecated)]
+    /// Get a [`HashMode`] from an [`Manifest`]
+    ///
+    /// # Panics
+    /// - Invalid regexes
+    pub fn from_manifest(manifest: &Manifest) -> Option<Self> {
+        let install_config = manifest
+            .architecture
+            .merge_default(manifest.install_config.clone());
+
+        if let Some(url) = install_config.url {
+            let fosshub_regex = Regex::new(r"^(?:.*fosshub.com\/).*(?:\/|\?dwl=)(?<filename>.*)$")
+                .expect("valid fosshub regex");
+
+            if fosshub_regex.is_match(&url) {
+                return Some(Self::Fosshub);
+            }
+
+            let sourceforge_regex = Regex::new(r"(?:downloads\.)?sourceforge.net\/projects?\/(?<project>[^\/]+)\/(?:files\/)?(?<file>.*)").expect("valid sourceforge regex");
+
+            if sourceforge_regex.is_match(&url) {
+                return Some(Self::Sourceforge);
+            }
+        }
+
+        let autoupdate_config = manifest
+            .autoupdate
+            .as_ref()
+            .and_then(|autoupdate| autoupdate.architecture.clone())
+            .merge_default(
+                manifest
+                    .autoupdate
+                    .as_ref()
+                    .unwrap()
+                    .autoupdate_config
+                    .clone(),
+            );
+
+        Self::from_autoupdate_config(&autoupdate_config)
+    }
+
+    #[must_use]
+    #[deprecated(note = "Does not handle Sourceforge or Fosshub. Use `from_manifest` instead.")]
     /// Get a [`HashMode`] from an [`AutoupdateConfig`]
     pub fn from_autoupdate_config(config: &AutoupdateConfig) -> Option<Self> {
         let hash = config.hash.as_ref()?;
@@ -212,6 +255,9 @@ impl Hash {
                     .clone(),
             );
 
+        let hash_mode =
+            HashMode::from_manifest(manifest).ok_or(HashError::MissingHashExtraction)?;
+
         let hash_extraction = autoupdate_config
             .hash
             .as_ref()
@@ -242,8 +288,6 @@ impl Hash {
             (url, submap)
         };
 
-        let hash_mode = HashMode::from_autoupdate_config(&autoupdate_config)
-            .ok_or(HashError::MissingHashExtraction)?;
         let source = reqwest::blocking::get(url.as_str())?;
 
         if hash_mode == HashMode::HashUrl {
