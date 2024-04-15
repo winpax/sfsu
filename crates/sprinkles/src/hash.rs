@@ -73,8 +73,8 @@ pub struct Hash {
 
 impl Hash {
     #[must_use]
-    pub fn hash(&self) -> &str {
-        &self.hash
+    pub fn hash(&self) -> String {
+        self.to_string()
     }
 
     #[must_use]
