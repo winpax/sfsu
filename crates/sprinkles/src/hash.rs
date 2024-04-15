@@ -286,7 +286,18 @@ impl Hash {
 
                     (manifest_url, regex)
                 }
-                HashMode::Sourceforge => todo!("Handle Sourceforge"),
+                HashMode::Sourceforge => {
+                    let matches = HashMode::sourceforge_regex().captures(manifest_url.as_str()).ok_or(HashError::MissingSourceforgeCaptures)?;
+
+                    let project = matches.name("project").ok_or(HashError::MissingSourceforgeCaptures)?;
+                    let file = matches.name("file").ok_or(HashError::MissingSourceforgeCaptures)?;
+
+
+
+                    let hashfile_url: Url = todo!();
+
+                    todo!("Handle Sourceforge")
+                }
                 _ => unreachable!(),
             };
 
