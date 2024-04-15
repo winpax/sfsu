@@ -130,6 +130,15 @@ pub enum HashMode {
 }
 
 impl HashMode {
+    fn fosshub_regex() -> Regex {
+        Regex::new(r"^(?:.*fosshub.com\/).*(?:\/|\?dwl=)(?<filename>.*)$")
+            .expect("valid fosshub regex")
+    }
+
+    fn sourceforge_regex() -> Regex {
+        Regex::new(r"(?:downloads\.)?sourceforge.net\/projects?\/(?<project>[^\/]+)\/(?:files\/)?(?<file>.*)").expect("valid sourceforge regex")
+    }
+
     #[must_use]
     #[allow(deprecated)]
     /// Get a [`HashMode`] from an [`Manifest`]
@@ -142,16 +151,11 @@ impl HashMode {
             .merge_default(manifest.install_config.clone());
 
         if let Some(url) = install_config.url {
-            let fosshub_regex = Regex::new(r"^(?:.*fosshub.com\/).*(?:\/|\?dwl=)(?<filename>.*)$")
-                .expect("valid fosshub regex");
-
-            if fosshub_regex.is_match(&url) {
+            if Self::fosshub_regex().is_match(&url) {
                 return Some(Self::Fosshub);
             }
 
-            let sourceforge_regex = Regex::new(r"(?:downloads\.)?sourceforge.net\/projects?\/(?<project>[^\/]+)\/(?:files\/)?(?<file>.*)").expect("valid sourceforge regex");
-
-            if sourceforge_regex.is_match(&url) {
+            if Self::sourceforge_regex().is_match(&url) {
                 return Some(Self::Sourceforge);
             }
         }
@@ -252,7 +256,11 @@ impl Hash {
             HashMode::from_manifest(manifest).ok_or(HashError::MissingHashExtraction)?;
 
         if matches!(hash_mode, HashMode::Fosshub | HashMode::Sourceforge) {
-            todo!("Handle Fosshub and Sourceforge")
+            match hash_mode {
+                HashMode::Fosshub => todo!("Handle Fosshub"),
+                HashMode::Sourceforge => todo!("Handle Sourceforge"),
+                _ => unreachable!(),
+            }
         }
 
         let hash_extraction = autoupdate_config

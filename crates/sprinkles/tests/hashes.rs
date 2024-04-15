@@ -76,3 +76,14 @@ fn test_keepass() -> anyhow::Result<()> {
 
     Ok(())
 }
+
+#[test]
+fn test_hwinfo() -> anyhow::Result<()> {
+    let package = reference::Package::from_str("extras/hwinfo")?;
+
+    let handler = TestHandler::new(package);
+
+    handler.test()?;
+
+    Ok(())
+}
