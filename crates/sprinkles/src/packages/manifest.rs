@@ -61,7 +61,7 @@ pub struct Manifest {
     pub suggest: Option<Suggest>,
     /// The version of the package
     pub version: Version,
-        /// The environment variables to add to PATH
+    /// The environment variables to add to PATH
     pub env_add_path: Option<StringArray>,
     /// The environment variables to set
     pub env_set: Option<HashMap<String, Option<serde_json::Value>>>,
