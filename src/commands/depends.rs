@@ -25,7 +25,7 @@ impl super::Command for Args {
             self.package.set_bucket(bucket)?;
         }
 
-        let manifests = self.package.list_manifests();
+        let manifests = self.package.list_manifests()?;
 
         if manifests.is_empty() {
             abandon!("Could not find any packages matching: {}", self.package);

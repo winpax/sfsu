@@ -105,7 +105,7 @@ pub struct InstallConfig {
     /// The directories to extract to
     pub extract_dir: Option<StringArray>,
     /// The hash of the package
-    pub hash: Option<StringArray>,
+    pub hash: Option<String>,
     /// The installer configuration
     pub installer: Option<Installer>,
     #[deprecated(since = "1.10.0")]

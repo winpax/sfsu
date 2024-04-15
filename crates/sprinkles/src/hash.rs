@@ -562,11 +562,7 @@ mod tests {
 
         let hash = Hash::find_hash_in_xml(source, &submap, xpath).unwrap();
 
-        let StringArray::String(actual_hash) =
-            manifest.architecture.unwrap().x64.unwrap().hash.unwrap()
-        else {
-            unreachable!();
-        };
+        let actual_hash = manifest.architecture.unwrap().x64.unwrap().hash.unwrap();
 
         assert_eq!(actual_hash, hash.hash);
     }
@@ -609,14 +605,11 @@ mod tests {
 
             let hash = Hash::get_for_app(&manifest)?;
 
-            let StringArray::String(actual_hash) = manifest
+            let actual_hash = manifest
                 .architecture
                 .merge_default(dbg!(manifest.install_config))
                 .hash
-                .unwrap()
-            else {
-                unreachable!();
-            };
+                .unwrap();
 
             assert_eq!(actual_hash, hash.hash());
 

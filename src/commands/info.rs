@@ -55,7 +55,7 @@ impl super::Command for Args {
             }
         }
 
-        let manifests = self.package.list_manifests();
+        let manifests = self.package.list_manifests()?;
 
         if manifests.is_empty() {
             abandon!("No package found with the name \"{}\"", self.package);

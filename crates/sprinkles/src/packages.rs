@@ -19,6 +19,7 @@ use strum::Display;
 use crate::{
     buckets::{self, Bucket},
     git::{self, Repo},
+    hash::HashError,
     output::{
         sectioned::{Children, Section, Text},
         wrappers::{author::Author, time::NicerTime},
@@ -87,7 +88,39 @@ macro_rules! arch_config {
     // };
 }
 
+#[macro_export]
+macro_rules! arch_field {
+    ($self:ident.$field:ident) => {
+        arch_field!($self.$field).clone()
+    };
+
+    (ref $self:ident.$field:ident) => {{
+        if let Some(cfg) = match $crate::Architecture::ARCH {
+            $crate::Architecture::Arm64 => &$self.arm64,
+            $crate::Architecture::X64 => &$self.x64,
+            $crate::Architecture::X86 => &$self.x86,
+        } {
+            Some(&cfg.$field)
+        } else {
+            None
+        }
+    }};
+
+    (ref mut $self:ident.$field:ident) => {{
+        if let Some(cfg) = match $crate::Architecture::ARCH {
+            $crate::Architecture::Arm64 => &mut $self.arm64,
+            $crate::Architecture::X64 => &mut $self.x64,
+            $crate::Architecture::X86 => &mut $self.x86,
+        } {
+            Some(&mut cfg.$field)
+        } else {
+            None
+        }
+    }};
+}
+
 pub use arch_config;
+pub use arch_field;
 
 use self::manifest::{
     AliasArray, AutoupdateArchitecture, AutoupdateConfig, HashExtraction,
@@ -613,31 +646,41 @@ impl Manifest {
 
     #[cfg(feature = "manifest-hashes")]
     pub fn set_version(&mut self, version: String) -> std::result::Result<(), SetVersionError> {
-        // self.version = version.into();
+        use crate::hash::Hash;
 
-        let autoupdate = self
-            .autoupdate
-            .as_mut()
-            .ok_or(SetVersionError::MissingAutoUpdate)?;
+        self.version = version.into();
 
-        if let Some(architecture) = &autoupdate.architecture {
-            let config = autoupdate
-                .architecture
-                .merge_default(autoupdate.default_config.clone());
+        // let autoupdate = self
+        //     .autoupdate
+        //     .as_mut()
+        //     .ok_or(SetVersionError::MissingAutoUpdate)?;
 
-            // let autoupdate_arch = match Scoop::arch() {
-            //     Architecture::Arm64 => architecture.arm64.as_mut(),
-            //     Architecture::X64 => architecture.x64.as_mut(),
-            //     Architecture::X86 => architecture.x86.as_mut(),
-            // }
-            // .ok_or(SetVersionError::MissingAutoUpdate)?;
-
-            // TODO: Figure out hash extraction
-            // autoupdate_arch.hash
-            todo!()
+        let hash = Hash::get_for_app(self)?;
+        if let Some(arch) = &mut self.architecture {
+            if let Some(manifest_hash) = arch_field!(ref mut arch.hash) {
+                _ = manifest_hash.insert(hash.hash());
+            } else {
+                return Err(SetVersionError::MissingArchAutoUpdate);
+            }
         }
 
-        todo!()
+        // if let Some(architecture) = &autoupdate.architecture {
+        //     let config = autoupdate
+        //         .architecture
+        //         .merge_default(autoupdate.default_config.clone());
+
+        // let autoupdate_arch = match Scoop::arch() {
+        //     Architecture::Arm64 => architecture.arm64.as_mut(),
+        //     Architecture::X64 => architecture.x64.as_mut(),
+        //     Architecture::X86 => architecture.x86.as_mut(),
+        // }
+        // .ok_or(SetVersionError::MissingAutoUpdate)?;
+
+        // TODO: Figure out hash extraction
+        // autoupdate_arch.hash
+
+        // todo!()
+        Ok(())
     }
 
     #[must_use]
@@ -785,6 +828,9 @@ impl Manifest {
 
 #[derive(Debug, thiserror::Error)]
 pub enum SetVersionError {
+    #[error("Could not get hash for app: {0}")]
+    HashError(#[from] HashError),
+
     #[error("Manifest does not have `autoupdate` field")]
     MissingAutoUpdate,
 

@@ -5,8 +5,8 @@ use std::{fmt, path::PathBuf, str::FromStr};
 use itertools::Itertools;
 use url::Url;
 
-use super::{CreateManifest, Manifest};
-use crate::buckets::Bucket;
+use super::{CreateManifest, Manifest, SetVersionError};
+use crate::buckets::{self, Bucket};
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -24,6 +24,18 @@ pub enum Error {
     TooManySegments,
     #[error("Invalid version supplied")]
     InvalidVersion,
+    #[error("Could not find matching manifest")]
+    NotFound,
+    #[error("Failed to set version: {0}")]
+    SetVersion(#[from] SetVersionError),
+    #[error("HTTP error: {0}")]
+    Reqwest(#[from] reqwest::Error),
+    #[error("Packages error: {0}")]
+    Packages(#[from] crate::packages::Error),
+    #[error("ser/de error: {0}")]
+    Serde(#[from] serde_json::Error),
+    #[error("Buckets error: {0}")]
+    Buckets(#[from] buckets::Error),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -127,45 +139,45 @@ impl Package {
         }
     }
 
-    #[must_use]
     /// Parse the bucket and package to get the manifest
-    ///
-    /// Returns [`None`] if the bucket is not valid, the manifest does not exist,
-    /// or an error was thrown while getting the manifest
-    pub fn manifest(&self) -> Option<Manifest> {
+    pub fn manifest(&self) -> Result<Manifest, Error> {
         // TODO: Map output to fix version
 
-        if matches!(self.manifest, ManifestRef::File(_) | ManifestRef::Url(_)) {
+        let mut manifest = if matches!(self.manifest, ManifestRef::File(_) | ManifestRef::Url(_)) {
             let mut manifest = match &self.manifest {
-                ManifestRef::File(path) => Manifest::from_path(path).ok()?,
+                ManifestRef::File(path) => Manifest::from_path(path)?,
                 ManifestRef::Url(url) => {
                     let manifest_string = crate::requests::BlockingClient::new()
                         .get(url.to_string())
-                        .send()
-                        .ok()?
-                        .text()
-                        .ok()?;
+                        .send()?
+                        .text()?;
 
-                    Manifest::from_str(manifest_string).ok()?
+                    Manifest::from_str(manifest_string)?
                 }
                 _ => unreachable!(),
             };
 
-            manifest.name = self.name()?;
+            manifest.name = self.name().ok_or(Error::MissingAppName)?;
 
-            return Some(manifest);
-        }
+            Ok(manifest)
+        } else if let Some(bucket_name) = self.bucket() {
+            let bucket = Bucket::from_name(bucket_name)?;
 
-        if let Some(bucket_name) = self.bucket() {
-            let bucket = Bucket::from_name(bucket_name).ok()?;
-
-            bucket.get_manifest(self.name()?).ok()
+            Ok(bucket.get_manifest(self.name().ok_or(Error::MissingAppName)?)?)
         } else {
-            Bucket::list_all()
-                .ok()?
+            Ok(Bucket::list_all()?
                 .into_iter()
                 .find_map(|bucket| bucket.get_manifest(self.name()?).ok())
+                .ok_or(Error::NotFound)?)
+        };
+
+        if let Ok(manifest) = manifest.as_mut()
+            && let Some(version) = &self.version
+        {
+            manifest.set_version(version.clone())?;
         }
+
+        manifest
     }
 
     #[must_use]
@@ -213,16 +225,23 @@ impl Package {
         }
     }
 
-    #[must_use]
     /// Parse the bucket and package to get the manifest, or search for all matches in local buckets
     ///
     /// Returns a [`Vec`] with a single manifest if the reference is valid
     ///
     /// Otherwise returns a [`Vec`] containing each matching manifest found in each local bucket
-    pub fn list_manifests(&self) -> Vec<Manifest> {
+    pub fn list_manifests(&self) -> Result<Vec<Manifest>, Error> {
         self.list_manifest_paths()
             .into_iter()
-            .filter_map(|path| Manifest::from_path(path).ok())
+            .map(Manifest::from_path)
+            .map(|manifest| -> Result<Manifest, Error> {
+                let mut manifest = manifest?;
+                if let Some(version) = &self.version {
+                    manifest.set_version(version.clone())?;
+                }
+
+                Ok(manifest)
+            })
             .collect()
     }
 
