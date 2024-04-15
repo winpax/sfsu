@@ -177,8 +177,8 @@ impl Hash {
     /// - If the hash is not found in the XML
     /// - If the hash is not found in the text
     /// - If the hash is not found in the JSON
-    pub fn get_for_app(manifest: Manifest) -> Result<Hash> {
-        let autoupdate_config = if let Some(ref arch) = manifest
+    pub fn get_for_app(manifest: &Manifest) -> Result<Hash> {
+        let autoupdate_config = if let Some(arch) = &manifest
             .autoupdate
             .as_ref()
             .and_then(|autoupdate| autoupdate.architecture.clone())
@@ -187,6 +187,7 @@ impl Hash {
         } else {
             manifest
                 .autoupdate
+                .as_ref()
                 .ok_or(HashError::MissingAutoupdate)?
                 .autoupdate_config
                 .clone()
@@ -417,6 +418,27 @@ mod tests {
         else {
             unreachable!();
         };
+
+        assert_eq!(actual_hash, hash.hash);
+    }
+
+    #[test]
+    fn test_get_hash_for_googlechrome() {
+        let manifest = Bucket::from_name("extras")
+            .unwrap()
+            .get_manifest("googlechrome")
+            .unwrap();
+
+        let hash = Hash::get_for_app(&manifest).unwrap();
+
+        let actual_hash = manifest
+            .architecture
+            .unwrap()
+            .x64
+            .unwrap()
+            .hash
+            .unwrap()
+            .to_string();
 
         assert_eq!(actual_hash, hash.hash);
     }
