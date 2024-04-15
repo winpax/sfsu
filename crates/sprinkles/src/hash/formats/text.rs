@@ -207,7 +207,7 @@ mod tests {
 
         substitutions.insert(
             "$basename".into(),
-            "VisualCppRedist_AIO_x86_x64_80.zip".into(),
+            "VisualCppRedist_AIO_x86_x64_81.zip".into(),
         );
 
         let hash = parse_text(text_file, &substitutions, regex)
