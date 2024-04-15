@@ -10,7 +10,6 @@ use chrono::{DateTime, FixedOffset, Local};
 use clap::{Parser, ValueEnum};
 use git2::Commit;
 use itertools::Itertools;
-use owo_colors::OwoColorize;
 use quork::traits::truthy::ContainsTruth as _;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use regex::Regex;
@@ -78,7 +77,7 @@ macro_rules! arch_field {
 
 pub use arch_field;
 
-use self::manifest::AliasArray;
+use self::manifest::{AliasArray, Autoupdate, AutoupdateArchitecture};
 
 #[derive(Debug, Serialize)]
 /// Minimal package info
@@ -531,6 +530,8 @@ impl Manifest {
         pattern: &Regex,
         mode: SearchMode,
     ) -> Option<Section<Text<String>>> {
+        use owo_colors::OwoColorize;
+
         // TODO: Better display of output
 
         // This may be a bit of a hack, but it works
@@ -781,4 +782,8 @@ pub fn is_installed(manifest_name: impl AsRef<Path>, bucket: Option<impl AsRef<s
         }
         Err(_) => false,
     }
+}
+
+impl Autoupdate {
+    pub fn merge_arches(&mut self, arches: AutoupdateArchitecture) {}
 }

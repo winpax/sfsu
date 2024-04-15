@@ -151,7 +151,7 @@ impl Hash {
                 .map(|url| {
                     let mut submap = submap.clone();
                     submap.append_url(&url);
-                    submap
+                    (url, submap)
                 })
                 .collect_vec()
         };
