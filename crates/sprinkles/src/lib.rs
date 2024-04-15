@@ -233,11 +233,11 @@ impl Scoop {
         let logs_dir = Self::logging_dir()?;
         let date = Local::now();
 
-        let log_file = tokio::runtime::Builder::new_current_thread()
+        if let Ok(rt) = tokio::runtime::Builder::new_current_thread()
             .enable_all()
             .build()
-            .unwrap()
-            .block_on(async {
+        {
+            let log_file = rt.block_on(async {
                 let new_file = async {
                     use tokio::fs::File;
 
@@ -266,9 +266,26 @@ impl Scoop {
                 }
             })??;
 
-        Ok(log_file
-            .try_into_std()
-            .expect("converted tokio file into std file"))
+            Ok(log_file
+                .try_into_std()
+                .expect("converted tokio file into std file"))
+        } else {
+            use std::fs::File;
+
+            let mut i = 0;
+            let file = loop {
+                i += 1;
+
+                let log_path =
+                    logs_dir.join(format!("sfsu-{}-{i}.log", date.format("%Y-%m-%d-%H-%M-%S")));
+
+                if !log_path.exists() {
+                    break File::create(log_path)?;
+                }
+            };
+
+            Ok(file)
+        }
     }
 
     /// Checks if the app is installed by its name
