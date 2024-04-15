@@ -11,7 +11,7 @@ pub struct Logger {
 
 impl Logger {
     pub fn new(verbose: bool) -> Self {
-        Self::from_file(sprinkles::Scoop::new_log().expect("new log"), verbose)
+        Self::from_file(sprinkles::Scoop::new_log_sync().expect("new log"), verbose)
     }
 
     pub fn from_file(file: File, verbose: bool) -> Self {

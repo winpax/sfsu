@@ -103,6 +103,16 @@ impl fmt::Display for Architecture {
     }
 }
 
+#[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
+/// Library errors
+pub enum Error {
+    #[error("Timeout creating new log file. This is a bug, please report it.")]
+    TimeoutCreatingLog,
+    #[error("Error creating log file: {0}")]
+    CreatingLog(#[from] std::io::Error),
+}
+
 /// The Scoop install reference
 pub struct Scoop;
 
@@ -218,21 +228,71 @@ impl Scoop {
     ///
     /// # Errors
     /// - Creating the file fails
-    pub fn new_log() -> std::io::Result<File> {
+    ///
+    /// # Panics
+    /// - Could not convert tokio file into std file
+    pub async fn new_log() -> Result<File, Error> {
+        let logs_dir = Self::logging_dir()?;
+        let date = Local::now();
+
+        let log_file = async {
+            use tokio::fs::File;
+
+            let mut i = 0;
+            loop {
+                i += 1;
+
+                let log_path =
+                    logs_dir.join(format!("sfsu-{}-{i}.log", date.format("%Y-%m-%d-%H-%M-%S")));
+
+                if !log_path.exists() {
+                    break File::create(log_path).await;
+                }
+            }
+        };
+        let timeout = async {
+            use std::time::Duration;
+            use tokio::time;
+
+            time::sleep(Duration::from_secs(5)).await;
+        };
+
+        let log_file = tokio::select! {
+            res = log_file => Ok(res),
+            () = timeout => Err(Error::TimeoutCreatingLog),
+        }??;
+
+        Ok(log_file
+            .try_into_std()
+            .expect("converted tokio file into std file"))
+    }
+
+    /// Create a new log file
+    ///
+    /// This function is synchronous and does not allow for timeouts.
+    /// If for some reason there are no available log files, this function will block indefinitely.
+    ///
+    /// # Errors
+    /// - Creating the file fails
+    pub fn new_log_sync() -> Result<File, Error> {
+        use std::fs::File;
+
         let logs_dir = Self::logging_dir()?;
         let date = Local::now();
 
         let mut i = 0;
-        loop {
+        let file = loop {
             i += 1;
 
             let log_path =
                 logs_dir.join(format!("sfsu-{}-{i}.log", date.format("%Y-%m-%d-%H-%M-%S")));
 
             if !log_path.exists() {
-                break File::create(&log_path);
+                break File::create(log_path)?;
             }
-        }
+        };
+
+        Ok(file)
     }
 
     /// Checks if the app is installed by its name
