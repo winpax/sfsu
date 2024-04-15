@@ -219,7 +219,6 @@ impl HashMode {
             return if let Some(mode) = mode {
                 Some(mode)
             } else {
-                dbg!(&hash_cfg.url);
                 Some(HashMode::HashUrl)
             };
         }
@@ -607,7 +606,7 @@ mod tests {
 
             let actual_hash = manifest
                 .architecture
-                .merge_default(dbg!(manifest.install_config))
+                .merge_default(manifest.install_config)
                 .hash
                 .unwrap();
 

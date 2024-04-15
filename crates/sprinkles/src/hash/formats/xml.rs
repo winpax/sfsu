@@ -25,8 +25,6 @@ pub fn parse_xml(
     let mut xpath = xpath.as_ref().to_string();
     xpath.substitute(substitutions, false);
 
-    dbg!(&xpath);
-
     let pkg = parser::parse(source.as_ref())?;
     let doc = pkg.as_document();
 
