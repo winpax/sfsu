@@ -13,9 +13,11 @@ use crate::{
         manifest::{
             AutoupdateConfig, HashExtractionOrArrayOfHashExtractions, HashMode as ManifestHashMode,
         },
-        Manifest,
+        Manifest, MergeDefaults,
     },
 };
+
+use self::substitutions::Substitute;
 
 mod formats;
 mod substitutions;
@@ -61,6 +63,18 @@ pub type Result<T> = std::result::Result<T, HashError>;
 pub struct Hash {
     hash: String,
     hash_type: HashType,
+}
+
+impl Hash {
+    #[must_use]
+    pub fn hash(&self) -> &str {
+        &self.hash
+    }
+
+    #[must_use]
+    pub fn hash_type(&self) -> HashType {
+        self.hash_type
+    }
 }
 
 impl std::fmt::Display for Hash {
@@ -178,20 +192,18 @@ impl Hash {
     /// - If the hash is not found in the text
     /// - If the hash is not found in the JSON
     pub fn get_for_app(manifest: &Manifest) -> Result<Hash> {
-        let autoupdate_config = if let Some(arch) = &manifest
+        let autoupdate_config = manifest
             .autoupdate
             .as_ref()
             .and_then(|autoupdate| autoupdate.architecture.clone())
-        {
-            arch_field!(arch).clone()
-        } else {
-            manifest
-                .autoupdate
-                .as_ref()
-                .ok_or(HashError::MissingAutoupdate)?
-                .autoupdate_config
-                .clone()
-        };
+            .merge_default(
+                manifest
+                    .autoupdate
+                    .as_ref()
+                    .unwrap()
+                    .autoupdate_config
+                    .clone(),
+            );
 
         let hash_extraction = autoupdate_config
             .hash
@@ -201,41 +213,54 @@ impl Hash {
             .ok_or(HashError::HashExtractionUrl)?;
 
         let (url, submap) = {
+            let url = manifest
+                .architecture
+                .merge_default(manifest.install_config.clone())
+                .url
+                .as_ref()
+                .ok_or(HashError::UrlNotFound)
+                .and_then(|url| Ok(Url::parse(&url)?))?;
+
+            let mut submap = SubstitutionMap::new();
+            submap.append_version(&manifest.version);
+            submap.append_url(&url);
+
             let url = hash_extraction
                 .url
                 .as_ref()
                 .ok_or(HashError::UrlNotFound)
-                .map(|url: &String| Url::parse(url))??;
-
-            let mut submap = SubstitutionMap::new();
-            submap.append_version(&manifest.version);
-
-            let mut submap = submap.clone();
-            submap.append_url(&url);
+                .map(|url| url.clone().into_substituted(&submap, false))
+                .and_then(|url: String| Ok(Url::parse(&url)?))?;
 
             (url, submap)
         };
 
-        let hash_mode =
-            HashMode::from_autoupdate_config(&autoupdate_config).ok_or(HashError::HashMode)?;
+        if let Some(hash_mode) = HashMode::from_autoupdate_config(&autoupdate_config) {
+            let source = reqwest::blocking::get(url.as_str())?;
 
-        let source = reqwest::blocking::get(url.as_str())?;
+            if hash_mode == HashMode::Download {
+                todo!("Download and compute hashes")
+            }
 
-        if hash_mode == HashMode::Download {
-            todo!("Download and compute hashes")
+            let hash = match hash_mode {
+                HashMode::Extract(regex) => Hash::from_text(source.text()?, &submap, regex),
+                HashMode::Xpath(xpath) => Hash::find_hash_in_xml(source.text()?, &submap, xpath),
+                HashMode::Json(json_path) => Hash::from_json(source.bytes()?, &submap, json_path),
+                HashMode::Rdf => Hash::from_rdf(source.bytes()?, url.remote_filename()),
+                // HashMode::Fosshub => todo!(),
+                // HashMode::Sourceforge => todo!(),
+                _ => unreachable!(),
+            }?;
+
+            Ok(hash)
+        } else {
+            let hash = reqwest::blocking::get(url)?.text()?;
+
+            Ok(Hash {
+                hash,
+                hash_type: HashType::default(),
+            })
         }
-
-        let hash = match hash_mode {
-            HashMode::Extract(regex) => Hash::from_text(source.text()?, &submap, regex),
-            HashMode::Xpath(xpath) => Hash::find_hash_in_xml(source.text()?, &submap, xpath),
-            HashMode::Json(json_path) => Hash::from_json(source.bytes()?, &submap, json_path),
-            HashMode::Rdf => Hash::from_rdf(source.bytes()?, url.remote_filename()),
-            // HashMode::Fosshub => todo!(),
-            // HashMode::Sourceforge => todo!(),
-            _ => unreachable!(),
-        }?;
-
-        Ok(hash)
     }
 
     /// Compute a hash from a source
@@ -429,6 +454,7 @@ mod tests {
         assert_eq!(actual_hash, hash.hash);
     }
 
+    #[ignore = "replaced"]
     #[test]
     fn test_get_hash_for_googlechrome() {
         let manifest = Bucket::from_name("extras")

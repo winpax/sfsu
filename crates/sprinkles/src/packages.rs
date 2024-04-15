@@ -83,7 +83,7 @@ pub use arch_field;
 
 use self::manifest::{
     AliasArray, AutoupdateArchitecture, AutoupdateConfig, HashExtraction,
-    HashExtractionOrArrayOfHashExtractions,
+    HashExtractionOrArrayOfHashExtractions, ManifestArchitecture,
 };
 
 #[derive(Debug, Serialize)]
@@ -445,9 +445,10 @@ impl Manifest {
     }
 
     pub fn download_urls(&self, arch: Architecture) -> Option<Vec<DownloadUrl>> {
-        let urls = self.install_config(arch).url?.to_vec();
+        let urls = self.install_config(arch).url?;
 
-        Some(urls.into_iter().map(DownloadUrl::from_string).collect())
+        // Some(urls.into_iter().map(DownloadUrl::from_string).collect())
+        Some(vec![DownloadUrl::from_string(urls)])
     }
 
     #[must_use]
@@ -605,9 +606,7 @@ impl Manifest {
         if let Some(architecture) = &autoupdate.architecture {
             let config = autoupdate
                 .architecture
-                .as_ref()
-                .map(|arch| arch.merge_default(autoupdate.autoupdate_config.clone()))
-                .unwrap_or(autoupdate.autoupdate_config.clone());
+                .merge_default(autoupdate.autoupdate_config.clone());
 
             // let autoupdate_arch = match Scoop::arch() {
             //     Architecture::Arm64 => architecture.arm64.as_mut(),
@@ -797,11 +796,23 @@ pub fn is_installed(manifest_name: impl AsRef<Path>, bucket: Option<impl AsRef<s
     }
 }
 
-impl AutoupdateArchitecture {
+pub(crate) trait MergeDefaults {
+    type Output;
+
+    fn merge_default(&self, default: Self::Output) -> Self::Output;
+}
+
+impl MergeDefaults for Option<AutoupdateArchitecture> {
+    type Output = AutoupdateConfig;
+
     #[must_use]
     /// Merge the architecture specific autoupdate config with the arch agnostic one
-    pub fn merge_default(&self, default: AutoupdateConfig) -> AutoupdateConfig {
-        let config = arch_field!(self);
+    fn merge_default(&self, default: Self::Output) -> Self::Output {
+        let Some(config) = self else {
+            return default;
+        };
+
+        let config = arch_field!(config);
 
         AutoupdateConfig {
             bin: config.bin.or(default.bin),
@@ -816,11 +827,92 @@ impl AutoupdateArchitecture {
     }
 }
 
+impl MergeDefaults for Option<ManifestArchitecture> {
+    type Output = InstallConfig;
+
+    #[allow(deprecated)]
+    #[must_use]
+    /// Merge the architecture specific autoupdate config with the arch agnostic one
+    fn merge_default(&self, default: Self::Output) -> Self::Output {
+        let Some(config) = self else {
+            return default;
+        };
+
+        let config = arch_field!(config);
+
+        InstallConfig {
+            bin: config.bin.or(default.bin),
+            checkver: config.checkver.or(default.checkver),
+            env_add_path: config.env_add_path.or(default.env_add_path),
+            env_set: config.env_set.or(default.env_set),
+            extract_dir: config.extract_dir.or(default.extract_dir),
+            hash: config.hash.or(default.hash),
+            installer: config.installer.or(default.installer),
+            msi: config.msi.or(default.msi),
+            post_install: config.post_install.or(default.post_install),
+            post_uninstall: config.post_uninstall.or(default.post_uninstall),
+            pre_install: config.pre_install.or(default.pre_install),
+            pre_uninstall: config.pre_uninstall.or(default.pre_uninstall),
+            shortcuts: config.shortcuts.or(default.shortcuts),
+            uninstaller: config.uninstaller.or(default.uninstaller),
+            url: config.url.or(default.url),
+        }
+    }
+}
+
 impl HashExtractionOrArrayOfHashExtractions {
+    #[must_use]
     pub fn as_object(&self) -> Option<&HashExtraction> {
         match self {
             Self::Url(_) => None,
             Self::HashExtraction(hash) => Some(hash),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::error::Error;
+
+    use crate::{buckets::Bucket, packages::MergeDefaults};
+    use rayon::prelude::*;
+
+    #[test]
+    fn test_parse_all_manifests() -> Result<(), Box<dyn Error>> {
+        // Some manifests (ahem unityhub) are broken and don't follow Scoop's spec
+        // This list is used to skip those manifests
+        // because go fuck yourself
+        const BROKEN_MANIFESTS: &[&str] = &["unityhub"];
+
+        let buckets = Bucket::list_all()?;
+
+        let manifests = buckets
+            .into_par_iter()
+            .flat_map(|bucket| bucket.list_packages())
+            .flatten()
+            .collect::<Vec<_>>();
+
+        manifests.par_iter().for_each(|manifest| {
+            assert!(!manifest.name.is_empty());
+            assert!(!manifest.bucket.is_empty());
+
+            if BROKEN_MANIFESTS.contains(&manifest.name.as_str()) {
+                return;
+            }
+
+            if let Some(autoupdate) = &manifest.autoupdate {
+                let autoupdate_config = autoupdate
+                    .architecture
+                    .merge_default(autoupdate.autoupdate_config.clone());
+
+                assert!(
+                    autoupdate_config.url.is_some(),
+                    "URL is missing in package: {}",
+                    manifest.name
+                );
+            }
+        });
+
+        Ok(())
     }
 }

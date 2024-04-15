@@ -59,6 +59,14 @@ impl ManifestRef {
 }
 
 impl Package {
+    #[must_use]
+    pub fn from_ref(manifest: ManifestRef) -> Self {
+        Self {
+            manifest,
+            version: None,
+        }
+    }
+
     /// Update the bucket string in the package reference
     ///
     /// # Errors
@@ -232,10 +240,7 @@ impl Package {
 
 impl From<ManifestRef> for Package {
     fn from(manifest: ManifestRef) -> Self {
-        Package {
-            manifest,
-            version: None,
-        }
+        Self::from_ref(manifest)
     }
 }
 
@@ -256,7 +261,7 @@ impl fmt::Display for ManifestRef {
 impl FromStr for ManifestRef {
     type Err = Error;
 
-    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         if let Ok(url) = url::Url::parse(s) {
             return Ok(Self::Url(url));
         }

@@ -123,7 +123,7 @@ pub struct InstallConfig {
     pub pre_uninstall: Option<StringArray>,
     pub shortcuts: Option<Vec<Vec<String>>>,
     pub uninstaller: Option<Uninstaller>,
-    pub url: Option<StringArray>,
+    pub url: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]

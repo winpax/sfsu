@@ -3,6 +3,8 @@ use std::borrow::Cow;
 use regex::Regex;
 use url::Url;
 
+use super::substitutions::{Substitute, SubstitutionMap};
+
 pub fn strip_ext(file_name: &str) -> Cow<'_, str> {
     let ext_regex = Regex::new(r"\.[^\.]*$").expect("valid extension regex");
 
@@ -17,6 +19,8 @@ pub trait UrlExt {
     fn strip_filename(&mut self);
 
     fn leaf(&self) -> Option<String>;
+
+    fn substitute(&mut self, submap: &SubstitutionMap);
 }
 
 impl UrlExt for Url {
@@ -68,6 +72,14 @@ impl UrlExt for Url {
     fn leaf(&self) -> Option<String> {
         self.path_segments()
             .and_then(|segments| segments.last().map(ToString::to_string))
+    }
+
+    fn substitute(&mut self, submap: &SubstitutionMap) {
+        let mut url = self.to_string();
+
+        url.substitute(submap, false);
+
+        *self = Url::parse(&url).unwrap();
     }
 }
 
