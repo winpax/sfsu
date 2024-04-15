@@ -805,7 +805,7 @@ pub fn is_installed(manifest_name: impl AsRef<Path>, bucket: Option<impl AsRef<s
     }
 }
 
-pub(crate) trait MergeDefaults {
+pub trait MergeDefaults {
     type Output;
 
     fn merge_default(&self, default: Self::Output) -> Self::Output;

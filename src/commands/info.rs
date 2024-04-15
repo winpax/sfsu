@@ -11,7 +11,7 @@ use sprinkles::{
     packages::{
         info::PackageInfo,
         manifest::{AliasArray, StringArray},
-        reference, Manifest,
+        reference, Manifest, MergeDefaults,
     },
     semver, Scoop,
 };
@@ -132,17 +132,21 @@ impl Args {
             version: manifest.version.to_string(),
             website: manifest.homepage,
             license: manifest.license,
-            binaries: manifest.bin.map(|b| match b {
-                AliasArray::NestedArray(StringArray::String(bin)) => bin.to_string(),
-                AliasArray::NestedArray(StringArray::StringArray(bins)) => bins.join(" | "),
-                AliasArray::AliasArray(bins) => bins
-                    .into_iter()
-                    .map(|bin_union| match bin_union {
-                        StringArray::String(bin) => bin,
-                        StringArray::StringArray(mut bin_alias) => bin_alias.remove(0),
-                    })
-                    .join(" | "),
-            }),
+            binaries: manifest
+                .architecture
+                .merge_default(manifest.install_config.clone())
+                .bin
+                .map(|b| match b {
+                    AliasArray::NestedArray(StringArray::String(bin)) => bin.to_string(),
+                    AliasArray::NestedArray(StringArray::StringArray(bins)) => bins.join(" | "),
+                    AliasArray::AliasArray(bins) => bins
+                        .into_iter()
+                        .map(|bin_union| match bin_union {
+                            StringArray::String(bin) => bin,
+                            StringArray::StringArray(mut bin_alias) => bin_alias.remove(0),
+                        })
+                        .join(" | "),
+                }),
             notes: manifest
                 .notes
                 .map(|notes| notes.to_string())
