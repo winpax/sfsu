@@ -267,6 +267,13 @@ impl Hash {
             .ok_or(HashError::UrlNotFound)
             .and_then(|url| Ok(Url::parse(url)?))?;
 
+        let submap = {
+            let mut submap = SubstitutionMap::new();
+            submap.append_version(&manifest.version);
+            submap.append_url(&manifest_url);
+            submap
+        };
+
         if matches!(hash_mode, HashMode::Fosshub | HashMode::Sourceforge) {
             let (url, regex): (Url, String) = match hash_mode {
                 HashMode::Fosshub => {
@@ -287,16 +294,29 @@ impl Hash {
                     (manifest_url, regex)
                 }
                 HashMode::Sourceforge => {
-                    let matches = HashMode::sourceforge_regex().captures(manifest_url.as_str()).ok_or(HashError::MissingSourceforgeCaptures)?;
+                    let matches = HashMode::sourceforge_regex()
+                        .captures(manifest_url.as_str())
+                        .ok_or(HashError::MissingSourceforgeCaptures)?;
 
-                    let project = matches.name("project").ok_or(HashError::MissingSourceforgeCaptures)?;
-                    let file = matches.name("file").ok_or(HashError::MissingSourceforgeCaptures)?;
+                    let project = matches
+                        .name("project")
+                        .ok_or(HashError::MissingSourceforgeCaptures)?
+                        .as_str();
+                    let file = matches
+                        .name("file")
+                        .ok_or(HashError::MissingSourceforgeCaptures)?
+                        .as_str();
 
+                    let hashfile_url = {
+                        let url_string =
+                            format!("https://sourceforge.net/projects/{project}/files/{file}");
 
+                        Url::parse(&url_string)?
+                    };
 
-                    let hashfile_url: Url = todo!();
+                    let regex = r#""$basename":.*?"sha1":\s*"([a-fA-F0-9]{40})""#;
 
-                    todo!("Handle Sourceforge")
+                    (hashfile_url, regex.to_string())
                 }
                 _ => unreachable!(),
             };
@@ -311,20 +331,12 @@ impl Hash {
             .as_object()
             .ok_or(HashError::HashExtractionUrl)?;
 
-        let (url, submap) = {
-            let mut submap = SubstitutionMap::new();
-            submap.append_version(&manifest.version);
-            submap.append_url(&manifest_url);
-
-            let url = hash_extraction
-                .url
-                .as_ref()
-                .ok_or(HashError::UrlNotFound)
-                .map(|url| url.clone().into_substituted(&submap, false))
-                .and_then(|url: String| Ok(Url::parse(&url)?))?;
-
-            (url, submap)
-        };
+        let url = hash_extraction
+            .url
+            .as_ref()
+            .ok_or(HashError::UrlNotFound)
+            .map(|url| url.clone().into_substituted(&submap, false))
+            .and_then(|url: String| Ok(Url::parse(&url)?))?;
 
         let source = BlockingClient::new().get(url.as_str()).send()?;
 
