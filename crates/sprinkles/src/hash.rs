@@ -134,24 +134,21 @@ impl Hash {
         };
 
         let submaps = {
-            let urls = autoupdate_config
+            let url = autoupdate_config
                 .url
-                .ok_or(HashError::UrlNotFound)?
-                .to_vec()
-                .iter()
-                .map(|url: &String| Ok(Url::parse(url)?))
-                .collect::<Result<Vec<_>>>()?;
+                .ok_or(HashError::UrlNotFound)
+                .map(|url: String| Url::parse(&url))??
+            // .to_vec()
+            // .iter()
+            // .collect::<Result<Vec<_>>>()?;
+            ;
 
             let mut submap = SubstitutionMap::new();
             submap.append_version(&manifest.version);
 
-            urls.into_iter()
-                .map(|url| {
-                    let mut submap = submap.clone();
-                    submap.append_url(&url);
-                    (url, submap)
-                })
-                .collect_vec()
+            let mut submap = submap.clone();
+            submap.append_url(&url);
+            (url, submap)
         };
 
         todo!()
@@ -327,7 +324,7 @@ mod tests {
 
         let source = reqwest::blocking::get(url).unwrap().text().unwrap();
 
-        let Some(StringArray::String(url)) = autoupdate.url else {
+        let Some(url) = autoupdate.url else {
             unreachable!()
         };
 
