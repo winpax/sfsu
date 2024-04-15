@@ -655,6 +655,8 @@ impl Manifest {
         //     .as_mut()
         //     .ok_or(SetVersionError::MissingAutoUpdate)?;
 
+        todo!("Handle urls and other autoupdate fields");
+
         let hash = Hash::get_for_app(self)?;
         if let Some(arch) = &mut self.architecture {
             if let Some(manifest_hash) = arch_field!(ref mut arch.hash) {
