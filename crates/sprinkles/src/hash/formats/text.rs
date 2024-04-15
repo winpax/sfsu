@@ -214,7 +214,7 @@ mod tests {
             .unwrap()
             .expect("found hash");
 
-        let actual_hash = { manifest.hash.unwrap().to_string() };
+        let actual_hash = manifest.install_config.hash.unwrap().to_string();
 
         assert_eq!(actual_hash, hash);
     }

@@ -302,7 +302,12 @@ impl MatchCriteria {
         }
 
         if let Some(manifest) = manifest {
-            let binaries = manifest.bin.clone().map(|b| b.to_vec()).unwrap_or_default();
+            let binaries = manifest
+                .architecture
+                .merge_default(manifest.install_config.clone())
+                .bin
+                .map(|b| b.to_vec())
+                .unwrap_or_default();
 
             let binary_matches = binaries
                 .into_iter()
@@ -481,7 +486,11 @@ impl Manifest {
     #[must_use]
     /// Check if the manifest binaries matche the given regex
     pub fn binary_matches(&self, regex: &Regex) -> Option<Vec<String>> {
-        match self.bin {
+        match self
+            .architecture
+            .merge_default(self.install_config.clone())
+            .bin
+        {
             Some(AliasArray::NestedArray(StringArray::String(ref binary))) => {
                 if regex.is_match(binary) {
                     Some(vec![binary.clone()])
@@ -843,8 +852,6 @@ impl MergeDefaults for Option<ManifestArchitecture> {
         InstallConfig {
             bin: config.bin.or(default.bin),
             checkver: config.checkver.or(default.checkver),
-            env_add_path: config.env_add_path.or(default.env_add_path),
-            env_set: config.env_set.or(default.env_set),
             extract_dir: config.extract_dir.or(default.extract_dir),
             hash: config.hash.or(default.hash),
             installer: config.installer.or(default.installer),

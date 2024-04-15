@@ -286,7 +286,7 @@ impl Hash {
                         .ok_or(HashError::MissingFosshubCaptures)?
                         .as_str()
                         .to_string()
-                        + r#"e+'.*?"sha256":"([a-fA-F0-9]{64"#;
+                        + r#".*?"sha256":"([a-fA-F0-9]{64})""#;
 
                     // let source = BlockingClient::new().get(manifest_url).send()?.text()?;
                     // Hash::from_text(source, &SubstitutionMap::default(), regex);
@@ -321,7 +321,9 @@ impl Hash {
                 _ => unreachable!(),
             };
 
-            todo!("Handle Fosshub and Sourceforge downloading and hashing");
+            let source = BlockingClient::new().get(url).send()?.text()?;
+
+            return Hash::from_text(source, &submap, regex);
         }
 
         let hash_extraction = autoupdate_config
@@ -478,11 +480,14 @@ impl Hash {
 
 #[cfg(test)]
 mod tests {
-    use std::io::BufReader;
+    use std::{io::BufReader, str::FromStr};
 
     use crate::{
         buckets::Bucket,
-        packages::manifest::{HashExtractionOrArrayOfHashExtractions, StringArray},
+        packages::{
+            manifest::{HashExtractionOrArrayOfHashExtractions, StringArray},
+            reference,
+        },
     };
 
     use super::*;
@@ -582,5 +587,91 @@ mod tests {
             .to_string();
 
         assert_eq!(actual_hash, hash.hash);
+    }
+
+    pub struct TestHandler {
+        package: reference::Package,
+    }
+
+    // TODO: Implement tests for entire application autoupdate
+
+    impl TestHandler {
+        pub fn new(package: reference::Package) -> Self {
+            Self { package }
+        }
+
+        pub fn test(self) -> anyhow::Result<()> {
+            let manifest = self.package.manifest().unwrap();
+
+            let hash = Hash::get_for_app(&manifest).unwrap();
+
+            let StringArray::String(actual_hash) = manifest
+                .architecture
+                .merge_default(dbg!(manifest.install_config))
+                .hash
+                .unwrap()
+            else {
+                unreachable!();
+            };
+
+            assert_eq!(actual_hash, hash.hash());
+
+            Ok(())
+        }
+    }
+
+    #[test]
+    fn test_handlers_implemented() -> anyhow::Result<()> {
+        let package = reference::Package::from_str("extras/googlechrome")?;
+
+        let handler = TestHandler::new(package);
+
+        handler.test()?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_googlechrome() -> anyhow::Result<()> {
+        let package = reference::Package::from_str("extras/googlechrome")?;
+
+        let handler = TestHandler::new(package);
+
+        handler.test()?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_sfsu() -> anyhow::Result<()> {
+        let package = reference::Package::from_str("extras/sfsu")?;
+
+        let handler = TestHandler::new(package);
+
+        handler.test()?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_keepass() -> anyhow::Result<()> {
+        let package = reference::Package::from_str("extras/keepass")?;
+
+        let handler = TestHandler::new(package);
+
+        handler.test()?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_hwinfo() -> anyhow::Result<()> {
+        let package = reference::Package::from_str("extras/hwinfo")?;
+
+        let handler = TestHandler::new(package);
+
+        handler.test()?;
+
+        Ok(())
     }
 }

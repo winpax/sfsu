@@ -61,20 +61,10 @@ pub struct Manifest {
     pub suggest: Option<Suggest>,
     /// The version of the package
     pub version: Version,
-    /// The package binaries
-    pub bin: Option<AliasArray>,
-    /// The checkver configuration
-    pub checkver: Option<Checkver>,
-    /// The environment variables to add to PATH
+        /// The environment variables to add to PATH
     pub env_add_path: Option<StringArray>,
     /// The environment variables to set
     pub env_set: Option<HashMap<String, Option<serde_json::Value>>>,
-    /// The directories to extract to
-    pub extract_dir: Option<StringArray>,
-    /// The hash of the package
-    pub hash: Option<StringArray>,
-    /// The installer configuration
-    pub installer: Option<Installer>,
     #[serde(flatten)]
     /// The install configuration
     pub install_config: InstallConfig,
@@ -108,12 +98,15 @@ impl std::ops::Index<Architecture> for ManifestArchitecture {
 #[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq, Eq)]
 /// The install configuration
 pub struct InstallConfig {
+    /// The package binaries
     pub bin: Option<AliasArray>,
+    /// The checkver configuration
     pub checkver: Option<Checkver>,
-    pub env_add_path: Option<StringArray>,
-    pub env_set: Option<HashMap<String, Option<serde_json::Value>>>,
+    /// The directories to extract to
     pub extract_dir: Option<StringArray>,
+    /// The hash of the package
     pub hash: Option<StringArray>,
+    /// The installer configuration
     pub installer: Option<Installer>,
     #[deprecated(since = "1.10.0")]
     pub msi: Option<StringArray>,
