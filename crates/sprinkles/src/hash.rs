@@ -607,7 +607,7 @@ mod tests {
         pub fn test(self) -> anyhow::Result<()> {
             let manifest = self.package.manifest().unwrap();
 
-            let hash = Hash::get_for_app(&manifest).unwrap();
+            let hash = Hash::get_for_app(&manifest)?;
 
             let StringArray::String(actual_hash) = manifest
                 .architecture
