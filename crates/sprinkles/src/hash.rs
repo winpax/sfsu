@@ -6,10 +6,15 @@ use reqwest::header::{HeaderMap, HeaderValue};
 use substitutions::SubstitutionMap;
 use url::Url;
 
-use crate::packages::{
-    arch_field,
-    manifest::{AutoupdateConfig, HashExtractionOrArrayOfHashExtractions, HashMode},
-    Manifest,
+use crate::{
+    hash::url_ext::UrlExt,
+    packages::{
+        arch_field,
+        manifest::{
+            AutoupdateConfig, HashExtractionOrArrayOfHashExtractions, HashMode as ManifestHashMode,
+        },
+        Manifest,
+    },
 };
 
 mod formats;
@@ -95,6 +100,18 @@ impl TryFrom<&String> for HashType {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum HashMode {
+    Download,
+    Extract(String),
+    Json(String),
+    Xpath(String),
+    Fosshub,
+    Metalink,
+    Rdf,
+    Sourceforge,
+}
+
 impl HashMode {
     #[must_use]
     /// Get a [`HashMode`] from an [`AutoupdateConfig`]
@@ -106,19 +123,37 @@ impl HashMode {
         }
 
         if let HashExtractionOrArrayOfHashExtractions::HashExtraction(hash_cfg) = hash {
-            let mode = hash_cfg.mode.or_else(|| {
-                if hash_cfg.regex.is_some() || hash_cfg.find.is_some() {
-                    return Some(HashMode::Extract);
-                }
-                if hash_cfg.jp.is_some() || hash_cfg.jsonpath.is_some() {
-                    return Some(HashMode::Json);
-                }
-                if hash_cfg.xpath.is_some() {
-                    return Some(HashMode::Xpath);
-                }
+            let mode = hash_cfg
+                .mode
+                .and_then(|mode| match mode {
+                    ManifestHashMode::Download => Some(HashMode::Download),
+                    ManifestHashMode::Fosshub => Some(HashMode::Fosshub),
+                    ManifestHashMode::Sourceforge => Some(HashMode::Sourceforge),
+                    ManifestHashMode::Metalink => Some(HashMode::Metalink),
+                    ManifestHashMode::Rdf => Some(HashMode::Rdf),
+                    _ => None,
+                })
+                .or_else(|| {
+                    if let Some(regex) = &hash_cfg.regex {
+                        return Some(HashMode::Extract(regex.clone()));
+                    }
+                    if let Some(regex) = &hash_cfg.find {
+                        return Some(HashMode::Extract(regex.clone()));
+                    }
 
-                None
-            });
+                    if let Some(jsonpath) = &hash_cfg.jsonpath {
+                        return Some(HashMode::Json(jsonpath.clone()));
+                    }
+                    if let Some(jsonpath) = &hash_cfg.jp {
+                        return Some(HashMode::Json(jsonpath.clone()));
+                    }
+
+                    if let Some(xpath) = &hash_cfg.xpath {
+                        return Some(HashMode::Xpath(xpath.clone()));
+                    }
+
+                    None
+                });
 
             return mode;
         }
@@ -128,7 +163,21 @@ impl HashMode {
 }
 
 impl Hash {
-    pub fn get_for_app(manifest: Manifest) -> Result<Vec<Hash>> {
+    /// Get a hash for an app
+    ///
+    /// # Errors
+    /// - If the hash is not found
+    /// - If the hash is invalid
+    /// - If the hash mode is invalid
+    /// - If the URL is invalid
+    /// - If the source is invalid
+    /// - If the JSON is invalid
+    /// - If the hash is not found in the headers
+    /// - If the hash is not found in the RDF
+    /// - If the hash is not found in the XML
+    /// - If the hash is not found in the text
+    /// - If the hash is not found in the JSON
+    pub fn get_for_app(manifest: Manifest) -> Result<Hash> {
         let autoupdate_config = if let Some(ref arch) = manifest
             .autoupdate
             .as_ref()
@@ -145,13 +194,10 @@ impl Hash {
 
         let (url, submap) = {
             let url = autoupdate_config
-                .url.as_ref()
+                .url
+                .as_ref()
                 .ok_or(HashError::UrlNotFound)
-                .map(|url: &String| Url::parse(url))??
-            // .to_vec()
-            // .iter()
-            // .collect::<Result<Vec<_>>>()?;
-            ;
+                .map(|url: &String| Url::parse(url))??;
 
             let mut submap = SubstitutionMap::new();
             submap.append_version(&manifest.version);
@@ -165,45 +211,23 @@ impl Hash {
         let hash_mode =
             HashMode::from_autoupdate_config(&autoupdate_config).ok_or(HashError::HashMode)?;
 
-        let source = reqwest::blocking::get(url)?;
+        let source = reqwest::blocking::get(url.as_str())?;
 
         if hash_mode == HashMode::Download {
             todo!("Download and compute hashes")
         }
 
-        let hash_extraction = autoupdate_config
-            .hash
-            .as_ref()
-            .ok_or(HashError::MissingHashExtraction)?
-            .as_object()
-            .ok_or(HashError::HashExtractionUrl)?;
-
-        match hash_mode {
-            HashMode::Extract => Hash::from_text(
-                source.text()?,
-                &submap,
-                hash_extraction
-                    .regex
-                    .as_ref()
-                    .ok_or(HashError::MissingExtraction)?,
-            ),
+        let hash = match hash_mode {
+            HashMode::Extract(regex) => Hash::from_text(source.text()?, &submap, regex),
+            HashMode::Xpath(xpath) => Hash::find_hash_in_xml(source.text()?, &submap, xpath),
+            HashMode::Json(json_path) => Hash::from_json(source.bytes()?, &submap, json_path),
+            HashMode::Rdf => Hash::from_rdf(source.bytes()?, url.remote_filename()),
             // HashMode::Fosshub => todo!(),
             // HashMode::Sourceforge => todo!(),
-            HashMode::Json => Hash::from_json(
-                source.bytes()?,
-                &submap,
-                hash_extraction
-                    .jsonpath
-                    .or(hash_extraction.jp)
-                    .ok_or(HashError::MissingExtraction)?,
-            ),
-            HashMode::Metalink => todo!(),
-            HashMode::Rdf => todo!(),
-            HashMode::Xpath => todo!(),
             _ => unreachable!(),
-        };
+        }?;
 
-        todo!()
+        Ok(hash)
     }
 
     /// Compute a hash from a source
