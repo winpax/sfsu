@@ -36,6 +36,19 @@ pub mod shell;
 pub mod stream;
 pub mod version;
 
+pub mod versions {
+    //! Version information
+
+    /// Sprinkles library version
+    pub const VERSION: &str = env!("CARGO_PKG_VERSION");
+
+    #[must_use]
+    /// Get the git2 library version
+    pub fn git2_version() -> git2::Version {
+        git2::Version::get()
+    }
+}
+
 #[macro_use]
 extern crate log;
 
