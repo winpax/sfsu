@@ -1,4 +1,9 @@
-#![warn(clippy::all, clippy::pedantic, rust_2018_idioms)]
+#![warn(
+    clippy::all,
+    clippy::pedantic,
+    rust_2018_idioms,
+    rust_2024_compatibility
+)]
 
 // TODO: Replace regex with glob
 
@@ -59,7 +64,7 @@ fn main() -> anyhow::Result<()> {
 
     if args.no_color {
         debug!("Colour disabled globally");
-        colored::control::set_override(false);
+        owo_colors::set_override(false);
     }
 
     debug!("Running command: {:?}", args.command);

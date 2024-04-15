@@ -1,3 +1,5 @@
+//! Reference to a package
+
 use std::{fmt, path::PathBuf, str::FromStr};
 
 use itertools::Itertools;
@@ -14,6 +16,14 @@ pub enum Error {
     MissingAppName,
     #[error("IO Error")]
     Io(#[from] std::io::Error),
+    #[error("Package name was not provided")]
+    MissingPackageName,
+    #[error(
+        "Too many segments in package reference. Expected either `<bucket>/<name>` or `<name>`"
+    )]
+    TooManySegments,
+    #[error("Invalid version supplied")]
+    InvalidVersion,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -23,8 +33,16 @@ pub struct Package {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+/// A reference to a package
 pub enum ManifestRef {
-    BucketNamePair { bucket: String, name: String },
+    /// A package reference with a bucket and name
+    BucketNamePair {
+        /// The package bucket
+        bucket: String,
+        /// The package name
+        name: String,
+    },
+    /// A package reference with just a name
     Name(String),
     File(PathBuf),
     Url(Url),
@@ -235,20 +253,8 @@ impl fmt::Display for ManifestRef {
     }
 }
 
-#[derive(Debug, thiserror::Error)]
-pub enum PackageRefParseError {
-    #[error("Package name was not provided")]
-    MissingPackageName,
-    #[error(
-        "Too many segments in package reference. Expected either `<bucket>/<name>` or `<name>`"
-    )]
-    TooManySegments,
-    #[error("Invalid version supplied")]
-    InvalidVersion,
-}
-
 impl FromStr for ManifestRef {
-    type Err = PackageRefParseError;
+    type Err = Error;
 
     fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
         if let Ok(url) = url::Url::parse(s) {
@@ -270,9 +276,9 @@ impl FromStr for ManifestRef {
                 name: parts[1].to_string(),
             })
         } else if parts.len() > 2 {
-            Err(PackageRefParseError::TooManySegments)
+            Err(Error::TooManySegments)
         } else if parts.is_empty() {
-            Err(PackageRefParseError::MissingPackageName)
+            Err(Error::MissingPackageName)
         } else {
             unreachable!()
         }
@@ -292,7 +298,7 @@ impl fmt::Display for Package {
 }
 
 impl FromStr for Package {
-    type Err = PackageRefParseError;
+    type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let parts = s.split('@').collect_vec();
@@ -306,7 +312,7 @@ impl FromStr for Package {
                 manifest: ManifestRef::from_str(parts[0])?,
                 version: Some(parts[1].to_string()),
             }),
-            _ => Err(PackageRefParseError::InvalidVersion),
+            _ => Err(Error::InvalidVersion),
         }
     }
 }

@@ -1,3 +1,5 @@
+//! Array of arrays of values, where the first value is the alias and the second value is the value.
+
 use std::fmt::Display;
 
 use derive_more::{Deref, DerefMut};
@@ -5,15 +7,13 @@ use serde::Serialize;
 
 #[derive(Debug, Default, Clone, Deref, DerefMut)]
 #[must_use]
+/// Array of arrays of values, where the first value is the alias and the second value is the value.
 pub struct AliasVec<T>(Vec<Vec<T>>);
 
 impl<T: Display> AliasVec<T> {
+    /// Create a new [`AliasVec`] from the provided vector
     pub fn from_vec(vec: Vec<Vec<T>>) -> Self {
         Self(vec)
-    }
-
-    pub fn from_shortcuts(vec: Option<Vec<Vec<T>>>) -> Self {
-        Self(vec.unwrap_or_default())
     }
 }
 

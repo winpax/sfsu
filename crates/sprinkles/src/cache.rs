@@ -8,7 +8,7 @@ use std::{
 use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 use reqwest::blocking::Response;
 
-use crate::{packages::Manifest, SupportedArch};
+use crate::{packages::Manifest, Architecture};
 
 #[derive(Debug)]
 pub struct Handle {
@@ -39,7 +39,7 @@ impl Handle {
     pub fn open_manifest(
         cache_path: impl AsRef<Path>,
         manifest: &Manifest,
-        arch: Option<SupportedArch>,
+        arch: Option<Architecture>,
     ) -> Option<std::io::Result<Vec<Self>>> {
         let name = &manifest.name;
         let version = &manifest.version;

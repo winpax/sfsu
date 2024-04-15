@@ -1,37 +1,70 @@
+//! Package export data
+
 use chrono::{DateTime, Local, SecondsFormat};
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    buckets::{Bucket as SfsuBucket, BucketError},
+    buckets::{Bucket as SfsuBucket, Error as BucketError},
     config,
-    packages::MinInfo,
+    packages::{Error as PackageError, MinInfo},
 };
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Export {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub config: Option<config::Scoop>,
-    pub apps: Vec<App>,
-    pub buckets: Vec<Bucket>,
+#[derive(Debug, thiserror::Error)]
+/// Export errors
+pub enum Error {
+    #[error("Failed to load Scoop config: {0}")]
+    /// An error occurred while loading the Scoop configuration
+    LoadingScoop(#[from] std::io::Error),
+    #[error("Failed to list buckets: {0}")]
+    /// An error occurred while listing the buckets
+    BucketError(#[from] BucketError),
+    #[error("Failed to list installed apps: {0}")]
+    /// An error occurred while listing the installed apps
+    PackageError(#[from] PackageError),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+/// The export data
+pub struct Export {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    /// The Scoop configuration
+    pub config: Option<config::Scoop>,
+    /// The installed apps
+    pub apps: Vec<App>,
+    /// The installed buckets
+    pub buckets: Vec<Bucket>,
+}
+
+// TODO: Remove this struct in favour of `MinInfo`
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
+/// An installed app
 pub struct App {
+    /// The name of the app
     pub name: String,
+    /// The source of the app, e.g. bucket name
     pub source: String,
+    /// The last time the app was updated
     pub updated: String,
+    /// The version of the app
     pub version: String,
+    /// Additional information about the app
     pub info: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
+/// An installed bucket
 pub struct Bucket {
+    /// The name of the bucket
     pub name: String,
+    /// The source of the bucket (e.g. git URL)
     pub source: String,
+    /// The last time the bucket was updated
     pub updated: String,
+    /// The number of manifests in the bucket
     pub manifests: usize,
 }
 
@@ -43,7 +76,7 @@ impl Export {
     /// - The buckets could not be listed
     /// - The installed apps could not be listed
     /// - The buckets could not be converted
-    pub fn load() -> anyhow::Result<Self> {
+    pub fn load() -> Result<Self, Error> {
         let config = config::Scoop::load()?;
         let buckets = SfsuBucket::list_all()?
             .into_iter()

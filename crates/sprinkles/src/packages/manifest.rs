@@ -1,3 +1,7 @@
+//! Package manifest
+// TODO: Add documentation
+#![allow(missing_docs)]
+
 // Thanks to quicktype.io for saving me a lot of time.
 // The names are a bit weird at times but I'll work on that in future.
 
@@ -6,9 +10,10 @@ use std::{collections::HashMap, fmt::Display};
 use itertools::Itertools as _;
 use serde::{Deserialize, Serialize};
 
-use crate::{version::Version, SupportedArch};
+use crate::{version::Version, Architecture};
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
+/// The manifest for a package
 pub struct Manifest {
     /// This must be manually set
     #[serde(skip)]
@@ -20,61 +25,88 @@ pub struct Manifest {
     #[serde(rename = "##")]
     pub empty: Option<StringArray>,
     #[serde(rename = "$schema")]
+    /// The schema of the manifest
     pub schema: Option<String>,
-    #[deprecated(note = "Use ## instead")]
+    #[deprecated(since = "1.10.0", note = "Use ## instead")]
     #[serde(rename = "_comment")]
+    /// A comment.
     pub comment: Option<StringArray>,
-    pub architecture: Option<Arch>,
+    /// The architecture of the package
+    pub architecture: Option<ManifestArchitecture>,
+    /// The autoupdate configuration
     pub autoupdate: Option<Autoupdate>,
     /// Undocumented: Found at <https://github.com/se35710/scoop-java/search?l=JSON&q=cookie>
     pub cookie: Option<HashMap<String, Option<serde_json::Value>>>,
+    /// The dependencies of the package
     pub depends: Option<TOrArrayOfTs<super::reference::ManifestRef>>,
+    /// The description of the package
     pub description: Option<String>,
+    /// Extract to dir or dirs
     pub extract_to: Option<StringArray>,
+    /// The homepage of the package
     pub homepage: Option<String>,
     /// True if the installer `InnoSetup` based. Found in
     /// <https://github.com/ScoopInstaller/Main/search?l=JSON&q=innosetup>
     pub innosetup: Option<bool>,
+    /// The license of the package
     pub license: Option<PackageLicense>,
-    /// Deprecated
+    // Deprecated
+    /// The manifest notes
     pub notes: Option<StringArray>,
+    /// Directories to persist when updating
     pub persist: Option<AliasArray>,
+    /// The PowerShell module of the package
     pub psmodule: Option<Psmodule>,
+    /// The suggested dependencies of the package
     pub suggest: Option<Suggest>,
+    /// The version of the package
     pub version: Version,
+    /// The package binaries
     pub bin: Option<AliasArray>,
+    /// The checkver configuration
     pub checkver: Option<Checkver>,
+    /// The environment variables to add to PATH
     pub env_add_path: Option<StringArray>,
+    /// The environment variables to set
     pub env_set: Option<HashMap<String, Option<serde_json::Value>>>,
+    /// The directories to extract to
     pub extract_dir: Option<StringArray>,
+    /// The hash of the package
     pub hash: Option<StringArray>,
+    /// The installer configuration
     pub installer: Option<Installer>,
     #[serde(flatten)]
+    /// The install configuration
     pub install_config: InstallConfig,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct Arch {
+/// Manifest architecture specific configuration
+pub struct ManifestArchitecture {
     #[serde(rename = "32bit")]
+    /// The 32-bit configuration
     pub x86: Option<InstallConfig>,
     #[serde(rename = "64bit")]
+    /// The 64-bit configuration
     pub x64: Option<InstallConfig>,
+    /// The ARM64 configuration
     pub arm64: Option<InstallConfig>,
 }
 
-impl std::ops::Index<SupportedArch> for Arch {
+impl std::ops::Index<Architecture> for ManifestArchitecture {
     type Output = Option<InstallConfig>;
 
-    fn index(&self, index: SupportedArch) -> &Self::Output {
+    fn index(&self, index: Architecture) -> &Self::Output {
         match index {
-            SupportedArch::Arm64 => &self.arm64,
-            SupportedArch::X64 => &self.x64,
-            SupportedArch::X86 => &self.x86,
+            Architecture::Arm64 => &self.arm64,
+            Architecture::X64 => &self.x64,
+            Architecture::X86 => &self.x86,
         }
     }
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq, Eq)]
+/// The install configuration
 pub struct InstallConfig {
     pub bin: Option<AliasArray>,
     pub checkver: Option<Checkver>,
@@ -83,7 +115,7 @@ pub struct InstallConfig {
     pub extract_dir: Option<StringArray>,
     pub hash: Option<StringArray>,
     pub installer: Option<Installer>,
-    #[deprecated]
+    #[deprecated(since = "1.10.0")]
     pub msi: Option<StringArray>,
     pub post_install: Option<StringArray>,
     pub post_uninstall: Option<StringArray>,
@@ -182,7 +214,7 @@ pub struct HashExtraction {
     pub jsonpath: Option<String>,
     pub mode: Option<HashMode>,
     pub regex: Option<String>,
-    #[deprecated(note = "hash type is determined automatically")]
+    #[deprecated(since = "1.10.0", note = "hash type is determined automatically")]
     #[serde(rename = "type")]
     pub hash_extraction_type: Option<Type>,
     pub url: Option<String>,

@@ -1,13 +1,15 @@
+//! Vertical sectioned output
+
 use std::fmt::Display;
 
 use itertools::Itertools;
 use serde_json::{Map, Value};
 
-use crate::{output::wrappers::header::Header, SimIter};
+use crate::output::wrappers::header::Header;
 
 #[derive(Debug)]
 #[must_use = "OptionalTruncate is lazy, and only takes effect when used in formatting"]
-pub struct OptionalTruncate<T> {
+struct OptionalTruncate<T> {
     data: T,
     length: Option<usize>,
     suffix: Option<&'static str>,
@@ -131,7 +133,7 @@ impl Display for VTable {
                         .collect()
                 });
 
-        let iters = SimIter(headers.iter(), values.iter()).enumerate();
+        let iters = headers.iter().zip(values.iter()).enumerate();
 
         for (i, (header, element)) in iters {
             let header_size = header_lengths[i];

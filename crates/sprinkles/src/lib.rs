@@ -1,11 +1,20 @@
 #![feature(let_chains)]
-#![warn(clippy::all, clippy::pedantic, rust_2018_idioms)]
+#![doc = include_str!("../README.md")]
+#![warn(
+    clippy::all,
+    clippy::pedantic,
+    rust_2018_idioms,
+    rustdoc::all,
+    rust_2024_compatibility,
+    missing_docs
+)]
 #![allow(clippy::module_name_repetitions)]
 
 use std::{ffi::OsStr, fmt, fs::File, path::PathBuf};
 
 use chrono::Local;
 use rayon::prelude::*;
+use serde::{Deserialize, Serialize};
 
 pub use semver;
 
@@ -19,11 +28,11 @@ pub mod diagnostics;
 pub mod git;
 #[cfg(feature = "manifest-hashes")]
 pub mod hash;
-/// Currently this is mostly an internal api
 pub mod output;
 pub mod packages;
 pub mod progress;
 pub mod requests;
+pub mod shell;
 pub mod stream;
 pub mod version;
 
@@ -40,38 +49,20 @@ mod const_assertions {
     const _: () = eval(&Scoop::arch());
 }
 
-/// Check if the process is elevated
-///
-/// # Errors
-/// - Internal Windows API error
-pub fn is_elevated() -> Result<bool, quork::root::Error> {
-    use quork::root::is_root;
-
-    is_root()
-}
-
-pub struct SimIter<A, B>(A, B);
-
-impl<A: Iterator<Item = AI>, AI, B: Iterator<Item = BI>, BI> Iterator for SimIter<A, B> {
-    type Item = (AI, BI);
-
-    fn next(&mut self) -> Option<Self::Item> {
-        Some((self.0.next()?, self.1.next()?))
-    }
-}
-
-pub trait KeyValue {
-    fn into_pairs(self) -> (Vec<&'static str>, Vec<String>);
-}
-
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-pub enum SupportedArch {
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+/// Supported architectures
+pub enum Architecture {
+    /// 64 bit Arm
     Arm64,
+    /// 64 bit
+    #[serde(rename = "64bit")]
     X64,
+    #[serde(rename = "32bit")]
+    /// 32 bit
     X86,
 }
 
-impl SupportedArch {
+impl Architecture {
     /// Get the architecture of the current environment
     pub const ARCH: Self = {
         if cfg!(target_arch = "x86_64") {
@@ -109,7 +100,7 @@ impl SupportedArch {
     }
 }
 
-impl fmt::Display for SupportedArch {
+impl fmt::Display for Architecture {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Arm64 => write!(f, "arm64"),
@@ -119,19 +110,30 @@ impl fmt::Display for SupportedArch {
     }
 }
 
-impl Default for SupportedArch {
+impl Default for Architecture {
     fn default() -> Self {
         Self::from_env()
     }
 }
 
+#[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
+/// Library errors
+pub enum Error {
+    #[error("Timeout creating new log file. This is a bug, please report it.")]
+    TimeoutCreatingLog,
+    #[error("Error creating log file: {0}")]
+    CreatingLog(#[from] std::io::Error),
+}
+
+/// The Scoop install reference
 pub struct Scoop;
 
 impl Scoop {
     #[must_use]
     /// Get the system architecture
-    pub const fn arch() -> SupportedArch {
-        SupportedArch::from_env()
+    pub const fn arch() -> Architecture {
+        Architecture::from_env()
     }
 
     /// Get the git executable path
@@ -245,21 +247,71 @@ impl Scoop {
     ///
     /// # Errors
     /// - Creating the file fails
-    pub fn new_log() -> std::io::Result<File> {
+    ///
+    /// # Panics
+    /// - Could not convert tokio file into std file
+    pub async fn new_log() -> Result<File, Error> {
+        let logs_dir = Self::logging_dir()?;
+        let date = Local::now();
+
+        let log_file = async {
+            use tokio::fs::File;
+
+            let mut i = 0;
+            loop {
+                i += 1;
+
+                let log_path =
+                    logs_dir.join(format!("sfsu-{}-{i}.log", date.format("%Y-%m-%d-%H-%M-%S")));
+
+                if !log_path.exists() {
+                    break File::create(log_path).await;
+                }
+            }
+        };
+        let timeout = async {
+            use std::time::Duration;
+            use tokio::time;
+
+            time::sleep(Duration::from_secs(5)).await;
+        };
+
+        let log_file = tokio::select! {
+            res = log_file => Ok(res),
+            () = timeout => Err(Error::TimeoutCreatingLog),
+        }??;
+
+        Ok(log_file
+            .try_into_std()
+            .expect("converted tokio file into std file"))
+    }
+
+    /// Create a new log file
+    ///
+    /// This function is synchronous and does not allow for timeouts.
+    /// If for some reason there are no available log files, this function will block indefinitely.
+    ///
+    /// # Errors
+    /// - Creating the file fails
+    pub fn new_log_sync() -> Result<File, Error> {
+        use std::fs::File;
+
         let logs_dir = Self::logging_dir()?;
         let date = Local::now();
 
         let mut i = 0;
-        loop {
+        let file = loop {
             i += 1;
 
             let log_path =
                 logs_dir.join(format!("sfsu-{}-{i}.log", date.format("%Y-%m-%d-%H-%M-%S")));
 
             if !log_path.exists() {
-                break File::create(&log_path);
+                break File::create(log_path)?;
             }
-        }
+        };
+
+        Ok(file)
     }
 
     /// Checks if the app is installed by its name
