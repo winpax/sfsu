@@ -57,6 +57,10 @@ pub enum HashError {
     HashExtractionUrl,
     #[error("Missing part of hash extraction object, where it should exist. This is a bug, please report it.")]
     MissingExtraction,
+    #[error("Fosshub regex failed to match")]
+    MissingFosshubCaptures,
+    #[error("Sourceforge regex failed to match")]
+    MissingSourceforgeCaptures,
 }
 
 pub type Result<T> = std::result::Result<T, HashError>;
@@ -255,12 +259,38 @@ impl Hash {
         let hash_mode =
             HashMode::from_manifest(manifest).ok_or(HashError::MissingHashExtraction)?;
 
+        let manifest_url = manifest
+            .architecture
+            .merge_default(manifest.install_config.clone())
+            .url
+            .as_ref()
+            .ok_or(HashError::UrlNotFound)
+            .and_then(|url| Ok(Url::parse(url)?))?;
+
         if matches!(hash_mode, HashMode::Fosshub | HashMode::Sourceforge) {
-            match hash_mode {
-                HashMode::Fosshub => todo!("Handle Fosshub"),
+            let (url, regex): (Url, String) = match hash_mode {
+                HashMode::Fosshub => {
+                    let matches = HashMode::fosshub_regex()
+                        .captures(manifest_url.as_str())
+                        .ok_or(HashError::MissingFosshubCaptures)?;
+
+                    let regex = matches
+                        .name("filename")
+                        .ok_or(HashError::MissingFosshubCaptures)?
+                        .as_str()
+                        .to_string()
+                        + r#"e+'.*?"sha256":"([a-fA-F0-9]{64"#;
+
+                    // let source = BlockingClient::new().get(manifest_url).send()?.text()?;
+                    // Hash::from_text(source, &SubstitutionMap::default(), regex);
+
+                    (manifest_url, regex)
+                }
                 HashMode::Sourceforge => todo!("Handle Sourceforge"),
                 _ => unreachable!(),
-            }
+            };
+
+            todo!("Handle Fosshub and Sourceforge downloading and hashing");
         }
 
         let hash_extraction = autoupdate_config
@@ -271,17 +301,9 @@ impl Hash {
             .ok_or(HashError::HashExtractionUrl)?;
 
         let (url, submap) = {
-            let url = manifest
-                .architecture
-                .merge_default(manifest.install_config.clone())
-                .url
-                .as_ref()
-                .ok_or(HashError::UrlNotFound)
-                .and_then(|url| Ok(Url::parse(url)?))?;
-
             let mut submap = SubstitutionMap::new();
             submap.append_version(&manifest.version);
-            submap.append_url(&url);
+            submap.append_url(&manifest_url);
 
             let url = hash_extraction
                 .url
