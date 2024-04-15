@@ -116,6 +116,7 @@ impl TryFrom<&String> for HashType {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum HashMode {
+    HashUrl,
     Download,
     Extract(String),
     Json(String),
@@ -128,6 +129,7 @@ pub enum HashMode {
 
 impl HashMode {
     #[must_use]
+    #[deprecated(note = "Does not handle Sourceforge or Fosshub")]
     /// Get a [`HashMode`] from an [`AutoupdateConfig`]
     pub fn from_autoupdate_config(config: &AutoupdateConfig) -> Option<Self> {
         let hash = config.hash.as_ref()?;
@@ -169,7 +171,12 @@ impl HashMode {
                     None
                 });
 
-            return mode;
+            return if let Some(mode) = mode {
+                Some(mode)
+            } else {
+                dbg!(&hash_cfg.url);
+                Some(HashMode::HashUrl)
+            };
         }
 
         todo!("Handle array of hash extractions")
@@ -235,32 +242,34 @@ impl Hash {
             (url, submap)
         };
 
-        if let Some(hash_mode) = HashMode::from_autoupdate_config(&autoupdate_config) {
-            let source = reqwest::blocking::get(url.as_str())?;
+        let hash_mode = HashMode::from_autoupdate_config(&autoupdate_config)
+            .ok_or(HashError::MissingHashExtraction)?;
+        let source = reqwest::blocking::get(url.as_str())?;
 
-            if hash_mode == HashMode::Download {
-                todo!("Download and compute hashes")
-            }
-
-            let hash = match hash_mode {
-                HashMode::Extract(regex) => Hash::from_text(source.text()?, &submap, regex),
-                HashMode::Xpath(xpath) => Hash::find_hash_in_xml(source.text()?, &submap, xpath),
-                HashMode::Json(json_path) => Hash::from_json(source.bytes()?, &submap, json_path),
-                HashMode::Rdf => Hash::from_rdf(source.bytes()?, url.remote_filename()),
-                // HashMode::Fosshub => todo!(),
-                // HashMode::Sourceforge => todo!(),
-                _ => unreachable!(),
-            }?;
-
-            Ok(hash)
-        } else {
+        if hash_mode == HashMode::HashUrl {
             let hash = reqwest::blocking::get(url)?.text()?;
 
-            Ok(Hash {
+            return Ok(Hash {
                 hash,
                 hash_type: HashType::default(),
-            })
+            });
         }
+
+        if hash_mode == HashMode::Download {
+            todo!("Download and compute hashes")
+        }
+
+        let hash = match hash_mode {
+            HashMode::Extract(regex) => Hash::from_text(source.text()?, &submap, regex),
+            HashMode::Xpath(xpath) => Hash::find_hash_in_xml(source.text()?, &submap, xpath),
+            HashMode::Json(json_path) => Hash::from_json(source.bytes()?, &submap, json_path),
+            HashMode::Rdf => Hash::from_rdf(source.bytes()?, url.remote_filename()),
+            // HashMode::Fosshub => todo!(),
+            // HashMode::Sourceforge => todo!(),
+            _ => unreachable!(),
+        }?;
+
+        Ok(hash)
     }
 
     /// Compute a hash from a source
