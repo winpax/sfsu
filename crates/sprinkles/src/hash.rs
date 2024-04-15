@@ -1,4 +1,4 @@
-use std::io::BufRead;
+use std::io::{BufRead, Read};
 
 use formats::{json::JsonError, text::TextError};
 use itertools::Itertools;
@@ -30,6 +30,8 @@ pub enum HashError {
     SerdeJson(#[from] serde_json::Error),
     #[error("Failed to parse url: {0}")]
     InvalidUrl(#[from] url::ParseError),
+    #[error("Error downloading hash")]
+    HashDownloading(#[from] reqwest::Error),
     #[error("Hash not found")]
     NotFound,
     #[error("Missing download url(s) in manifest")]
@@ -38,6 +40,14 @@ pub enum HashError {
     InvalidHash,
     #[error("Missing autoupdate filter")]
     MissingAutoupdate,
+    #[error("Cannot determine hash mode")]
+    HashMode,
+    #[error("Missing hash extraction object")]
+    MissingHashExtraction,
+    #[error("Hash extraction url where there should be a hash extraction object. This is a bug, please report it.")]
+    HashExtractionUrl,
+    #[error("Missing part of hash extraction object, where it should exist. This is a bug, please report it.")]
+    MissingExtraction,
 }
 
 pub type Result<T> = std::result::Result<T, HashError>;
@@ -133,11 +143,11 @@ impl Hash {
                 .clone()
         };
 
-        let submaps = {
+        let (url, submap) = {
             let url = autoupdate_config
-                .url
+                .url.as_ref()
                 .ok_or(HashError::UrlNotFound)
-                .map(|url: String| Url::parse(&url))??
+                .map(|url: &String| Url::parse(url))??
             // .to_vec()
             // .iter()
             // .collect::<Result<Vec<_>>>()?;
@@ -148,7 +158,49 @@ impl Hash {
 
             let mut submap = submap.clone();
             submap.append_url(&url);
+
             (url, submap)
+        };
+
+        let hash_mode =
+            HashMode::from_autoupdate_config(&autoupdate_config).ok_or(HashError::HashMode)?;
+
+        let source = reqwest::blocking::get(url)?;
+
+        if hash_mode == HashMode::Download {
+            todo!("Download and compute hashes")
+        }
+
+        let hash_extraction = autoupdate_config
+            .hash
+            .as_ref()
+            .ok_or(HashError::MissingHashExtraction)?
+            .as_object()
+            .ok_or(HashError::HashExtractionUrl)?;
+
+        match hash_mode {
+            HashMode::Extract => Hash::from_text(
+                source.text()?,
+                &submap,
+                hash_extraction
+                    .regex
+                    .as_ref()
+                    .ok_or(HashError::MissingExtraction)?,
+            ),
+            // HashMode::Fosshub => todo!(),
+            // HashMode::Sourceforge => todo!(),
+            HashMode::Json => Hash::from_json(
+                source.bytes()?,
+                &submap,
+                hash_extraction
+                    .jsonpath
+                    .or(hash_extraction.jp)
+                    .ok_or(HashError::MissingExtraction)?,
+            ),
+            HashMode::Metalink => todo!(),
+            HashMode::Rdf => todo!(),
+            HashMode::Xpath => todo!(),
+            _ => unreachable!(),
         };
 
         todo!()

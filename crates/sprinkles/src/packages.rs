@@ -81,7 +81,10 @@ macro_rules! arch_field {
 
 pub use arch_field;
 
-use self::manifest::{AliasArray, AutoupdateArchitecture, AutoupdateConfig};
+use self::manifest::{
+    AliasArray, AutoupdateArchitecture, AutoupdateConfig, HashExtraction,
+    HashExtractionOrArrayOfHashExtractions,
+};
 
 #[derive(Debug, Serialize)]
 /// Minimal package info
@@ -809,6 +812,15 @@ impl AutoupdateArchitecture {
             installer: config.installer.or(default.installer),
             shortcuts: config.shortcuts.or(default.shortcuts),
             url: config.url.or(default.url),
+        }
+    }
+}
+
+impl HashExtractionOrArrayOfHashExtractions {
+    pub fn as_object(&self) -> Option<&HashExtraction> {
+        match self {
+            Self::Url(_) => None,
+            Self::HashExtraction(hash) => Some(hash),
         }
     }
 }
