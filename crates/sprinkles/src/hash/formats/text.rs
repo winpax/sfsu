@@ -79,6 +79,8 @@ pub fn parse_text(
 
         debug!("{regex}");
 
+        dbg!(&regex);
+
         Regex::new(&regex)?
     };
 

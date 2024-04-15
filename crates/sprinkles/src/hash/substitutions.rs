@@ -80,7 +80,9 @@ impl From<&Url> for SubstitutionMap {
             url
         };
 
-        let basename = url.remote_filename();
+        let basename = urlencoding::decode(&url.remote_filename())
+            .expect("UTF-8")
+            .to_string();
 
         let mut map = SubstitutionMap::new();
 

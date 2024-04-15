@@ -311,7 +311,11 @@ impl Hash {
                         let url_string =
                             format!("https://sourceforge.net/projects/{project}/files/{file}");
 
-                        Url::parse(&url_string)?
+                        let mut parsed_url = Url::parse(&url_string)?;
+                        parsed_url.strip_fragment();
+                        parsed_url.strip_filename();
+
+                        parsed_url
                     };
 
                     let regex = r#""$basename":.*?"sha1":\s*"([a-fA-F0-9]{40})""#;

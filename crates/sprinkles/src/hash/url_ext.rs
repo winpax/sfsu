@@ -25,13 +25,7 @@ pub trait UrlExt {
 
 impl UrlExt for Url {
     fn remote_filename(&self) -> String {
-        let basename = {
-            let basename = self.path();
-            self.query().map_or_else(
-                || basename.to_string(),
-                |query| format!("{basename}?{query}"),
-            )
-        };
+        let basename = self.leaf().expect("url leaf");
 
         let query_regex = Regex::new(r".*[?=]+([\w._-]+)").expect("valid query regex");
         let version_regex = Regex::new(r"^[v.\d]+$").expect("valid version regex");
