@@ -104,6 +104,8 @@ impl fmt::Display for Architecture {
 }
 
 #[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
+/// Library errors
 pub enum Error {
     #[error("Timeout creating new log file. This is a bug, please report it.")]
     TimeoutCreatingLog,
