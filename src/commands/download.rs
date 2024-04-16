@@ -3,6 +3,7 @@ use clap::Parser;
 use indicatif::MultiProgress;
 
 use sprinkles::{
+    abandon,
     cache::{Downloader, Handle},
     packages::reference::Package,
     requests::BlockingClient,
@@ -30,8 +31,16 @@ impl super::Command for Args {
         let downloaders = Handle::open_manifest(Scoop::cache_path(), &manifest, None)
             .context("missing download urls")??
             .into_iter()
-            .map(|dl| Downloader::new(dl, &client, &mp).unwrap())
-            .collect::<Vec<_>>();
+            .map(|dl| match Downloader::new(dl, &client, &mp) {
+                Ok(dl) => Ok(dl),
+                Err(e) => match e {
+                    sprinkles::cache::Error::ErrorCode(status) => {
+                        abandon!("Found {status} error while downloading")
+                    }
+                    _ => Err(e),
+                },
+            })
+            .collect::<Result<Vec<_>, _>>()?;
 
         let threads = downloaders
             .into_iter()
