@@ -9,7 +9,7 @@ version.workspace = true
 members = ["crates/*"]
 package.license = "Apache-2.0"
 package.publish = false
-package.version = "1.10.1"
+package.version = "1.10.2"
 
 [workspace.dependencies]
 git2 = "0.18"

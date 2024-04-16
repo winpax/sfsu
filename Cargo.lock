@@ -1581,7 +1581,7 @@ dependencies = [
 
 [[package]]
 name = "sfsu"
-version = "1.10.1"
+version = "1.10.2"
 dependencies = [
  "anyhow",
  "bat",
@@ -1654,7 +1654,7 @@ checksum = "3c5e1a9a646d36c3599cd173a41282daf47c44583ad367b8e6837255952e5c67"
 
 [[package]]
 name = "sprinkles"
-version = "1.10.1"
+version = "1.10.2"
 dependencies = [
  "chrono",
  "clap",
