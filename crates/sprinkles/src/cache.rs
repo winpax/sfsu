@@ -6,9 +6,19 @@ use std::{
 };
 
 use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
-use reqwest::blocking::Response;
+use reqwest::{blocking::Response, StatusCode};
 
-use crate::{packages::Manifest, Architecture};
+use crate::{calm_panic::CalmUnwrap, packages::Manifest, Architecture};
+
+#[derive(Debug, thiserror::Error)]
+pub enum Error {
+    #[error("Failed to download file: {0}")]
+    Reqwest(#[from] reqwest::Error),
+    #[error("Failed to write to file: {0}")]
+    IO(#[from] std::io::Error),
+    #[error("HTTP Error: {0}")]
+    ErrorCode(StatusCode),
+}
 
 #[derive(Debug)]
 pub struct Handle {
@@ -67,7 +77,7 @@ impl Handle {
         self,
         client: &impl Deref<Target = reqwest::blocking::Client>,
         mp: &MultiProgress,
-    ) -> reqwest::Result<Downloader> {
+    ) -> Result<Downloader, Error> {
         Downloader::new(self, client, mp)
     }
 }
@@ -104,9 +114,13 @@ impl Downloader {
         cache: Handle,
         client: &impl Deref<Target = reqwest::blocking::Client>,
         mp: &MultiProgress,
-    ) -> reqwest::Result<Self> {
+    ) -> Result<Self, Error> {
         let url = cache.url.clone();
         let resp = client.get(url).send()?;
+
+        if resp.status().is_success() {
+            return Err(Error::ErrorCode(resp.status()));
+        }
 
         let content_length = resp.content_length().unwrap_or_default();
 
@@ -147,11 +161,8 @@ impl Downloader {
     ///
     /// # Errors
     /// - If the file cannot be written to the cache
-    ///
-    /// # Panics
-    /// - The request did not provide a content length
-    pub fn download(mut self) -> std::io::Result<()> {
-        let total_length = self.resp.content_length().expect("content length");
+    pub fn download(mut self) -> Result<(), Error> {
+        let total_length = self.resp.content_length().calm_expect("Missing content length. Please report this and provide the command you used to get this error.");
         let mut current = 0;
 
         let mut chunk = [0; 1024];
