@@ -732,6 +732,9 @@ impl Manifest {
         // TODO: Figure out hash extraction
         // autoupdate_arch.hash
 
+        serde_json::to_writer_pretty(std::fs::File::create("manifest.json").unwrap(), &self)
+            .unwrap();
+
         // todo!()
         Ok(())
     }

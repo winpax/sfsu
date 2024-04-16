@@ -2,7 +2,10 @@ use std::io::BufRead;
 
 use formats::{json::JsonError, text::TextError};
 use regex::Regex;
-use reqwest::header::{HeaderMap, HeaderValue};
+use reqwest::{
+    header::{HeaderMap, HeaderValue},
+    StatusCode,
+};
 use substitutions::SubstitutionMap;
 use url::Url;
 
@@ -61,6 +64,8 @@ pub enum HashError {
     MissingFosshubCaptures,
     #[error("Sourceforge regex failed to match")]
     MissingSourceforgeCaptures,
+    #[error("HTTP error: {0}")]
+    ErrorStatus(StatusCode),
 }
 
 pub type Result<T> = std::result::Result<T, HashError>;
@@ -255,7 +260,7 @@ impl Hash {
                 .merge_default(autoupdate.default_config.clone())
         };
 
-        let hash_mode =
+        let mut hash_mode =
             HashMode::from_manifest(manifest).ok_or(HashError::MissingHashExtraction)?;
 
         let manifest_url = manifest
@@ -273,7 +278,7 @@ impl Hash {
             submap
         };
 
-        if matches!(hash_mode, HashMode::Fosshub | HashMode::Sourceforge) {
+        let url = if matches!(hash_mode, HashMode::Fosshub | HashMode::Sourceforge) {
             let (url, regex): (Url, String) = match hash_mode {
                 HashMode::Fosshub => {
                     let matches = HashMode::fosshub_regex()
@@ -324,24 +329,25 @@ impl Hash {
                 _ => unreachable!(),
             };
 
-            let source = BlockingClient::new().get(url).send()?.text()?;
+            hash_mode = HashMode::Extract(regex);
 
-            return Hash::from_text(source, &submap, regex);
-        }
+            url
+            // return Hash::from_text(source, &submap, regex);
+        } else {
+            let hash_extraction = autoupdate_config
+                .hash
+                .as_ref()
+                .ok_or(HashError::MissingHashExtraction)?
+                .as_object()
+                .ok_or(HashError::HashExtractionUrl)?;
 
-        let hash_extraction = autoupdate_config
-            .hash
-            .as_ref()
-            .ok_or(HashError::MissingHashExtraction)?
-            .as_object()
-            .ok_or(HashError::HashExtractionUrl)?;
-
-        let url = hash_extraction
-            .url
-            .as_ref()
-            .ok_or(HashError::UrlNotFound)
-            .map(|url| url.clone().into_substituted(&submap, false))
-            .and_then(|url: String| Ok(Url::parse(&url)?))?;
+            hash_extraction
+                .url
+                .as_ref()
+                .ok_or(HashError::UrlNotFound)
+                .map(|url| url.clone().into_substituted(&submap, false))
+                .and_then(|url: String| Ok(Url::parse(&url)?))?
+        };
 
         let source = BlockingClient::new().get(url.as_str()).send()?;
 
