@@ -8,7 +8,7 @@ use std::{
 use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 use reqwest::{blocking::Response, StatusCode};
 
-use crate::{calm_panic::CalmUnwrap, packages::Manifest, Architecture};
+use crate::{calm_panic::CalmUnwrap, hash::url_ext::UrlExt, packages::Manifest, Architecture};
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -115,8 +115,7 @@ impl Downloader {
         client: &impl Deref<Target = reqwest::blocking::Client>,
         mp: &MultiProgress,
     ) -> Result<Self, Error> {
-        let url = cache.url.clone();
-        let resp = client.get(url).send()?;
+        let resp = client.get(&cache.url).send()?;
 
         if !resp.status().is_success() {
             return Err(Error::ErrorCode(resp.status()));
@@ -127,14 +126,22 @@ impl Downloader {
         let content_length = resp.content_length().unwrap_or_default();
 
         // TODO: Implement a way to free this later to avoid (negligable) memory leaks
-        let boxed = cache
-            .file_name
-            .to_string_lossy()
-            .split('_')
-            .next_back()
-            .expect("non-empty file name")
-            .to_string()
-            .into_boxed_str();
+        let boxed = {
+            if let Ok(parsed_url) = url::Url::parse(&cache.url)
+                && let Some(leaf) = parsed_url.leaf()
+            {
+                leaf.into_boxed_str()
+            } else {
+                cache
+                    .file_name
+                    .to_string_lossy()
+                    .split('_')
+                    .next_back()
+                    .expect("non-empty file name")
+                    .to_string()
+                    .into_boxed_str()
+            }
+        };
 
         let message: &'static str = Box::leak(boxed);
 
