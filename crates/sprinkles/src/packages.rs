@@ -669,6 +669,11 @@ impl Manifest {
     }
 
     #[cfg(feature = "manifest-hashes")]
+    /// Set the manifest version and get the hash for the manifest
+    ///
+    /// # Errors
+    /// - Missing autoupdate field
+    /// - Hash error
     pub fn set_version(&mut self, version: String) -> std::result::Result<(), SetVersionError> {
         use crate::hash::{
             substitutions::{Substitute, SubstitutionMap},
