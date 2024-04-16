@@ -19,9 +19,9 @@ use crate::{
 
 use self::substitutions::Substitute;
 
-mod formats;
-mod substitutions;
-mod url_ext;
+pub(crate) mod formats;
+pub(crate) mod substitutions;
+pub(crate) mod url_ext;
 
 #[derive(Debug, thiserror::Error)]
 pub enum HashError {
@@ -487,10 +487,7 @@ mod tests {
 
     use crate::{
         buckets::Bucket,
-        packages::{
-            manifest::{HashExtractionOrArrayOfHashExtractions, StringArray},
-            reference,
-        },
+        packages::{manifest::HashExtractionOrArrayOfHashExtractions, reference},
     };
 
     use super::*;

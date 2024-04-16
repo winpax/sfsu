@@ -117,6 +117,30 @@ macro_rules! arch_field {
             None
         }
     }};
+
+    ($self:ident.$field:ident as ref) => {{
+        if let Some(cfg) = match $crate::Architecture::ARCH {
+            $crate::Architecture::Arm64 => $self.arm64.as_ref(),
+            $crate::Architecture::X64 => $self.x64.as_ref(),
+            $crate::Architecture::X86 => $self.x86.as_ref(),
+        } {
+            Some(cfg.$field.as_ref())
+        } else {
+            None
+        }
+    }};
+
+    ($self:ident.$field:ident as mut) => {{
+        if let Some(cfg) = match $crate::Architecture::ARCH {
+            $crate::Architecture::Arm64 => $self.arm64.as_mut(),
+            $crate::Architecture::X64 => $self.x64.as_mut(),
+            $crate::Architecture::X86 => $self.x86.as_mut(),
+        } {
+            Some(cfg.$field.as_mut())
+        } else {
+            None
+        }
+    }};
 }
 
 pub use arch_config;
@@ -646,18 +670,45 @@ impl Manifest {
 
     #[cfg(feature = "manifest-hashes")]
     pub fn set_version(&mut self, version: String) -> std::result::Result<(), SetVersionError> {
-        use crate::hash::Hash;
+        use crate::hash::{
+            substitutions::{Substitute, SubstitutionMap},
+            Hash,
+        };
 
         self.version = version.into();
 
-        // let autoupdate = self
-        //     .autoupdate
-        //     .as_mut()
-        //     .ok_or(SetVersionError::MissingAutoUpdate)?;
+        let autoupdate = self
+            .autoupdate
+            .as_ref()
+            .ok_or(SetVersionError::MissingAutoUpdate)?;
 
-        todo!("Handle urls and other autoupdate fields");
+        let autoupdate = autoupdate
+            .architecture
+            .merge_default(autoupdate.default_config.clone());
 
-        let hash = Hash::get_for_app(self)?;
+        if let Some(autoupdate_url) = autoupdate.url {
+            debug!("Autoupdate Url: {autoupdate_url}");
+
+            let mut submap = SubstitutionMap::new();
+            submap.append_version(&self.version);
+
+            let new_url = autoupdate_url.into_substituted(&submap, false);
+
+            debug!("Subbed Autoupdate Url: {new_url}");
+
+            if let Some(arch) = &mut self.architecture
+                && let Some(url) = arch_field!(ref mut arch.url)
+            {
+                _ = url.insert(new_url);
+            } else {
+                self.install_config.url = Some(new_url);
+            }
+        }
+
+        // TODO: Handle other autoupdate fields
+        // todo!("Handle urls and other autoupdate fields");
+
+        let hash: Hash = Hash::get_for_app(self)?;
         if let Some(arch) = &mut self.architecture {
             if let Some(manifest_hash) = arch_field!(ref mut arch.hash) {
                 _ = manifest_hash.insert(hash.hash());

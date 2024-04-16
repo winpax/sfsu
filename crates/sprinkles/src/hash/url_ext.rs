@@ -21,6 +21,8 @@ pub trait UrlExt {
     fn leaf(&self) -> Option<String>;
 
     fn substitute(&mut self, submap: &SubstitutionMap);
+
+    fn submap(&self) -> SubstitutionMap;
 }
 
 impl UrlExt for Url {
@@ -74,6 +76,35 @@ impl UrlExt for Url {
         url.substitute(submap, false);
 
         *self = Url::parse(&url).unwrap();
+    }
+
+    fn submap(&self) -> SubstitutionMap {
+        let stripped_url = {
+            let mut url = self.clone();
+            url.strip_fragment();
+            url
+        };
+
+        let basename = urlencoding::decode(&self.remote_filename())
+            .expect("UTF-8")
+            .to_string();
+
+        let mut map = SubstitutionMap::new();
+
+        map.insert("$url".into(), stripped_url.to_string());
+        map.insert("$baseurl".into(), {
+            let mut base_url = stripped_url.clone();
+            base_url.strip_filename();
+            base_url.to_string()
+        });
+        map.insert("$basenameNoExt".into(), strip_ext(&basename).to_string());
+        map.insert("$basename".into(), basename);
+
+        if let Some(url_no_ext) = stripped_url.leaf().as_ref().map(|fname| strip_ext(fname)) {
+            map.insert("$urlNoExt".into(), url_no_ext.to_string());
+        }
+
+        map
     }
 }
 
