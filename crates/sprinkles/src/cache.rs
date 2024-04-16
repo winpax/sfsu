@@ -118,9 +118,11 @@ impl Downloader {
         let url = cache.url.clone();
         let resp = client.get(url).send()?;
 
-        if resp.status().is_success() {
+        if !resp.status().is_success() {
             return Err(Error::ErrorCode(resp.status()));
         }
+
+        debug!("Status Code: {}", resp.status());
 
         let content_length = resp.content_length().unwrap_or_default();
 
