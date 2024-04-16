@@ -82,6 +82,7 @@ pub enum Commands {
     Search(search::Args),
     /// List all installed packages
     List(list::Args),
+    #[no_hook]
     /// Generate hooks for the given shell
     Hook(hook::Args),
     #[cfg(not(feature = "v2"))]
