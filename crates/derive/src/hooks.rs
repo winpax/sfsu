@@ -127,7 +127,7 @@ pub fn hook_enum(input: DeriveInput) -> TokenStream {
         impl From<String> for #struct_name {
             fn from(string: String) -> Self {
                 match string.as_str() {
-                    #(stringify!(#hook_names) => #struct_name::#variants,)*
+                    #(#hook_names => #struct_name::#variants,)*
                     _ => panic!("Invalid command name: {}", string),
                 }
             }
