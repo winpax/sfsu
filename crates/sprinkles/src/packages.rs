@@ -706,6 +706,7 @@ impl Manifest {
         }
 
         // TODO: Handle other autoupdate fields
+        // TODO: Autoupdate fields in all architectures
         // todo!("Handle urls and other autoupdate fields");
 
         let hash: Hash = Hash::get_for_app(self)?;
