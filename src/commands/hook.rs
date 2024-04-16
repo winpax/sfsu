@@ -27,7 +27,7 @@ impl super::Command for Args {
                 // I would love to make this all one condition, but Powershell doesn't seem to support that elegantly
                 for command in enabled_hooks {
                     print!(
-                        "  '{hook}' {{ return sfsu.exe {command} $args[1..$($args.Length - 1)] }} ",
+                        "  '{hook}' {{ return sfsu.exe {command} @($args | Select-Object -Skip 1) }} ",
                         hook = command.hook(),
                         command = command.command()
                     );
