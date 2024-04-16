@@ -149,7 +149,7 @@ impl Downloader {
             ProgressBar::new(content_length)
                 .with_style(
                     ProgressStyle::with_template(
-                        "{msg} {spinner:.green} [{wide_bar:.cyan/blue}] {bytes}/{total_bytes} ({eta})",
+                        "{msg} {spinner:.green} [{wide_bar:.cyan/blue}] {bytes}/{total_bytes} {bytes_per_sec} ({eta})",
                     )
                     .unwrap()
                     .progress_chars("#>-"),
@@ -171,6 +171,7 @@ impl Downloader {
     /// # Errors
     /// - If the file cannot be written to the cache
     pub fn download(mut self) -> Result<(), Error> {
+        // TODO: Use async here for streams instead of chunks
         let total_length = self.resp.content_length().calm_expect("Missing content length. Please report this and provide the command you used to get this error.");
         let mut current = 0;
 
