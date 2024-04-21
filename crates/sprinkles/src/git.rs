@@ -3,13 +3,38 @@
 use std::{ffi::OsStr, fmt::Display, process::Command};
 
 use derive_more::Deref;
-use git2::{Commit, DiffOptions, Direction, FetchOptions, Remote, Repository, Sort};
+use git2::{Commit, DiffOptions, Direction, FetchOptions, Progress, Remote, Repository, Sort};
+use indicatif::ProgressBar;
 
 use crate::{buckets::Bucket, opt::ResultIntoOption, Scoop};
 
 use self::pull::ProgressCallback;
 
-pub mod pull;
+mod pull;
+
+#[doc(hidden)]
+/// Progress callback
+///
+/// This is meant primarily for internal sfsu use.
+/// You are welcome to use this yourself, but it will likely not meet your requirements.
+pub fn __stats_callback(stats: &Progress<'_>, thin: bool, pb: &ProgressBar) {
+    if thin {
+        pb.set_position(stats.indexed_objects() as u64);
+        pb.set_length(stats.total_objects() as u64);
+
+        return;
+    }
+
+    if stats.received_objects() == stats.total_objects() {
+        pb.set_position(stats.indexed_deltas() as u64);
+        pb.set_length(stats.total_deltas() as u64);
+        pb.set_message("Resolving deltas");
+    } else if stats.total_objects() > 0 {
+        pb.set_position(stats.received_objects() as u64);
+        pb.set_length(stats.total_objects() as u64);
+        pb.set_message("Receiving objects");
+    }
+}
 
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]

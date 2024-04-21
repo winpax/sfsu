@@ -6,7 +6,7 @@ use rayon::prelude::*;
 use sprinkles::{
     buckets::{self, Bucket},
     config::Scoop as ScoopConfig,
-    git::pull::stats_callback,
+    git::__stats_callback,
     output::sectioned::{Children, Section},
     progress::{style, MessagePosition, ProgressOptions},
     Scoop,
@@ -43,12 +43,12 @@ impl super::Command for Args {
         let scoop_changelog = if scoop_repo.outdated()? {
             let mut changelog = if self.changelog {
                 scoop_repo.pull_with_changelog(Some(&|stats, thin| {
-                    stats_callback(&stats, thin, &pb);
+                    __stats_callback(&stats, thin, &pb);
                     true
                 }))?
             } else {
                 scoop_repo.pull(Some(&|stats, thin| {
-                    stats_callback(&stats, thin, &pb);
+                    __stats_callback(&stats, thin, &pb);
                     true
                 }))?;
                 vec![]
@@ -98,12 +98,12 @@ impl super::Command for Args {
 
                 let changelog = if self.changelog {
                     repo.pull_with_changelog(Some(&|stats, thin| {
-                        stats_callback(&stats, thin, pb);
+                        __stats_callback(&stats, thin, pb);
                         true
                     }))?
                 } else {
                     repo.pull(Some(&|stats, thin| {
-                        stats_callback(&stats, thin, pb);
+                        __stats_callback(&stats, thin, pb);
                         true
                     }))?;
 
