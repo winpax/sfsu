@@ -20,8 +20,7 @@
 
 use std::str;
 
-use git2::{Progress, Repository};
-use indicatif::ProgressBar;
+use git2::Repository;
 
 pub type ProgressCallback<'a> = &'a dyn Fn(git2::Progress<'_>, bool) -> bool;
 
