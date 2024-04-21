@@ -55,7 +55,7 @@ pub struct Manifest {
     pub notes: Option<StringArray>,
     /// Directories to persist when updating
     pub persist: Option<AliasArray>,
-    /// The PowerShell module of the package
+    /// The `PowerShell` module of the package
     pub psmodule: Option<Psmodule>,
     /// The suggested dependencies of the package
     pub suggest: Option<Suggest>,

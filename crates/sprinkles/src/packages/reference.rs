@@ -140,6 +140,15 @@ impl Package {
     }
 
     /// Parse the bucket and package to get the manifest
+    ///
+    /// # Errors
+    /// - If the manifest does not exist
+    /// - If the manifest is invalid
+    /// - If the manifest is not found
+    /// - If the app name is missing
+    /// - If the app dir cannot be read
+    /// - If the bucket is not valid
+    /// - If the bucket is not found
     pub fn manifest(&self) -> Result<Manifest, Error> {
         // TODO: Map output to fix version
 
@@ -230,6 +239,14 @@ impl Package {
     /// Returns a [`Vec`] with a single manifest if the reference is valid
     ///
     /// Otherwise returns a [`Vec`] containing each matching manifest found in each local bucket
+    ///
+    /// # Errors
+    /// - If any of the manifests are invalid
+    /// - If any of the manifests are not found
+    /// - If any of the manifests are missing
+    /// - If the app dir cannot be read
+    /// - If any of the buckets are not valid
+    /// - If any of the buckets are not found
     pub fn list_manifests(&self) -> Result<Vec<Manifest>, Error> {
         self.list_manifest_paths()
             .into_iter()
