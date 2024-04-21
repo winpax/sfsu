@@ -12,6 +12,7 @@ use crate::hash::substitutions::SubstitutionMap;
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq, Hash)]
 #[serde(transparent)]
+/// A struct representing a string version
 pub struct Version(String);
 
 impl From<String> for Version {
