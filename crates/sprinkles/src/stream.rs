@@ -1,5 +1,10 @@
+#![deprecated(note = "I didn't realise BufReader does the same shit")]
+
+//! A module that provides a streaming iterator over a reader.
+
 use std::io::Read;
 
+/// A streaming iterator over a reader
 pub struct Stream<const N: usize, R: Read> {
     total_length: u64,
     current: u64,
@@ -8,6 +13,7 @@ pub struct Stream<const N: usize, R: Read> {
 }
 
 impl<R: Read, const N: usize> Stream<N, R> {
+    /// Create a new streaming iterator
     pub fn new(reader: R, total_length: u64) -> Self {
         Self {
             reader,

@@ -1,3 +1,5 @@
+//! HTTP request helpers and defaults
+
 use derive_more::Deref;
 use reqwest::header::HeaderMap;
 

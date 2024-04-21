@@ -1,3 +1,5 @@
+//! Cache helpers
+
 use std::{
     fs::File,
     io::{Read, Write},

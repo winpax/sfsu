@@ -1,3 +1,5 @@
+//! Downloading helpers for packages
+
 use std::path::PathBuf;
 
 use regex::Regex;

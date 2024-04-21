@@ -43,6 +43,7 @@ use downloading::DownloadUrl;
 use manifest::{InstallConfig, StringArray};
 
 #[macro_export]
+/// Get a field from a manifest based on the architecture
 macro_rules! arch_config {
     ($field:ident.$arch:expr) => {{
         use $crate::calm_panic::CalmUnwrap;
@@ -89,6 +90,7 @@ macro_rules! arch_config {
 }
 
 #[macro_export]
+/// Get a field from a manifest based on the architecture
 macro_rules! arch_field {
     ($self:ident.$field:ident) => {
         arch_field!($self.$field).clone()
@@ -507,6 +509,7 @@ impl InstallManifest {
 
 impl Manifest {
     #[must_use]
+    /// Get the install config for a given architecture
     pub fn install_config(&self, arch: Architecture) -> InstallConfig {
         self.architecture
             .as_ref()
@@ -888,6 +891,8 @@ impl Manifest {
 }
 
 #[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
+/// Errors for setting the version of a manifest
 pub enum SetVersionError {
     #[error("Could not get hash for app: {0}")]
     HashError(#[from] HashError),
@@ -920,18 +925,21 @@ pub fn is_installed(manifest_name: impl AsRef<Path>, bucket: Option<impl AsRef<s
     }
 }
 
+/// Merge defaults for a given architecture and the provided field
 pub trait MergeDefaults {
-    type Output;
+    /// Output & Input type
+    type Default;
 
-    fn merge_default(&self, default: Self::Output) -> Self::Output;
+    /// Merge the architecture specific autoupdate config with the arch agnostic one
+    fn merge_default(&self, default: Self::Default) -> Self::Default;
 }
 
 impl MergeDefaults for Option<AutoupdateArchitecture> {
-    type Output = AutoupdateConfig;
+    type Default = AutoupdateConfig;
 
     #[must_use]
     /// Merge the architecture specific autoupdate config with the arch agnostic one
-    fn merge_default(&self, default: Self::Output) -> Self::Output {
+    fn merge_default(&self, default: Self::Default) -> Self::Default {
         let Some(config) = self else {
             return default;
         };
@@ -952,12 +960,12 @@ impl MergeDefaults for Option<AutoupdateArchitecture> {
 }
 
 impl MergeDefaults for Option<ManifestArchitecture> {
-    type Output = InstallConfig;
+    type Default = InstallConfig;
 
     #[allow(deprecated)]
     #[must_use]
     /// Merge the architecture specific autoupdate config with the arch agnostic one
-    fn merge_default(&self, default: Self::Output) -> Self::Output {
+    fn merge_default(&self, default: Self::Default) -> Self::Default {
         let Some(config) = self else {
             return default;
         };
@@ -984,6 +992,7 @@ impl MergeDefaults for Option<ManifestArchitecture> {
 
 impl HashExtractionOrArrayOfHashExtractions {
     #[must_use]
+    /// Get the hash extraction as a single hash extraction object
     pub fn as_object(&self) -> Option<&HashExtraction> {
         match self {
             Self::Url(_) => None,

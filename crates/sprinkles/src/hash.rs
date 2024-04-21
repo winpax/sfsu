@@ -1,3 +1,5 @@
+//! Manifest hashing utilities
+
 use std::io::BufRead;
 
 use formats::{json::JsonError, text::TextError};
