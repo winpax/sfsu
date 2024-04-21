@@ -95,9 +95,9 @@ impl Hash {
 impl std::fmt::Display for Hash {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let prefix = match self.hash_type {
-            HashType::Sha512 => "sha512:",
-            HashType::Sha256 => "",
-            HashType::Sha1 => "sha1:",
+            HashType::SHA512 => "sha512:",
+            HashType::SHA256 => "",
+            HashType::SHA1 => "sha1:",
             HashType::MD5 => "md5:",
         };
 
@@ -110,12 +110,12 @@ impl std::fmt::Display for Hash {
 /// Hash types
 pub enum HashType {
     /// SHA512
-    Sha512,
+    SHA512,
     #[default]
     /// SHA256
-    Sha256,
+    SHA256,
     /// SHA1
-    Sha1,
+    SHA1,
     /// MD5
     MD5,
 }
@@ -125,10 +125,10 @@ impl TryFrom<&String> for HashType {
 
     fn try_from(value: &String) -> Result<Self, HashError> {
         match value.len() {
-            64 => Ok(HashType::Sha256),
-            40 => Ok(HashType::Sha1),
+            64 => Ok(HashType::SHA256),
+            40 => Ok(HashType::SHA1),
             32 => Ok(HashType::MD5),
-            128 => Ok(HashType::Sha512),
+            128 => Ok(HashType::SHA512),
             _ => Err(HashError::InvalidHash),
         }
     }
@@ -409,9 +409,9 @@ impl Hash {
         }
 
         let hash_bytes = match hash_type {
-            HashType::Sha512 => compute_hash::<sha2::Sha512>(reader),
-            HashType::Sha256 => compute_hash::<sha2::Sha256>(reader),
-            HashType::Sha1 => compute_hash::<sha1::Sha1>(reader),
+            HashType::SHA512 => compute_hash::<sha2::Sha512>(reader),
+            HashType::SHA256 => compute_hash::<sha2::Sha256>(reader),
+            HashType::SHA1 => compute_hash::<sha1::Sha1>(reader),
             HashType::MD5 => compute_hash::<md5::Md5>(reader),
         };
 
@@ -517,16 +517,16 @@ mod tests {
         let md5 = Hash::compute(BufReader::new(&data[..]), HashType::MD5);
         assert_eq!(md5.hash, "5eb63bbbe01eeed093cb22bb8f5acdc3");
 
-        let sha1 = Hash::compute(BufReader::new(&data[..]), HashType::Sha1);
+        let sha1 = Hash::compute(BufReader::new(&data[..]), HashType::SHA1);
         assert_eq!(sha1.hash, "2aae6c35c94fcfb415dbe95f408b9ce91ee846ed");
 
-        let sha256 = Hash::compute(BufReader::new(&data[..]), HashType::Sha256);
+        let sha256 = Hash::compute(BufReader::new(&data[..]), HashType::SHA256);
         assert_eq!(
             sha256.hash,
             "b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9"
         );
 
-        let sha512 = Hash::compute(BufReader::new(&data[..]), HashType::Sha512);
+        let sha512 = Hash::compute(BufReader::new(&data[..]), HashType::SHA512);
         assert_eq!(
             sha512.hash,
             "309ecc489c12d6eb4cc40f50c902f2b4d0ed77ee511a7c7a9bcd3ca86d4cd86f989dd35bc5ff499670da34255b45b0cfd830e81f605dcf7dc5542e93ae9cd76f"
