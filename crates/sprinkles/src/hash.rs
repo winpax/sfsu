@@ -135,15 +135,25 @@ impl TryFrom<&String> for HashType {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+/// A copy of the manifest `HashMode`, with associated data, and additional options
 pub enum HashMode {
+    /// Directly download the hash from the provided url
     HashUrl,
+    /// Download the file and compute the hash
     Download,
+    /// Extract the hash using the provided regex
     Extract(String),
+    /// Extract the hash using the provided JSON path
     Json(String),
+    /// Extract the hash using the provided `XPath`
     Xpath(String),
+    /// Extract the hash from the Fosshub page
     Fosshub,
+    /// Extract the hash from the Metalink (unimplemented)
     Metalink,
+    /// Extract the hash from an RDF file
     Rdf,
+    /// Extract the hash from the Sourceforge page
     Sourceforge,
 }
 
