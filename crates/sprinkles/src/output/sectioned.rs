@@ -9,7 +9,11 @@ use std::fmt::Display;
 
 use rayon::prelude::*;
 
-trait SectionData: Display {}
+// trait SectionData: Display {}
+// impl<T: Display> SectionData for Sections<T> {}
+// impl<T: Display> SectionData for Section<T> {}
+// impl<T: Display> SectionData for Children<T> {}
+// impl<T: Display> SectionData for Text<T> {}
 
 /// Multiple sections
 #[must_use = "does nothing unless printed"]
@@ -49,11 +53,6 @@ impl<T> Sections<T> {
         self.0.par_sort_by(Section::cmp);
     }
 }
-
-impl<T: Display> SectionData for Sections<T> {}
-impl<T: Display> SectionData for Section<T> {}
-impl<T: Display> SectionData for Children<T> {}
-impl<T: Display> SectionData for Text<T> {}
 
 impl<T: Display> Display for Sections<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
