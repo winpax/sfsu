@@ -27,6 +27,7 @@ mod versions {
             r#"{}
 sprinkles {}
 branch:{}
+tag:{}
 commit_hash:{}
 build_time:{}
 build_env:{},{}
@@ -34,6 +35,7 @@ libgit2:{}"#,
             PKG_VERSION,
             sprinkles::versions::VERSION,
             BRANCH,
+            TAG,
             SHORT_COMMIT,
             BUILD_TIME,
             RUST_VERSION,

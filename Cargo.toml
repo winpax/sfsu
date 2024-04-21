@@ -10,7 +10,7 @@ version.workspace = true
 members = ["crates/*"]
 package.license = "Apache-2.0"
 package.publish = false
-package.version = "1.10.1"
+package.version = "1.10.3"
 
 [workspace.dependencies]
 chrono = { version = ">=0.4.37", features = [
@@ -49,7 +49,7 @@ anyhow = "1.0"
 bat = "0.24"
 clap = { version = "4.5", features = ["derive"] }
 git2.workspace = true
-human-panic = "1.2"
+human-panic = "2.0"
 indicatif = { version = "0.17", features = ["improved_unicode", "rayon"] }
 itertools = "0.12"
 log = { workspace = true }
