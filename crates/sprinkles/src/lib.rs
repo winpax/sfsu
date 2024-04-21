@@ -33,6 +33,7 @@ pub mod packages;
 pub mod progress;
 pub mod requests;
 pub mod shell;
+#[cfg(not(feature = "v2"))]
 pub mod stream;
 pub mod version;
 
