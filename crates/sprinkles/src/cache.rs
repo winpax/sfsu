@@ -11,6 +11,8 @@ use reqwest::{blocking::Response, StatusCode};
 use crate::{calm_panic::CalmUnwrap, hash::url_ext::UrlExt, packages::Manifest, Architecture};
 
 #[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
+/// Cache error
 pub enum Error {
     #[error("Failed to download file: {0}")]
     Reqwest(#[from] reqwest::Error),
@@ -21,8 +23,10 @@ pub enum Error {
 }
 
 #[derive(Debug)]
+/// A cache handle
 pub struct Handle {
     url: String,
+    /// The file name
     pub file_name: PathBuf,
     fp: File,
 }
@@ -46,6 +50,7 @@ impl Handle {
     }
 
     #[must_use]
+    /// Open a manifest and return a list of cache handles
     pub fn open_manifest(
         cache_path: impl AsRef<Path>,
         manifest: &Manifest,
@@ -94,6 +99,7 @@ impl Write for Handle {
 
 #[derive(Debug)]
 #[must_use = "Does nothing until `download` is called"]
+/// A cache handle downloader
 pub struct Downloader {
     cache: Handle,
     resp: Response,

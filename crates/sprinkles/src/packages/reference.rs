@@ -9,6 +9,8 @@ use super::{CreateManifest, Manifest, SetVersionError};
 use crate::buckets::{self, Bucket};
 
 #[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
+/// Package reference errors
 pub enum Error {
     #[error("Attempted to set bucket on a file path or url. This is not supported.")]
     BucketOnDirectRef,
@@ -39,29 +41,35 @@ pub enum Error {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+/// A package reference with an optional version
 pub struct Package {
+    /// The manifest reference
     pub manifest: ManifestRef,
+    /// The manifest version
     pub version: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 /// A reference to a package
 pub enum ManifestRef {
-    /// A package reference with a bucket and name
+    /// Manifest reference with a bucket and name
     BucketNamePair {
         /// The package bucket
         bucket: String,
         /// The package name
         name: String,
     },
-    /// A package reference with just a name
+    /// Manifest reference with just a name
     Name(String),
+    /// Manifest reference from path
     File(PathBuf),
+    /// Manifest reference from url
     Url(Url),
 }
 
 impl ManifestRef {
     #[must_use]
+    /// Convert the [`ManifestRef`] into a [`Package`] reference
     pub fn into_package_ref(self) -> Package {
         Package {
             manifest: self,
@@ -72,6 +80,7 @@ impl ManifestRef {
 
 impl Package {
     #[must_use]
+    /// Convert the [`ManifestRef`] into a [`Package`] reference
     pub fn from_ref(manifest: ManifestRef) -> Self {
         Self {
             manifest,
