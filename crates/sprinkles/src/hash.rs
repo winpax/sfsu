@@ -27,6 +27,8 @@ pub(crate) mod substitutions;
 pub(crate) mod url_ext;
 
 #[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
+/// Hash errors
 pub enum HashError {
     #[error("Text error: {0}")]
     TextError(#[from] TextError),
@@ -68,21 +70,23 @@ pub enum HashError {
     ErrorStatus(StatusCode),
 }
 
-pub type Result<T> = std::result::Result<T, HashError>;
-
 #[derive(Debug, Clone, PartialEq, Eq)]
+/// Hash result type
 pub struct Hash {
+    // TODO: Represent this as a byte array, and convert it to hex when needed
     hash: String,
     hash_type: HashType,
 }
 
 impl Hash {
     #[must_use]
+    /// Get the hash string
     pub fn hash(&self) -> String {
         self.to_string()
     }
 
     #[must_use]
+    /// Get the hash type
     pub fn hash_type(&self) -> HashType {
         self.hash_type
     }
@@ -103,18 +107,23 @@ impl std::fmt::Display for Hash {
 }
 
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq)]
+/// Hash types
 pub enum HashType {
+    /// SHA512
     Sha512,
     #[default]
+    /// SHA256
     Sha256,
+    /// SHA1
     Sha1,
+    /// MD5
     MD5,
 }
 
 impl TryFrom<&String> for HashType {
     type Error = HashError;
 
-    fn try_from(value: &String) -> Result<Self> {
+    fn try_from(value: &String) -> Result<Self, HashError> {
         match value.len() {
             64 => Ok(HashType::Sha256),
             40 => Ok(HashType::Sha1),
@@ -247,7 +256,7 @@ impl Hash {
     /// - If the hash is not found in the XML
     /// - If the hash is not found in the text
     /// - If the hash is not found in the JSON
-    pub fn get_for_app(manifest: &Manifest) -> Result<Hash> {
+    pub fn get_for_app(manifest: &Manifest) -> Result<Hash, HashError> {
         let autoupdate_config = {
             let autoupdate = manifest
                 .autoupdate
@@ -418,7 +427,10 @@ impl Hash {
     ///
     /// # Errors
     /// - If the hash is not found
-    pub fn from_rdf(source: impl AsRef<[u8]>, file_name: impl AsRef<str>) -> Result<Hash> {
+    pub fn from_rdf(
+        source: impl AsRef<[u8]>,
+        file_name: impl AsRef<str>,
+    ) -> Result<Hash, HashError> {
         Ok(formats::rdf::parse_xml(source, file_name).map(|hash| {
             let hash_type = HashType::try_from(&hash).unwrap_or_default();
             Hash { hash, hash_type }
@@ -434,7 +446,7 @@ impl Hash {
         source: impl AsRef<str>,
         substitutions: &SubstitutionMap,
         regex: impl AsRef<str>,
-    ) -> Result<Hash> {
+    ) -> Result<Hash, HashError> {
         let hash =
             formats::text::parse_text(source, substitutions, regex)?.ok_or(HashError::NotFound)?;
         let hash_type = HashType::try_from(&hash)?;
@@ -451,7 +463,7 @@ impl Hash {
         source: impl AsRef<[u8]>,
         substitutions: &SubstitutionMap,
         json_path: impl AsRef<str>,
-    ) -> Result<Hash> {
+    ) -> Result<Hash, HashError> {
         let json = serde_json::from_slice(source.as_ref())?;
 
         let hash = formats::json::parse_json(&json, substitutions, json_path)?;
@@ -471,7 +483,7 @@ impl Hash {
         source: impl AsRef<str>,
         substitutions: &SubstitutionMap,
         xpath: impl AsRef<str>,
-    ) -> Result<Hash> {
+    ) -> Result<Hash, HashError> {
         let hash = formats::xml::parse_xml(source, substitutions, xpath)?;
         let hash_type = HashType::try_from(&hash)?;
 
@@ -482,7 +494,7 @@ impl Hash {
     ///
     /// # Errors
     /// peepeepoopoo
-    pub fn find_hash_in_headers(_headers: &HeaderMap<HeaderValue>) -> Result<Hash> {
+    pub fn find_hash_in_headers(_headers: &HeaderMap<HeaderValue>) -> Result<Hash, HashError> {
         unimplemented!("I can't find a location where this is ever used")
     }
 }
