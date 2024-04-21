@@ -205,51 +205,48 @@ impl HashMode {
     pub fn from_autoupdate_config(config: &AutoupdateConfig) -> Option<Self> {
         let hash = config.hash.as_ref()?;
 
-        if let HashExtractionOrArrayOfHashExtractions::Url(_) = hash {
-            return Some(HashMode::Download);
+        match hash {
+            HashExtractionOrArrayOfHashExtractions::Url(_) => Some(HashMode::Download),
+            HashExtractionOrArrayOfHashExtractions::HashExtraction(hash_cfg) => {
+                let mode = hash_cfg
+                    .mode
+                    .and_then(|mode| match mode {
+                        ManifestHashMode::Download => Some(HashMode::Download),
+                        ManifestHashMode::Fosshub => Some(HashMode::Fosshub),
+                        ManifestHashMode::Sourceforge => Some(HashMode::Sourceforge),
+                        ManifestHashMode::Metalink => Some(HashMode::Metalink),
+                        ManifestHashMode::Rdf => Some(HashMode::Rdf),
+                        _ => None,
+                    })
+                    .or_else(|| {
+                        if let Some(regex) = &hash_cfg.regex {
+                            return Some(HashMode::Extract(regex.clone()));
+                        }
+                        if let Some(regex) = &hash_cfg.find {
+                            return Some(HashMode::Extract(regex.clone()));
+                        }
+
+                        if let Some(jsonpath) = &hash_cfg.jsonpath {
+                            return Some(HashMode::Json(jsonpath.clone()));
+                        }
+                        if let Some(jsonpath) = &hash_cfg.jp {
+                            return Some(HashMode::Json(jsonpath.clone()));
+                        }
+
+                        if let Some(xpath) = &hash_cfg.xpath {
+                            return Some(HashMode::Xpath(xpath.clone()));
+                        }
+
+                        None
+                    });
+
+                if let Some(mode) = mode {
+                    Some(mode)
+                } else {
+                    Some(HashMode::HashUrl)
+                }
+            }
         }
-
-        if let HashExtractionOrArrayOfHashExtractions::HashExtraction(hash_cfg) = hash {
-            let mode = hash_cfg
-                .mode
-                .and_then(|mode| match mode {
-                    ManifestHashMode::Download => Some(HashMode::Download),
-                    ManifestHashMode::Fosshub => Some(HashMode::Fosshub),
-                    ManifestHashMode::Sourceforge => Some(HashMode::Sourceforge),
-                    ManifestHashMode::Metalink => Some(HashMode::Metalink),
-                    ManifestHashMode::Rdf => Some(HashMode::Rdf),
-                    _ => None,
-                })
-                .or_else(|| {
-                    if let Some(regex) = &hash_cfg.regex {
-                        return Some(HashMode::Extract(regex.clone()));
-                    }
-                    if let Some(regex) = &hash_cfg.find {
-                        return Some(HashMode::Extract(regex.clone()));
-                    }
-
-                    if let Some(jsonpath) = &hash_cfg.jsonpath {
-                        return Some(HashMode::Json(jsonpath.clone()));
-                    }
-                    if let Some(jsonpath) = &hash_cfg.jp {
-                        return Some(HashMode::Json(jsonpath.clone()));
-                    }
-
-                    if let Some(xpath) = &hash_cfg.xpath {
-                        return Some(HashMode::Xpath(xpath.clone()));
-                    }
-
-                    None
-                });
-
-            return if let Some(mode) = mode {
-                Some(mode)
-            } else {
-                Some(HashMode::HashUrl)
-            };
-        }
-
-        todo!("Handle array of hash extractions")
     }
 }
 
