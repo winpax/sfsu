@@ -514,6 +514,8 @@ impl Manifest {
             .unwrap_or_else(|| self.install_config.clone())
     }
 
+    #[must_use]
+    /// Get the download urls for a given architecture
     pub fn download_urls(&self, arch: Architecture) -> Option<Vec<DownloadUrl>> {
         let urls = self.install_config(arch).url?;
 

@@ -2,7 +2,6 @@ use std::{
     borrow::Cow,
     fmt::{Display, Formatter},
     num::ParseIntError,
-    ops::Sub,
 };
 
 use getset::Getters;
@@ -85,6 +84,10 @@ impl Version {
     }
 
     #[must_use]
+    /// Create a substitution map for the version
+    ///
+    /// # Panics
+    /// - If the hardcoded regex is invalid. (This is a bug, please report it)
     pub fn submap(&self) -> SubstitutionMap {
         let mut map = SubstitutionMap::new();
         map.insert("$version".into(), self.as_str().to_string());
