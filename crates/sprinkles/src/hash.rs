@@ -387,8 +387,6 @@ impl Hash {
             HashMode::Xpath(xpath) => Hash::find_hash_in_xml(source.text()?, &submap, xpath),
             HashMode::Json(json_path) => Hash::from_json(source.bytes()?, &submap, json_path),
             HashMode::Rdf => Hash::from_rdf(source.bytes()?, url.remote_filename()),
-            // HashMode::Fosshub => todo!(),
-            // HashMode::Sourceforge => todo!(),
             _ => unreachable!(),
         }?;
 
