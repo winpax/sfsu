@@ -1,3 +1,5 @@
+//! Version helpers
+
 use std::{
     borrow::Cow,
     fmt::{Display, Formatter},
@@ -152,6 +154,8 @@ impl TryFrom<&Version> for semver::Version {
 }
 
 #[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
+/// Errors that can occur when parsing a version string
 pub enum ParseError {
     #[error("Failed to parse integer: {0}")]
     ParseInt(#[from] ParseIntError),
@@ -162,6 +166,7 @@ pub enum ParseError {
 
 #[derive(Debug, Clone, Getters)]
 #[get = "pub"]
+/// A structured version
 pub struct ParsedVersion {
     major: u64,
     minor: Option<u64>,
@@ -172,6 +177,7 @@ pub struct ParsedVersion {
 
 impl ParsedVersion {
     #[must_use]
+    /// Get the version as a simple [`Version`] string
     pub fn to_unparsed(&self) -> Version {
         Version(self.to_string())
     }

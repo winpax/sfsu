@@ -1,4 +1,9 @@
+#![doc(hidden)]
+
 //! HTTP request helpers and defaults
+//!
+//! Note that this is primarily intended for internal SFSU use, and is not recommended for general use.
+//! You are welcome to do so, but be aware that the API may change without warning, and it will likely not meet your requirements.
 
 use derive_more::Deref;
 use reqwest::header::HeaderMap;
@@ -31,6 +36,7 @@ pub fn default_headers() -> HeaderMap {
 }
 
 #[derive(Debug, Clone, Deref)]
+/// A blocking client with sane defaults for SFSU
 pub struct BlockingClient(reqwest::blocking::Client);
 
 impl BlockingClient {
@@ -52,6 +58,7 @@ impl Default for BlockingClient {
 }
 
 #[derive(Debug, Clone, Deref)]
+/// An async client with sane defaults for SFSU
 pub struct AsyncClient(reqwest::Client);
 
 impl AsyncClient {
