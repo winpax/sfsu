@@ -20,6 +20,7 @@ pub trait UrlExt {
 
     fn leaf(&self) -> Option<String>;
 
+    #[allow(dead_code)]
     fn substitute(&mut self, submap: &SubstitutionMap);
 
     fn submap(&self) -> SubstitutionMap;
