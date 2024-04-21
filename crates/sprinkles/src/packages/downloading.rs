@@ -3,18 +3,23 @@ use std::path::PathBuf;
 use regex::Regex;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+/// A URL to download
 pub struct DownloadUrl {
+    /// The URL
     pub url: String,
+    /// The destination file name
     pub file_name: Option<String>,
 }
 
 impl DownloadUrl {
     #[must_use]
+    /// Create a new download URL
     pub fn new(url: String, file_name: Option<String>) -> Self {
         Self { url, file_name }
     }
 
     #[must_use]
+    /// Create a new download URL from a string
     pub fn from_string(url: String) -> Self {
         if let Some((url, file_name)) = url.split_once("#/") {
             Self {
@@ -30,6 +35,7 @@ impl DownloadUrl {
     }
 
     #[must_use]
+    /// Get the cache path for the download URL
     pub fn into_cache_path(&self) -> PathBuf {
         self.into()
     }
