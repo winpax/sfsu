@@ -444,6 +444,24 @@ impl Hash {
         })?)
     }
 
+    /// Parse a hash from an XML source
+    ///
+    /// # Errors
+    /// - If the hash is not found
+    /// - If the hash is invalid
+    /// - If the XML is invalid
+    /// - If the `XPath` is invalid
+    pub fn find_hash_in_xml(
+        source: impl AsRef<str>,
+        substitutions: &SubstitutionMap,
+        xpath: impl AsRef<str>,
+    ) -> Result<Hash, HashError> {
+        let hash = formats::xml::parse_xml(source, substitutions, xpath)?;
+        let hash_type = HashType::try_from(&hash)?;
+
+        Ok(Hash { hash, hash_type })
+    }
+
     /// Parse a hash from a text source
     ///
     /// # Errors
@@ -474,24 +492,6 @@ impl Hash {
         let json = serde_json::from_slice(source.as_ref())?;
 
         let hash = formats::json::parse_json(&json, substitutions, json_path)?;
-        let hash_type = HashType::try_from(&hash)?;
-
-        Ok(Hash { hash, hash_type })
-    }
-
-    /// Parse a hash from an XML source
-    ///
-    /// # Errors
-    /// - If the hash is not found
-    /// - If the hash is invalid
-    /// - If the XML is invalid
-    /// - If the `XPath` is invalid
-    pub fn find_hash_in_xml(
-        source: impl AsRef<str>,
-        substitutions: &SubstitutionMap,
-        xpath: impl AsRef<str>,
-    ) -> Result<Hash, HashError> {
-        let hash = formats::xml::parse_xml(source, substitutions, xpath)?;
         let hash_type = HashType::try_from(&hash)?;
 
         Ok(Hash { hash, hash_type })
@@ -660,6 +660,14 @@ mod tests {
 
         handler.test()?;
 
+        Ok(())
+    }
+
+    #[test]
+    fn test_springboot() -> anyhow::Result<()> {
+        let package = reference::Package::from_str("extras/springboot")?;
+        let handler = TestHandler::new(package);
+        handler.test()?;
         Ok(())
     }
 
