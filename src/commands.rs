@@ -51,9 +51,9 @@ pub trait Command {
     where
         Self: Sized,
     {
-        if let Some(deprecation_warning) = Self::deprecated() {
-            use owo_colors::OwoColorize;
+        use owo_colors::OwoColorize;
 
+        if let Some(deprecation_warning) = Self::deprecated() {
             let mut output = String::from("DEPRECATED: ");
 
             match deprecation_warning.message {
@@ -74,7 +74,12 @@ pub trait Command {
             abandon!("This command requires elevation. Please run as an administrator.");
         }
 
-        if Self::BETA {}
+        if Self::BETA {
+            println!(
+                "{}\n",
+                "This command is in beta and may not work as expected. Please report any and all bugs you find!".yellow()
+            );
+        }
 
         self.runner()
     }
@@ -106,8 +111,6 @@ pub enum Commands {
     /// List the dependencies of a given package, in the order that they will be installed
     Depends(depends::Args),
     /// Download the specified app.
-    /// NOTE: This is currently experimental, and might not always work as expected.
-    /// Please report any issues found
     Download(download::Args),
     /// Show status and check for new app versions
     Status(status::Args),
