@@ -58,7 +58,7 @@ source path/to/the/file.nu
 
 The above disable demonstration also works
 
-## Benchmarks [^1]
+## Benchmarks
 
 Benchmarks have been moved to [the wiki](https://github.com/jewlexx/sfsu/wiki/Benchmarks)
 
