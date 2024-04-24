@@ -38,6 +38,7 @@ pub enum DeprecationMessage {
 
 // TODO: Run command could return `impl Display` and print that itself
 pub trait Command {
+    const BETA: bool = false;
     const NEEDS_ELEVATION: bool = false;
 
     fn deprecated() -> Option<DeprecationWarning> {
@@ -72,6 +73,8 @@ pub trait Command {
         if Self::NEEDS_ELEVATION && !quork::root::is_root()? {
             abandon!("This command requires elevation. Please run as an administrator.");
         }
+
+        if Self::BETA {}
 
         self.runner()
     }

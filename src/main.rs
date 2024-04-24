@@ -81,15 +81,6 @@ struct Args {
         env = "DISABLE_GIT"
     )]
     disable_git: bool,
-
-    #[clap(
-        short,
-        long,
-        global = true,
-        help = "Disable beta commands that are still in development",
-        env = "SFSU_DISABLE_BETA"
-    )]
-    disable_beta: bool,
 }
 
 fn main() -> anyhow::Result<()> {

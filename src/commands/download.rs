@@ -21,6 +21,8 @@ pub struct Args {
 }
 
 impl super::Command for Args {
+    const BETA: bool = true;
+
     fn runner(self) -> Result<(), anyhow::Error> {
         let manifest = self.package.manifest().context("Failed to find manifest")?;
 
