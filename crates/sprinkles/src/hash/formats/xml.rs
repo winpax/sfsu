@@ -48,7 +48,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_finding_xml_hashes() -> anyhow::Result<()> {
+    fn test_finding_in_xml() -> anyhow::Result<()> {
         const EXAMPLE_XML: &str = r#"
             <assembly>
                 <description>sfsu</description>
