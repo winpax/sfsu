@@ -48,11 +48,11 @@ fn criterion_benchmark(c: &mut Criterion) {
         );
     });
 
-    let mut properties = c.benchmark_group("updating manifest properties");
-    properties.sample_size(10);
-    properties.measurement_time(Duration::from_secs(10));
+    let mut slow = c.benchmark_group("updating manifest properties");
+    slow.sample_size(10);
+    slow.measurement_time(Duration::from_secs(10));
 
-    properties.bench_function("set version", |b| {
+    slow.bench_function("set version", |b| {
         b.iter_batched(
             || Package::from_str("extras/sfsu").unwrap(),
             |mut package| {
@@ -63,7 +63,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         );
     });
 
-    properties.bench_function("create downloader", |b| {
+    slow.bench_function("create downloader", |b| {
         b.iter_batched(
             || {
                 (
@@ -84,7 +84,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         );
     });
 
-    properties.finish();
+    slow.finish();
 }
 
 criterion_group!(benches, criterion_benchmark);
