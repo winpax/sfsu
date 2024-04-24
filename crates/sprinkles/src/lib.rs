@@ -18,8 +18,6 @@ use serde::{Deserialize, Serialize};
 
 pub use semver;
 
-mod opt;
-
 pub mod buckets;
 pub mod cache;
 pub mod calm_panic;

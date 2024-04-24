@@ -6,7 +6,7 @@ use derive_more::Deref;
 use git2::{Commit, DiffOptions, Direction, FetchOptions, Progress, Remote, Repository, Sort};
 use indicatif::ProgressBar;
 
-use crate::{buckets::Bucket, opt::ResultIntoOption, Scoop};
+use crate::{buckets::Bucket, Scoop};
 
 use self::pull::ProgressCallback;
 
@@ -84,7 +84,7 @@ impl Repo {
     #[must_use]
     /// Get the origin remote
     pub fn origin(&self) -> Option<Remote<'_>> {
-        self.find_remote("origin").into_option()
+        self.find_remote("origin").ok()
     }
 
     /// Get the current branch
