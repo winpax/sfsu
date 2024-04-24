@@ -639,6 +639,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "Duplicate of `test_googlechrome`"]
     fn test_handlers_implemented() -> anyhow::Result<()> {
         let package = reference::Package::from_str("extras/googlechrome")?;
 
