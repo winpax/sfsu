@@ -703,6 +703,15 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "sfsu does not yet support custom matches"]
+    fn test_ungoogled_chromium() -> anyhow::Result<()> {
+        let package = reference::Package::from_str("extras/ungoogled-chromium")?;
+        let handler = TestHandler::new(package);
+        handler.test()?;
+        Ok(())
+    }
+
+    #[test]
     fn test_firefox() -> anyhow::Result<()> {
         let package = reference::Package::from_str("extras/firefox")?;
         TestHandler::new(package).test()
