@@ -30,7 +30,7 @@ anyhow = "1.0"
 base64 = { version = "0.22.0", optional = true }
 cfg-if = "1.0"
 chrono.workspace = true
-clap = "4.5"
+clap = { version = "4.5", features = ["derive"] }
 const-str = { version = "0.5", features = ["all"] }
 derive_more = "0.99"
 digest = { version = "0.10.7", features = ["std"], optional = true }
