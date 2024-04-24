@@ -217,10 +217,9 @@ In the meantime I will continue working on this independently of Scoop as a coll
 **Made with 💗 by Juliette Cordor**
 
 [^1]: These benchmarks are done after warmups. You will likely see far greater improvements when run on "cold" systems. Results will also differ depending on search request and the number of results, as well as installed buckets, and a few other factors
-[^search-version]: Run on sfsu version [v1.8.3][v1.8.3], Hok version [v0.1.0-beta.4][hokv0.1.0-beta.4], scoop-search version [1.4.0](https://github.com/shilangyu/scoop-search/releases/tag/v1.4.0)
-[^info-version]: Run on sfsu version [v1.6.3][v1.6.3] and Hok version [v0.1.0-beta.4][hokv0.1.0-beta.4]
-[^list-version]: Run on sfsu version [v1.6.3][v1.6.3] and Hok version [v0.1.0-beta.4][hokv0.1.0-beta.4]
+[^search-version]: Run on sfsu version [v1.10.3][v1.10.3], Hok version [v0.1.0-beta.4][hokv0.1.0-beta.4], scoop-search version [1.4.1](https://github.com/shilangyu/scoop-search/releases/tag/v1.4.1)
+[^info-version]: Run on sfsu version [v1.10.3][v1.10.3] and Hok version [v0.1.0-beta.4][hokv0.1.0-beta.4]
+[^list-version]: Run on sfsu version [v1.10.3][v1.10.3] and Hok version [v0.1.0-beta.4][hokv0.1.0-beta.4]
 
-[v1.8.3]: https://github.com/jewlexx/sfsu/releases/tag/v1.8.3
-[v1.6.3]: https://github.com/jewlexx/sfsu/releases/tag/v1.6.3
+[v1.10.3]: https://github.com/jewlexx/sfsu/releases/tag/v1.10.3
 [hokv0.1.0-beta.4]: https://github.com/chawyehsu/hok/releases/tag/v0.1.0-beta.4
