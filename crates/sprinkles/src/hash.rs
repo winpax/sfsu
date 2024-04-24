@@ -695,6 +695,12 @@ mod tests {
     }
 
     #[test]
+    fn test_firefox() -> anyhow::Result<()> {
+        let package = reference::Package::from_str("extras/firefox")?;
+        TestHandler::new(package).test()
+    }
+
+    #[test]
     fn test_sfsu_autoupdate() -> anyhow::Result<()> {
         let mut package = reference::Package::from_str("personal/sfsu")?;
         package.set_version("1.10.2".to_string());
