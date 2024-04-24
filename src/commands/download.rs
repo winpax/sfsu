@@ -39,7 +39,13 @@ impl super::Command for Args {
             },
         }?;
 
-        downloader.download()?;
+        let (path, hash) = downloader.download()?;
+
+        // if let Some(actual_hash) = manifest.install_config().hash {
+        //     if actual_hash != hash {
+        //         abandon!("Hash mismatch: expected {actual_hash}, got {hash}");
+        //     }
+        // }
 
         Ok(())
     }

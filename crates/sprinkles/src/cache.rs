@@ -12,7 +12,7 @@ use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 use reqwest::{blocking::Response, StatusCode};
 
 use crate::{
-    hash::{url_ext::UrlExt, HashType},
+    hash::{url_ext::UrlExt, Hash, HashType},
     packages::Manifest,
 };
 
@@ -191,6 +191,8 @@ impl Downloader {
             HashType::SHA1 => self.handle_buf::<sha1::Sha1>(),
             HashType::MD5 => self.handle_buf::<md5::Md5>(),
         }?;
+
+        // Hash;
 
         // loop {
         //     let chunk = reader.fill_buf()?;
