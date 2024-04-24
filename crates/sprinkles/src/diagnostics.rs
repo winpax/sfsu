@@ -51,7 +51,7 @@ const EXPECTED_HELPERS: &[Helper] = &[
         exe: "7z",
         name: "7-Zip",
         reason: "unpacking most programs",
-        packages: &["7zip", "7zip-std"],
+        packages: &["7zip"],
     },
     Helper {
         exe: "innounp",
