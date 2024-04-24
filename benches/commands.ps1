@@ -21,7 +21,7 @@ function BenchCommands
     }
     $FileName = "$OutDir/$OutFile.txt"
 
-    Write-Output "$ hyperfine --warmup 5 $commands" > $FileName
+    Write-Output "$ hyperfine --warmup 5 $($commands | ForEach-Object { "'$($_)'" })" > $FileName
     hyperfine --warmup 5 $Commands >> $FileName
 }
 
@@ -46,5 +46,5 @@ BenchCommands @('sfsu search google', 'scoop search google') -OutFile 'search_ca
 
 # Info
 Write-Output 'Benchmarking info'
-BenchCommands @('sfsu info sfsu --disable-updated', 'hok info sfsu')
+BenchCommands @('sfsu info sfsu --disable-updated', 'hok info sfsu') -OutFile 'info_hok'
 BenchCommands @('sfsu info sfsu', 'scoop info sfsu')
