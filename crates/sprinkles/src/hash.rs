@@ -78,7 +78,6 @@ pub enum HashError {
 #[derive(Debug, Clone, PartialEq, Eq)]
 /// Hash result type
 pub struct Hash {
-    // TODO: Represent this as a byte array, and convert it to hex when needed
     hash: String,
     hash_type: HashType,
 }
