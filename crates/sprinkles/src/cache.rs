@@ -73,23 +73,7 @@ impl Handle {
 
         let url = manifest.download_url().ok_or(Error::MissingDownloadUrl)?;
 
-        let file_name = if let Some(frag) = &url.file_name {
-            let file_name = PathBuf::from(&url);
-            let orig_ext = file_name.extension();
-            let mut file_name = file_name.display().to_string();
-            file_name += "_";
-            file_name += frag;
-
-            let file_name = PathBuf::from(file_name);
-
-            if let Some(ext) = orig_ext {
-                file_name.with_extension(ext)
-            } else {
-                file_name
-            }
-        } else {
-            PathBuf::from(&url)
-        };
+        let file_name = PathBuf::from(&url);
 
         let file_name = format!("{}#{}#{}", name, version, file_name.display());
 

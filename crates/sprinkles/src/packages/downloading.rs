@@ -41,14 +41,40 @@ impl DownloadUrl {
     pub fn into_cache_path(&self) -> PathBuf {
         self.into()
     }
+
+    #[must_use]
+    /// Convert into a path buf
+    ///
+    /// # Panics
+    /// - If the hardcoded regex is invalid
+    pub fn to_path_buf(&self) -> PathBuf {
+        let cache_path_regex = Regex::new(r"[^\w\.\-]+").expect("valid regex");
+
+        let safe_url = cache_path_regex.replace_all(&self.url, "_");
+
+        let file_name = PathBuf::from(safe_url.to_string());
+
+        if let Some(frag) = &self.file_name {
+            let orig_ext = file_name.extension();
+            let mut file_name = file_name.display().to_string();
+            file_name += "_";
+            file_name += frag;
+
+            let file_name = PathBuf::from(file_name);
+
+            if let Some(ext) = orig_ext {
+                file_name.with_extension(ext)
+            } else {
+                file_name
+            }
+        } else {
+            file_name
+        }
+    }
 }
 
 impl From<&DownloadUrl> for PathBuf {
     fn from(url: &DownloadUrl) -> Self {
-        let cache_path_regex = Regex::new(r"[^\w\.\-]+").expect("valid regex");
-
-        let safe_url = cache_path_regex.replace_all(&url.url, "_");
-
-        PathBuf::from(safe_url.to_string())
+        url.to_path_buf()
     }
 }
