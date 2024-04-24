@@ -31,8 +31,6 @@ base64 = { version = "0.22.0", optional = true }
 cfg-if = "1.0"
 chrono.workspace = true
 clap = "4.5"
-# TODO: Remove colored
-colored = "2.1"
 const-str = { version = "0.5", features = ["all"] }
 derive_more = "0.99"
 digest = { version = "0.10.7", features = ["std"], optional = true }
