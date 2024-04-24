@@ -168,10 +168,15 @@ pub enum ParseError {
 #[get = "pub"]
 /// A structured version
 pub struct ParsedVersion {
+    /// Major version
     major: u64,
+    /// Minor version
     minor: Option<u64>,
+    /// Patch version
     patch: Option<u64>,
+    /// Build version
     build: Option<String>,
+    /// Pre-release version
     pre_release: Option<String>,
 }
 
