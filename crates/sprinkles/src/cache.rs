@@ -155,7 +155,7 @@ impl Downloader {
                 ProgressBar::new(content_length)
                     .with_style(
                         ProgressStyle::with_template(
-                            "{msg} {spinner:.green} [{wide_bar:.cyan/blue}] {bytes}/{total_bytes} {bytes_per_sec} ({eta})",
+                            "{prefix} {msg} {spinner:.green} [{wide_bar:.cyan/blue}] {bytes}/{total_bytes} {bytes_per_sec} ({eta})",
                         )
                         .unwrap()
                         .progress_chars("#>-"),
@@ -225,6 +225,9 @@ impl Downloader {
 
         let reader = if self.cache.cache_path.exists() {
             debug!("Loading from cache");
+            if let Some(pb) = &self.pb {
+                pb.set_prefix("[Cached]");
+            }
             Source::Cache(File::open(&self.cache.cache_path)?)
         } else {
             debug!("Downloading via network");
