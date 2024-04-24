@@ -32,7 +32,7 @@ impl super::Command for Args {
         let dl = Handle::open_manifest(Scoop::cache_path(), &manifest)
             .context("missing download urls")??;
 
-        let downloader = match Downloader::new(dl, &client, &mp) {
+        let downloader = match Downloader::new(dl, &client, Some(&mp)) {
             Ok(dl) => Ok(dl),
             Err(e) => match e {
                 sprinkles::cache::Error::ErrorCode(status) => {

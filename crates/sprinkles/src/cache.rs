@@ -87,7 +87,7 @@ impl Handle {
     pub fn begin_download(
         self,
         client: &impl Deref<Target = reqwest::blocking::Client>,
-        mp: &MultiProgress,
+        mp: Option<&MultiProgress>,
     ) -> Result<Downloader, Error> {
         Downloader::new(self, client, mp)
     }
@@ -109,7 +109,7 @@ impl Write for Handle {
 pub struct Downloader {
     cache: Handle,
     resp: Response,
-    pb: ProgressBar,
+    pb: Option<ProgressBar>,
     message_ptr: &'static str,
 }
 
@@ -125,7 +125,7 @@ impl Downloader {
     pub fn new(
         cache: Handle,
         client: &impl Deref<Target = reqwest::blocking::Client>,
-        mp: &MultiProgress,
+        mp: Option<&MultiProgress>,
     ) -> Result<Self, Error> {
         let resp = client.get(&cache.url).send()?;
 
@@ -157,7 +157,8 @@ impl Downloader {
 
         let message: &'static str = Box::leak(boxed);
 
-        let pb = mp.add(
+        let pb = mp.map(|mp| {
+            mp.add(
             ProgressBar::new(content_length)
                 .with_style(
                     ProgressStyle::with_template(
@@ -168,7 +169,8 @@ impl Downloader {
                 )
                 .with_message(message)
                 .with_finish(indicatif::ProgressFinish::WithMessage("Finished ✅".into())),
-        );
+        )
+        });
 
         Ok(Self {
             cache,
@@ -226,19 +228,14 @@ impl Downloader {
 
             let chunk_length = chunk.len();
 
-            self.pb.inc(chunk_length as u64);
+            if let Some(pb) = &self.pb {
+                pb.inc(chunk_length as u64);
+            }
+
             reader.consume(chunk_length);
         }
 
         Ok(hasher.finalize()[..].to_vec())
-    }
-}
-
-impl Read for Downloader {
-    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
-        let read = self.resp.read(buf)?;
-        self.pb.inc(read as u64);
-        Ok(read)
     }
 }
 
