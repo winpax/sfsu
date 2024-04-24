@@ -251,6 +251,9 @@ impl Repo {
 
     /// Equivalent of `git log -n {n} -s --format='{format}'`
     ///
+    /// # Panics
+    /// - Git repo path could not be found
+    ///
     /// # Errors
     /// - Git path could not be found
     pub fn log(
@@ -264,7 +267,7 @@ impl Repo {
         let mut command = Command::new(git_path);
 
         command
-            .current_dir(self.path())
+            .current_dir(self.path().parent().expect("parent dir in .git path"))
             .arg("-C")
             .arg(cd)
             .arg("log")
