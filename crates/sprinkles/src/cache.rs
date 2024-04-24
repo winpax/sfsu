@@ -7,6 +7,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use digest::Digest;
 use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 use reqwest::{blocking::Response, StatusCode};
 
@@ -179,26 +180,55 @@ impl Downloader {
 
     /// Download the file to the cache
     ///
+    /// Returns the cache file name, and the computed hash
+    ///
     /// # Errors
     /// - If the file cannot be written to the cache
-    pub fn download(mut self) -> Result<PathBuf, Error> {
+    pub fn download(mut self) -> Result<(PathBuf, Vec<u8>), Error> {
+        let hash_bytes = match self.cache.hash_type {
+            HashType::SHA512 => self.handle_buf::<sha2::Sha512>(),
+            HashType::SHA256 => self.handle_buf::<sha2::Sha256>(),
+            HashType::SHA1 => self.handle_buf::<sha1::Sha1>(),
+            HashType::MD5 => self.handle_buf::<md5::Md5>(),
+        }?;
+
+        // loop {
+        //     let chunk = reader.fill_buf()?;
+        //     let chunk_length = chunk.len();
+
+        //     if chunk_length == 0 {
+        //         break;
+        //     }
+
+        //     self.cache.write_all(chunk)?;
+        //     self.pb.inc(chunk_length as u64);
+
+        //     reader.consume(chunk_length);
+        // }
+
+        Ok((self.cache.file_name.clone(), hash_bytes))
+    }
+
+    fn handle_buf<D: Digest>(&mut self) -> Result<Vec<u8>, Error> {
         let mut reader = BufReader::new(self.resp.by_ref());
+        let mut hasher = D::new();
 
         loop {
-            let chunk = reader.fill_buf()?;
-            let chunk_length = chunk.len();
-
-            if chunk_length == 0 {
+            let chunk = reader.fill_buf().unwrap();
+            if chunk.is_empty() {
                 break;
             }
 
+            hasher.update(chunk);
             self.cache.write_all(chunk)?;
-            self.pb.inc(chunk_length as u64);
 
+            let chunk_length = chunk.len();
+
+            self.pb.inc(chunk_length as u64);
             reader.consume(chunk_length);
         }
 
-        Ok(self.cache.file_name.clone())
+        Ok(hasher.finalize()[..].to_vec())
     }
 }
 
