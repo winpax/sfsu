@@ -207,7 +207,13 @@ impl Scoop {
     #[must_use]
     /// Gets the user's scoop cache path
     pub fn cache_path() -> PathBuf {
-        Self::path().join("cache")
+        let path = Self::path().join("cache");
+
+        if !path.exists() && std::fs::create_dir_all(&path).is_err() {
+            abandon!("Could not create cache directory");
+        }
+
+        path
     }
 
     /// List all scoop apps and return their paths
