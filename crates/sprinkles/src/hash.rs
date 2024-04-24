@@ -139,11 +139,12 @@ impl TryFrom<&String> for HashType {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
 /// A copy of the manifest `HashMode`, with associated data, and additional options
 pub enum HashMode {
     /// Directly download the hash from the provided url
     HashUrl,
+    #[default]
     /// Download the file and compute the hash
     Download,
     /// Extract the hash using the provided regex
@@ -276,8 +277,20 @@ impl Hash {
             .autoupdate_config()
             .ok_or(HashError::MissingAutoupdateConfig)?;
 
-        let mut hash_mode =
-            HashMode::from_manifest(manifest).ok_or(HashError::MissingHashExtraction)?;
+        let mut hash_mode = HashMode::from_manifest(manifest).unwrap_or_default();
+
+        if hash_mode == HashMode::Download {
+            return if let Some(dl_url) = manifest
+                .architecture
+                .as_ref()
+                .and_then(|arch| arch_field!(arch.url as ref).flatten())
+            {
+                let source = BlockingClient::new().get(dl_url).send()?;
+                Ok(Hash::compute(BufReader::new(source), HashType::SHA256))
+            } else {
+                Err(HashError::MissingDownloadUrl)
+            };
+        }
 
         let manifest_url = manifest
             .install_config(crate::Architecture::ARCH)
@@ -367,19 +380,6 @@ impl Hash {
                 hash,
                 hash_type: HashType::default(),
             });
-        }
-
-        if hash_mode == HashMode::Download {
-            return if let Some(dl_url) = manifest
-                .architecture
-                .as_ref()
-                .and_then(|arch| arch_field!(arch.url as ref).flatten())
-            {
-                let source = BlockingClient::new().get(dl_url).send()?;
-                Ok(Hash::compute(BufReader::new(source), HashType::SHA256))
-            } else {
-                Err(HashError::MissingDownloadUrl)
-            };
         }
 
         let hash = match hash_mode {
@@ -689,6 +689,36 @@ mod tests {
         let handler = TestHandler::new(package);
 
         handler.test()?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_sfsu_autoupdate() -> anyhow::Result<()> {
+        let mut package = reference::Package::from_str("personal/sfsu")?;
+        package.set_version("1.10.2".to_string());
+        let manifest = package.manifest()?;
+
+        assert_eq!(
+            manifest.architecture.unwrap().x64.unwrap().hash.unwrap(),
+            "84344247cc06339d0dc675a49af81c37f9488e873e74e9701498d06f8e4db588"
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_computed_hash() -> anyhow::Result<()> {
+        let package = reference::Package::from_str("personal/sfsu")?;
+        let mut manifest = package.manifest()?;
+        manifest.autoupdate.as_mut().unwrap().default_config.hash = None;
+
+        manifest.set_version("1.10.2".to_string())?;
+
+        assert_eq!(
+            manifest.architecture.unwrap().x64.unwrap().hash.unwrap(),
+            "84344247cc06339d0dc675a49af81c37f9488e873e74e9701498d06f8e4db588"
+        );
 
         Ok(())
     }

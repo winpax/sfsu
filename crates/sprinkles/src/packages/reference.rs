@@ -109,6 +109,11 @@ impl Package {
         Ok(())
     }
 
+    /// Update the package version in the package reference
+    pub fn set_version(&mut self, version: String) {
+        self.version = Some(version);
+    }
+
     #[must_use]
     /// Just get the bucket name
     pub fn bucket(&self) -> Option<&str> {
