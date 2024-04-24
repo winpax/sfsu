@@ -110,7 +110,7 @@ pub struct Downloader {
     cache: Handle,
     resp: Response,
     pb: Option<ProgressBar>,
-    message_ptr: &'static str,
+    message: &'static str,
 }
 
 impl Downloader {
@@ -137,46 +137,47 @@ impl Downloader {
 
         let content_length = resp.content_length().unwrap_or_default();
 
-        // TODO: Implement a way to free this later to avoid (negligable) memory leaks
-        let boxed = {
-            if let Ok(parsed_url) = url::Url::parse(&cache.url)
-                && let Some(leaf) = parsed_url.leaf()
-            {
-                leaf.into_boxed_str()
-            } else {
-                cache
-                    .file_name
-                    .to_string_lossy()
-                    .split('_')
-                    .next_back()
-                    .expect("non-empty file name")
-                    .to_string()
-                    .into_boxed_str()
-            }
-        };
+        let (pb, message) = mp.map_or((None, ""), |mp| {
+            let boxed = {
+                if let Ok(parsed_url) = url::Url::parse(&cache.url)
+                    && let Some(leaf) = parsed_url.leaf()
+                {
+                    leaf.into_boxed_str()
+                } else {
+                    cache
+                        .file_name
+                        .to_string_lossy()
+                        .split('_')
+                        .next_back()
+                        .expect("non-empty file name")
+                        .to_string()
+                        .into_boxed_str()
+                }
+            };
 
-        let message: &'static str = Box::leak(boxed);
+            let message: &'static str = Box::leak(boxed);
 
-        let pb = mp.map(|mp| {
-            mp.add(
-            ProgressBar::new(content_length)
-                .with_style(
-                    ProgressStyle::with_template(
-                        "{msg} {spinner:.green} [{wide_bar:.cyan/blue}] {bytes}/{total_bytes} {bytes_per_sec} ({eta})",
+                let pb = mp.add(
+                ProgressBar::new(content_length)
+                    .with_style(
+                        ProgressStyle::with_template(
+                            "{msg} {spinner:.green} [{wide_bar:.cyan/blue}] {bytes}/{total_bytes} {bytes_per_sec} ({eta})",
+                        )
+                        .unwrap()
+                        .progress_chars("#>-"),
                     )
-                    .unwrap()
-                    .progress_chars("#>-"),
-                )
-                .with_message(message)
-                .with_finish(indicatif::ProgressFinish::WithMessage("Finished ✅".into())),
-        )
+                    .with_message(message)
+                    .with_finish(indicatif::ProgressFinish::WithMessage("Finished ✅".into())),
+            );
+
+            (Some(pb),message)
         });
 
         Ok(Self {
             cache,
             resp,
             pb,
-            message_ptr: message,
+            message,
         })
     }
 
@@ -243,6 +244,6 @@ impl Drop for Downloader {
     fn drop(&mut self) {
         // There is no code that would drop this message
         // As such this should be safe
-        drop(unsafe { Box::from_raw(std::ptr::from_ref::<str>(self.message_ptr).cast_mut()) });
+        unsafe { core::ptr::drop_in_place(std::ptr::from_ref::<str>(self.message).cast_mut()) };
     }
 }

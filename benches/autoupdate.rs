@@ -2,7 +2,6 @@ use std::{str::FromStr, time::Duration};
 
 use criterion::{black_box, criterion_group, criterion_main, BatchSize, Criterion};
 
-use indicatif::MultiProgress;
 use sprinkles::{
     cache::{Downloader, Handle},
     packages::reference::Package,
@@ -79,7 +78,7 @@ fn criterion_benchmark(c: &mut Criterion) {
                     BlockingClient::new(),
                 )
             },
-            |(dl, client)| black_box(Downloader::new(dl, &client, None)),
+            |(dl, client)| black_box(Downloader::new(dl, &client, None).unwrap()),
             BatchSize::SmallInput,
         );
     });
