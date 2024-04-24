@@ -38,11 +38,7 @@ fn criterion_benchmark(c: &mut Criterion) {
                     .manifest()
                     .unwrap()
             },
-            |manifest| {
-                Handle::open_manifest(Scoop::cache_path(), &manifest)
-                    .unwrap()
-                    .unwrap()
-            },
+            |manifest| Handle::open_manifest(Scoop::cache_path(), &manifest).unwrap(),
             BatchSize::SmallInput,
         );
     });
@@ -73,7 +69,6 @@ fn criterion_benchmark(c: &mut Criterion) {
                             .manifest()
                             .unwrap(),
                     )
-                    .unwrap()
                     .unwrap(),
                     BlockingClient::new(),
                 )
