@@ -2,7 +2,7 @@
 
 use std::{
     fs::File,
-    io::{Read, Write},
+    io::{BufRead, BufReader, Read, Write},
     ops::Deref,
     path::{Path, PathBuf},
 };
@@ -10,7 +10,7 @@ use std::{
 use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 use reqwest::{blocking::Response, StatusCode};
 
-use crate::{calm_panic::CalmUnwrap, hash::url_ext::UrlExt, packages::Manifest, Architecture};
+use crate::{hash::url_ext::UrlExt, packages::Manifest, Architecture};
 
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
@@ -179,28 +179,21 @@ impl Downloader {
     /// # Errors
     /// - If the file cannot be written to the cache
     pub fn download(mut self) -> Result<(), Error> {
-        // TODO: Use async here for streams instead of chunks
-        let total_length = self.resp.content_length().calm_expect("Missing content length. Please report this and provide the command you used to get this error.");
-        let mut current = 0;
-
-        let mut chunk = [0; 1024];
+        let mut reader = BufReader::new(self.resp.by_ref());
 
         loop {
-            // Ensures that `read_exact` does not exhaust the reader, and throw an error in the final chunk
-            if total_length - current < 1024 {
+            let chunk = reader.fill_buf()?;
+            let chunk_length = chunk.len();
+
+            if chunk_length == 0 {
                 break;
             }
 
-            self.read_exact(&mut chunk)?;
+            self.cache.write_all(chunk)?;
+            self.pb.inc(chunk_length as u64);
 
-            self.cache.write_all(&chunk)?;
-            current += 1024;
+            reader.consume(chunk_length);
         }
-
-        // Handles all remaning data
-        let mut final_chunk = vec![];
-        self.read_to_end(&mut final_chunk)?;
-        self.cache.write_all(&final_chunk)?;
 
         Ok(())
     }
