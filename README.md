@@ -72,7 +72,7 @@ On average, `sfsu search` is **~400** times faster than regular `scoop search` a
 
 `sfsu` and `hok` are pretty comperable in all benchmarks. `sfsu` wins some benchmarks and `hok` wins others.
 
-Done on a _AMD Ryzen 9 7900X @ 5.5GHz_ with _32GB_ of RAM at 5200MHz and 11 scoop buckets, as listed below
+Done on a *AMD Ryzen 9 7900X @ 5.5GHz* with *32GB* of RAM at 5200MHz and 11 scoop buckets, as listed below
 
 ### Searching [^search-version]
 
@@ -213,13 +213,13 @@ My other long term goal is to create a Scoop replacement for those who want it, 
 In the meantime I will continue working on this independently of Scoop as a collection of seperate tools that work in conjunction with Scoop.
 
 <!-- markdownlint-disable-next-line MD036 -->
-
 **Made with 💗 by Juliette Cordor**
 
 [^1]: These benchmarks are done after warmups. You will likely see far greater improvements when run on "cold" systems. Results will also differ depending on search request and the number of results, as well as installed buckets, and a few other factors
-[^search-version]: Run on sfsu version [v1.10.3][v1.10.3], Hok version [v0.1.0-beta.4][hokv0.1.0-beta.4], scoop-search version [1.4.1](https://github.com/shilangyu/scoop-search/releases/tag/v1.4.1)
-[^info-version]: Run on sfsu version [v1.10.3][v1.10.3] and Hok version [v0.1.0-beta.4][hokv0.1.0-beta.4]
-[^list-version]: Run on sfsu version [v1.10.3][v1.10.3] and Hok version [v0.1.0-beta.4][hokv0.1.0-beta.4]
+[^search-version]: Run on sfsu version [v1.10.3][v1.10.3], Hok version [v0.1.0-beta.4][hokv0.1.0-beta.4], scoop-search version [1.4.1](https://github.com/shilangyu/scoop-search/releases/tag/v1.4.1), and Scoop's [develop branch][scoop-develop]
+[^info-version]: Run on sfsu version [v1.10.3][v1.10.3], Hok version [v0.1.0-beta.4][hokv0.1.0-beta.4], and Scoop's [develop branch][scoop-develop]
+[^list-version]: Run on sfsu version [v1.10.3][v1.10.3], Hok version [v0.1.0-beta.4][hokv0.1.0-beta.4], and Scoop's [develop branch][scoop-develop]
 
 [v1.10.3]: https://github.com/jewlexx/sfsu/releases/tag/v1.10.3
 [hokv0.1.0-beta.4]: https://github.com/chawyehsu/hok/releases/tag/v0.1.0-beta.4
+[scoop-develop]: https://github.com/ScoopInstaller/Scoop/tree/develop
