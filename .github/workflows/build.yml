@@ -83,7 +83,12 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Build and Package
+        if: ${{ !github.event.release.prerelease }}
         run: just release-all
+
+      - name: Beta Build and Package
+        if: ${{ github.event.release.prerelease }}
+        run: just beta-release-all
 
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v4.3.3
