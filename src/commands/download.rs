@@ -29,8 +29,7 @@ impl super::Command for Args {
         let mp = MultiProgress::new();
         let client = BlockingClient::new();
 
-        let dl = Handle::open_manifest(Scoop::cache_path(), &manifest)
-            .context("missing download urls")??;
+        let dl = Handle::open_manifest(Scoop::cache_path(), &manifest)?;
 
         let downloader = match Downloader::new(dl, &client, Some(&mp)) {
             Ok(dl) => Ok(dl),

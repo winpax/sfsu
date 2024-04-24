@@ -26,6 +26,8 @@ pub enum Error {
     IO(#[from] std::io::Error),
     #[error("HTTP Error: {0}")]
     ErrorCode(StatusCode),
+    #[error("Missing download url in manifest")]
+    MissingDownloadUrl,
 }
 
 #[derive(Debug)]
@@ -48,7 +50,7 @@ impl Handle {
         file_name: impl Into<PathBuf>,
         hash_type: HashType,
         url: String,
-    ) -> std::io::Result<Self> {
+    ) -> Result<Self, Error> {
         let file_name = file_name.into();
         Ok(Self {
             fp: File::create(cache_path.as_ref().join(&file_name))?,
@@ -58,26 +60,26 @@ impl Handle {
         })
     }
 
-    #[must_use]
-    /// Open a manifest and return a list of cache handles
-    pub fn open_manifest(
-        cache_path: impl AsRef<Path>,
-        manifest: &Manifest,
-    ) -> Option<std::io::Result<Self>> {
+    /// Open a manifest and return a cache handle
+    ///
+    /// # Errors
+    /// - IO errors
+    /// - Missing download URL
+    pub fn open_manifest(cache_path: impl AsRef<Path>, manifest: &Manifest) -> Result<Self, Error> {
         let name = &manifest.name;
         let version = &manifest.version;
 
-        let url = manifest.download_url()?;
+        let url = manifest.download_url().ok_or(Error::MissingDownloadUrl)?;
 
         let file_name = PathBuf::from(&url);
         let file_name = format!("{}#{}#{}", name, version, file_name.display());
 
-        Some(Self::new(
+        Self::new(
             cache_path.as_ref(),
             PathBuf::from(file_name),
             HashType::default(),
             url.url,
-        ))
+        )
     }
 
     /// Create a new downloader

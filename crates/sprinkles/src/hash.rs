@@ -1,9 +1,6 @@
 //! Manifest hashing utilities
 
-use std::{
-    io::{BufRead, BufReader},
-    num::ParseIntError,
-};
+use std::{io::BufRead, num::ParseIntError};
 
 use formats::{json::JsonError, text::TextError};
 use regex::Regex;
@@ -15,7 +12,7 @@ use substitutions::SubstitutionMap;
 use url::Url;
 
 use crate::{
-    arch_field,
+    cache::{self, Downloader, Handle},
     hash::url_ext::UrlExt,
     packages::{
         manifest::{
@@ -24,6 +21,7 @@ use crate::{
         Manifest, MergeDefaults,
     },
     requests::BlockingClient,
+    Scoop,
 };
 
 use self::substitutions::Substitute;
@@ -102,6 +100,8 @@ pub enum HashError {
     DecodingHex(#[from] ParseIntError),
     #[error("Could not convert chunk to utf8 string")]
     DecodingHexUtf8(#[from] std::str::Utf8Error),
+    #[error("Interacting with cache failed: {0}")]
+    CacheError(#[from] cache::Error),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -283,6 +283,15 @@ impl HashMode {
 }
 
 impl Hash {
+    #[must_use]
+    /// Create a new hash from hash hex bytes
+    pub fn from_hex(bytes: &[u8]) -> Self {
+        let hash = encode_hex(bytes);
+        let hash_type = HashType::try_from(&hash).unwrap_or_default();
+
+        Hash { hash, hash_type }
+    }
+
     /// Get a hash for an app
     ///
     /// Note that this function expects the current url to be the updated version.
@@ -308,16 +317,24 @@ impl Hash {
         let mut hash_mode = HashMode::from_manifest(manifest).unwrap_or_default();
 
         if hash_mode == HashMode::Download {
-            return if let Some(dl_url) = manifest
-                .architecture
-                .as_ref()
-                .and_then(|arch| arch_field!(arch.url as ref).flatten())
-            {
-                let source = BlockingClient::new().get(dl_url).send()?;
-                Ok(Hash::compute(BufReader::new(source), HashType::SHA256))
-            } else {
-                Err(HashError::MissingDownloadUrl)
-            };
+            let cache_handle = Handle::open_manifest(Scoop::cache_path(), manifest)?;
+
+            let downloader = Downloader::new(cache_handle, &BlockingClient::new(), None)?;
+
+            let (_, hash) = downloader.download()?;
+
+            return Ok(Self::from_hex(&hash));
+
+            // return if let Some(dl_url) = manifest
+            //     .architecture
+            //     .as_ref()
+            //     .and_then(|arch| arch_field!(arch.url as ref).flatten())
+            // {
+            //     let source = BlockingClient::new().get(dl_url).send()?;
+            //     Ok(Hash::compute(BufReader::new(source), HashType::SHA256))
+            // } else {
+            //     Err(HashError::MissingDownloadUrl)
+            // };
         }
 
         let manifest_url = manifest
