@@ -34,10 +34,11 @@ pub enum Error {
 /// A cache handle
 pub struct Handle {
     url: String,
-    /// The file name
+    /// The cache output file name
     pub file_name: PathBuf,
+    /// The cache output file path
+    cache_path: PathBuf,
     hash_type: HashType,
-    fp: File,
 }
 
 impl Handle {
@@ -52,11 +53,12 @@ impl Handle {
         url: String,
     ) -> Result<Self, Error> {
         let file_name = file_name.into();
+        let cache_path = cache_path.as_ref().join(&file_name);
         Ok(Self {
-            fp: File::create(cache_path.as_ref().join(&file_name))?,
             url,
-            hash_type,
             file_name,
+            cache_path,
+            hash_type,
         })
     }
 
@@ -92,16 +94,6 @@ impl Handle {
         mp: Option<&MultiProgress>,
     ) -> Result<Downloader, Error> {
         Downloader::new(self, client, mp)
-    }
-}
-
-impl Write for Handle {
-    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-        self.fp.write(buf)
-    }
-
-    fn flush(&mut self) -> std::io::Result<()> {
-        self.fp.flush()
     }
 }
 
@@ -217,7 +209,34 @@ impl Downloader {
     }
 
     fn handle_buf<D: Digest>(&mut self) -> Result<Vec<u8>, Error> {
-        let mut reader = BufReader::new(self.resp.by_ref());
+        enum Source<'a> {
+            Cache(File),
+            Network(&'a mut Response),
+        }
+
+        impl<'a> Read for Source<'a> {
+            fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+                match self {
+                    Source::Cache(file) => file.read(buf),
+                    Source::Network(resp) => resp.read(buf),
+                }
+            }
+        }
+
+        let reader = if self.cache.cache_path.exists() {
+            debug!("Loading from cache");
+            Source::Cache(File::open(&self.cache.cache_path)?)
+        } else {
+            debug!("Downloading via network");
+            Source::Network(self.resp.by_ref())
+        };
+
+        let mut cache_file = match reader {
+            Source::Cache(_) => None,
+            Source::Network(_) => Some(File::create(&self.cache.cache_path)?),
+        };
+        let mut reader = BufReader::new(reader);
+
         let mut hasher = D::new();
 
         loop {
@@ -227,7 +246,7 @@ impl Downloader {
             }
 
             hasher.update(chunk);
-            self.cache.write_all(chunk)?;
+            cache_file.as_mut().map(|f| f.write_all(chunk));
 
             let chunk_length = chunk.len();
 
