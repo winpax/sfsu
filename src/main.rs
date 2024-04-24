@@ -56,7 +56,12 @@ struct Args {
     #[command(subcommand)]
     command: Commands,
 
-    #[clap(long, global = true, help = "Disable terminal formatting")]
+    #[clap(
+        long,
+        global = true,
+        help = "Disable terminal formatting",
+        env = "NO_COLOR"
+    )]
     no_color: bool,
 
     #[clap(
@@ -72,9 +77,19 @@ struct Args {
     #[clap(
         long,
         global = true,
-        help = "Disable using git commands for certain parts of the program. Allows sfsu to work entirely if you don't have git installed, but can negatively affect performance."
+        help = "Disable using git commands for certain parts of the program. Allows sfsu to work entirely if you don't have git installed, but can negatively affect performance.",
+        env = "DISABLE_GIT"
     )]
     disable_git: bool,
+
+    #[clap(
+        short,
+        long,
+        global = true,
+        help = "Enable beta features that are still in development",
+        env = "SFSU_BETA"
+    )]
+    beta: bool,
 }
 
 fn main() -> anyhow::Result<()> {
