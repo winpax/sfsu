@@ -200,6 +200,10 @@ impl Package {
             manifest.set_version(version.clone())?;
         }
 
+        if let Ok(manifest) = &manifest {
+            dbg!(&manifest.install_config);
+        }
+
         manifest
     }
 

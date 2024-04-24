@@ -293,7 +293,7 @@ impl Hash {
         }
 
         let manifest_url = manifest
-            .install_config(crate::Architecture::ARCH)
+            .install_config()
             .url
             .as_ref()
             .ok_or(HashError::UrlNotFound)
@@ -623,6 +623,10 @@ mod tests {
 
         pub fn test(self) -> anyhow::Result<()> {
             let manifest = self.package.manifest().unwrap();
+
+            dbg!(&manifest.install_config());
+            dbg!(&manifest.install_config);
+            dbg!(&manifest.architecture);
 
             let hash = Hash::get_for_app(&manifest)?;
 

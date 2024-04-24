@@ -24,7 +24,7 @@ use crate::{
         sectioned::{Children, Section, Text},
         wrappers::{author::Author, time::NicerTime},
     },
-    Architecture, Scoop,
+    Scoop,
 };
 
 pub mod downloading;
@@ -510,11 +510,10 @@ impl InstallManifest {
 impl Manifest {
     #[must_use]
     /// Get the install config for a given architecture
-    pub fn install_config(&self, arch: Architecture) -> InstallConfig {
+    pub fn install_config(&self) -> InstallConfig {
         self.architecture
             .as_ref()
-            .and_then(|config| config[arch].clone())
-            .unwrap_or_else(|| self.install_config.clone())
+            .merge_default(self.install_config.clone())
     }
 
     #[must_use]
@@ -532,8 +531,8 @@ impl Manifest {
 
     #[must_use]
     /// Get the download urls for a given architecture
-    pub fn download_urls(&self, arch: Architecture) -> Option<Vec<DownloadUrl>> {
-        let urls = self.install_config(arch).url?;
+    pub fn download_urls(&self) -> Option<Vec<DownloadUrl>> {
+        let urls = self.install_config().url?;
 
         // Some(urls.into_iter().map(DownloadUrl::from_string).collect())
         Some(vec![DownloadUrl::from_string(urls)])
@@ -571,6 +570,7 @@ impl Manifest {
     pub fn binary_matches(&self, regex: &Regex) -> Option<Vec<String>> {
         match self
             .architecture
+            .as_ref()
             .merge_default(self.install_config.clone())
             .bin
         {
@@ -972,7 +972,7 @@ impl MergeDefaults for Option<AutoupdateArchitecture> {
     }
 }
 
-impl MergeDefaults for Option<ManifestArchitecture> {
+impl MergeDefaults for Option<&ManifestArchitecture> {
     type Default = InstallConfig;
 
     #[allow(deprecated)]
@@ -1000,6 +1000,17 @@ impl MergeDefaults for Option<ManifestArchitecture> {
             uninstaller: config.uninstaller.or(default.uninstaller),
             url: config.url.or(default.url),
         }
+    }
+}
+
+impl MergeDefaults for Option<ManifestArchitecture> {
+    type Default = InstallConfig;
+
+    #[allow(deprecated)]
+    #[must_use]
+    /// Merge the architecture specific autoupdate config with the arch agnostic one
+    fn merge_default(&self, default: Self::Default) -> Self::Default {
+        self.as_ref().merge_default(default)
     }
 }
 

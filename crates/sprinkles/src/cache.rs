@@ -10,7 +10,7 @@ use std::{
 use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 use reqwest::{blocking::Response, StatusCode};
 
-use crate::{hash::url_ext::UrlExt, packages::Manifest, Architecture};
+use crate::{hash::url_ext::UrlExt, packages::Manifest};
 
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
@@ -56,12 +56,11 @@ impl Handle {
     pub fn open_manifest(
         cache_path: impl AsRef<Path>,
         manifest: &Manifest,
-        arch: Option<Architecture>,
     ) -> Option<std::io::Result<Vec<Self>>> {
         let name = &manifest.name;
         let version = &manifest.version;
 
-        let urls = manifest.download_urls(arch.unwrap_or_default())?;
+        let urls = manifest.download_urls()?;
 
         Some(
             urls.into_iter()
