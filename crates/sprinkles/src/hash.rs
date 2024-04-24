@@ -1,6 +1,9 @@
 //! Manifest hashing utilities
 
-use std::io::{BufRead, BufReader};
+use std::{
+    io::{BufRead, BufReader},
+    num::ParseIntError,
+};
 
 use formats::{json::JsonError, text::TextError};
 use regex::Regex;
@@ -28,6 +31,28 @@ use self::substitutions::Substitute;
 pub(crate) mod formats;
 pub(crate) mod substitutions;
 pub(crate) mod url_ext;
+
+/// Decode a hex string into bytes
+///
+/// # Errors
+/// - Parse hex string to integer
+/// - Convert chunk to utf8 string
+pub fn decode_hex(hex: &str) -> Result<Vec<u8>, HashError> {
+    hex.as_bytes()
+        .chunks(2)
+        .map(|chunk| Ok(u8::from_str_radix(std::str::from_utf8(chunk)?, 16)?))
+        .collect()
+}
+
+#[must_use]
+/// Encode bytes into a hex string
+pub fn encode_hex(bytes: &[u8]) -> String {
+    let mut result = String::new();
+    for byte in bytes {
+        result.push_str(&format!("{byte:02x}"));
+    }
+    result
+}
 
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
@@ -73,6 +98,10 @@ pub enum HashError {
     ErrorStatus(StatusCode),
     #[error("Could not find a download url in the manifest for hash computation")]
     MissingDownloadUrl,
+    #[error("Could not parse hex string as bytes")]
+    DecodingHex(#[from] ParseIntError),
+    #[error("Could not convert chunk to utf8 string")]
+    DecodingHexUtf8(#[from] std::str::Utf8Error),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

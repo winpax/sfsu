@@ -5,6 +5,7 @@ use indicatif::MultiProgress;
 use sprinkles::{
     abandon,
     cache::{Downloader, Handle},
+    hash::encode_hex,
     packages::reference::Package,
     requests::BlockingClient,
     Scoop,
@@ -39,13 +40,14 @@ impl super::Command for Args {
             },
         }?;
 
-        let (path, hash) = downloader.download()?;
+        let (_, hash) = downloader.download()?;
 
-        // if let Some(actual_hash) = manifest.install_config().hash {
-        //     if actual_hash != hash {
-        //         abandon!("Hash mismatch: expected {actual_hash}, got {hash}");
-        //     }
-        // }
+        if let Some(actual_hash) = manifest.install_config().hash {
+            let hash = encode_hex(&hash);
+            if actual_hash != hash {
+                abandon!("Hash mismatch: expected {actual_hash}, got {hash}");
+            }
+        }
 
         Ok(())
     }
