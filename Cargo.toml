@@ -44,6 +44,7 @@ inherits = "dev"
 opt-level = 3
 
 [features]
+beta = ["sprinkles/manifest-hashes"]
 default = []
 # Breaking changes are locked behind this feature flag
 v2 = ["sprinkles/v2"]
