@@ -86,10 +86,10 @@ struct Args {
         short,
         long,
         global = true,
-        help = "Enable beta features that are still in development",
-        env = "SFSU_BETA"
+        help = "Disable beta commands that are still in development",
+        env = "SFSU_DISABLE_BETA"
     )]
-    beta: bool,
+    disable_beta: bool,
 }
 
 fn main() -> anyhow::Result<()> {
