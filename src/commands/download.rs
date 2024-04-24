@@ -45,9 +45,13 @@ impl super::Command for Args {
 
         if let Some(actual_hash) = manifest.install_config().hash {
             let hash = encode_hex(&hash);
-            if actual_hash != hash {
-                abandon!("Hash mismatch: expected {actual_hash}, got {hash}");
+            if actual_hash == hash {
+                eprintln!("🔒 Hash matched: {hash}");
+            } else {
+                abandon!("🔓 Hash mismatch: expected {actual_hash}, found {hash}");
             }
+        } else {
+            warn!("🔓 No hash provided, skipping hash check");
         }
 
         Ok(())
