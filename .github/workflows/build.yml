@@ -24,7 +24,6 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: Swatinem/rust-cache@v2.7.3
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -39,7 +38,6 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: Swatinem/rust-cache@v2.7.3
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
