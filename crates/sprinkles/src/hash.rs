@@ -1,6 +1,6 @@
 //! Manifest hashing utilities
 
-use std::io::BufRead;
+use std::io::{BufRead, BufReader};
 
 use formats::{json::JsonError, text::TextError};
 use regex::Regex;
@@ -12,6 +12,7 @@ use substitutions::SubstitutionMap;
 use url::Url;
 
 use crate::{
+    arch_field,
     hash::url_ext::UrlExt,
     packages::{
         manifest::{
@@ -70,6 +71,8 @@ pub enum HashError {
     MissingSourceforgeCaptures,
     #[error("HTTP error: {0}")]
     ErrorStatus(StatusCode),
+    #[error("Could not find a download url in the manifest for hash computation")]
+    MissingDownloadUrl,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -253,6 +256,9 @@ impl HashMode {
 impl Hash {
     /// Get a hash for an app
     ///
+    /// Note that this function expects the current url to be the updated version.
+    /// In the case that we have to download and compute the hash, we will download the app from the current url, not the autoupdate url.
+    ///
     /// # Errors
     /// - If the hash is not found
     /// - If the hash is invalid
@@ -350,7 +356,6 @@ impl Hash {
             hash_mode = HashMode::Extract(regex);
 
             url
-            // return Hash::from_text(source, &submap, regex);
         } else {
             let hash_extraction = autoupdate_config
                 .hash
@@ -379,7 +384,16 @@ impl Hash {
         }
 
         if hash_mode == HashMode::Download {
-            todo!("Download and compute hashes")
+            return if let Some(dl_url) = manifest
+                .architecture
+                .as_ref()
+                .and_then(|arch| arch_field!(arch.url as ref).flatten())
+            {
+                let source = BlockingClient::new().get(dl_url).send()?;
+                Ok(Hash::compute(BufReader::new(source), HashType::SHA256))
+            } else {
+                Err(HashError::MissingDownloadUrl)
+            };
         }
 
         let hash = match hash_mode {
