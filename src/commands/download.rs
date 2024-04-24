@@ -51,7 +51,7 @@ impl super::Command for Args {
             match thread.join() {
                 Ok(res) => res?,
                 Err(err) => anyhow::bail!("Thread returned with an error: {err:?}"),
-            }
+            };
         }
 
         Ok(())

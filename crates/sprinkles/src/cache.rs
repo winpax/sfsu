@@ -177,7 +177,7 @@ impl Downloader {
     ///
     /// # Errors
     /// - If the file cannot be written to the cache
-    pub fn download(mut self) -> Result<(), Error> {
+    pub fn download(mut self) -> Result<PathBuf, Error> {
         let mut reader = BufReader::new(self.resp.by_ref());
 
         loop {
@@ -194,7 +194,7 @@ impl Downloader {
             reader.consume(chunk_length);
         }
 
-        Ok(())
+        Ok(self.cache.file_name.clone())
     }
 }
 
