@@ -747,7 +747,7 @@ mod tests {
 
     #[test]
     fn test_sfsu_autoupdate() -> anyhow::Result<()> {
-        let mut package = reference::Package::from_str("personal/sfsu")?;
+        let mut package = reference::Package::from_str("extras/sfsu")?;
         package.set_version("1.10.2".to_string());
         let manifest = package.manifest()?;
 
@@ -761,7 +761,7 @@ mod tests {
 
     #[test]
     fn test_computed_hash() -> anyhow::Result<()> {
-        let package = reference::Package::from_str("personal/sfsu")?;
+        let package = reference::Package::from_str("extras/sfsu")?;
         let mut manifest = package.manifest()?;
         manifest.autoupdate.as_mut().unwrap().default_config.hash = None;
 
