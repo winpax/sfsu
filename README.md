@@ -78,28 +78,27 @@ Done on a _AMD Ryzen 9 7900X @ 5.5GHz_ with _32GB_ of RAM at 5200MHz and 11 scoo
 
 ```shell
 $ hyperfine --warmup 5 'sfsu search google' 'hok search google' 'scoop-search google' 'scoop search google'
-
 Benchmark 1: sfsu search google
-  Time (mean ± σ):      32.0 ms ±   2.1 ms    [User: 0.4 ms, System: 2.4 ms]
-  Range (min … max):    29.5 ms …  44.5 ms    78 runs
+  Time (mean ± σ):      59.1 ms ±   1.3 ms    [User: 0.0 ms, System: 2.6 ms]
+  Range (min … max):    55.4 ms …  62.2 ms    36 runs
 
 Benchmark 2: hok search google
-  Time (mean ± σ):      37.8 ms ±   1.6 ms    [User: 2.2 ms, System: 2.2 ms]
-  Range (min … max):    34.5 ms …  44.2 ms    65 runs
+  Time (mean ± σ):      67.7 ms ±   1.5 ms    [User: 3.3 ms, System: 1.9 ms]
+  Range (min … max):    65.4 ms …  71.1 ms    33 runs
 
 Benchmark 3: scoop-search google
-  Time (mean ± σ):     352.6 ms ±  29.9 ms    [User: 14.1 ms, System: 78.1 ms]
-  Range (min … max):   325.2 ms … 415.2 ms    10 runs
+  Time (mean ± σ):     292.5 ms ±   6.5 ms    [User: 14.1 ms, System: 79.7 ms]
+  Range (min … max):   283.7 ms … 301.5 ms    10 runs
 
 Benchmark 4: scoop search google
-  Time (mean ± σ):     12.031 s ±  0.192 s    [User: 3.400 s, System: 6.475 s]
-  Range (min … max):   11.756 s … 12.464 s    10 runs
+  Time (mean ± σ):      1.908 s ±  0.018 s    [User: 1.144 s, System: 0.419 s]
+  Range (min … max):    1.894 s …  1.951 s    10 runs
 
 Summary
   sfsu search google ran
-    1.18 ± 0.09 times faster than hok search google
-   11.03 ± 1.17 times faster than scoop-search google
-  376.34 ± 24.89 times faster than scoop search google
+    1.15 ± 0.04 times faster than hok search google
+    4.95 ± 0.16 times faster than scoop-search google
+   32.28 ± 0.79 times faster than scoop search google
 ```
 
 #### With `Scoop` SQLite cache enabled, on the `develop` branch
@@ -107,16 +106,16 @@ Summary
 ```shell
 $ hyperfine --warmup 5 'sfsu search google' 'scoop search google'
 Benchmark 1: sfsu search google
-  Time (mean ± σ):     224.8 ms ±  41.5 ms    [User: 1.6 ms, System: 71.6 ms]
-  Range (min … max):   153.4 ms … 285.0 ms    10 runs
+  Time (mean ± σ):      59.9 ms ±   1.6 ms    [User: 1.3 ms, System: 0.9 ms]
+  Range (min … max):    57.3 ms …  64.6 ms    36 runs
 
 Benchmark 2: scoop search google
-  Time (mean ± σ):     744.7 ms ±  36.9 ms    [User: 65.6 ms, System: 129.4 ms]
-  Range (min … max):   668.1 ms … 794.8 ms    10 runs
+  Time (mean ± σ):     461.1 ms ±   2.8 ms    [User: 90.6 ms, System: 73.4 ms]
+  Range (min … max):   455.5 ms … 465.9 ms    10 runs
 
 Summary
   sfsu search google ran
-    3.31 ± 0.63 times faster than scoop search google
+    7.70 ± 0.21 times faster than scoop search google
 ```
 
 ### Listing [^list-version]
@@ -124,21 +123,21 @@ Summary
 ```shell
 $ hyperfine --warmup 5 'sfsu list' 'hok list' 'scoop list'
 Benchmark 1: sfsu list
-  Time (mean ± σ):     214.2 ms ±  54.7 ms    [User: 1.3 ms, System: 93.6 ms]
-  Range (min … max):   130.1 ms … 338.9 ms    12 runs
+  Time (mean ± σ):      69.7 ms ±   2.6 ms    [User: 1.5 ms, System: 6.3 ms]
+  Range (min … max):    64.0 ms …  75.2 ms    32 runs
 
 Benchmark 2: hok list
-  Time (mean ± σ):     206.9 ms ±  62.1 ms    [User: 1.4 ms, System: 94.7 ms]
-  Range (min … max):   136.2 ms … 345.4 ms    11 runs
+  Time (mean ± σ):      69.8 ms ±   1.6 ms    [User: 0.5 ms, System: 13.6 ms]
+  Range (min … max):    66.1 ms …  73.1 ms    31 runs
 
 Benchmark 3: scoop list
-  Time (mean ± σ):      2.391 s ±  0.448 s    [User: 0.209 s, System: 0.160 s]
-  Range (min … max):    1.536 s …  2.884 s    10 runs
+  Time (mean ± σ):      1.200 s ±  0.029 s    [User: 0.552 s, System: 0.334 s]
+  Range (min … max):    1.167 s …  1.265 s    10 runs
 
 Summary
-  hok list ran
-    1.04 ± 0.41 times faster than sfsu list
-   11.55 ± 4.09 times faster than scoop list
+  sfsu list ran
+    1.00 ± 0.04 times faster than hok list
+   17.21 ± 0.77 times faster than scoop list
 ```
 
 ### Info [^info-version]
@@ -152,31 +151,31 @@ and the second benchmark compares `sfsu` with these fields to Scoop.
 ```shell
 $ hyperfine --warmup 5 'sfsu info sfsu' 'scoop info sfsu'
 Benchmark 1: sfsu info sfsu
-  Time (mean ± σ):     876.5 ms ± 165.9 ms    [User: 6.2 ms, System: 370.3 ms]
-  Range (min … max):   702.0 ms … 1182.5 ms    10 runs
+  Time (mean ± σ):     167.8 ms ±   2.3 ms    [User: 0.0 ms, System: 1.0 ms]
+  Range (min … max):   163.8 ms … 171.7 ms    15 runs
 
 Benchmark 2: scoop info sfsu
-  Time (mean ± σ):      1.089 s ±  0.070 s    [User: 0.079 s, System: 0.245 s]
-  Range (min … max):    1.010 s …  1.250 s    10 runs
+  Time (mean ± σ):     595.1 ms ±   5.3 ms    [User: 137.5 ms, System: 60.9 ms]
+  Range (min … max):   587.6 ms … 603.8 ms    10 runs
 
 Summary
   sfsu info sfsu ran
-    1.24 ± 0.25 times faster than scoop info sfsu
+    3.55 ± 0.06 times faster than scoop info sfsu
 ```
 
 ```shell
 $ hyperfine --warmup 5 'sfsu info sfsu --disable-updated' 'hok info sfsu'
 Benchmark 1: sfsu info sfsu --disable-updated
-  Time (mean ± σ):     253.2 ms ±  55.0 ms    [User: 0.0 ms, System: 113.8 ms]
-  Range (min … max):   159.6 ms … 360.8 ms    10 runs
+  Time (mean ± σ):      56.6 ms ±   1.3 ms    [User: 0.4 ms, System: 0.0 ms]
+  Range (min … max):    54.7 ms …  61.3 ms    37 runs
 
 Benchmark 2: hok info sfsu
-  Time (mean ± σ):     276.0 ms ±  58.8 ms    [User: 1.6 ms, System: 88.8 ms]
-  Range (min … max):   201.5 ms … 383.4 ms    10 runs
+  Time (mean ± σ):      68.2 ms ±   1.5 ms    [User: 5.9 ms, System: 2.4 ms]
+  Range (min … max):    65.6 ms …  70.8 ms    32 runs
 
 Summary
   sfsu info sfsu --disable-updated ran
-    1.09 ± 0.33 times faster than hok info sfsu
+    1.20 ± 0.04 times faster than hok info sfsu
 ```
 
 ### Scoop Buckets
