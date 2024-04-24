@@ -13,6 +13,15 @@ impl SubstitutionMap {
         Self(HashMap::new())
     }
 
+    pub fn from_all(version: &Version, url: &Url) -> Self {
+        let mut map = Self::new();
+
+        map.append_version(version);
+        map.append_url(url);
+
+        map
+    }
+
     pub fn substitute(&self, builder: SubstituteBuilder, regex_escape: bool) -> String {
         builder.substitute(self, regex_escape)
     }

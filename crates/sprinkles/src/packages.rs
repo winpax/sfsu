@@ -517,6 +517,17 @@ impl Manifest {
             .unwrap_or_else(|| self.install_config.clone())
     }
 
+    pub fn autoupdate_config(&self) -> Option<AutoupdateConfig> {
+        let autoupdate = self.autoupdate.as_ref()?;
+
+        Some(
+            autoupdate
+                .architecture
+                .clone()
+                .merge_default(autoupdate.default_config.clone()),
+        )
+    }
+
     #[must_use]
     /// Get the download urls for a given architecture
     pub fn download_urls(&self, arch: Architecture) -> Option<Vec<DownloadUrl>> {

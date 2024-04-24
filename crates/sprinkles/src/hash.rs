@@ -272,35 +272,21 @@ impl Hash {
     /// - If the hash is not found in the text
     /// - If the hash is not found in the JSON
     pub fn get_for_app(manifest: &Manifest) -> Result<Hash, HashError> {
-        let autoupdate_config = {
-            let autoupdate = manifest
-                .autoupdate
-                .as_ref()
-                .ok_or(HashError::MissingAutoupdateConfig)?;
-
-            autoupdate
-                .architecture
-                .clone()
-                .merge_default(autoupdate.default_config.clone())
-        };
+        let autoupdate_config = manifest
+            .autoupdate_config()
+            .ok_or(HashError::MissingAutoupdateConfig)?;
 
         let mut hash_mode =
             HashMode::from_manifest(manifest).ok_or(HashError::MissingHashExtraction)?;
 
         let manifest_url = manifest
-            .architecture
-            .merge_default(manifest.install_config.clone())
+            .install_config(crate::Architecture::ARCH)
             .url
             .as_ref()
             .ok_or(HashError::UrlNotFound)
             .and_then(|url| Ok(Url::parse(url)?))?;
 
-        let submap = {
-            let mut submap = SubstitutionMap::new();
-            submap.append_version(&manifest.version);
-            submap.append_url(&manifest_url);
-            submap
-        };
+        let submap = SubstitutionMap::from_all(&manifest.version, &manifest_url);
 
         let url = if matches!(hash_mode, HashMode::Fosshub | HashMode::Sourceforge) {
             let (url, regex): (Url, String) = match hash_mode {
