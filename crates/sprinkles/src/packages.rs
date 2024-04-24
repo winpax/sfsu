@@ -517,6 +517,8 @@ impl Manifest {
             .unwrap_or_else(|| self.install_config.clone())
     }
 
+    #[must_use]
+    /// Get the autoupdate config for the default architecture
     pub fn autoupdate_config(&self) -> Option<AutoupdateConfig> {
         let autoupdate = self.autoupdate.as_ref()?;
 
