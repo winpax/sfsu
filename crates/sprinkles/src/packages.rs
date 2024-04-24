@@ -531,11 +531,11 @@ impl Manifest {
 
     #[must_use]
     /// Get the download urls for a given architecture
-    pub fn download_urls(&self) -> Option<Vec<DownloadUrl>> {
+    pub fn download_url(&self) -> Option<DownloadUrl> {
         let urls = self.install_config().url?;
 
         // Some(urls.into_iter().map(DownloadUrl::from_string).collect())
-        Some(vec![DownloadUrl::from_string(urls)])
+        Some(DownloadUrl::from_string(urls))
     }
 
     #[must_use]

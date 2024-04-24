@@ -10,7 +10,10 @@ use std::{
 use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 use reqwest::{blocking::Response, StatusCode};
 
-use crate::{hash::url_ext::UrlExt, packages::Manifest};
+use crate::{
+    hash::{url_ext::UrlExt, HashType},
+    packages::Manifest,
+};
 
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
@@ -30,6 +33,7 @@ pub struct Handle {
     url: String,
     /// The file name
     pub file_name: PathBuf,
+    hash_type: HashType,
     fp: File,
 }
 
@@ -41,12 +45,14 @@ impl Handle {
     pub fn new(
         cache_path: impl AsRef<Path>,
         file_name: impl Into<PathBuf>,
+        hash_type: HashType,
         url: String,
     ) -> std::io::Result<Self> {
         let file_name = file_name.into();
         Ok(Self {
             fp: File::create(cache_path.as_ref().join(&file_name))?,
             url,
+            hash_type,
             file_name,
         })
     }
@@ -56,23 +62,21 @@ impl Handle {
     pub fn open_manifest(
         cache_path: impl AsRef<Path>,
         manifest: &Manifest,
-    ) -> Option<std::io::Result<Vec<Self>>> {
+    ) -> Option<std::io::Result<Self>> {
         let name = &manifest.name;
         let version = &manifest.version;
 
-        let urls = manifest.download_urls()?;
+        let url = manifest.download_url()?;
 
-        Some(
-            urls.into_iter()
-                .map(|url| {
-                    let file_name = PathBuf::from(&url);
-                    (url, format!("{}#{}#{}", name, version, file_name.display()))
-                })
-                .map(|(url, file_name)| {
-                    Self::new(cache_path.as_ref(), PathBuf::from(file_name), url.url)
-                })
-                .collect(),
-        )
+        let file_name = PathBuf::from(&url);
+        let file_name = format!("{}#{}#{}", name, version, file_name.display());
+
+        Some(Self::new(
+            cache_path.as_ref(),
+            PathBuf::from(file_name),
+            HashType::default(),
+            url.url,
+        ))
     }
 
     /// Create a new downloader
