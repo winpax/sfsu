@@ -541,7 +541,7 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "Broken (not my fault)"]
+    #[ignore = "Broken (not my fault, the chrome xml file does not include the hash for the current version)"]
     fn test_google_chrome_hashes() {
         let manifest = Bucket::from_name("extras")
             .unwrap()
@@ -652,7 +652,7 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "Broken (not my fault)"]
+    #[ignore = "Broken (not my fault, the chrome xml file does not include the hash for the current version)"]
     fn test_googlechrome() -> anyhow::Result<()> {
         let package = reference::Package::from_str("extras/googlechrome")?;
 
