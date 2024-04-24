@@ -30,6 +30,7 @@ impl super::Command for Args {
         let client = BlockingClient::new();
 
         let dl = Handle::open_manifest(Scoop::cache_path(), &manifest)?;
+        let output_file = dl.file_name.clone();
 
         let downloader = match Downloader::new(dl, &client, Some(&mp)) {
             Ok(dl) => Ok(dl),
@@ -53,6 +54,12 @@ impl super::Command for Args {
         } else {
             warn!("🔓 No hash provided, skipping hash check");
         }
+
+        eprintln!(
+            "✅ Downloaded {} to {}",
+            manifest.name,
+            output_file.display()
+        );
 
         Ok(())
     }
