@@ -12,7 +12,7 @@ use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 use reqwest::{blocking::Response, StatusCode};
 
 use crate::{
-    hash::{url_ext::UrlExt, Hash, HashType},
+    hash::{url_ext::UrlExt, HashType},
     packages::Manifest,
 };
 
