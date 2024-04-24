@@ -1,4 +1,3 @@
-use anyhow::Context;
 use clap::Parser;
 use indicatif::MultiProgress;
 
@@ -24,7 +23,16 @@ impl super::Command for Args {
     const BETA: bool = true;
 
     fn runner(self) -> Result<(), anyhow::Error> {
-        let manifest = self.package.manifest().context("Failed to find manifest")?;
+        eprintln!("Downloading {}...", self.package.name().unwrap_or_default());
+
+        if self.package.version.is_some() {
+            eprint!("Attempting to generate manifest");
+        }
+        let manifest = self.package.manifest()?;
+        if let Some(version) = &self.package.version {
+            eprint!("\r📜 Generated manifest for version {version}");
+            eprintln!();
+        }
 
         let mp = MultiProgress::new();
         let client = BlockingClient::new();

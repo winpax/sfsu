@@ -226,7 +226,7 @@ impl Downloader {
         let reader = if self.cache.cache_path.exists() {
             debug!("Loading from cache");
             if let Some(pb) = &self.pb {
-                pb.set_prefix("[📦]");
+                pb.set_prefix("📦");
             }
             Source::Cache(File::open(&self.cache.cache_path)?)
         } else {
