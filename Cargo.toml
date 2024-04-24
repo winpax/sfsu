@@ -31,6 +31,10 @@ name = "searching"
 harness = false
 name = "serde"
 
+[[bench]]
+harness = false
+name = "autoupdate"
+
 [profile.release]
 codegen-units = 1
 lto = true
