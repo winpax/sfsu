@@ -224,7 +224,10 @@ impl Downloader {
                 pb.set_prefix("📦");
             }
             let file = File::open(&cache_path).await?;
-            let stream = FramedRead::new(file, BytesCodec::new());
+            let stream = FramedRead::with_capacity(file, BytesCodec::new(), {
+                // 1 MiB buffer
+                1024 * 1024
+            });
 
             Source::Cache(stream.into_stream())
         } else {
