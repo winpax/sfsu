@@ -3,6 +3,7 @@ pub mod cat;
 pub mod checkup;
 pub mod depends;
 pub mod describe;
+pub mod download;
 pub mod export;
 pub mod home;
 pub mod hook;
@@ -37,21 +38,22 @@ pub enum DeprecationMessage {
 
 // TODO: Run command could return `impl Display` and print that itself
 pub trait Command {
+    const BETA: bool = false;
     const NEEDS_ELEVATION: bool = false;
 
     fn deprecated() -> Option<DeprecationWarning> {
         None
     }
 
-    fn runner(self) -> Result<(), anyhow::Error>;
+    async fn runner(self) -> Result<(), anyhow::Error>;
 
-    fn run(self) -> Result<(), anyhow::Error>
+    async fn run(self) -> Result<(), anyhow::Error>
     where
         Self: Sized,
     {
-        if let Some(deprecation_warning) = Self::deprecated() {
-            use owo_colors::OwoColorize;
+        use owo_colors::OwoColorize;
 
+        if let Some(deprecation_warning) = Self::deprecated() {
             let mut output = String::from("DEPRECATED: ");
 
             match deprecation_warning.message {
@@ -72,7 +74,14 @@ pub trait Command {
             abandon!("This command requires elevation. Please run as an administrator.");
         }
 
-        self.runner()
+        if Self::BETA {
+            println!(
+                "{}\n",
+                "This command is in beta and may not work as expected. Please report any and all bugs you find!".yellow()
+            );
+        }
+
+        self.runner().await
     }
 }
 
@@ -101,6 +110,8 @@ pub enum Commands {
     Outdated(outdated::Args),
     /// List the dependencies of a given package, in the order that they will be installed
     Depends(depends::Args),
+    /// Download the specified app.
+    Download(download::Args),
     /// Show status and check for new app versions
     Status(status::Args),
     #[cfg_attr(not(feature = "v2"), no_hook)]

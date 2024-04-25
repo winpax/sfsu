@@ -9,7 +9,7 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    fn runner(self) -> anyhow::Result<()> {
+    async fn runner(self) -> anyhow::Result<()> {
         let export = {
             let mut export = Export::load()?;
 

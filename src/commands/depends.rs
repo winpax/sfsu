@@ -20,12 +20,12 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    fn runner(mut self) -> Result<(), anyhow::Error> {
+    async fn runner(mut self) -> Result<(), anyhow::Error> {
         if let Some(bucket) = self.bucket {
-            self.package.set_bucket(bucket);
+            self.package.set_bucket(bucket)?;
         }
 
-        let manifests = self.package.list_manifests();
+        let manifests = self.package.list_manifests().await?;
 
         if manifests.is_empty() {
             abandon!("Could not find any packages matching: {}", self.package);
@@ -36,7 +36,7 @@ impl super::Command for Args {
             return Ok(());
         }
 
-        let output: Sections<reference::Package> = manifests
+        let output: Sections<reference::ManifestRef> = manifests
             .into_iter()
             .filter_map(|manifest| {
                 Children::from(manifest.depends())

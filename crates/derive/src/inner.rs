@@ -21,9 +21,9 @@ pub fn into_inner(ast: DeriveInput) -> TokenStream {
 
     quote! {
         impl #input_name {
-            pub fn run(self) -> anyhow::Result<()> {
+            pub async fn run(self) -> anyhow::Result<()> {
                 match self {
-                    #(Self::#variants (a) => a.run(),)*
+                    #(Self::#variants (a) => a.run().await,)*
                 }
             }
         }

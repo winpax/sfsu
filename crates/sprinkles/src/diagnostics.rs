@@ -249,6 +249,6 @@ impl Diagnostics {
     #[must_use]
     /// Check if the user has git installed
     pub fn git_installed() -> bool {
-        which::which("git").is_ok()
+        Scoop::git_path().is_ok()
     }
 }

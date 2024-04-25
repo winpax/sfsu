@@ -24,7 +24,6 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: Swatinem/rust-cache@v2.7.3
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -39,7 +38,6 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: Swatinem/rust-cache@v2.7.3
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -66,7 +64,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Build and Test
-        run: cargo test
+        run: cargo test --all
 
   build:
     name: Build
@@ -83,7 +81,12 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Build and Package
+        if: ${{ !github.event.release.prerelease }}
         run: just release-all
+
+      - name: Beta Build and Package
+        if: ${{ github.event.release.prerelease }}
+        run: just beta-release-all
 
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v4.3.3

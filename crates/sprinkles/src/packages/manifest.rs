@@ -9,9 +9,11 @@ use std::{collections::HashMap, fmt::Display};
 
 use itertools::Itertools as _;
 use serde::{Deserialize, Serialize};
+use serde_with::skip_serializing_none;
 
-use crate::Architecture;
+use crate::{version::Version, Architecture};
 
+#[skip_serializing_none]
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
 /// The manifest for a package
 pub struct Manifest {
@@ -23,63 +25,54 @@ pub struct Manifest {
     pub name: String,
     /// A comment.
     #[serde(rename = "##")]
-    pub empty: Option<StringOrArrayOfStrings>,
+    pub empty: Option<StringArray>,
     #[serde(rename = "$schema")]
     /// The schema of the manifest
     pub schema: Option<String>,
     #[deprecated(since = "1.10.0", note = "Use ## instead")]
     #[serde(rename = "_comment")]
     /// A comment.
-    pub comment: Option<StringOrArrayOfStrings>,
+    pub comment: Option<StringArray>,
     /// The architecture of the package
     pub architecture: Option<ManifestArchitecture>,
     /// The autoupdate configuration
     pub autoupdate: Option<Autoupdate>,
-    /// Undocumented: Found at https://github.com/se35710/scoop-java/search?l=JSON&q=cookie
+    /// Undocumented: Found at <https://github.com/se35710/scoop-java/search?l=JSON&q=cookie>
     pub cookie: Option<HashMap<String, Option<serde_json::Value>>>,
     /// The dependencies of the package
-    pub depends: Option<TOrArrayOfTs<super::reference::Package>>,
+    pub depends: Option<TOrArrayOfTs<super::reference::ManifestRef>>,
     /// The description of the package
     pub description: Option<String>,
     /// Extract to dir or dirs
-    pub extract_to: Option<StringOrArrayOfStrings>,
+    pub extract_to: Option<StringArray>,
     /// The homepage of the package
     pub homepage: Option<String>,
-    /// True if the installer InnoSetup based. Found in
-    /// https://github.com/ScoopInstaller/Main/search?l=JSON&q=innosetup
+    /// True if the installer `InnoSetup` based. Found in
+    /// <https://github.com/ScoopInstaller/Main/search?l=JSON&q=innosetup>
     pub innosetup: Option<bool>,
     /// The license of the package
     pub license: Option<PackageLicense>,
     // Deprecated
     /// The manifest notes
-    pub notes: Option<StringOrArrayOfStrings>,
+    pub notes: Option<StringArray>,
     /// Directories to persist when updating
-    pub persist: Option<StringOrArrayOfStringsOrAnArrayOfArrayOfStrings>,
-    /// The PowerShell module of the package
+    pub persist: Option<AliasArray>,
+    /// The `PowerShell` module of the package
     pub psmodule: Option<Psmodule>,
     /// The suggested dependencies of the package
     pub suggest: Option<Suggest>,
     /// The version of the package
-    pub version: String,
-    /// The package binaries
-    pub bin: Option<StringOrArrayOfStringsOrAnArrayOfArrayOfStrings>,
-    /// The checkver configuration
-    pub checkver: Option<Checkver>,
+    pub version: Version,
     /// The environment variables to add to PATH
-    pub env_add_path: Option<StringOrArrayOfStrings>,
+    pub env_add_path: Option<StringArray>,
     /// The environment variables to set
     pub env_set: Option<HashMap<String, Option<serde_json::Value>>>,
-    /// The directories to extract to
-    pub extract_dir: Option<StringOrArrayOfStrings>,
-    /// The hash of the package
-    pub hash: Option<StringOrArrayOfStrings>,
-    /// The installer configuration
-    pub installer: Option<Installer>,
     #[serde(flatten)]
     /// The install configuration
     pub install_config: InstallConfig,
 }
 
+#[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 /// Manifest architecture specific configuration
 pub struct ManifestArchitecture {
@@ -105,27 +98,32 @@ impl std::ops::Index<Architecture> for ManifestArchitecture {
     }
 }
 
+#[skip_serializing_none]
 #[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq, Eq)]
 /// The install configuration
 pub struct InstallConfig {
-    pub bin: Option<StringOrArrayOfStringsOrAnArrayOfArrayOfStrings>,
+    /// The package binaries
+    pub bin: Option<AliasArray>,
+    /// The checkver configuration
     pub checkver: Option<Checkver>,
-    pub env_add_path: Option<StringOrArrayOfStrings>,
-    pub env_set: Option<HashMap<String, Option<serde_json::Value>>>,
-    pub extract_dir: Option<StringOrArrayOfStrings>,
-    pub hash: Option<StringOrArrayOfStrings>,
+    /// The directories to extract to
+    pub extract_dir: Option<StringArray>,
+    /// The hash of the package
+    pub hash: Option<String>,
+    /// The installer configuration
     pub installer: Option<Installer>,
     #[deprecated(since = "1.10.0")]
-    pub msi: Option<StringOrArrayOfStrings>,
-    pub post_install: Option<StringOrArrayOfStrings>,
-    pub post_uninstall: Option<StringOrArrayOfStrings>,
-    pub pre_install: Option<StringOrArrayOfStrings>,
-    pub pre_uninstall: Option<StringOrArrayOfStrings>,
+    pub msi: Option<StringArray>,
+    pub post_install: Option<StringArray>,
+    pub post_uninstall: Option<StringArray>,
+    pub pre_install: Option<StringArray>,
+    pub pre_uninstall: Option<StringArray>,
     pub shortcuts: Option<Vec<Vec<String>>>,
     pub uninstaller: Option<Uninstaller>,
-    pub url: Option<StringOrArrayOfStrings>,
+    pub url: Option<String>,
 }
 
+#[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct CheckverClass {
     pub github: Option<String>,
@@ -139,76 +137,79 @@ pub struct CheckverClass {
     pub replace: Option<String>,
     /// Reverse the order of regex matches
     pub reverse: Option<bool>,
-    /// Custom PowerShell script to retrieve application version using more complex approach.
-    pub script: Option<StringOrArrayOfStrings>,
+    /// Custom `PowerShell` script to retrieve application version using more complex approach.
+    pub script: Option<StringArray>,
     pub sourceforge: Option<SourceforgeUnion>,
     pub url: Option<String>,
     pub useragent: Option<String>,
     pub xpath: Option<String>,
 }
 
+#[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct SourceforgeClass {
     pub path: Option<String>,
     pub project: Option<String>,
 }
 
+#[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Installer {
     /// Undocumented: only used in scoop-extras/oraclejdk* and scoop-extras/appengine-go
     #[serde(rename = "_comment")]
     pub comment: Option<String>,
-    pub args: Option<StringOrArrayOfStrings>,
+    pub args: Option<StringArray>,
     pub file: Option<String>,
     pub keep: Option<bool>,
-    pub script: Option<StringOrArrayOfStrings>,
+    pub script: Option<StringArray>,
 }
 
+#[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Uninstaller {
-    pub args: Option<StringOrArrayOfStrings>,
+    pub args: Option<StringArray>,
     pub file: Option<String>,
-    pub script: Option<StringOrArrayOfStrings>,
+    pub script: Option<StringArray>,
 }
 
+#[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Autoupdate {
     pub architecture: Option<AutoupdateArchitecture>,
-    pub bin: Option<StringOrArrayOfStringsOrAnArrayOfArrayOfStrings>,
-    pub env_add_path: Option<StringOrArrayOfStrings>,
-    pub env_set: Option<HashMap<String, Option<serde_json::Value>>>,
-    pub extract_dir: Option<StringOrArrayOfStrings>,
-    pub hash: Option<HashExtractionOrArrayOfHashExtractions>,
-    pub installer: Option<AutoupdateInstaller>,
     pub license: Option<AutoupdateLicense>,
-    pub notes: Option<StringOrArrayOfStrings>,
-    pub persist: Option<StringOrArrayOfStringsOrAnArrayOfArrayOfStrings>,
+    pub notes: Option<StringArray>,
+    pub persist: Option<AliasArray>,
     pub psmodule: Option<AutoupdatePsmodule>,
-    pub shortcuts: Option<Vec<Vec<String>>>,
-    pub url: Option<StringOrArrayOfStrings>,
+    #[serde(flatten)]
+    pub default_config: AutoupdateConfig,
 }
 
+#[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct AutoupdateArchitecture {
     #[serde(rename = "32bit")]
-    pub the_32_bit: Option<AutoupdateArch>,
+    pub x86: Option<AutoupdateConfig>,
     #[serde(rename = "64bit")]
-    pub the_64_bit: Option<AutoupdateArch>,
-    pub arm64: Option<AutoupdateArch>,
+    pub x64: Option<AutoupdateConfig>,
+    pub arm64: Option<AutoupdateConfig>,
 }
 
+// TODO: Merge fields from AutoupdateConfig into and various Architectures
+
+#[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct AutoupdateArch {
-    pub bin: Option<StringOrArrayOfStringsOrAnArrayOfArrayOfStrings>,
-    pub env_add_path: Option<StringOrArrayOfStrings>,
+pub struct AutoupdateConfig {
+    pub bin: Option<AliasArray>,
+    pub env_add_path: Option<StringArray>,
     pub env_set: Option<HashMap<String, Option<serde_json::Value>>>,
-    pub extract_dir: Option<StringOrArrayOfStrings>,
+    pub extract_dir: Option<StringArray>,
     pub hash: Option<HashExtractionOrArrayOfHashExtractions>,
     pub installer: Option<PurpleInstaller>,
     pub shortcuts: Option<Vec<Vec<String>>>,
-    pub url: Option<StringOrArrayOfStrings>,
+    pub url: Option<String>,
 }
 
+#[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct HashExtraction {
     /// Same as 'regex'
@@ -216,7 +217,7 @@ pub struct HashExtraction {
     /// Same as 'jsonpath'
     pub jp: Option<String>,
     pub jsonpath: Option<String>,
-    pub mode: Option<Mode>,
+    pub mode: Option<HashMode>,
     pub regex: Option<String>,
     #[deprecated(since = "1.10.0", note = "hash type is determined automatically")]
     #[serde(rename = "type")]
@@ -225,76 +226,83 @@ pub struct HashExtraction {
     pub xpath: Option<String>,
 }
 
+#[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct PurpleInstaller {
     pub file: Option<String>,
 }
 
+#[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct AutoupdateInstaller {
     pub file: Option<String>,
 }
 
+#[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct License {
     pub identifier: String,
     pub url: Option<String>,
 }
 
+#[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct AutoupdatePsmodule {
     pub name: Option<String>,
 }
 
+#[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Psmodule {
     pub name: Option<String>,
 }
 
+#[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Suggest {}
 
+#[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(untagged)]
-pub enum StringOrArrayOfStringsOrAnArrayOfArrayOfStrings {
-    String(String),
-    StringArray(Vec<String>),
-    UnionArray(Vec<StringOrArrayOfStrings>),
+pub enum AliasArray {
+    NestedArray(StringArray),
+    AliasArray(Vec<StringArray>),
 }
 
-impl StringOrArrayOfStrings {
+impl StringArray {
     #[must_use]
-    pub fn into_vec(&self) -> Vec<String> {
+    pub fn to_vec(&self) -> Vec<String> {
         match self {
-            StringOrArrayOfStrings::String(s) => vec![s.clone()],
-            StringOrArrayOfStrings::StringArray(string_array) => string_array.clone(),
+            StringArray::String(s) => vec![s.clone()],
+            StringArray::StringArray(string_array) => string_array.clone(),
         }
     }
 }
 
-impl StringOrArrayOfStringsOrAnArrayOfArrayOfStrings {
+impl AliasArray {
     #[must_use]
-    pub fn into_vec(&self) -> Vec<String> {
+    pub fn to_vec(&self) -> Vec<String> {
         match self {
-            StringOrArrayOfStringsOrAnArrayOfArrayOfStrings::String(s) => vec![s.clone()],
-            StringOrArrayOfStringsOrAnArrayOfArrayOfStrings::StringArray(s) => s.clone(),
-            StringOrArrayOfStringsOrAnArrayOfArrayOfStrings::UnionArray(s) => s
+            AliasArray::NestedArray(StringArray::String(s)) => vec![s.clone()],
+            AliasArray::NestedArray(StringArray::StringArray(s)) => s.clone(),
+            AliasArray::AliasArray(s) => s
                 .iter()
                 .flat_map(|s| match s {
-                    StringOrArrayOfStrings::String(s) => vec![s.clone()],
-                    StringOrArrayOfStrings::StringArray(s) => s.clone(),
+                    StringArray::String(s) => vec![s.clone()],
+                    StringArray::StringArray(s) => s.clone(),
                 })
                 .collect(),
         }
     }
 }
 
-impl Display for StringOrArrayOfStringsOrAnArrayOfArrayOfStrings {
+impl Display for AliasArray {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.into_vec().iter().format(", ").fmt(f)
+        self.to_vec().iter().format(", ").fmt(f)
     }
 }
 
+#[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum Checkver {
@@ -302,6 +310,7 @@ pub enum Checkver {
     String(String),
 }
 
+#[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum TOrArrayOfTs<T> {
@@ -310,7 +319,7 @@ pub enum TOrArrayOfTs<T> {
 }
 
 impl<T> TOrArrayOfTs<T> {
-    pub fn into_vec(self) -> Vec<T> {
+    pub fn to_vec(self) -> Vec<T> {
         match self {
             TOrArrayOfTs::T(t) => vec![t],
             TOrArrayOfTs::Array(array) => array,
@@ -318,19 +327,21 @@ impl<T> TOrArrayOfTs<T> {
     }
 }
 
+#[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(untagged)]
-pub enum StringOrArrayOfStrings {
+pub enum StringArray {
     String(String),
     StringArray(Vec<String>),
 }
 
-impl Display for StringOrArrayOfStrings {
+impl Display for StringArray {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.into_vec().iter().format(", ").fmt(f)
+        self.to_vec().iter().format(", ").fmt(f)
     }
 }
 
+#[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum SourceforgeUnion {
@@ -338,14 +349,16 @@ pub enum SourceforgeUnion {
     String(String),
 }
 
+#[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum HashExtractionOrArrayOfHashExtractions {
     Url(String),
     HashExtraction(HashExtraction),
-    HashExtractionArray(Vec<HashExtraction>),
+    // HashExtractionArray(Vec<HashExtraction>),
 }
 
+#[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum AutoupdateLicense {
@@ -353,6 +366,7 @@ pub enum AutoupdateLicense {
     String(String),
 }
 
+#[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum PackageLicense {
@@ -388,7 +402,8 @@ pub struct LicenseObject {
     url: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[skip_serializing_none]
+#[derive(Debug, Copy, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum Type {
     #[serde(rename = "md5")]
     Md5,
@@ -400,8 +415,9 @@ pub enum Type {
     Sha512,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub enum Mode {
+#[skip_serializing_none]
+#[derive(Debug, Copy, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub enum HashMode {
     #[serde(rename = "download")]
     Download,
     #[serde(rename = "extract")]
@@ -431,5 +447,17 @@ mod tests {
         let deserialized: Manifest = serde_json::from_str(MANIFEST).unwrap();
 
         dbg!(deserialized);
+    }
+
+    #[test]
+    fn test_equal_generated_manifests() {
+        const SCOOP_GENERATED: &str = r#"{"version":"1.10.1","description":"Stupid Fast Scoop Utilities. Incredibly fast replacements for commonly used Scoop commands, written in Rust.","homepage":"https://github.com/jewlexx/sfsu","license":"Apache-2.0","architecture":{"64bit":{"url":"https://github.com/jewlexx/sfsu/releases/download/v1.10.1/sfsu-x86_64.exe#/sfsu.exe","hash":"e2a1c7dd49d547fdfe05fc45f0c9e276cb992bd94af151f0cf7d3e2ecfdc4233"},"32bit":{"url":"https://github.com/jewlexx/sfsu/releases/download/v1.10.1/sfsu-i686.exe#/sfsu.exe","hash":"b40478dc261fb58caecadd058dc7897a65167ca1f43993908b12dd389790dbd5"},"arm64":{"url":"https://github.com/jewlexx/sfsu/releases/download/v1.10.1/sfsu-aarch64.exe#/sfsu.exe","hash":"17d813fd810d074fd52bd9da8aabc6e52cf27d78a34d2b4403025d5da4b0e13d"}},"notes":"In order to replace scoop commands use `Invoke-Expression (&sfsu hook)` in your Powershell profile.","bin":"sfsu.exe","checkver":"github","autoupdate":{"architecture":{"64bit":{"url":"https://github.com/jewlexx/sfsu/releases/download/v$version/sfsu-x86_64.exe#/sfsu.exe"},"32bit":{"url":"https://github.com/jewlexx/sfsu/releases/download/v$version/sfsu-i686.exe#/sfsu.exe"},"arm64":{"url":"https://github.com/jewlexx/sfsu/releases/download/v$version/sfsu-aarch64.exe#/sfsu.exe"}},"hash":{"url":"$url.sha256"}}}"#;
+
+        const SFSU_GENERATED: &str = r#"{"architecture":{"32bit":{"hash":"b40478dc261fb58caecadd058dc7897a65167ca1f43993908b12dd389790dbd5","url":"https://github.com/jewlexx/sfsu/releases/download/v1.10.1/sfsu-i686.exe#/sfsu.exe"},"64bit":{"hash":"e2a1c7dd49d547fdfe05fc45f0c9e276cb992bd94af151f0cf7d3e2ecfdc4233","url":"https://github.com/jewlexx/sfsu/releases/download/v1.10.1/sfsu-x86_64.exe#/sfsu.exe"},"arm64":{"hash":"17d813fd810d074fd52bd9da8aabc6e52cf27d78a34d2b4403025d5da4b0e13d","url":"https://github.com/jewlexx/sfsu/releases/download/v1.10.1/sfsu-aarch64.exe#/sfsu.exe"}},"autoupdate":{"architecture":{"32bit":{"url":"https://github.com/jewlexx/sfsu/releases/download/v$version/sfsu-i686.exe#/sfsu.exe"},"64bit":{"url":"https://github.com/jewlexx/sfsu/releases/download/v$version/sfsu-x86_64.exe#/sfsu.exe"},"arm64":{"url":"https://github.com/jewlexx/sfsu/releases/download/v$version/sfsu-aarch64.exe#/sfsu.exe"}},"hash":{"url":"$url.sha256"}},"description":"Stupid Fast Scoop Utilities. Incredibly fast replacements for commonly used Scoop commands, written in Rust.","homepage":"https://github.com/jewlexx/sfsu","license":"Apache-2.0","notes":"In order to replace scoop commands use `Invoke-Expression (&sfsu hook)` in your Powershell profile.","version":"1.10.1","bin":"sfsu.exe","checkver":"github"}"#;
+
+        let scoop_generated: Manifest = serde_json::from_str(SCOOP_GENERATED).unwrap();
+        let sfsu_generated: Manifest = serde_json::from_str(SFSU_GENERATED).unwrap();
+
+        assert_eq!(scoop_generated, sfsu_generated);
     }
 }

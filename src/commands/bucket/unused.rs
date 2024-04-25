@@ -16,7 +16,7 @@ pub struct Args {
 }
 
 impl commands::Command for Args {
-    fn runner(self) -> Result<(), anyhow::Error> {
+    async fn runner(self) -> Result<(), anyhow::Error> {
         // TODO: Refactor
         let used_buckets = InstallManifest::list_all_unchecked()?
             .par_iter()

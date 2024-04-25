@@ -2,23 +2,38 @@ use clap::Parser;
 use quork::traits::list::ListVariants;
 use sprinkles::shell::Shell;
 
+use super::CommandsHooks;
+
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
     #[clap(short = 'D', long, help = "The commands to disable")]
-    disable: Vec<super::CommandsHooks>,
+    disable: Vec<CommandsHooks>,
+
+    #[clap(short = 'E', long, help = "The commands to exclusively enable")]
+    enabled: Vec<CommandsHooks>,
 
     #[clap(short, long, help = "Print hooks for the given shell", default_value_t = Shell::Powershell)]
     shell: Shell,
 }
 
 impl super::Command for Args {
-    fn runner(self) -> Result<(), anyhow::Error> {
+    async fn runner(self) -> Result<(), anyhow::Error> {
         let shell = self.shell;
         let shell_config = shell.config();
-        let enabled_hooks: Vec<super::CommandsHooks> = super::CommandsHooks::VARIANTS
-            .into_iter()
-            .filter(|variant| !self.disable.contains(variant))
-            .collect();
+        let enabled_hooks: Vec<CommandsHooks> = {
+            // Explicit binding here fixes type inference, as we explicitly cast it to a slice
+            let enabled_hooks: &[CommandsHooks] = if self.enabled.is_empty() {
+                &CommandsHooks::VARIANTS
+            } else {
+                &self.enabled
+            };
+
+            enabled_hooks
+        }
+        .iter()
+        .filter(|variant| !self.disable.contains(variant))
+        .copied()
+        .collect();
 
         match shell {
             Shell::Powershell => {

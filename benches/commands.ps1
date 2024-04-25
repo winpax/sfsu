@@ -29,6 +29,13 @@ function BenchCommands
 scoop config scoop_branch develop
 pwsh -NoProfile -C 'scoop update'
 
+# Downloading
+Write-Output 'Benchmarking downloads'
+BenchCommands @('cargo r -r download sfsu', 'scoop download sfsu')
+
+Write-Output 'Benchmarking downloads with versions'
+BenchCommands @('cargo r -r download sfsu@1.10.2', 'scoop download sfsu@1.10.2') -OutFile 'download_versions'
+
 # Listing
 Write-Output 'Benchmarking listing commands'
 BenchCommands @('sfsu list', 'hok list', 'scoop list')

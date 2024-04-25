@@ -1,3 +1,4 @@
+#![feature(let_chains)]
 #![doc = include_str!("../README.md")]
 #![warn(
     clippy::all,
@@ -9,27 +10,39 @@
 )]
 #![allow(clippy::module_name_repetitions)]
 
-use std::{ffi::OsStr, fmt, fs::File, path::PathBuf};
+use std::{
+    ffi::OsStr,
+    fmt,
+    fs::File,
+    path::{Path, PathBuf},
+};
 
 use chrono::Local;
+use quork::traits::list::ListVariants;
 use rayon::prelude::*;
-
-pub use semver;
 use serde::{Deserialize, Serialize};
 
+pub use semver;
+
 pub mod buckets;
+pub mod cache;
 pub mod calm_panic;
 pub mod config;
 pub mod diagnostics;
 pub mod git;
+#[cfg(feature = "manifest-hashes")]
+pub mod hash;
 pub mod output;
 pub mod packages;
 pub mod progress;
+pub mod requests;
 pub mod shell;
+#[cfg(not(feature = "v2"))]
+pub mod stream;
+pub mod version;
 
-mod opt;
-
-pub mod versions {
+#[doc(hidden)]
+pub mod __versions {
     //! Version information
 
     /// Sprinkles library version
@@ -55,7 +68,7 @@ mod const_assertions {
     const _: () = eval(&Scoop::arch());
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, ListVariants)]
 /// Supported architectures
 pub enum Architecture {
     /// 64 bit Arm
@@ -113,6 +126,12 @@ impl fmt::Display for Architecture {
             Self::X64 => write!(f, "64bit"),
             Self::X86 => write!(f, "32bit"),
         }
+    }
+}
+
+impl Default for Architecture {
+    fn default() -> Self {
+        Self::from_env()
     }
 }
 
@@ -180,16 +199,50 @@ impl Scoop {
         }
     }
 
+    fn scoop_sub_path(segment: impl AsRef<Path>) -> PathBuf {
+        let path = Self::path().join(segment.as_ref());
+
+        if !path.exists() && std::fs::create_dir_all(&path).is_err() {
+            abandon!("Could not create {} directory", segment.as_ref().display());
+        }
+
+        path
+    }
+
     #[must_use]
     /// Gets the user's scoop apps path
     pub fn apps_path() -> PathBuf {
-        Self::path().join("apps")
+        Self::scoop_sub_path("apps")
     }
 
     #[must_use]
     /// Gets the user's scoop buckets path
     pub fn buckets_path() -> PathBuf {
-        Self::path().join("buckets")
+        Self::scoop_sub_path("buckets")
+    }
+
+    #[must_use]
+    /// Gets the user's scoop cache path
+    pub fn cache_path() -> PathBuf {
+        Self::scoop_sub_path("cache")
+    }
+
+    #[must_use]
+    /// Gets the user's scoop persist path
+    pub fn persist_path() -> PathBuf {
+        Self::scoop_sub_path("persist")
+    }
+
+    #[must_use]
+    /// Gets the user's scoop shims path
+    pub fn shims_path() -> PathBuf {
+        Self::scoop_sub_path("shims")
+    }
+
+    #[must_use]
+    /// Gets the user's scoop workspace path
+    pub fn workspace_path() -> PathBuf {
+        Self::scoop_sub_path("workspace")
     }
 
     /// List all scoop apps and return their paths

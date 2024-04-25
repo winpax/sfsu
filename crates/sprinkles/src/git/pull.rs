@@ -1,3 +1,7 @@
+//! Pulls remote data into a local branch.
+//!
+//! This module is a modification of the libgit2 "pull" example, as mentioned in the license comment below.
+
 /*
  * libgit2 "pull" example - shows how to pull remote data into a local branch.
  *
@@ -14,9 +18,9 @@
  * Adapted by me (Juliette Cordor)
  */
 
-use git2::Repository;
-use log::trace;
 use std::str;
+
+use git2::Repository;
 
 pub type ProgressCallback<'a> = &'a dyn Fn(git2::Progress<'_>, bool) -> bool;
 
@@ -149,6 +153,10 @@ fn do_merge<'a>(
     Ok(())
 }
 
+/// Pulls the remote branch into the local branch.
+///
+/// # Errors
+/// - git2 errors
 pub fn pull(
     repo: &super::Repo,
     remote: Option<&str>,

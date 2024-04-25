@@ -10,7 +10,6 @@ use chrono::{DateTime, FixedOffset, Local};
 use clap::{Parser, ValueEnum};
 use git2::Commit;
 use itertools::Itertools;
-use owo_colors::OwoColorize;
 use quork::traits::truthy::ContainsTruth as _;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use regex::Regex;
@@ -20,13 +19,18 @@ use strum::Display;
 use crate::{
     buckets::{self, Bucket},
     git::{self, Repo},
+    hash::{
+        self,
+        substitutions::{Substitute, SubstitutionMap},
+    },
     output::{
         sectioned::{Children, Section, Text},
         wrappers::{author::Author, time::NicerTime},
     },
-    Scoop,
+    Architecture, Scoop,
 };
 
+pub mod downloading;
 pub mod export;
 pub mod info;
 pub mod install;
@@ -38,7 +42,108 @@ pub mod status;
 pub use install::Manifest as InstallManifest;
 pub use manifest::Manifest;
 
-use manifest::StringOrArrayOfStringsOrAnArrayOfArrayOfStrings;
+use downloading::DownloadUrl;
+use manifest::{InstallConfig, StringArray};
+
+#[macro_export]
+/// Get a field from a manifest based on the architecture
+macro_rules! arch_config {
+    ($field:ident.$arch:expr) => {
+        match $arch {
+            $crate::Architecture::Arm64 => $field.arm64.as_ref(),
+            $crate::Architecture::X64 => $field.x64.as_ref(),
+            $crate::Architecture::X86 => $field.x86.as_ref(),
+        }
+    };
+
+    ($field:ident) => {
+        arch_config!($field.$crate::Architecture::ARCH)
+    };
+
+    ($field:ident.$arch:expr => clone) => {
+        arch_config!($field.$arch).cloned()
+    };
+
+    ($field:ident => clone) => {
+        arch_config!($field).cloned()
+    };
+
+    // ($field:ident.$arch:expr => $default:expr) => {
+    //     arch_config!($field.$arch).unwrap_or($default)
+    // };
+
+    // ($field:ident => $default:expr) => {
+    //     arch_config!($field.$crate::Architecture::ARCH).unwrap_or($default)
+    // };
+}
+
+#[macro_export]
+/// Get a field from a manifest based on the architecture
+macro_rules! arch_field {
+    // ($self:ident.$field:ident) => {
+    //     arch_field!($self.$field).clone()
+    // };
+
+    // ($arch:expr => ref $self:ident.$field:ident) => {{
+    //     if let Some(cfg) = match $arch {
+    //         $crate::Architecture::Arm64 => &$self.arm64,
+    //         $crate::Architecture::X64 => &$self.x64,
+    //         $crate::Architecture::X86 => &$self.x86,
+    //     } {
+    //         &cfg.$field
+    //     } else {
+    //         &None
+    //     }
+    // }};
+
+    // (ref $self:ident.$field:ident) => {
+    //     arch_field!($crate::Architecture::ARCH => ref $self.$field)
+    // };
+
+    // ($arch:expr => ref mut $self:ident.$field:ident) => {{
+    //     match $arch {
+    //         $crate::Architecture::Arm64 => $self.arm64.as_mut(),
+    //         $crate::Architecture::X64 => $self.x64.as_mut(),
+    //         $crate::Architecture::X86 => $self.x86.as_mut(),
+    //     }.and_then(|cfg| cfg.$field.as_mut())
+    // }};
+
+    // (ref mut $self:ident.$field:ident) => {
+    //     arch_field!($crate::Architecture::ARCH => ref mut $self.$field)
+    // };
+
+    ($self:ident.$field:ident as ref) => {
+        arch_field!($crate::Architecture::ARCH => $self.$field as ref)
+    };
+
+    ($arch:expr => $self:ident.$field:ident as ref) => {{
+        match $arch {
+            $crate::Architecture::Arm64 => $self.arm64.as_ref(),
+            $crate::Architecture::X64 => $self.x64.as_ref(),
+            $crate::Architecture::X86 => $self.x86.as_ref(),
+        }.and_then(|cfg| cfg.$field.as_ref())
+    }};
+
+    ($self:ident.$field:ident as mut) => {
+        arch_field!($crate::Architecture::ARCH => $self.$field as mut)
+    };
+
+    ($arch:expr => $self:ident.$field:ident as mut) => {{
+        match $arch {
+            $crate::Architecture::Arm64 => $self.arm64.as_mut(),
+            $crate::Architecture::X64 => $self.x64.as_mut(),
+            $crate::Architecture::X86 => $self.x86.as_mut(),
+        }.and_then(|cfg| cfg.$field.as_mut())
+    }};
+}
+
+pub use arch_config;
+pub use arch_field;
+
+use self::manifest::{
+    AliasArray, AutoupdateArchitecture, AutoupdateConfig, HashExtraction,
+    HashExtractionOrArrayOfHashExtractions, ManifestArchitecture,
+};
 
 #[derive(Debug, Serialize)]
 /// Minimal package info
@@ -164,10 +269,16 @@ pub enum Error {
     MissingGitOutput,
     #[error("Missing local manifest for package")]
     MissingLocalManifest,
+    #[error("Could not get hash for app: {0}")]
+    HashError(#[from] hash::Error),
+    #[error("Manifest does not have `autoupdate` field")]
+    MissingAutoUpdate,
+    #[error("Manifest architecture section does not have `autoupdate` field")]
+    MissingArchAutoUpdate,
 }
 
 /// The result type for package operations
-pub type Result<T> = std::result::Result<T, Error>;
+pub type Result<T, E = Error> = std::result::Result<T, E>;
 
 #[derive(Debug, Default, Copy, Clone, ValueEnum, Display, Parser, PartialEq, Eq)]
 #[strum(serialize_all = "snake_case")]
@@ -257,9 +368,10 @@ impl MatchCriteria {
 
         if let Some(manifest) = manifest {
             let binaries = manifest
+                .architecture
+                .merge_default(manifest.install_config.clone(), Architecture::ARCH)
                 .bin
-                .clone()
-                .map(|b| b.into_vec())
+                .map(|b| b.to_vec())
                 .unwrap_or_default();
 
             let binary_matches = binaries
@@ -277,6 +389,12 @@ impl MatchCriteria {
         }
 
         output
+    }
+}
+
+impl Default for MatchCriteria {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -389,6 +507,36 @@ impl InstallManifest {
 
 impl Manifest {
     #[must_use]
+    /// Get the install config for a given architecture
+    pub fn install_config(&self, arch: Architecture) -> InstallConfig {
+        self.architecture
+            .as_ref()
+            .merge_default(self.install_config.clone(), arch)
+    }
+
+    #[must_use]
+    /// Get the autoupdate config for the default architecture
+    pub fn autoupdate_config(&self, arch: Architecture) -> Option<AutoupdateConfig> {
+        let autoupdate = self.autoupdate.as_ref()?;
+
+        Some(
+            autoupdate
+                .architecture
+                .clone()
+                .merge_default(autoupdate.default_config.clone(), arch),
+        )
+    }
+
+    #[must_use]
+    /// Get the download urls for a given architecture
+    pub fn download_url(&self, arch: Architecture) -> Option<DownloadUrl> {
+        let urls = self.install_config(arch).url?;
+
+        // Some(urls.into_iter().map(DownloadUrl::from_string).collect())
+        Some(DownloadUrl::from_string(urls))
+    }
+
+    #[must_use]
     /// Apply a bucket to a manifest
     pub fn with_bucket(mut self, bucket: &Bucket) -> Self {
         self.bucket = bucket.name().to_string();
@@ -400,10 +548,10 @@ impl Manifest {
     /// List the dependencies of a given manifest, in the order that they will be installed
     ///
     /// Note that this does not include the package itself as a dependency
-    pub fn depends(&self) -> Vec<reference::Package> {
+    pub fn depends(&self) -> Vec<reference::ManifestRef> {
         self.depends
             .clone()
-            .map(manifest::TOrArrayOfTs::into_vec)
+            .map(manifest::TOrArrayOfTs::to_vec)
             .unwrap_or_default()
     }
 
@@ -418,15 +566,20 @@ impl Manifest {
     #[must_use]
     /// Check if the manifest binaries matche the given regex
     pub fn binary_matches(&self, regex: &Regex) -> Option<Vec<String>> {
-        match self.bin {
-            Some(StringOrArrayOfStringsOrAnArrayOfArrayOfStrings::String(ref binary)) => {
+        match self
+            .architecture
+            .as_ref()
+            .merge_default(self.install_config.clone(), Architecture::ARCH)
+            .bin
+        {
+            Some(AliasArray::NestedArray(StringArray::String(ref binary))) => {
                 if regex.is_match(binary) {
                     Some(vec![binary.clone()])
                 } else {
                     None
                 }
             }
-            Some(StringOrArrayOfStringsOrAnArrayOfArrayOfStrings::StringArray(ref binaries)) => {
+            Some(AliasArray::NestedArray(StringArray::StringArray(ref binaries))) => {
                 let matched: Vec<_> = binaries
                     .iter()
                     .filter(|binary| regex.is_match(binary))
@@ -475,6 +628,8 @@ impl Manifest {
         pattern: &Regex,
         mode: SearchMode,
     ) -> Option<Section<Text<String>>> {
+        use owo_colors::OwoColorize;
+
         // TODO: Better display of output
 
         // This may be a bit of a hack, but it works
@@ -529,6 +684,107 @@ impl Manifest {
         Some(package)
     }
 
+    fn update_field<T>(
+        arch_field: Option<&mut T>,
+        default_field: &mut Option<T>,
+        value: Option<T>,
+    ) {
+        if let Some(arch_field) = arch_field
+            && let Some(value) = value
+        {
+            *arch_field = value;
+        } else {
+            *default_field = value;
+        }
+    }
+
+    fn get_new_url(&self, autoupdate: &AutoupdateConfig) -> Option<String> {
+        if let Some(autoupdate_url) = &autoupdate.url {
+            debug!("Autoupdate Url: {autoupdate_url}");
+
+            let mut submap = SubstitutionMap::new();
+            submap.append_version(&self.version);
+
+            let new_url = autoupdate_url.clone().into_substituted(&submap, false);
+
+            debug!("Subbed Autoupdate Url: {new_url}");
+
+            Some(new_url)
+        } else {
+            None
+        }
+    }
+
+    #[cfg(feature = "manifest-hashes")]
+    /// Set the manifest version and get the hash for the manifest
+    ///
+    /// # Errors
+    /// - Missing autoupdate field
+    /// - Hash error
+    pub async fn set_version(&mut self, version: String) -> Result<(), Error> {
+        use quork::traits::list::ListVariants;
+
+        use crate::hash::Hash;
+
+        self.version = version.into();
+
+        let autoupdate = self.autoupdate.as_ref().ok_or(Error::MissingAutoUpdate)?;
+
+        // TODO: This sets the same hash and url for all architectures
+        for arch in crate::Architecture::VARIANTS {
+            let arch_autoupdate = autoupdate
+                .architecture
+                .merge_default(autoupdate.default_config.clone(), arch);
+
+            let arch_url = self.get_new_url(&arch_autoupdate);
+
+            if let Some(arch_config) = &mut self.architecture {
+                Self::update_field(
+                    arch_field!(arch => arch_config.url as mut),
+                    &mut self.install_config.url,
+                    arch_url,
+                );
+            } else {
+                self.install_config.url = self.get_new_url(&autoupdate.default_config);
+            }
+        }
+
+        for arch in crate::Architecture::VARIANTS {
+            let Ok(hash) = Hash::get_for_app(self, arch).await else {
+                continue;
+            };
+
+            if let Some(arch_config) = &mut self.architecture {
+                // TODO: This sets the same hash and url for all architectures
+                Self::update_field(
+                    arch_field!(arch => arch_config.hash as mut),
+                    &mut self.install_config.hash,
+                    Some(hash.hash()),
+                );
+            } else {
+                self.install_config.hash = Some(hash.hash());
+            }
+        }
+
+        // TODO: Handle other autoupdate fields
+        // TODO: Autoupdate fields in all architectures
+        // todo!("Handle urls and other autoupdate fields");
+
+        // TODO: Figure out hash extraction
+        // autoupdate_arch.hash
+
+        // todo!()
+
+        let workspace_manifest_path = Scoop::workspace_path().join(format!("{}.json", self.name));
+        serde_json::to_writer_pretty(std::fs::File::create(workspace_manifest_path)?, &self)
+            .map_err(|e| {
+                error!("Failed to write workspace manifest: {e}");
+                Error::ParsingManifest(self.name.to_string(), e)
+            })?;
+
+        Ok(())
+    }
+
     #[must_use]
     /// Check if the commit's message matches the name of the manifest
     pub fn commit_message_matches(&self, commit: &Commit<'_>) -> bool {
@@ -562,7 +818,6 @@ impl Manifest {
         Ok(diff.stats()?.files_changed() != 0)
     }
 
-    #[cfg_attr(feature = "info-git-commands", allow(unreachable_code))]
     /// Get the time and author of the commit where this manifest was last changed
     ///
     /// # Errors
@@ -589,11 +844,8 @@ impl Manifest {
                         // TODO: Add tests using personal bucket to ensure that different methods return the same info
                         let commit = repo.find_commit(oid?)?;
 
-                        #[cfg(not(any(
-                            feature = "info-difftrees",
-                            feature = "info-git-commands"
-                        )))]
-                        if self.commit_matches_name(&commit) {
+                        #[cfg(not(feature = "info-difftrees"))]
+                        if self.commit_message_matches(&commit) {
                             return Ok(commit);
                         }
 
@@ -694,5 +946,141 @@ pub fn is_installed(manifest_name: impl AsRef<Path>, bucket: Option<impl AsRef<s
             }
         }
         Err(_) => false,
+    }
+}
+
+/// Merge defaults for a given architecture and the provided field
+pub trait MergeDefaults {
+    /// Output & Input type
+    type Default;
+
+    /// Merge the architecture specific autoupdate config with the arch agnostic one
+    fn merge_default(&self, default: Self::Default, arch: Architecture) -> Self::Default;
+}
+
+impl MergeDefaults for Option<AutoupdateArchitecture> {
+    type Default = AutoupdateConfig;
+
+    #[must_use]
+    /// Merge the architecture specific autoupdate config with the arch agnostic one
+    fn merge_default(&self, default: Self::Default, arch: Architecture) -> Self::Default {
+        let Some(config) = self
+            .as_ref()
+            .and_then(|config| arch_config!(config.arch => clone))
+        else {
+            return default;
+        };
+
+        AutoupdateConfig {
+            bin: config.bin.or(default.bin),
+            env_add_path: config.env_add_path.or(default.env_add_path),
+            env_set: config.env_set.or(default.env_set),
+            extract_dir: config.extract_dir.or(default.extract_dir),
+            hash: config.hash.or(default.hash),
+            installer: config.installer.or(default.installer),
+            shortcuts: config.shortcuts.or(default.shortcuts),
+            url: config.url.or(default.url),
+        }
+    }
+}
+
+impl MergeDefaults for Option<&ManifestArchitecture> {
+    type Default = InstallConfig;
+
+    #[allow(deprecated)]
+    #[must_use]
+    /// Merge the architecture specific autoupdate config with the arch agnostic one
+    fn merge_default(&self, default: Self::Default, arch: Architecture) -> Self::Default {
+        let Some(config) = self
+            .as_ref()
+            .and_then(|config| arch_config!(config.arch => clone))
+        else {
+            return default;
+        };
+
+        InstallConfig {
+            bin: config.bin.or(default.bin),
+            checkver: config.checkver.or(default.checkver),
+            extract_dir: config.extract_dir.or(default.extract_dir),
+            hash: config.hash.or(default.hash),
+            installer: config.installer.or(default.installer),
+            msi: config.msi.or(default.msi),
+            post_install: config.post_install.or(default.post_install),
+            post_uninstall: config.post_uninstall.or(default.post_uninstall),
+            pre_install: config.pre_install.or(default.pre_install),
+            pre_uninstall: config.pre_uninstall.or(default.pre_uninstall),
+            shortcuts: config.shortcuts.or(default.shortcuts),
+            uninstaller: config.uninstaller.or(default.uninstaller),
+            url: config.url.or(default.url),
+        }
+    }
+}
+
+impl MergeDefaults for Option<ManifestArchitecture> {
+    type Default = InstallConfig;
+
+    #[allow(deprecated)]
+    #[must_use]
+    /// Merge the architecture specific autoupdate config with the arch agnostic one
+    fn merge_default(&self, default: Self::Default, arch: Architecture) -> Self::Default {
+        self.as_ref().merge_default(default, arch)
+    }
+}
+
+impl HashExtractionOrArrayOfHashExtractions {
+    #[must_use]
+    /// Get the hash extraction as a single hash extraction object
+    pub fn as_object(&self) -> Option<&HashExtraction> {
+        match self {
+            Self::Url(_) => None,
+            Self::HashExtraction(hash) => Some(hash),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::error::Error;
+
+    use crate::{buckets::Bucket, packages::MergeDefaults, Architecture};
+    use rayon::prelude::*;
+
+    #[test]
+    fn test_parse_all_manifests() -> Result<(), Box<dyn Error>> {
+        // Some manifests (ahem unityhub) are broken and don't follow Scoop's spec
+        // This list is used to skip those manifests
+        // because go fuck yourself
+        const BROKEN_MANIFESTS: &[&str] = &["unityhub"];
+
+        let buckets = Bucket::list_all()?;
+
+        let manifests = buckets
+            .into_par_iter()
+            .flat_map(|bucket| bucket.list_packages())
+            .flatten()
+            .collect::<Vec<_>>();
+
+        manifests.par_iter().for_each(|manifest| {
+            assert!(!manifest.name.is_empty());
+            assert!(!manifest.bucket.is_empty());
+
+            if BROKEN_MANIFESTS.contains(&manifest.name.as_str()) {
+                return;
+            }
+
+            if let Some(autoupdate) = &manifest.autoupdate {
+                let autoupdate_config = autoupdate
+                    .architecture
+                    .merge_default(autoupdate.default_config.clone(), Architecture::ARCH);
+
+                assert!(
+                    autoupdate_config.url.is_some(),
+                    "URL is missing in package: {}",
+                    manifest.name
+                );
+            }
+        });
+
+        Ok(())
     }
 }

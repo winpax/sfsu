@@ -1,5 +1,7 @@
 //! Progress helpers for the CLI
 
+use std::fmt::Display;
+
 use indicatif::ProgressStyle;
 
 #[derive(Debug, Copy, Clone, Default)]
@@ -14,14 +16,54 @@ pub enum ProgressOptions {
     Hide,
 }
 
-#[derive(Debug, Copy, Clone, Default)]
+#[derive(Debug, Copy, Clone)]
 /// Message position
-pub enum MessagePosition {
-    #[default]
+pub enum Message<'a> {
     /// Before progress bar
-    Prefix,
+    Prefix(Option<&'a str>),
     /// After progress bar
-    Suffix,
+    Suffix(Option<&'a str>),
+}
+
+impl<'a> Default for Message<'a> {
+    fn default() -> Self {
+        Message::Prefix(None)
+    }
+}
+
+impl<'a> Message<'a> {
+    fn display(self, prefix: bool) -> MessageDisplay<'a> {
+        MessageDisplay {
+            message: self,
+            prefix,
+        }
+    }
+}
+
+struct MessageDisplay<'a> {
+    message: Message<'a>,
+    prefix: bool,
+}
+
+impl<'a> Display for MessageDisplay<'a> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self.message {
+            Message::Prefix(message) => {
+                if self.prefix {
+                    write!(f, "{}", message.unwrap_or("{msg}"))
+                } else {
+                    Ok(())
+                }
+            }
+            Message::Suffix(message) => {
+                if self.prefix {
+                    Ok(())
+                } else {
+                    write!(f, "{}", message.unwrap_or("{msg}"))
+                }
+            }
+        }
+    }
 }
 
 #[must_use]
@@ -31,7 +73,7 @@ pub enum MessagePosition {
 /// - Invalid template
 pub fn style(
     progress_opts: Option<ProgressOptions>,
-    message_position: Option<MessagePosition>,
+    message_position: Option<Message<'_>>,
 ) -> ProgressStyle {
     const PROGRESS_CHARS: &str = "=> ";
 
@@ -39,17 +81,11 @@ pub fn style(
     let message_position = message_position.unwrap_or_default();
 
     ProgressStyle::with_template(&format!(
-        "{prefix} {{prefix}} [{{wide_bar}}] {progress} ({{eta}}) {suffix}",
-        prefix = match message_position {
-            MessagePosition::Prefix => "{msg}",
-            MessagePosition::Suffix => "",
-        },
-        suffix = match message_position {
-            MessagePosition::Prefix => "",
-            MessagePosition::Suffix => "{msg}",
-        },
+        "{{prefix}} {prefix_message} {{spinner}} [{{wide_bar}}] {progress} ({{eta}}) {suffix}",
+        prefix_message = message_position.display(true),
+        suffix = message_position.display(false),
         progress = match progress_opts {
-            ProgressOptions::Bytes => "{bytes}/{total_bytes}",
+            ProgressOptions::Bytes => "{bytes}/{total_bytes} {bytes_per_sec}",
             ProgressOptions::PosLen => "{pos}/{len}",
             ProgressOptions::Hide => "",
         },
