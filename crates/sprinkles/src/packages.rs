@@ -49,8 +49,6 @@ use manifest::{InstallConfig, StringArray};
 /// Get a field from a manifest based on the architecture
 macro_rules! arch_config {
     ($field:ident.$arch:expr) => {{
-        use $crate::calm_panic::CalmUnwrap;
-
         let arch = match $arch {
             $crate::Architecture::Arm64 => &$field.arm64,
             $crate::Architecture::X64 => &$field.x64,
@@ -68,7 +66,7 @@ macro_rules! arch_config {
             }
         };
 
-        config.calm_expect("Unsupported architecture")
+        config
     }};
 
     ($field:ident) => {
@@ -76,11 +74,11 @@ macro_rules! arch_config {
     };
 
     ($field:ident.$arch:expr => clone) => {
-        arch_config!($field.$arch).clone()
+        arch_config!($field.$arch).cloned()
     };
 
     ($field:ident => clone) => {
-        arch_config!($field).clone()
+        arch_config!($field).cloned()
     };
 
     // ($field:ident.$arch:expr => $default:expr) => {
@@ -765,7 +763,9 @@ impl Manifest {
         }
 
         for arch in crate::Architecture::VARIANTS {
-            let hash = Hash::get_for_app(self, arch).await?;
+            let Ok(hash) = Hash::get_for_app(self, arch).await else {
+                continue;
+            };
 
             if let Some(arch_config) = &mut self.architecture {
                 // TODO: This sets the same hash and url for all architectures
@@ -977,11 +977,12 @@ impl MergeDefaults for Option<AutoupdateArchitecture> {
     #[must_use]
     /// Merge the architecture specific autoupdate config with the arch agnostic one
     fn merge_default(&self, default: Self::Default, arch: Architecture) -> Self::Default {
-        let Some(config) = self else {
+        let Some(config) = self
+            .as_ref()
+            .and_then(|config| arch_config!(config.arch => clone))
+        else {
             return default;
         };
-
-        let config = arch_config!(config.arch => clone);
 
         AutoupdateConfig {
             bin: config.bin.or(default.bin),
@@ -1003,11 +1004,12 @@ impl MergeDefaults for Option<&ManifestArchitecture> {
     #[must_use]
     /// Merge the architecture specific autoupdate config with the arch agnostic one
     fn merge_default(&self, default: Self::Default, arch: Architecture) -> Self::Default {
-        let Some(config) = self else {
+        let Some(config) = self
+            .as_ref()
+            .and_then(|config| arch_config!(config.arch => clone))
+        else {
             return default;
         };
-
-        let config = arch_config!(config.arch => clone);
 
         InstallConfig {
             bin: config.bin.or(default.bin),
