@@ -25,6 +25,7 @@ use serde::{Deserialize, Serialize};
 pub use semver;
 
 pub mod buckets;
+#[cfg(feature = "manifest-hashes")]
 pub mod cache;
 pub mod calm_panic;
 pub mod config;
