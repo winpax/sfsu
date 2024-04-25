@@ -85,7 +85,7 @@ pub fn style(
         prefix_message = message_position.display(true),
         suffix = message_position.display(false),
         progress = match progress_opts {
-            ProgressOptions::Bytes => "{bytes}/{total_bytes}",
+            ProgressOptions::Bytes => "{bytes}/{total_bytes} {bytes_per_sec}",
             ProgressOptions::PosLen => "{pos}/{len}",
             ProgressOptions::Hide => "",
         },
