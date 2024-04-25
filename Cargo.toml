@@ -59,6 +59,7 @@ clap = { version = "4.5", features = [
     "unicode",
     "wrap_help",
 ] }
+futures = "0.3.30"
 git2.workspace = true
 human-panic = "2.0"
 indicatif = { version = "0.17", features = ["improved_unicode", "rayon"] }
@@ -78,7 +79,7 @@ tokio = { version = "1.37.0", features = ["full"] }
 
 [dev-dependencies]
 chrono.workspace = true
-criterion = { version = "0.5", features = ["html_reports"] }
+criterion = { version = "0.5", features = ["async_tokio", "html_reports"] }
 git2 = { workspace = true }
 
 [build-dependencies]

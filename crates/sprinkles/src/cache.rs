@@ -182,7 +182,7 @@ impl Downloader {
     ///
     /// # Errors
     /// - If the file cannot be written to the cache
-    pub fn download(mut self) -> Result<(PathBuf, Vec<u8>), Error> {
+    pub async fn download(mut self) -> Result<(PathBuf, Vec<u8>), Error> {
         let hash_bytes = match self.cache.hash_type {
             HashType::SHA512 => self.handle_buf::<sha2::Sha512>(),
             HashType::SHA256 => self.handle_buf::<sha2::Sha256>(),

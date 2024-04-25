@@ -10,14 +10,19 @@ use sprinkles::{
 };
 
 fn criterion_benchmark(c: &mut Criterion) {
+    let runtime = tokio::runtime::Builder::new_multi_thread()
+        .enable_all()
+        .build()
+        .unwrap();
+
     c.bench_function("parse package", |b| {
         b.iter(|| black_box(Package::from_str("extras/sfsu").unwrap()));
     });
 
     c.bench_function("get package manifest", |b| {
-        b.iter_batched(
+        b.to_async(&runtime).iter_batched(
             || Package::from_str("extras/sfsu").unwrap(),
-            |package| black_box(package.manifest().unwrap()),
+            |package| async move { black_box(package.manifest().await.unwrap()) },
             BatchSize::SmallInput,
         );
     });
@@ -31,14 +36,17 @@ fn criterion_benchmark(c: &mut Criterion) {
     });
 
     c.bench_function("open handle", |b| {
-        b.iter_batched(
-            || {
+        b.to_async(&runtime).iter_batched(
+            || async {
                 Package::from_str("extras/sfsu")
                     .unwrap()
                     .manifest()
+                    .await
                     .unwrap()
             },
-            |manifest| Handle::open_manifest(Scoop::cache_path(), &manifest).unwrap(),
+            |manifest| async {
+                Handle::open_manifest(Scoop::cache_path(), &manifest.await).unwrap()
+            },
             BatchSize::SmallInput,
         );
     });
@@ -48,32 +56,36 @@ fn criterion_benchmark(c: &mut Criterion) {
     slow.measurement_time(Duration::from_secs(10));
 
     slow.bench_function("set version", |b| {
-        b.iter_batched(
+        b.to_async(&runtime).iter_batched(
             || Package::from_str("extras/sfsu").unwrap(),
-            |mut package| {
+            |mut package| async move {
                 black_box(&mut package).set_version("1.10.2".to_string());
-                black_box(package.manifest().unwrap());
+                black_box(package.manifest().await.unwrap());
             },
             BatchSize::SmallInput,
         );
     });
 
     slow.bench_function("create downloader", |b| {
-        b.iter_batched(
-            || {
+        b.to_async(&runtime).iter_batched(
+            || async {
                 (
                     Handle::open_manifest(
                         Scoop::cache_path(),
                         &Package::from_str("extras/sfsu")
                             .unwrap()
                             .manifest()
+                            .await
                             .unwrap(),
                     )
                     .unwrap(),
                     BlockingClient::new(),
                 )
             },
-            |(dl, client)| black_box(Downloader::new(dl, &client, None).unwrap()),
+            |dl| async {
+                let (dl, client) = dl.await;
+                black_box(Downloader::new(dl, &client, None).unwrap())
+            },
             BatchSize::SmallInput,
         );
     });

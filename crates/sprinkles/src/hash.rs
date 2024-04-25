@@ -309,7 +309,7 @@ impl Hash {
     /// - If the hash is not found in the XML
     /// - If the hash is not found in the text
     /// - If the hash is not found in the JSON
-    pub fn get_for_app(manifest: &Manifest) -> Result<Hash, HashError> {
+    pub async fn get_for_app(manifest: &Manifest) -> Result<Hash, HashError> {
         let autoupdate_config = manifest
             .autoupdate_config()
             .ok_or(HashError::MissingAutoupdateConfig)?;
@@ -321,7 +321,7 @@ impl Hash {
 
             let downloader = Downloader::new(cache_handle, &BlockingClient::new(), None)?;
 
-            let (_, hash) = downloader.download()?;
+            let (_, hash) = downloader.download().await?;
 
             return Ok(Self::from_hex(&hash));
 
@@ -633,14 +633,14 @@ mod tests {
     }
 
     #[ignore = "replaced"]
-    #[test]
-    fn test_get_hash_for_googlechrome() {
+    #[tokio::test]
+    async fn test_get_hash_for_googlechrome() {
         let manifest = Bucket::from_name("extras")
             .unwrap()
             .get_manifest("googlechrome")
             .unwrap();
 
-        let hash = Hash::get_for_app(&manifest).unwrap();
+        let hash = Hash::get_for_app(&manifest).await.unwrap();
 
         let actual_hash = manifest
             .architecture
@@ -665,10 +665,10 @@ mod tests {
             Self { package }
         }
 
-        pub fn test(self) -> anyhow::Result<()> {
-            let manifest = self.package.manifest().unwrap();
+        pub async fn test(self) -> anyhow::Result<()> {
+            let manifest = self.package.manifest().await?;
 
-            let hash = Hash::get_for_app(&manifest)?;
+            let hash = Hash::get_for_app(&manifest).await?;
 
             let actual_hash = manifest
                 .architecture
@@ -682,91 +682,91 @@ mod tests {
         }
     }
 
-    #[test]
+    #[tokio::test]
     #[ignore = "Duplicate of `test_googlechrome`"]
-    fn test_handlers_implemented() -> anyhow::Result<()> {
+    async fn test_handlers_implemented() -> anyhow::Result<()> {
         let package = reference::Package::from_str("extras/googlechrome")?;
 
         let handler = TestHandler::new(package);
 
-        handler.test()?;
+        handler.test().await?;
 
         Ok(())
     }
 
-    #[test]
+    #[tokio::test]
     #[ignore = "Broken (not my fault, the chrome xml file does not include the hash for the current version)"]
-    fn test_googlechrome() -> anyhow::Result<()> {
+    async fn test_googlechrome() -> anyhow::Result<()> {
         let package = reference::Package::from_str("extras/googlechrome")?;
 
         let handler = TestHandler::new(package);
 
-        handler.test()?;
+        handler.test().await?;
 
         Ok(())
     }
 
-    #[test]
-    fn test_springboot() -> anyhow::Result<()> {
+    #[tokio::test]
+    async fn test_springboot() -> anyhow::Result<()> {
         let package = reference::Package::from_str("extras/springboot")?;
         let handler = TestHandler::new(package);
-        handler.test()?;
+        handler.test().await?;
         Ok(())
     }
 
-    #[test]
-    fn test_sfsu() -> anyhow::Result<()> {
+    #[tokio::test]
+    async fn test_sfsu() -> anyhow::Result<()> {
         let package = reference::Package::from_str("extras/sfsu")?;
 
         let handler = TestHandler::new(package);
 
-        handler.test()?;
+        handler.test().await?;
 
         Ok(())
     }
 
-    #[test]
-    fn test_keepass() -> anyhow::Result<()> {
+    #[tokio::test]
+    async fn test_keepass() -> anyhow::Result<()> {
         let package = reference::Package::from_str("extras/keepass")?;
 
         let handler = TestHandler::new(package);
 
-        handler.test()?;
+        handler.test().await?;
 
         Ok(())
     }
 
-    #[test]
-    fn test_hwinfo() -> anyhow::Result<()> {
+    #[tokio::test]
+    async fn test_hwinfo() -> anyhow::Result<()> {
         let package = reference::Package::from_str("extras/hwinfo")?;
 
         let handler = TestHandler::new(package);
 
-        handler.test()?;
+        handler.test().await?;
 
         Ok(())
     }
 
-    #[test]
+    #[tokio::test]
     #[ignore = "sfsu does not yet support custom matches"]
-    fn test_ungoogled_chromium() -> anyhow::Result<()> {
+    async fn test_ungoogled_chromium() -> anyhow::Result<()> {
         let package = reference::Package::from_str("extras/ungoogled-chromium")?;
         let handler = TestHandler::new(package);
-        handler.test()?;
+        handler.test().await?;
         Ok(())
     }
 
-    #[test]
-    fn test_firefox() -> anyhow::Result<()> {
+    #[tokio::test]
+    async fn test_firefox() -> anyhow::Result<()> {
         let package = reference::Package::from_str("extras/firefox")?;
-        TestHandler::new(package).test()
+        TestHandler::new(package).test().await
     }
 
-    #[test]
-    fn test_sfsu_autoupdate() -> anyhow::Result<()> {
+    #[tokio::test]
+    async fn test_sfsu_autoupdate() -> anyhow::Result<()> {
         let mut package = reference::Package::from_str("extras/sfsu")?;
         package.set_version("1.10.2".to_string());
-        let manifest = package.manifest()?;
+        let manifest = package.manifest().await?;
 
         assert_eq!(
             manifest.architecture.unwrap().x64.unwrap().hash.unwrap(),
@@ -776,13 +776,13 @@ mod tests {
         Ok(())
     }
 
-    #[test]
-    fn test_computed_hash() -> anyhow::Result<()> {
+    #[tokio::test]
+    async fn test_computed_hash() -> anyhow::Result<()> {
         let package = reference::Package::from_str("extras/sfsu")?;
-        let mut manifest = package.manifest()?;
+        let mut manifest = package.manifest().await?;
         manifest.autoupdate.as_mut().unwrap().default_config.hash = None;
 
-        manifest.set_version("1.10.2".to_string())?;
+        manifest.set_version("1.10.2".to_string()).await?;
 
         assert_eq!(
             manifest.architecture.unwrap().x64.unwrap().hash.unwrap(),

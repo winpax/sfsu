@@ -692,7 +692,10 @@ impl Manifest {
     /// # Errors
     /// - Missing autoupdate field
     /// - Hash error
-    pub fn set_version(&mut self, version: String) -> std::result::Result<(), SetVersionError> {
+    pub async fn set_version(
+        &mut self,
+        version: String,
+    ) -> std::result::Result<(), SetVersionError> {
         use crate::hash::{
             substitutions::{Substitute, SubstitutionMap},
             Hash,
@@ -732,7 +735,7 @@ impl Manifest {
         // TODO: Autoupdate fields in all architectures
         // todo!("Handle urls and other autoupdate fields");
 
-        let hash: Hash = Hash::get_for_app(self)?;
+        let hash = Hash::get_for_app(self).await?;
         if let Some(arch) = &mut self.architecture {
             if let Some(manifest_hash) = arch_field!(ref mut arch.hash) {
                 _ = manifest_hash.insert(hash.hash());

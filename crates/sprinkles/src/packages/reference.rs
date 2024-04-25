@@ -163,7 +163,7 @@ impl Package {
     /// - If the app dir cannot be read
     /// - If the bucket is not valid
     /// - If the bucket is not found
-    pub fn manifest(&self) -> Result<Manifest, Error> {
+    pub async fn manifest(&self) -> Result<Manifest, Error> {
         // TODO: Map output to fix version
 
         let mut manifest = if matches!(self.manifest, ManifestRef::File(_) | ManifestRef::Url(_)) {
@@ -197,7 +197,7 @@ impl Package {
         if let Ok(manifest) = manifest.as_mut()
             && let Some(version) = &self.version
         {
-            manifest.set_version(version.clone())?;
+            manifest.set_version(version.clone()).await?;
         }
 
         manifest
@@ -261,19 +261,21 @@ impl Package {
     /// - If the app dir cannot be read
     /// - If any of the buckets are not valid
     /// - If any of the buckets are not found
-    pub fn list_manifests(&self) -> Result<Vec<Manifest>, Error> {
-        self.list_manifest_paths()
-            .into_iter()
-            .map(Manifest::from_path)
-            .map(|manifest| -> Result<Manifest, Error> {
-                let mut manifest = manifest?;
-                if let Some(version) = &self.version {
-                    manifest.set_version(version.clone())?;
-                }
+    pub async fn list_manifests(&self) -> Result<Vec<Manifest>, Error> {
+        futures::future::try_join_all(
+            self.list_manifest_paths()
+                .into_iter()
+                .map(Manifest::from_path)
+                .map(|manifest| async {
+                    let mut manifest = manifest?;
+                    if let Some(version) = &self.version {
+                        manifest.set_version(version.clone()).await?;
+                    }
 
-                Ok(manifest)
-            })
-            .collect()
+                    Ok::<Manifest, Error>(manifest)
+                }),
+        )
+        .await
     }
 
     /// Checks if the package is installed

@@ -36,6 +36,7 @@ derive_more = "0.99"
 digest = { version = "0.10.7", features = ["std"], optional = true }
 directories = "5.0"
 dunce = "1.0"
+futures = "0.3.30"
 getset = { version = "0.1.2", optional = true }
 git2.workspace = true
 heck = "0.5"

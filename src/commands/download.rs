@@ -29,16 +29,14 @@ impl super::Command for Args {
         let mp = MultiProgress::new();
         let client = BlockingClient::new();
 
-        let downloaders = self
-            .packages
-            .into_iter()
-            .map(|package| {
+        let downloaders =
+            futures::future::try_join_all(self.packages.into_iter().map(|package| async {
                 eprintln!("Downloading {}...", package.name().unwrap_or_default());
 
                 if package.version.is_some() {
                     eprint!("Attempting to generate manifest");
                 }
-                let manifest = package.manifest()?;
+                let manifest = package.manifest().await?;
                 if let Some(version) = &package.version {
                     eprint!("\r📜 Generated manifest for version {version}");
                     eprintln!();
@@ -56,13 +54,13 @@ impl super::Command for Args {
                         _ => Err(e.into()),
                     },
                 }
-            })
-            .collect::<anyhow::Result<Vec<_>>>()?;
+            }))
+            .await?;
 
-        // let threads = downloaders
-        //     .into_iter()
-        //     .map(|dl| thread::spawn(move || dl.download()))
-        //     .collect_vec();
+        let threads = downloaders
+            .into_iter()
+            .map(|dl| tokio::spawn(dl.download))
+            .collect_vec();
 
         // if let Some(actual_hash) = manifest.install_config().hash {
         //     let hash = encode_hex(&hash);
