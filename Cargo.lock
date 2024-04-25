@@ -450,29 +450,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "const-str"
-version = "0.5.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3618cccc083bb987a415d85c02ca6c9994ea5b44731ec28b9ecf09658655fba9"
-dependencies = [
- "const-str-proc-macro",
-]
-
-[[package]]
-name = "const-str-proc-macro"
-version = "0.5.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3d3007177ccd2435eef6de9e7471365c36bc35c0b31773e27b4fe797f39f84bf"
-dependencies = [
- "heck 0.4.1",
- "http",
- "proc-macro2",
- "quote",
- "regex",
- "syn 2.0.60",
-]
-
-[[package]]
 name = "const_fn"
 version = "0.4.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1015,9 +992,6 @@ name = "heck"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "95505c38b4572b2d910cecb0281560f54b440a19336cbbcb27bf6ce6adc6f5a8"
-dependencies = [
- "unicode-segmentation",
-]
 
 [[package]]
 name = "heck"
@@ -2408,13 +2382,11 @@ dependencies = [
  "cfg-if",
  "chrono",
  "clap",
- "const-str",
  "derive_more",
  "digest",
  "directories",
  "dunce",
  "futures",
- "futures-core",
  "getset",
  "git2",
  "heck 0.5.0",
@@ -2440,7 +2412,6 @@ dependencies = [
  "sxd-xpath",
  "thiserror",
  "tokio",
- "tokio-stream",
  "tokio-util",
  "url",
  "urlencoding",
@@ -2742,17 +2713,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bbae76ab933c85776efabc971569dd6119c580d8f5d448769dec1764bf796ef2"
 dependencies = [
  "native-tls",
- "tokio",
-]
-
-[[package]]
-name = "tokio-stream"
-version = "0.1.15"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "267ac89e0bec6e691e5813911606935d77c476ff49024f98abcea3e7b15e37af"
-dependencies = [
- "futures-core",
- "pin-project-lite",
  "tokio",
 ]
 

@@ -187,16 +187,14 @@ impl Downloader {
     async fn handle_buf<D: Digest>(self) -> Result<Vec<u8>, Error> {
         use tokio::fs::File;
 
-        enum Source<
-            T: futures_core::Stream<Item = reqwest::Result<bytes::Bytes>> + std::marker::Unpin,
-        > {
+        enum Source<T: futures::Stream<Item = reqwest::Result<bytes::Bytes>> + std::marker::Unpin> {
             Cache(futures::prelude::stream::IntoStream<FramedRead<File, BytesCodec>>),
             Network(T),
         }
 
         impl<T> Stream for Source<T>
         where
-            T: futures_core::Stream<Item = reqwest::Result<bytes::Bytes>> + std::marker::Unpin,
+            T: futures::Stream<Item = reqwest::Result<bytes::Bytes>> + std::marker::Unpin,
         {
             type Item = reqwest::Result<bytes::Bytes>;
 

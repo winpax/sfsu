@@ -1,6 +1,7 @@
 use itertools::Itertools as _;
+use quork::traits::list::ListVariants;
 use regex::Regex;
-use strum::{Display, EnumIter};
+use strum::Display;
 
 use crate::hash::substitutions::{Substitute, SubstitutionMap};
 
@@ -15,7 +16,7 @@ pub enum Error {
 
 // Convert from https://github.com/ScoopInstaller/Scoop/blob/f93028001fbe5c78cc41f59e3814d2ac8e595724/lib/autoupdate.ps1#L75
 
-#[derive(Debug, Copy, Clone, Display, EnumIter)]
+#[derive(Debug, Copy, Clone, Display, ListVariants)]
 #[strum(serialize_all = "lowercase")]
 enum RegexTemplates {
     Md5,
@@ -41,11 +42,9 @@ impl From<RegexTemplates> for &'static str {
 
 impl RegexTemplates {
     fn into_substitute_map() -> SubstitutionMap {
-        use strum::IntoEnumIterator;
-
         let mut map = SubstitutionMap::new();
 
-        for field in Self::iter() {
+        for field in Self::VARIANTS {
             let field_name = format!("${field}");
             let regex: &'static str = field.into();
 
