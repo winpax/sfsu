@@ -50,7 +50,7 @@ impl<'a> Display for MessageDisplay<'a> {
         match self.message {
             Message::Prefix(message) => {
                 if self.prefix {
-                    write!(f, "{}", message.unwrap_or("{msg}"))
+                    write!(f, "{} {{spinner}}", message.unwrap_or("{msg}"))
                 } else {
                     Ok(())
                 }
