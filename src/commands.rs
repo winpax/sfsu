@@ -3,6 +3,7 @@ pub mod cat;
 pub mod checkup;
 pub mod depends;
 pub mod describe;
+#[cfg(feature = "beta")]
 pub mod download;
 pub mod export;
 pub mod home;
@@ -110,6 +111,7 @@ pub enum Commands {
     Outdated(outdated::Args),
     /// List the dependencies of a given package, in the order that they will be installed
     Depends(depends::Args),
+    #[cfg(feature = "beta")]
     /// Download the specified app.
     Download(download::Args),
     /// Show status and check for new app versions

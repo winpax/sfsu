@@ -10,7 +10,7 @@ version.workspace = true
 members = ["crates/*"]
 package.license = "Apache-2.0"
 package.publish = false
-package.version = "1.10.3"
+package.version = "1.11.0-beta.1"
 
 [workspace.dependencies]
 chrono = { version = ">=0.4.38", features = [
@@ -53,7 +53,7 @@ inherits = "dev"
 opt-level = 3
 
 [features]
-beta = ["sprinkles/manifest-hashes"]
+beta = ["sprinkles/beta"]
 default = []
 # Breaking changes are locked behind this feature flag
 v2 = ["sprinkles/v2"]
@@ -83,7 +83,7 @@ regex.workspace = true
 serde_json = { version = "1.0", features = ["preserve_order"] }
 sfsu-derive = { path = "./crates/derive" }
 shadow-rs = "0.27"
-sprinkles = { version = "1", path = "crates/sprinkles" }
+sprinkles = { version = "1.11.0-beta.1", path = "crates/sprinkles" }
 tokio = { version = "1.37", features = ["full"] }
 
 [dev-dependencies]

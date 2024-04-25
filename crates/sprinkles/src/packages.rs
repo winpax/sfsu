@@ -19,15 +19,17 @@ use strum::Display;
 use crate::{
     buckets::{self, Bucket},
     git::{self, Repo},
-    hash::{
-        self,
-        substitutions::{Substitute, SubstitutionMap},
-    },
     output::{
         sectioned::{Children, Section, Text},
         wrappers::{author::Author, time::NicerTime},
     },
     Architecture, Scoop,
+};
+
+#[cfg(feature = "manifest-hashes")]
+use crate::hash::{
+    self,
+    substitutions::{Substitute, SubstitutionMap},
 };
 
 pub mod downloading;
@@ -269,6 +271,7 @@ pub enum Error {
     MissingGitOutput,
     #[error("Missing local manifest for package")]
     MissingLocalManifest,
+    #[cfg(feature = "manifest-hashes")]
     #[error("Could not get hash for app: {0}")]
     HashError(#[from] hash::Error),
     #[error("Manifest does not have `autoupdate` field")]
@@ -698,6 +701,7 @@ impl Manifest {
         }
     }
 
+    #[cfg(feature = "manifest-hashes")]
     fn get_new_url(&self, autoupdate: &AutoupdateConfig) -> Option<String> {
         if let Some(autoupdate_url) = &autoupdate.url {
             debug!("Autoupdate Url: {autoupdate_url}");

@@ -31,7 +31,7 @@ jobs:
           components: clippy
 
       - name: Run Clippy
-        run: cargo clippy
+        run: cargo clippy --features beta
 
   format:
     name: Formatting
@@ -45,7 +45,7 @@ jobs:
           components: rustfmt
 
       - name: Check Formatting
-        run: cargo fmt --all -- --check
+        run: cargo fmt --all --check
 
   test:
     name: Test
@@ -64,7 +64,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Build and Test
-        run: cargo test --all
+        run: cargo test --all --features beta
 
   build:
     name: Build

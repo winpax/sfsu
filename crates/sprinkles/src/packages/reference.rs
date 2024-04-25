@@ -3,6 +3,7 @@
 use std::{fmt, path::PathBuf, str::FromStr};
 
 use itertools::Itertools;
+#[cfg(feature = "manifest-hashes")]
 use url::Url;
 
 use super::{CreateManifest, Manifest};
@@ -61,6 +62,7 @@ pub enum ManifestRef {
     Name(String),
     /// Manifest reference from path
     File(PathBuf),
+    #[cfg(feature = "manifest-hashes")]
     /// Manifest reference from url
     Url(Url),
 }
@@ -131,6 +133,7 @@ impl Package {
             ManifestRef::File(path) => {
                 Some(path.with_extension("").file_name()?.to_str()?.to_string())
             }
+            #[cfg(feature = "manifest-hashes")]
             ManifestRef::Url(url) => {
                 Some(url.path_segments()?.last()?.split('.').next()?.to_string())
             }
@@ -164,9 +167,18 @@ impl Package {
     pub async fn manifest(&self) -> Result<Manifest, Error> {
         // TODO: Map output to fix version
 
-        let mut manifest = if matches!(self.manifest, ManifestRef::File(_) | ManifestRef::Url(_)) {
+        let mut manifest = if {
+            cfg_if::cfg_if! {
+                if #[cfg(feature = "manifest-hashes")] {
+                    matches!(self.manifest, ManifestRef::File(_) | ManifestRef::Url(_))
+                } else {
+                    matches!(self.manifest, ManifestRef::File(_))
+                }
+            }
+        } {
             let mut manifest = match &self.manifest {
                 ManifestRef::File(path) => Manifest::from_path(path)?,
+                #[cfg(feature = "manifest-hashes")]
                 ManifestRef::Url(url) => {
                     let manifest_string = crate::requests::AsyncClient::new()
                         .get(url.to_string())
@@ -194,6 +206,7 @@ impl Package {
                 .ok_or(Error::NotFound)?)
         };
 
+        #[cfg(feature = "manifest-hashes")]
         if let Ok(manifest) = manifest.as_mut()
             && let Some(version) = &self.version
         {
@@ -268,6 +281,7 @@ impl Package {
                 .map(Manifest::from_path)
                 .map(|manifest| async {
                     let mut manifest = manifest?;
+                    #[cfg(feature = "manifest-hashes")]
                     if let Some(version) = &self.version {
                         manifest.set_version(version.clone()).await?;
                     }
@@ -305,6 +319,7 @@ impl fmt::Display for ManifestRef {
                 let name = Package::from(self.clone()).name().unwrap();
                 write!(f, "{name}")
             }
+            #[cfg(feature = "manifest-hashes")]
             ManifestRef::Url(url) => write!(f, "{url}"),
         }
     }
@@ -314,6 +329,7 @@ impl FromStr for ManifestRef {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
+        #[cfg(feature = "manifest-hashes")]
         if let Ok(url) = url::Url::parse(s) {
             return Ok(Self::Url(url));
         }

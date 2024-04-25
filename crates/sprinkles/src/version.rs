@@ -6,10 +6,12 @@ use std::{
     num::ParseIntError,
 };
 
+#[cfg(feature = "manifest-hashes")]
 use getset::Getters;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 
+#[cfg(feature = "manifest-hashes")]
 use crate::hash::substitutions::SubstitutionMap;
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq, Hash)]
@@ -63,6 +65,7 @@ impl Version {
         Self::part_regex().replace_all(&self.0, "")
     }
 
+    #[cfg(feature = "manifest-hashes")]
     /// Parse the version string into a structured version
     ///
     /// # Errors
@@ -86,6 +89,7 @@ impl Version {
         })
     }
 
+    #[cfg(feature = "manifest-hashes")]
     #[must_use]
     /// Create a substitution map for the version
     ///
@@ -164,6 +168,7 @@ pub enum Error {
     MissingFirstPart,
 }
 
+#[cfg(feature = "manifest-hashes")]
 #[derive(Debug, Clone, Getters)]
 #[get = "pub"]
 /// A structured version
@@ -180,6 +185,7 @@ pub struct ParsedVersion {
     pre_release: Option<String>,
 }
 
+#[cfg(feature = "manifest-hashes")]
 impl ParsedVersion {
     #[must_use]
     /// Get the version as a simple [`Version`] string
@@ -188,6 +194,7 @@ impl ParsedVersion {
     }
 }
 
+#[cfg(feature = "manifest-hashes")]
 impl Display for ParsedVersion {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.major)?;
