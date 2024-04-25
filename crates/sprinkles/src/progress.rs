@@ -50,7 +50,7 @@ impl<'a> Display for MessageDisplay<'a> {
         match self.message {
             Message::Prefix(message) => {
                 if self.prefix {
-                    write!(f, "{} {{spinner}}", message.unwrap_or("{msg}"))
+                    write!(f, "{}", message.unwrap_or("{msg}"))
                 } else {
                     Ok(())
                 }
@@ -81,7 +81,7 @@ pub fn style(
     let message_position = message_position.unwrap_or_default();
 
     ProgressStyle::with_template(&format!(
-        "{{prefix}} {prefix} [{{wide_bar}}] {progress} ({{eta}}) {suffix}",
+        "{{prefix}} {prefix} {{spinner}} [{{wide_bar}}] {progress} ({{eta}}) {suffix}",
         prefix = message_position.display(true),
         suffix = message_position.display(false),
         progress = match progress_opts {
