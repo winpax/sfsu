@@ -5,7 +5,7 @@ use std::{fmt, path::PathBuf, str::FromStr};
 use itertools::Itertools;
 use url::Url;
 
-use super::{CreateManifest, Manifest, SetVersionError};
+use super::{CreateManifest, Manifest};
 use crate::buckets::{self, Bucket};
 
 #[derive(Debug, thiserror::Error)]
@@ -28,12 +28,10 @@ pub enum Error {
     InvalidVersion,
     #[error("Could not find matching manifest")]
     NotFound,
-    #[error("Failed to set version: {0}")]
-    SetVersion(#[from] SetVersionError),
     #[error("HTTP error: {0}")]
     Reqwest(#[from] reqwest::Error),
     #[error("Packages error: {0}")]
-    Packages(#[from] crate::packages::Error),
+    Packages(#[from] super::Error),
     #[error("ser/de error: {0}")]
     Serde(#[from] serde_json::Error),
     #[error("Buckets error: {0}")]

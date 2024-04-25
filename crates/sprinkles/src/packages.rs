@@ -277,10 +277,16 @@ pub enum Error {
     MissingGitOutput,
     #[error("Missing local manifest for package")]
     MissingLocalManifest,
+    #[error("Could not get hash for app: {0}")]
+    HashError(#[from] hash::Error),
+    #[error("Manifest does not have `autoupdate` field")]
+    MissingAutoUpdate,
+    #[error("Manifest architecture section does not have `autoupdate` field")]
+    MissingArchAutoUpdate,
 }
 
 /// The result type for package operations
-pub type Result<T> = std::result::Result<T, Error>;
+pub type Result<T, E = Error> = std::result::Result<T, E>;
 
 #[derive(Debug, Default, Copy, Clone, ValueEnum, Display, Parser, PartialEq, Eq)]
 #[strum(serialize_all = "snake_case")]
@@ -692,10 +698,7 @@ impl Manifest {
     /// # Errors
     /// - Missing autoupdate field
     /// - Hash error
-    pub async fn set_version(
-        &mut self,
-        version: String,
-    ) -> std::result::Result<(), SetVersionError> {
+    pub async fn set_version(&mut self, version: String) -> Result<(), Error> {
         use crate::hash::{
             substitutions::{Substitute, SubstitutionMap},
             Hash,
@@ -703,10 +706,7 @@ impl Manifest {
 
         self.version = version.into();
 
-        let autoupdate = self
-            .autoupdate
-            .as_ref()
-            .ok_or(SetVersionError::MissingAutoUpdate)?;
+        let autoupdate = self.autoupdate.as_ref().ok_or(Error::MissingAutoUpdate)?;
 
         let autoupdate = autoupdate
             .architecture
@@ -740,7 +740,7 @@ impl Manifest {
             if let Some(manifest_hash) = arch_field!(ref mut arch.hash) {
                 _ = manifest_hash.insert(hash.hash());
             } else {
-                return Err(SetVersionError::MissingArchAutoUpdate);
+                return Err(Error::MissingArchAutoUpdate);
             }
         }
 
@@ -754,7 +754,7 @@ impl Manifest {
         //     Architecture::X64 => architecture.x64.as_mut(),
         //     Architecture::X86 => architecture.x86.as_mut(),
         // }
-        // .ok_or(SetVersionError::MissingAutoUpdate)?;
+        // .ok_or(Error::MissingAutoUpdate)?;
 
         // TODO: Figure out hash extraction
         // autoupdate_arch.hash
@@ -904,20 +904,6 @@ impl Manifest {
 
         InstallManifest::from_path(install_path)
     }
-}
-
-#[derive(Debug, thiserror::Error)]
-#[allow(missing_docs)]
-/// Errors for setting the version of a manifest
-pub enum SetVersionError {
-    #[error("Could not get hash for app: {0}")]
-    HashError(#[from] hash::Error),
-
-    #[error("Manifest does not have `autoupdate` field")]
-    MissingAutoUpdate,
-
-    #[error("Manifest architecture section does not have `autoupdate` field")]
-    MissingArchAutoUpdate,
 }
 
 /// Check if the manifest path is installed, and optionally confirm the bucket
