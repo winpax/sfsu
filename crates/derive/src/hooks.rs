@@ -105,13 +105,13 @@ pub fn hook_enum(input: DeriveInput) -> TokenStream {
         }
 
         impl #struct_name {
-            pub fn command<'a>(self) -> &'a str {
+            pub const fn command<'a>(self) -> &'a str {
                 match self {
                     #(#struct_name::#variants => #command_names,)*
                 }
             }
 
-            pub fn hook<'a>(self) -> &'a str {
+            pub const fn hook<'a>(self) -> &'a str {
                 match self {
                     #(#struct_name::#variants => #hook_names,)*
                 }
@@ -127,7 +127,7 @@ pub fn hook_enum(input: DeriveInput) -> TokenStream {
         impl From<String> for #struct_name {
             fn from(string: String) -> Self {
                 match string.as_str() {
-                    #(stringify!(#hook_names) => #struct_name::#variants,)*
+                    #(#hook_names => #struct_name::#variants,)*
                     _ => panic!("Invalid command name: {}", string),
                 }
             }

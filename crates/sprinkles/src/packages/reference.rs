@@ -2,55 +2,138 @@
 
 use std::{fmt, path::PathBuf, str::FromStr};
 
-use itertools::Itertools as _;
+use itertools::Itertools;
+use url::Url;
 
 use super::{CreateManifest, Manifest};
-use crate::buckets::Bucket;
+use crate::buckets::{self, Bucket};
+
+#[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
+/// Package reference errors
+pub enum Error {
+    #[error("Attempted to set bucket on a file path or url. This is not supported.")]
+    BucketOnDirectRef,
+    #[error("Invalid app name in manifest ref")]
+    MissingAppName,
+    #[error("IO Error")]
+    Io(#[from] std::io::Error),
+    #[error("Package name was not provided")]
+    MissingPackageName,
+    #[error(
+        "Too many segments in package reference. Expected either `<bucket>/<name>` or `<name>`"
+    )]
+    TooManySegments,
+    #[error("Invalid version supplied")]
+    InvalidVersion,
+    #[error("Could not find matching manifest")]
+    NotFound,
+    #[error("HTTP error: {0}")]
+    Reqwest(#[from] reqwest::Error),
+    #[error("Packages error: {0}")]
+    Packages(#[from] super::Error),
+    #[error("ser/de error: {0}")]
+    Serde(#[from] serde_json::Error),
+    #[error("Buckets error: {0}")]
+    Buckets(#[from] buckets::Error),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+/// A package reference with an optional version
+pub struct Package {
+    /// The manifest reference
+    pub manifest: ManifestRef,
+    /// The manifest version
+    pub version: Option<String>,
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 /// A reference to a package
-pub enum Package {
-    /// A package reference with a bucket and name
+pub enum ManifestRef {
+    /// Manifest reference with a bucket and name
     BucketNamePair {
         /// The package bucket
         bucket: String,
         /// The package name
         name: String,
     },
-    /// A package reference with just a name
+    /// Manifest reference with just a name
     Name(String),
+    /// Manifest reference from path
+    File(PathBuf),
+    /// Manifest reference from url
+    Url(Url),
+}
+
+impl ManifestRef {
+    #[must_use]
+    /// Convert the [`ManifestRef`] into a [`Package`] reference
+    pub fn into_package_ref(self) -> Package {
+        Package {
+            manifest: self,
+            version: None,
+        }
+    }
 }
 
 impl Package {
+    #[must_use]
+    /// Convert the [`ManifestRef`] into a [`Package`] reference
+    pub fn from_ref(manifest: ManifestRef) -> Self {
+        Self {
+            manifest,
+            version: None,
+        }
+    }
+
     /// Update the bucket string in the package reference
-    pub fn set_bucket(&mut self, bucket: String) {
-        match self {
-            Package::BucketNamePair {
+    ///
+    /// # Errors
+    /// - If the package reference is a url. Setting the bucket on a url reference is not supported
+    pub fn set_bucket(&mut self, bucket: String) -> Result<(), Error> {
+        match &mut self.manifest {
+            ManifestRef::BucketNamePair {
                 bucket: old_bucket, ..
             } => *old_bucket = bucket,
-            Package::Name(name) => {
-                *self = Package::BucketNamePair {
+            ManifestRef::Name(name) => {
+                self.manifest = ManifestRef::BucketNamePair {
                     bucket,
                     name: name.clone(),
                 }
             }
+            _ => return Err(Error::BucketOnDirectRef),
         }
+
+        Ok(())
+    }
+
+    /// Update the package version in the package reference
+    pub fn set_version(&mut self, version: String) {
+        self.version = Some(version);
     }
 
     #[must_use]
     /// Just get the bucket name
     pub fn bucket(&self) -> Option<&str> {
-        match self {
-            Package::BucketNamePair { bucket, .. } => Some(bucket),
-            Package::Name(_) => None,
+        match &self.manifest {
+            ManifestRef::BucketNamePair { bucket, .. } => Some(bucket),
+            _ => None,
         }
     }
 
     #[must_use]
-    /// Just get the package name
-    pub fn name(&self) -> &str {
-        match self {
-            Package::Name(name) | Package::BucketNamePair { name, .. } => name,
+    /// Get the package name
+    pub fn name(&self) -> Option<String> {
+        match &self.manifest {
+            ManifestRef::Name(name) | ManifestRef::BucketNamePair { name, .. } => {
+                Some(name.to_string())
+            }
+            ManifestRef::File(path) => {
+                Some(path.with_extension("").file_name()?.to_str()?.to_string())
+            }
+            ManifestRef::Url(url) => {
+                Some(url.path_segments()?.last()?.split('.').next()?.to_string())
+            }
         }
     }
 
@@ -62,24 +145,62 @@ impl Package {
         if let Some(bucket_name) = self.bucket() {
             let bucket = Bucket::from_name(bucket_name).ok()?;
 
-            Some(bucket.get_manifest_path(self.name()))
+            Some(bucket.get_manifest_path(self.name()?))
         } else {
             None
         }
     }
 
-    #[must_use]
     /// Parse the bucket and package to get the manifest
     ///
-    /// Returns [`None`] if the bucket is not valid or the manifest does not exist
-    pub fn manifest(&self) -> Option<Manifest> {
-        if let Some(bucket_name) = self.bucket() {
-            let bucket = Bucket::from_name(bucket_name).ok()?;
+    /// # Errors
+    /// - If the manifest does not exist
+    /// - If the manifest is invalid
+    /// - If the manifest is not found
+    /// - If the app name is missing
+    /// - If the app dir cannot be read
+    /// - If the bucket is not valid
+    /// - If the bucket is not found
+    pub async fn manifest(&self) -> Result<Manifest, Error> {
+        // TODO: Map output to fix version
 
-            bucket.get_manifest(self.name()).ok()
+        let mut manifest = if matches!(self.manifest, ManifestRef::File(_) | ManifestRef::Url(_)) {
+            let mut manifest = match &self.manifest {
+                ManifestRef::File(path) => Manifest::from_path(path)?,
+                ManifestRef::Url(url) => {
+                    let manifest_string = crate::requests::AsyncClient::new()
+                        .get(url.to_string())
+                        .send()
+                        .await?
+                        .text()
+                        .await?;
+
+                    Manifest::from_str(manifest_string)?
+                }
+                _ => unreachable!(),
+            };
+
+            manifest.name = self.name().ok_or(Error::MissingAppName)?;
+
+            Ok(manifest)
+        } else if let Some(bucket_name) = self.bucket() {
+            let bucket = Bucket::from_name(bucket_name)?;
+
+            Ok(bucket.get_manifest(self.name().ok_or(Error::MissingAppName)?)?)
         } else {
-            None
+            Ok(Bucket::list_all()?
+                .into_iter()
+                .find_map(|bucket| bucket.get_manifest(self.name()?).ok())
+                .ok_or(Error::NotFound)?)
+        };
+
+        if let Ok(manifest) = manifest.as_mut()
+            && let Some(version) = &self.version
+        {
+            manifest.set_version(version.clone()).await?;
         }
+
+        manifest
     }
 
     #[must_use]
@@ -93,7 +214,7 @@ impl Package {
 
         buckets
             .into_iter()
-            .find_map(|bucket| match bucket.get_manifest(self.name()) {
+            .find_map(|bucket| match bucket.get_manifest(self.name()?) {
                 Ok(manifest) => Some(manifest),
                 Err(_) => None,
             })
@@ -116,7 +237,7 @@ impl Package {
             buckets
                 .into_iter()
                 .filter_map(|bucket| {
-                    let manifest_path = bucket.get_manifest_path(self.name());
+                    let manifest_path = bucket.get_manifest_path(self.name()?);
                     if manifest_path.exists() {
                         Some(manifest_path)
                     } else {
@@ -127,55 +248,82 @@ impl Package {
         }
     }
 
-    #[must_use]
     /// Parse the bucket and package to get the manifest, or search for all matches in local buckets
     ///
     /// Returns a [`Vec`] with a single manifest if the reference is valid
     ///
     /// Otherwise returns a [`Vec`] containing each matching manifest found in each local bucket
-    pub fn list_manifests(&self) -> Vec<Manifest> {
-        self.list_manifest_paths()
-            .into_iter()
-            .filter_map(|path| Manifest::from_path(path).ok())
-            .collect()
+    ///
+    /// # Errors
+    /// - If any of the manifests are invalid
+    /// - If any of the manifests are not found
+    /// - If any of the manifests are missing
+    /// - If the app dir cannot be read
+    /// - If any of the buckets are not valid
+    /// - If any of the buckets are not found
+    pub async fn list_manifests(&self) -> Result<Vec<Manifest>, Error> {
+        futures::future::try_join_all(
+            self.list_manifest_paths()
+                .into_iter()
+                .map(Manifest::from_path)
+                .map(|manifest| async {
+                    let mut manifest = manifest?;
+                    if let Some(version) = &self.version {
+                        manifest.set_version(version.clone()).await?;
+                    }
+
+                    Ok::<Manifest, Error>(manifest)
+                }),
+        )
+        .await
     }
 
     /// Checks if the package is installed
     ///
     /// # Errors
     /// - Reading app dir fails
-    pub fn installed(&self) -> std::io::Result<bool> {
-        let name = self.name();
+    /// - Missing app name
+    pub fn installed(&self) -> Result<bool, Error> {
+        let name = self.name().ok_or(Error::MissingAppName)?;
 
-        crate::Scoop::app_installed(name)
+        Ok(crate::Scoop::app_installed(name)?)
     }
 }
 
-impl fmt::Display for Package {
+impl From<ManifestRef> for Package {
+    fn from(manifest: ManifestRef) -> Self {
+        Self::from_ref(manifest)
+    }
+}
+
+impl fmt::Display for ManifestRef {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Package::BucketNamePair { bucket, name } => write!(f, "{bucket}/{name}"),
-            Package::Name(name) => write!(f, "{name}"),
+            ManifestRef::BucketNamePair { bucket, name } => write!(f, "{bucket}/{name}"),
+            ManifestRef::Name(name) => write!(f, "{name}"),
+            ManifestRef::File(_) => {
+                let name = Package::from(self.clone()).name().unwrap();
+                write!(f, "{name}")
+            }
+            ManifestRef::Url(url) => write!(f, "{url}"),
         }
     }
 }
 
-#[derive(Debug, thiserror::Error)]
-#[allow(missing_docs)]
-/// The error type for package references
-pub enum Error {
-    #[error("Package name was not provided")]
-    MissingPackageName,
-    #[error(
-        "Too many segments in package reference. Expected either `<bucket>/<name>` or `<name>`"
-    )]
-    TooManySegments,
-}
-
-impl FromStr for Package {
+impl FromStr for ManifestRef {
     type Err = Error;
 
-    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if let Ok(url) = url::Url::parse(s) {
+            return Ok(Self::Url(url));
+        }
+
+        if let Ok(path) = PathBuf::from_str(s) {
+            if path.exists() {
+                return Ok(Self::File(path));
+            }
+        }
+
         let parts = s.split('/').collect_vec();
         if parts.len() == 1 {
             Ok(Self::Name(parts[0].to_string()))
@@ -194,8 +342,40 @@ impl FromStr for Package {
     }
 }
 
+impl fmt::Display for Package {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.manifest)?;
+
+        if let Some(version) = &self.version {
+            write!(f, "@{version}")?;
+        }
+
+        Ok(())
+    }
+}
+
+impl FromStr for Package {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let parts = s.split('@').collect_vec();
+
+        match parts.len() {
+            1 => Ok(Package {
+                manifest: ManifestRef::from_str(s)?,
+                version: None,
+            }),
+            2 => Ok(Package {
+                manifest: ManifestRef::from_str(parts[0])?,
+                version: Some(parts[1].to_string()),
+            }),
+            _ => Err(Error::InvalidVersion),
+        }
+    }
+}
+
 mod ser_de {
-    use super::{FromStr, Package};
+    use super::{FromStr, ManifestRef, Package};
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
     impl Serialize for Package {
@@ -208,6 +388,19 @@ mod ser_de {
         fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
             let s = String::deserialize(deserializer)?;
             Package::from_str(&s).map_err(serde::de::Error::custom)
+        }
+    }
+
+    impl Serialize for ManifestRef {
+        fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+            serializer.collect_str(self)
+        }
+    }
+
+    impl<'de> Deserialize<'de> for ManifestRef {
+        fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+            let s = String::deserialize(deserializer)?;
+            ManifestRef::from_str(&s).map_err(serde::de::Error::custom)
         }
     }
 }

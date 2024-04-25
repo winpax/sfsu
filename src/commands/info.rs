@@ -10,10 +10,10 @@ use sprinkles::{
     },
     packages::{
         info::PackageInfo,
-        manifest::{StringOrArrayOfStrings, StringOrArrayOfStringsOrAnArrayOfArrayOfStrings},
-        reference, Manifest,
+        manifest::{AliasArray, StringArray},
+        reference, Manifest, MergeDefaults,
     },
-    semver, Scoop,
+    semver, Architecture, Scoop,
 };
 
 #[derive(Debug, Clone, Parser)]
@@ -47,15 +47,15 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    fn runner(mut self) -> Result<(), anyhow::Error> {
+    async fn runner(mut self) -> anyhow::Result<()> {
         #[cfg(not(feature = "v2"))]
         if self.package.bucket().is_none() {
             if let Some(bucket) = &self.bucket {
-                self.package.set_bucket(bucket.clone());
+                self.package.set_bucket(bucket.clone())?;
             }
         }
 
-        let manifests = self.package.list_manifests();
+        let manifests = self.package.list_manifests().await?;
 
         if manifests.is_empty() {
             abandon!("No package found with the name \"{}\"", self.package);
@@ -75,9 +75,9 @@ impl super::Command for Args {
             let latest = manifests
                 .into_iter()
                 .max_by(|a_manifest, b_manifest| {
-                    semver::Version::parse(&a_manifest.version)
+                    semver::Version::try_from(&a_manifest.version)
                         .and_then(|a_version| {
-                            Ok(a_version.cmp(&semver::Version::parse(&b_manifest.version)?))
+                            Ok(a_version.cmp(&semver::Version::try_from(&b_manifest.version)?))
                         })
                         .unwrap_or(std::cmp::Ordering::Equal)
                 }).expect("something went terribly wrong (no manifests found even though we just checked for manifests)");
@@ -132,19 +132,21 @@ impl Args {
             version: manifest.version.to_string(),
             website: manifest.homepage,
             license: manifest.license,
-            binaries: manifest.bin.map(|b| match b {
-                StringOrArrayOfStringsOrAnArrayOfArrayOfStrings::String(bin) => bin.to_string(),
-                StringOrArrayOfStringsOrAnArrayOfArrayOfStrings::StringArray(bins) => {
-                    bins.join(" | ")
-                }
-                StringOrArrayOfStringsOrAnArrayOfArrayOfStrings::UnionArray(bins) => bins
-                    .into_iter()
-                    .map(|bin_union| match bin_union {
-                        StringOrArrayOfStrings::String(bin) => bin,
-                        StringOrArrayOfStrings::StringArray(mut bin_alias) => bin_alias.remove(0),
-                    })
-                    .join(" | "),
-            }),
+            binaries: manifest
+                .architecture
+                .merge_default(manifest.install_config.clone(), Architecture::ARCH)
+                .bin
+                .map(|b| match b {
+                    AliasArray::NestedArray(StringArray::String(bin)) => bin.to_string(),
+                    AliasArray::NestedArray(StringArray::StringArray(bins)) => bins.join(" | "),
+                    AliasArray::AliasArray(bins) => bins
+                        .into_iter()
+                        .map(|bin_union| match bin_union {
+                            StringArray::String(bin) => bin,
+                            StringArray::StringArray(mut bin_alias) => bin_alias.remove(0),
+                        })
+                        .join(" | "),
+                }),
             notes: manifest
                 .notes
                 .map(|notes| notes.to_string())

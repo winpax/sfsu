@@ -51,7 +51,7 @@ const EXPECTED_HELPERS: &[Helper] = &[
         exe: "7z",
         name: "7-Zip",
         reason: "unpacking most programs",
-        packages: &["7zip", "7zip-std"],
+        packages: &["7zip"],
     },
     Helper {
         exe: "innounp",
@@ -249,6 +249,6 @@ impl Diagnostics {
     #[must_use]
     /// Check if the user has git installed
     pub fn git_installed() -> bool {
-        which::which("git").is_ok()
+        Scoop::git_path().is_ok()
     }
 }

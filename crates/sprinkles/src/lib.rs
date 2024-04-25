@@ -1,3 +1,4 @@
+#![feature(let_chains)]
 #![doc = include_str!("../README.md")]
 #![warn(
     clippy::all,
@@ -9,25 +10,50 @@
 )]
 #![allow(clippy::module_name_repetitions)]
 
-use std::{ffi::OsStr, fmt, fs::File, path::PathBuf};
+use std::{
+    ffi::OsStr,
+    fmt,
+    fs::File,
+    path::{Path, PathBuf},
+};
 
 use chrono::Local;
+use quork::traits::list::ListVariants;
 use rayon::prelude::*;
-
-pub use semver;
 use serde::{Deserialize, Serialize};
 
+pub use semver;
+
 pub mod buckets;
+pub mod cache;
 pub mod calm_panic;
 pub mod config;
 pub mod diagnostics;
 pub mod git;
+#[cfg(feature = "manifest-hashes")]
+pub mod hash;
 pub mod output;
 pub mod packages;
 pub mod progress;
+pub mod requests;
 pub mod shell;
+#[cfg(not(feature = "v2"))]
+pub mod stream;
+pub mod version;
 
-mod opt;
+#[doc(hidden)]
+pub mod __versions {
+    //! Version information
+
+    /// Sprinkles library version
+    pub const VERSION: &str = env!("CARGO_PKG_VERSION");
+
+    #[must_use]
+    /// Get the git2 library version
+    pub fn git2_version() -> git2::Version {
+        git2::Version::get()
+    }
+}
 
 #[macro_use]
 extern crate log;
@@ -42,7 +68,7 @@ mod const_assertions {
     const _: () = eval(&Scoop::arch());
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, ListVariants)]
 /// Supported architectures
 pub enum Architecture {
     /// 64 bit Arm
@@ -103,6 +129,22 @@ impl fmt::Display for Architecture {
     }
 }
 
+impl Default for Architecture {
+    fn default() -> Self {
+        Self::from_env()
+    }
+}
+
+#[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
+/// Library errors
+pub enum Error {
+    #[error("Timeout creating new log file. This is a bug, please report it.")]
+    TimeoutCreatingLog,
+    #[error("Error creating log file: {0}")]
+    CreatingLog(#[from] std::io::Error),
+}
+
 /// The Scoop install reference
 pub struct Scoop;
 
@@ -157,16 +199,50 @@ impl Scoop {
         }
     }
 
+    fn scoop_sub_path(segment: impl AsRef<Path>) -> PathBuf {
+        let path = Self::path().join(segment.as_ref());
+
+        if !path.exists() && std::fs::create_dir_all(&path).is_err() {
+            abandon!("Could not create {} directory", segment.as_ref().display());
+        }
+
+        path
+    }
+
     #[must_use]
     /// Gets the user's scoop apps path
     pub fn apps_path() -> PathBuf {
-        Self::path().join("apps")
+        Self::scoop_sub_path("apps")
     }
 
     #[must_use]
     /// Gets the user's scoop buckets path
     pub fn buckets_path() -> PathBuf {
-        Self::path().join("buckets")
+        Self::scoop_sub_path("buckets")
+    }
+
+    #[must_use]
+    /// Gets the user's scoop cache path
+    pub fn cache_path() -> PathBuf {
+        Self::scoop_sub_path("cache")
+    }
+
+    #[must_use]
+    /// Gets the user's scoop persist path
+    pub fn persist_path() -> PathBuf {
+        Self::scoop_sub_path("persist")
+    }
+
+    #[must_use]
+    /// Gets the user's scoop shims path
+    pub fn shims_path() -> PathBuf {
+        Self::scoop_sub_path("shims")
+    }
+
+    #[must_use]
+    /// Gets the user's scoop workspace path
+    pub fn workspace_path() -> PathBuf {
+        Self::scoop_sub_path("workspace")
     }
 
     /// List all scoop apps and return their paths
@@ -218,21 +294,71 @@ impl Scoop {
     ///
     /// # Errors
     /// - Creating the file fails
-    pub fn new_log() -> std::io::Result<File> {
+    ///
+    /// # Panics
+    /// - Could not convert tokio file into std file
+    pub async fn new_log() -> Result<File, Error> {
+        let logs_dir = Self::logging_dir()?;
+        let date = Local::now();
+
+        let log_file = async {
+            use tokio::fs::File;
+
+            let mut i = 0;
+            loop {
+                i += 1;
+
+                let log_path =
+                    logs_dir.join(format!("sfsu-{}-{i}.log", date.format("%Y-%m-%d-%H-%M-%S")));
+
+                if !log_path.exists() {
+                    break File::create(log_path).await;
+                }
+            }
+        };
+        let timeout = async {
+            use std::time::Duration;
+            use tokio::time;
+
+            time::sleep(Duration::from_secs(5)).await;
+        };
+
+        let log_file = tokio::select! {
+            res = log_file => Ok(res),
+            () = timeout => Err(Error::TimeoutCreatingLog),
+        }??;
+
+        Ok(log_file
+            .try_into_std()
+            .expect("converted tokio file into std file"))
+    }
+
+    /// Create a new log file
+    ///
+    /// This function is synchronous and does not allow for timeouts.
+    /// If for some reason there are no available log files, this function will block indefinitely.
+    ///
+    /// # Errors
+    /// - Creating the file fails
+    pub fn new_log_sync() -> Result<File, Error> {
+        use std::fs::File;
+
         let logs_dir = Self::logging_dir()?;
         let date = Local::now();
 
         let mut i = 0;
-        loop {
+        let file = loop {
             i += 1;
 
             let log_path =
                 logs_dir.join(format!("sfsu-{}-{i}.log", date.format("%Y-%m-%d-%H-%M-%S")));
 
             if !log_path.exists() {
-                break File::create(&log_path);
+                break File::create(log_path)?;
             }
-        }
+        };
+
+        Ok(file)
     }
 
     /// Checks if the app is installed by its name

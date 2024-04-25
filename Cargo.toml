@@ -1,6 +1,7 @@
 [package]
 description = "Stupid Fast Scoop Utils"
 edition = "2021"
+license = { workspace = true }
 name = "sfsu"
 publish.workspace = true
 version.workspace = true
@@ -9,11 +10,27 @@ version.workspace = true
 members = ["crates/*"]
 package.license = "Apache-2.0"
 package.publish = false
-package.version = "1.10.0"
+package.version = "1.10.3"
 
 [workspace.dependencies]
-owo-colors = { version = "4.0.0", features = ["supports-colors"] }
+chrono = { version = ">=0.4.37", features = [
+    "clock",
+    "serde",
+    "std",
+], default-features = false }
+futures = "0.3"
+git2 = "0.18"
+indicatif = { version = "0.17", features = [
+    "improved_unicode",
+    "rayon",
+    "tokio",
+] }
+itertools = "0.12"
+log = { version = "0.4", features = ["std"] }
+owo-colors = { version = "4.0", features = ["supports-colors"] }
 quork = "0.6"
+rayon = "1.10"
+regex = "1.10"
 
 [[bench]]
 harness = false
@@ -23,11 +40,20 @@ name = "searching"
 harness = false
 name = "serde"
 
+[[bench]]
+harness = false
+name = "autoupdate"
+
 [profile.release]
 codegen-units = 1
 lto = true
 
+[profile.profiling]
+inherits = "dev"
+opt-level = 3
+
 [features]
+beta = ["sprinkles/manifest-hashes"]
 default = []
 # Breaking changes are locked behind this feature flag
 v2 = ["sprinkles/v2"]
@@ -35,27 +61,37 @@ v2 = ["sprinkles/v2"]
 [dependencies]
 anyhow = "1.0"
 bat = "0.24"
-clap = { version = "4.5", features = ["derive"] }
-git2 = "0.18"
-human-panic = "1.2"
-indicatif = { version = "0.17", features = ["improved_unicode", "rayon"] }
-itertools = "0.12"
-log = { version = "0.4", features = ["std"] }
+clap = { version = "4.5", features = [
+    "derive",
+    "env",
+    "string",
+    "unicode",
+    "wrap_help",
+] }
+futures.workspace = true
+git2.workspace = true
+human-panic = "2.0"
+indicatif.workspace = true
+itertools.workspace = true
+log = { workspace = true }
 open = "5.1"
 owo-colors.workspace = true
 parking_lot = "0.12"
 quork.workspace = true
-rayon = "1.10"
-regex = "1.10"
+rayon.workspace = true
+regex.workspace = true
 serde_json = { version = "1.0", features = ["preserve_order"] }
-sfsu-derive = { path = "crates/derive" }
+sfsu-derive = { path = "./crates/derive" }
 shadow-rs = "0.27"
 sprinkles = { version = "1", path = "crates/sprinkles" }
+tokio = { version = "1.37", features = ["full"] }
 
 [dev-dependencies]
-chrono = ">=0.4.37"
-criterion = { version = "0.5", features = ["html_reports"] }
+chrono.workspace = true
+criterion = { version = "0.5", features = ["async_tokio", "html_reports"] }
+git2 = { workspace = true }
 
 [build-dependencies]
+git2.workspace = true
 shadow-rs = "0.27"
 winres = "0.1"

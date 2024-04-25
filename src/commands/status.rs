@@ -38,7 +38,7 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    fn runner(self) -> anyhow::Result<()> {
+    async fn runner(self) -> anyhow::Result<()> {
         let value = Mutex::new(Value::default());
 
         let pb = indicatif::ProgressBar::new(3).with_style(style(None, None));

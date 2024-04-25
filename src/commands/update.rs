@@ -1,5 +1,4 @@
 use clap::Parser;
-use git2::Progress;
 use indicatif::{MultiProgress, ProgressBar, ProgressFinish};
 use itertools::Itertools;
 use rayon::prelude::*;
@@ -7,29 +6,11 @@ use rayon::prelude::*;
 use sprinkles::{
     buckets::{self, Bucket},
     config::Scoop as ScoopConfig,
+    git::__stats_callback,
     output::sectioned::{Children, Section},
-    progress::{style, MessagePosition, ProgressOptions},
+    progress::{style, Message, ProgressOptions},
     Scoop,
 };
-
-fn stats_callback(stats: &Progress<'_>, thin: bool, pb: &ProgressBar) {
-    if thin {
-        pb.set_position(stats.indexed_objects() as u64);
-        pb.set_length(stats.total_objects() as u64);
-
-        return;
-    }
-
-    if stats.received_objects() == stats.total_objects() {
-        pb.set_position(stats.indexed_deltas() as u64);
-        pb.set_length(stats.total_deltas() as u64);
-        pb.set_message("Resolving deltas");
-    } else if stats.total_objects() > 0 {
-        pb.set_position(stats.received_objects() as u64);
-        pb.set_length(stats.total_objects() as u64);
-        pb.set_message("Receiving objects");
-    }
-}
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
@@ -38,10 +19,10 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    fn runner(self) -> Result<(), anyhow::Error> {
+    async fn runner(self) -> Result<(), anyhow::Error> {
         const FINISH_MESSAGE: &str = "✅";
 
-        let progress_style = style(Some(ProgressOptions::Hide), Some(MessagePosition::Suffix));
+        let progress_style = style(Some(ProgressOptions::Hide), Some(Message::Suffix(None)));
 
         let buckets = Bucket::list_all()?;
 
@@ -62,12 +43,12 @@ impl super::Command for Args {
         let scoop_changelog = if scoop_repo.outdated()? {
             let mut changelog = if self.changelog {
                 scoop_repo.pull_with_changelog(Some(&|stats, thin| {
-                    stats_callback(&stats, thin, &pb);
+                    __stats_callback(&stats, thin, &pb);
                     true
                 }))?
             } else {
                 scoop_repo.pull(Some(&|stats, thin| {
-                    stats_callback(&stats, thin, &pb);
+                    __stats_callback(&stats, thin, &pb);
                     true
                 }))?;
                 vec![]
@@ -117,12 +98,12 @@ impl super::Command for Args {
 
                 let changelog = if self.changelog {
                     repo.pull_with_changelog(Some(&|stats, thin| {
-                        stats_callback(&stats, thin, pb);
+                        __stats_callback(&stats, thin, pb);
                         true
                     }))?
                 } else {
                     repo.pull(Some(&|stats, thin| {
-                        stats_callback(&stats, thin, pb);
+                        __stats_callback(&stats, thin, pb);
                         true
                     }))?;
 
