@@ -9,10 +9,12 @@ use std::{collections::HashMap, fmt::Display};
 
 use itertools::Itertools as _;
 use serde::{Deserialize, Serialize};
+use serde_with::skip_serializing_none;
 
 use crate::{version::Version, Architecture};
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
+#[skip_serializing_none]
 /// The manifest for a package
 pub struct Manifest {
     /// This must be manually set

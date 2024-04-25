@@ -747,16 +747,24 @@ impl Manifest {
             None
         };
 
-        let hash = Hash::get_for_app(self).await?;
-
         if let Some(arch_config) = &mut self.architecture {
+            // TODO: This sets the same hash and url for all architectures
             for arch in crate::Architecture::VARIANTS {
                 Self::update_field(
                     arch_field!(arch => arch_config.url as mut),
                     &mut self.install_config.url,
                     new_url.clone(),
                 );
+            }
+        } else {
+            self.install_config.url = new_url;
+        }
 
+        let hash = Hash::get_for_app(self).await?;
+
+        if let Some(arch_config) = &mut self.architecture {
+            // TODO: This sets the same hash and url for all architectures
+            for arch in crate::Architecture::VARIANTS {
                 Self::update_field(
                     arch_field!(arch => arch_config.hash as mut),
                     &mut self.install_config.hash,
@@ -764,7 +772,6 @@ impl Manifest {
                 );
             }
         } else {
-            self.install_config.url = new_url;
             self.install_config.hash = Some(hash.hash());
         }
 
