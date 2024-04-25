@@ -81,8 +81,8 @@ pub fn style(
     let message_position = message_position.unwrap_or_default();
 
     ProgressStyle::with_template(&format!(
-        "{{prefix}} {prefix} {{spinner}} [{{wide_bar}}] {progress} ({{eta}}) {suffix}",
-        prefix = message_position.display(true),
+        "{{prefix}} {prefix_message} {{spinner}} [{{wide_bar}}] {progress} ({{eta}}) {suffix}",
+        prefix_message = message_position.display(true),
         suffix = message_position.display(false),
         progress = match progress_opts {
             ProgressOptions::Bytes => "{bytes}/{total_bytes}",
