@@ -1,8 +1,6 @@
 //! Cache helpers
 
 use std::{
-    fs::File,
-    io::{BufRead, BufReader, Read, Write},
     ops::Deref,
     path::{Path, PathBuf},
 };
@@ -12,7 +10,7 @@ use digest::Digest;
 use futures::{Stream, StreamExt, TryStreamExt};
 use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 use reqwest::{Response, StatusCode};
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio::io::AsyncWriteExt;
 use tokio_util::codec::{BytesCodec, FramedRead};
 
 use crate::{
@@ -195,22 +193,6 @@ impl Downloader {
             HashType::MD5 => self.handle_buf::<md5::Md5>().await,
         }?;
 
-        // Hash;
-
-        // loop {
-        //     let chunk = reader.fill_buf()?;
-        //     let chunk_length = chunk.len();
-
-        //     if chunk_length == 0 {
-        //         break;
-        //     }
-
-        //     self.cache.write_all(chunk)?;
-        //     self.pb.inc(chunk_length as u64);
-
-        //     reader.consume(chunk_length);
-        // }
-
         Ok((file_name, hash_bytes))
     }
 
@@ -246,38 +228,6 @@ impl Downloader {
             }
         }
 
-        // impl<'a> tokio_stream::Stream for Source<'a> {
-        //     type Item = bytes::Bytes;
-
-        //     fn poll_next(
-        //         self: std::pin::Pin<&mut Self>,
-        //         cx: &mut std::task::Context<'_>,
-        //     ) -> std::task::Poll<Option<Self::Item>> {
-        //         match self {
-        //             Source::Cache(file) => {
-        //                 let mut buf = vec![];
-
-        //                 file.read(&mut buf).then(|buf_length| async {
-        //                     if buf.is_empty() {
-        //                         None
-        //                     } else {
-        //                         Some(buf)
-        //                     }
-        //                 });
-        //             }
-        //             Source::Network(resp) => todo!(),
-        //         }
-        //         todo!()
-        //     }
-        // }
-        // impl<'a> Read for Source<'a> {
-        //     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
-        //         match self {
-        //             Source::Cache(file) => file.read(buf),
-        //             Source::Network(resp) => resp.read(buf),
-        //         }
-        //     }
-        // }
         let cache_path = self.cache.cache_path.clone();
 
         let mut reader = if cache_path.exists() {

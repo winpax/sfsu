@@ -1,9 +1,6 @@
-use std::thread;
-
 use clap::Parser;
 use indicatif::MultiProgress;
 
-use itertools::Itertools;
 use sprinkles::{
     abandon,
     cache::{Downloader, Handle},
