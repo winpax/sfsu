@@ -25,7 +25,7 @@ pub struct Args {
 impl super::Command for Args {
     const BETA: bool = true;
 
-    fn runner(self) -> Result<(), anyhow::Error> {
+    async fn runner(self) -> Result<(), anyhow::Error> {
         let mp = MultiProgress::new();
         let client = BlockingClient::new();
 

@@ -32,7 +32,7 @@ impl Command for Args {
         })
     }
 
-    fn runner(self) -> anyhow::Result<()> {
+    async fn runner(self) -> anyhow::Result<()> {
         if let Some(command) = self.command {
             command.run()
         } else {

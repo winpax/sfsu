@@ -19,7 +19,7 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    fn runner(self) -> Result<(), anyhow::Error> {
+    async fn runner(self) -> Result<(), anyhow::Error> {
         const FINISH_MESSAGE: &str = "✅";
 
         let progress_style = style(Some(ProgressOptions::Hide), Some(MessagePosition::Suffix));

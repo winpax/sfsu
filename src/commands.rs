@@ -45,7 +45,7 @@ pub trait Command {
         None
     }
 
-    fn runner(self) -> Result<(), anyhow::Error>;
+    async fn runner(self) -> Result<(), anyhow::Error>;
 
     fn run(self) -> Result<(), anyhow::Error>
     where
@@ -81,7 +81,10 @@ pub trait Command {
             );
         }
 
-        self.runner()
+        tokio::runtime::Builder::new_multi_thread()
+            .enable_all()
+            .build()?
+            .block_on(async { self.runner().await })
     }
 }
 

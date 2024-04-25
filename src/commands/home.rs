@@ -8,7 +8,7 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    fn runner(self) -> Result<(), anyhow::Error> {
+    async fn runner(self) -> Result<(), anyhow::Error> {
         let manifest = self
             .package
             .first()

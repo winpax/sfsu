@@ -35,7 +35,7 @@ pub enum SortBy {
 }
 
 impl super::Command for Args {
-    fn runner(self) -> Result<(), anyhow::Error> {
+    async fn runner(self) -> Result<(), anyhow::Error> {
         let mut outputs = MinInfo::list_installed(self.bucket.as_ref())?;
 
         outputs.par_sort_by(|a, b| match self.sort_by {

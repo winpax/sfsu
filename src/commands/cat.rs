@@ -13,7 +13,7 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    fn runner(self) -> Result<(), anyhow::Error> {
+    async fn runner(self) -> Result<(), anyhow::Error> {
         let manifests = self.package.list_manifest_paths();
 
         if manifests.is_empty() {
