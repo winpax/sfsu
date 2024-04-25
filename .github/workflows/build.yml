@@ -45,7 +45,7 @@ jobs:
           components: rustfmt
 
       - name: Check Formatting
-        run: cargo fmt --all --features beta -- --check
+        run: cargo fmt --all --check
 
   test:
     name: Test
