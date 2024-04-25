@@ -10,7 +10,12 @@
 )]
 #![allow(clippy::module_name_repetitions)]
 
-use std::{ffi::OsStr, fmt, fs::File, path::PathBuf};
+use std::{
+    ffi::OsStr,
+    fmt,
+    fs::File,
+    path::{Path, PathBuf},
+};
 
 use chrono::Local;
 use quork::traits::list::ListVariants;
@@ -194,28 +199,50 @@ impl Scoop {
         }
     }
 
+    fn scoop_sub_path(segment: impl AsRef<Path>) -> PathBuf {
+        let path = Self::path().join(segment.as_ref());
+
+        if !path.exists() && std::fs::create_dir_all(&path).is_err() {
+            abandon!("Could not create {} directory", segment.as_ref().display());
+        }
+
+        path
+    }
+
     #[must_use]
     /// Gets the user's scoop apps path
     pub fn apps_path() -> PathBuf {
-        Self::path().join("apps")
+        Self::scoop_sub_path("apps")
     }
 
     #[must_use]
     /// Gets the user's scoop buckets path
     pub fn buckets_path() -> PathBuf {
-        Self::path().join("buckets")
+        Self::scoop_sub_path("buckets")
     }
 
     #[must_use]
     /// Gets the user's scoop cache path
     pub fn cache_path() -> PathBuf {
-        let path = Self::path().join("cache");
+        Self::scoop_sub_path("cache")
+    }
 
-        if !path.exists() && std::fs::create_dir_all(&path).is_err() {
-            abandon!("Could not create cache directory");
-        }
+    #[must_use]
+    /// Gets the user's scoop persist path
+    pub fn persist_path() -> PathBuf {
+        Self::scoop_sub_path("persist")
+    }
 
-        path
+    #[must_use]
+    /// Gets the user's scoop shims path
+    pub fn shims_path() -> PathBuf {
+        Self::scoop_sub_path("shims")
+    }
+
+    #[must_use]
+    /// Gets the user's scoop workspace path
+    pub fn workspace_path() -> PathBuf {
+        Self::scoop_sub_path("workspace")
     }
 
     /// List all scoop apps and return their paths

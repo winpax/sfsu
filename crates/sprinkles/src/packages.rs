@@ -96,70 +96,57 @@ macro_rules! arch_field {
     //     arch_field!($self.$field).clone()
     // };
 
-    ($arch:expr => ref $self:ident.$field:ident) => {{
-        if let Some(cfg) = match $arch {
-            $crate::Architecture::Arm64 => &$self.arm64,
-            $crate::Architecture::X64 => &$self.x64,
-            $crate::Architecture::X86 => &$self.x86,
-        } {
-            Some(&cfg.$field)
-        } else {
-            None
-        }
-    }};
+    // ($arch:expr => ref $self:ident.$field:ident) => {{
+    //     if let Some(cfg) = match $arch {
+    //         $crate::Architecture::Arm64 => &$self.arm64,
+    //         $crate::Architecture::X64 => &$self.x64,
+    //         $crate::Architecture::X86 => &$self.x86,
+    //     } {
+    //         &cfg.$field
+    //     } else {
+    //         &None
+    //     }
+    // }};
 
-    (ref $self:ident.$field:ident) => {
-        arch_field!($crate::Architecture::ARCH => ref $self.$field)
-    };
+    // (ref $self:ident.$field:ident) => {
+    //     arch_field!($crate::Architecture::ARCH => ref $self.$field)
+    // };
 
-    ($arch:expr => ref mut $self:ident.$field:ident) => {{
-        if let Some(cfg) = match $arch {
-            $crate::Architecture::Arm64 => &mut $self.arm64,
-            $crate::Architecture::X64 => &mut $self.x64,
-            $crate::Architecture::X86 => &mut $self.x86,
-        } {
-            Some(&mut cfg.$field)
-        } else {
-            None
-        }
-    }};
+    // ($arch:expr => ref mut $self:ident.$field:ident) => {{
+    //     match $arch {
+    //         $crate::Architecture::Arm64 => $self.arm64.as_mut(),
+    //         $crate::Architecture::X64 => $self.x64.as_mut(),
+    //         $crate::Architecture::X86 => $self.x86.as_mut(),
+    //     }.and_then(|cfg| cfg.$field.as_mut())
+    // }};
 
-    (ref mut $self:ident.$field:ident) => {
-        arch_field!($crate::Architecture::ARCH => ref mut $self.$field)
-    };
-
-
-    ($arch:expr => $self:ident.$field:ident as ref) => {{
-        if let Some(cfg) = match $arch {
-            $crate::Architecture::Arm64 => $self.arm64.as_ref(),
-            $crate::Architecture::X64 => $self.x64.as_ref(),
-            $crate::Architecture::X86 => $self.x86.as_ref(),
-        } {
-            Some(cfg.$field.as_ref())
-        } else {
-            None
-        }
-    }};
+    // (ref mut $self:ident.$field:ident) => {
+    //     arch_field!($crate::Architecture::ARCH => ref mut $self.$field)
+    // };
 
     ($self:ident.$field:ident as ref) => {
         arch_field!($crate::Architecture::ARCH => $self.$field as ref)
     };
 
-    ($arch:expr => $self:ident.$field:ident as mut) => {{
-        if let Some(cfg) = match $arch {
-            $crate::Architecture::Arm64 => $self.arm64.as_mut(),
-            $crate::Architecture::X64 => $self.x64.as_mut(),
-            $crate::Architecture::X86 => $self.x86.as_mut(),
-        } {
-            Some(cfg.$field.as_mut())
-        } else {
-            None
-        }
+    ($arch:expr => $self:ident.$field:ident as ref) => {{
+        match $arch {
+            $crate::Architecture::Arm64 => $self.arm64.as_ref(),
+            $crate::Architecture::X64 => $self.x64.as_ref(),
+            $crate::Architecture::X86 => $self.x86.as_ref(),
+        }.and_then(|cfg| cfg.$field.as_ref())
     }};
 
     ($self:ident.$field:ident as mut) => {
         arch_field!($crate::Architecture::ARCH => $self.$field as mut)
     };
+
+    ($arch:expr => $self:ident.$field:ident as mut) => {{
+        match $arch {
+            $crate::Architecture::Arm64 => $self.arm64.as_mut(),
+            $crate::Architecture::X64 => $self.x64.as_mut(),
+            $crate::Architecture::X86 => $self.x86.as_mut(),
+        }.and_then(|cfg| cfg.$field.as_mut())
+    }};
 }
 
 pub use arch_config;
@@ -709,6 +696,20 @@ impl Manifest {
         Some(package)
     }
 
+    fn update_field<T>(
+        arch_field: Option<&mut T>,
+        default_field: &mut Option<T>,
+        value: Option<T>,
+    ) {
+        if let Some(arch_field) = arch_field
+            && let Some(value) = value
+        {
+            *arch_field = value;
+        } else {
+            *default_field = value;
+        }
+    }
+
     #[cfg(feature = "manifest-hashes")]
     /// Set the manifest version and get the hash for the manifest
     ///
@@ -716,6 +717,8 @@ impl Manifest {
     /// - Missing autoupdate field
     /// - Hash error
     pub async fn set_version(&mut self, version: String) -> Result<(), Error> {
+        use quork::traits::list::ListVariants;
+
         use crate::hash::{
             substitutions::{Substitute, SubstitutionMap},
             Hash,
@@ -729,7 +732,7 @@ impl Manifest {
             .architecture
             .merge_default(autoupdate.default_config.clone());
 
-        if let Some(autoupdate_url) = autoupdate.url {
+        let new_url = if let Some(autoupdate_url) = autoupdate.url {
             debug!("Autoupdate Url: {autoupdate_url}");
 
             let mut submap = SubstitutionMap::new();
@@ -739,39 +742,35 @@ impl Manifest {
 
             debug!("Subbed Autoupdate Url: {new_url}");
 
-            if let Some(arch) = &mut self.architecture
-                && let Some(url) = arch_field!(ref mut arch.url)
-            {
-                _ = url.insert(new_url);
-            } else {
-                self.install_config.url = Some(new_url);
+            Some(new_url)
+        } else {
+            None
+        };
+
+        let hash = Hash::get_for_app(self).await?;
+
+        if let Some(arch_config) = &mut self.architecture {
+            for arch in crate::Architecture::VARIANTS {
+                Self::update_field(
+                    arch_field!(arch => arch_config.url as mut),
+                    &mut self.install_config.url,
+                    new_url.clone(),
+                );
+
+                Self::update_field(
+                    arch_field!(arch => arch_config.hash as mut),
+                    &mut self.install_config.hash,
+                    Some(hash.hash()),
+                );
             }
+        } else {
+            self.install_config.url = new_url;
+            self.install_config.hash = Some(hash.hash());
         }
 
         // TODO: Handle other autoupdate fields
         // TODO: Autoupdate fields in all architectures
         // todo!("Handle urls and other autoupdate fields");
-
-        let hash = Hash::get_for_app(self).await?;
-        if let Some(arch) = &mut self.architecture {
-            if let Some(manifest_hash) = arch_field!(ref mut arch.hash) {
-                _ = manifest_hash.insert(hash.hash());
-            } else {
-                return Err(Error::MissingArchAutoUpdate);
-            }
-        }
-
-        // if let Some(architecture) = &autoupdate.architecture {
-        //     let config = autoupdate
-        //         .architecture
-        //         .merge_default(autoupdate.default_config.clone());
-
-        // let autoupdate_arch = match Scoop::arch() {
-        //     Architecture::Arm64 => architecture.arm64.as_mut(),
-        //     Architecture::X64 => architecture.x64.as_mut(),
-        //     Architecture::X86 => architecture.x86.as_mut(),
-        // }
-        // .ok_or(Error::MissingAutoUpdate)?;
 
         // TODO: Figure out hash extraction
         // autoupdate_arch.hash
