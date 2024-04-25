@@ -256,11 +256,3 @@ impl Downloader {
         Ok(hasher.finalize()[..].to_vec())
     }
 }
-
-// impl Drop for Downloader {
-//     fn drop(&mut self) {
-//         // There is no code that would drop this message
-//         // As such this should be safe
-//         unsafe { core::ptr::drop_in_place(std::ptr::from_ref::<str>(self.message).cast_mut()) };
-//     }
-// }
