@@ -13,6 +13,7 @@
 use std::{ffi::OsStr, fmt, fs::File, path::PathBuf};
 
 use chrono::Local;
+use quork::traits::list::ListVariants;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -61,7 +62,7 @@ mod const_assertions {
     const _: () = eval(&Scoop::arch());
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, ListVariants)]
 /// Supported architectures
 pub enum Architecture {
     /// 64 bit Arm

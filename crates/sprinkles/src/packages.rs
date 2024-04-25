@@ -92,12 +92,12 @@ macro_rules! arch_config {
 #[macro_export]
 /// Get a field from a manifest based on the architecture
 macro_rules! arch_field {
-    ($self:ident.$field:ident) => {
-        arch_field!($self.$field).clone()
-    };
+    // ($self:ident.$field:ident) => {
+    //     arch_field!($self.$field).clone()
+    // };
 
-    (ref $self:ident.$field:ident) => {{
-        if let Some(cfg) = match $crate::Architecture::ARCH {
+    ($arch:expr => ref $self:ident.$field:ident) => {{
+        if let Some(cfg) = match $arch {
             $crate::Architecture::Arm64 => &$self.arm64,
             $crate::Architecture::X64 => &$self.x64,
             $crate::Architecture::X86 => &$self.x86,
@@ -108,8 +108,12 @@ macro_rules! arch_field {
         }
     }};
 
-    (ref mut $self:ident.$field:ident) => {{
-        if let Some(cfg) = match $crate::Architecture::ARCH {
+    (ref $self:ident.$field:ident) => {
+        arch_field!($crate::Architecture::ARCH => ref $self.$field)
+    };
+
+    ($arch:expr => ref mut $self:ident.$field:ident) => {{
+        if let Some(cfg) = match $arch {
             $crate::Architecture::Arm64 => &mut $self.arm64,
             $crate::Architecture::X64 => &mut $self.x64,
             $crate::Architecture::X86 => &mut $self.x86,
@@ -120,8 +124,13 @@ macro_rules! arch_field {
         }
     }};
 
-    ($self:ident.$field:ident as ref) => {{
-        if let Some(cfg) = match $crate::Architecture::ARCH {
+    (ref mut $self:ident.$field:ident) => {
+        arch_field!($crate::Architecture::ARCH => ref mut $self.$field)
+    };
+
+
+    ($arch:expr => $self:ident.$field:ident as ref) => {{
+        if let Some(cfg) = match $arch {
             $crate::Architecture::Arm64 => $self.arm64.as_ref(),
             $crate::Architecture::X64 => $self.x64.as_ref(),
             $crate::Architecture::X86 => $self.x86.as_ref(),
@@ -132,8 +141,12 @@ macro_rules! arch_field {
         }
     }};
 
-    ($self:ident.$field:ident as mut) => {{
-        if let Some(cfg) = match $crate::Architecture::ARCH {
+    ($self:ident.$field:ident as ref) => {
+        arch_field!($crate::Architecture::ARCH => $self.$field as ref)
+    };
+
+    ($arch:expr => $self:ident.$field:ident as mut) => {{
+        if let Some(cfg) = match $arch {
             $crate::Architecture::Arm64 => $self.arm64.as_mut(),
             $crate::Architecture::X64 => $self.x64.as_mut(),
             $crate::Architecture::X86 => $self.x86.as_mut(),
@@ -143,6 +156,10 @@ macro_rules! arch_field {
             None
         }
     }};
+
+    ($self:ident.$field:ident as mut) => {
+        arch_field!($crate::Architecture::ARCH => $self.$field as mut)
+    };
 }
 
 pub use arch_config;
