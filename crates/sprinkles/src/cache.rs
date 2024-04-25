@@ -203,12 +203,10 @@ impl Downloader {
                 cx: &mut std::task::Context<'_>,
             ) -> std::task::Poll<Option<Self::Item>> {
                 match self.get_mut() {
-                    Source::Cache(file) => {
-                        std::pin::pin!(file).poll_next(cx).map(|bytes| match bytes {
-                            Some(Ok(bytes)) => Some(Ok(BytesMut::freeze(bytes))),
-                            _ => None,
-                        })
-                    }
+                    Source::Cache(file) => file.poll_next_unpin(cx).map(|bytes| match bytes {
+                        Some(Ok(bytes)) => Some(Ok(BytesMut::freeze(bytes))),
+                        _ => None,
+                    }),
                     Source::Network(resp) => resp.poll_next_unpin(cx),
                 }
             }
