@@ -8,7 +8,7 @@ use std::{
 use bytes::BytesMut;
 use digest::Digest;
 use futures::{Stream, StreamExt, TryStreamExt};
-use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
+use indicatif::{MultiProgress, ProgressBar};
 use reqwest::{Response, StatusCode};
 use tokio::io::AsyncWriteExt;
 use tokio_util::codec::{BytesCodec, FramedRead};
@@ -16,6 +16,7 @@ use tokio_util::codec::{BytesCodec, FramedRead};
 use crate::{
     hash::{url_ext::UrlExt, HashType},
     packages::Manifest,
+    progress,
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -107,7 +108,6 @@ pub struct Downloader {
     cache: Handle,
     resp: Response,
     pb: Option<ProgressBar>,
-    message: &'static str,
 }
 
 impl Downloader {
@@ -134,12 +134,12 @@ impl Downloader {
 
         let content_length = resp.content_length().unwrap_or_default();
 
-        let (pb, message) = mp.map_or((None, ""), |mp| {
-            let boxed = {
+        let pb = mp.map(|mp| {
+            let message = {
                 if let Ok(parsed_url) = url::Url::parse(&cache.url)
                     && let Some(leaf) = parsed_url.leaf()
                 {
-                    leaf.into_boxed_str()
+                    leaf
                 } else {
                     cache
                         .file_name
@@ -148,34 +148,22 @@ impl Downloader {
                         .next_back()
                         .expect("non-empty file name")
                         .to_string()
-                        .into_boxed_str()
                 }
             };
 
-            let message: &'static str = Box::leak(boxed);
-
-                let pb = mp.add(
+            let pb = mp.add(
                 ProgressBar::new(content_length)
-                    .with_style(
-                        ProgressStyle::with_template(
-                            "{prefix} {msg} {spinner:.green} [{wide_bar:.cyan/blue}] {bytes}/{total_bytes} {bytes_per_sec} ({eta})",
-                        )
-                        .unwrap()
-                        .progress_chars("#>-"),
-                    )
-                    .with_message(message)
+                    .with_style(progress::style(
+                        Some(progress::ProgressOptions::Bytes),
+                        Some(progress::Message::Prefix(Some(&message))),
+                    ))
                     .with_finish(indicatif::ProgressFinish::WithMessage("Finished ✅".into())),
             );
 
-            (Some(pb),message)
+            pb
         });
 
-        Ok(Self {
-            cache,
-            resp,
-            pb,
-            message,
-        })
+        Ok(Self { cache, resp, pb })
     }
 
     /// Download the file to the cache

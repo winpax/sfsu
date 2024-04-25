@@ -8,7 +8,7 @@ use sprinkles::{
     config::Scoop as ScoopConfig,
     git::__stats_callback,
     output::sectioned::{Children, Section},
-    progress::{style, MessagePosition, ProgressOptions},
+    progress::{style, Message, ProgressOptions},
     Scoop,
 };
 
@@ -22,7 +22,7 @@ impl super::Command for Args {
     async fn runner(self) -> Result<(), anyhow::Error> {
         const FINISH_MESSAGE: &str = "✅";
 
-        let progress_style = style(Some(ProgressOptions::Hide), Some(MessagePosition::Suffix));
+        let progress_style = style(Some(ProgressOptions::Hide), Some(Message::Suffix(None)));
 
         let buckets = Bucket::list_all()?;
 
