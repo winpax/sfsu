@@ -20,7 +20,7 @@ use crate::{
         },
         Manifest, MergeDefaults,
     },
-    requests::{AsyncClient, BlockingClient},
+    requests::AsyncClient,
     Scoop,
 };
 
@@ -556,6 +556,7 @@ mod tests {
     use crate::{
         buckets::Bucket,
         packages::{manifest::HashExtractionOrArrayOfHashExtractions, reference},
+        requests::BlockingClient,
     };
 
     use super::*;
