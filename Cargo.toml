@@ -10,7 +10,7 @@ version.workspace = true
 members = ["crates/*"]
 package.license = "Apache-2.0"
 package.publish = false
-package.version = "1.11.0-beta.2"
+package.version = "1.11.0-beta.3"
 
 [workspace.dependencies]
 chrono = { version = ">=0.4.38", features = [
