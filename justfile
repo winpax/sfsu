@@ -28,7 +28,7 @@ release TARGET:
     just export-hash {{ TARGET }}
 
 beta-release TARGET:
-    just build {{ TARGET }}
+    just beta-build {{ TARGET }}
 
     cp ./target/{{ TARGET }}-pc-windows-msvc/release/sfsu.exe ./release/sfsu.exe
     7z a ./release/dl-{{ TARGET }} ./release/sfsu.exe
