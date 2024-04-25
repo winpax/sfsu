@@ -776,6 +776,14 @@ impl Manifest {
         // autoupdate_arch.hash
 
         // todo!()
+
+        let workspace_manifest_path = Scoop::workspace_path().join(format!("{}.json", self.name));
+        serde_json::to_writer_pretty(std::fs::File::create(workspace_manifest_path)?, &self)
+            .map_err(|e| {
+                error!("Failed to write workspace manifest: {e}");
+                Error::ParsingManifest(self.name.to_string(), e)
+            })?;
+
         Ok(())
     }
 
