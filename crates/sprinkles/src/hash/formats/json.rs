@@ -4,7 +4,7 @@ use serde_json_path::{JsonPath, NodeList};
 use crate::hash::substitutions::{Substitute, SubstitutionMap};
 
 #[derive(Debug, thiserror::Error)]
-pub enum JsonError {
+pub enum Error {
     #[error("JSON error: {0}")]
     Json(#[from] serde_json::Error),
 
@@ -19,7 +19,7 @@ pub fn parse_json(
     json: &Value,
     substitutions: &SubstitutionMap,
     jp: impl AsRef<str>,
-) -> Result<String, JsonError> {
+) -> Result<String, Error> {
     // let json: Value = serde_json::from_slice(source)?;
 
     let hashes = query_jp(json, jp.as_ref(), substitutions)?;
@@ -28,14 +28,14 @@ pub fn parse_json(
         .first()
         .and_then(|v| v.as_str())
         .map(std::string::ToString::to_string)
-        .ok_or(JsonError::NotFound)
+        .ok_or(Error::NotFound)
 }
 
 fn query_jp<'a>(
     json: &'a Value,
     jp: &str,
     substitutions: &SubstitutionMap,
-) -> Result<NodeList<'a>, JsonError> {
+) -> Result<NodeList<'a>, Error> {
     let jp = {
         let regex_escape = jp.contains("=~");
         jp.to_string().into_substituted(substitutions, regex_escape)

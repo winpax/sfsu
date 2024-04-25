@@ -2,7 +2,7 @@
 
 use std::{io::BufRead, num::ParseIntError};
 
-use formats::{json::JsonError, text::TextError};
+use formats::{json, text};
 use regex::Regex;
 use reqwest::{
     header::{HeaderMap, HeaderValue},
@@ -35,7 +35,7 @@ pub(crate) mod url_ext;
 /// # Errors
 /// - Parse hex string to integer
 /// - Convert chunk to utf8 string
-pub fn decode_hex(hex: &str) -> Result<Vec<u8>, HashError> {
+pub fn decode_hex(hex: &str) -> Result<Vec<u8>, Error> {
     hex.as_bytes()
         .chunks(2)
         .map(|chunk| Ok(u8::from_str_radix(std::str::from_utf8(chunk)?, 16)?))
@@ -55,11 +55,11 @@ pub fn encode_hex(bytes: &[u8]) -> String {
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 /// Hash errors
-pub enum HashError {
+pub enum Error {
     #[error("Text error: {0}")]
-    TextError(#[from] TextError),
+    TextError(#[from] text::Error),
     #[error("Json error: {0}")]
-    JsonError(#[from] JsonError),
+    JsonError(#[from] json::Error),
     #[error("RDF error: {0}")]
     RDFError(#[from] formats::rdf::RDFError),
     #[error("XML error: {0}")]
@@ -154,15 +154,15 @@ pub enum HashType {
 }
 
 impl TryFrom<&String> for HashType {
-    type Error = HashError;
+    type Error = Error;
 
-    fn try_from(value: &String) -> Result<Self, HashError> {
+    fn try_from(value: &String) -> Result<Self, Error> {
         match value.len() {
             64 => Ok(HashType::SHA256),
             40 => Ok(HashType::SHA1),
             32 => Ok(HashType::MD5),
             128 => Ok(HashType::SHA512),
-            _ => Err(HashError::InvalidHash),
+            _ => Err(Error::InvalidHash),
         }
     }
 }
@@ -309,10 +309,10 @@ impl Hash {
     /// - If the hash is not found in the XML
     /// - If the hash is not found in the text
     /// - If the hash is not found in the JSON
-    pub async fn get_for_app(manifest: &Manifest) -> Result<Hash, HashError> {
+    pub async fn get_for_app(manifest: &Manifest) -> Result<Hash, Error> {
         let autoupdate_config = manifest
             .autoupdate_config()
-            .ok_or(HashError::MissingAutoupdateConfig)?;
+            .ok_or(Error::MissingAutoupdateConfig)?;
 
         let mut hash_mode = HashMode::from_manifest(manifest).unwrap_or_default();
 
@@ -341,7 +341,7 @@ impl Hash {
             .install_config()
             .url
             .as_ref()
-            .ok_or(HashError::UrlNotFound)
+            .ok_or(Error::UrlNotFound)
             .and_then(|url| Ok(Url::parse(url)?))?;
 
         let submap = SubstitutionMap::from_all(&manifest.version, &manifest_url);
@@ -351,11 +351,11 @@ impl Hash {
                 HashMode::Fosshub => {
                     let matches = HashMode::fosshub_regex()
                         .captures(manifest_url.as_str())
-                        .ok_or(HashError::MissingFosshubCaptures)?;
+                        .ok_or(Error::MissingFosshubCaptures)?;
 
                     let regex = matches
                         .name("filename")
-                        .ok_or(HashError::MissingFosshubCaptures)?
+                        .ok_or(Error::MissingFosshubCaptures)?
                         .as_str()
                         .to_string()
                         + r#".*?"sha256":"([a-fA-F0-9]{64})""#;
@@ -368,15 +368,15 @@ impl Hash {
                 HashMode::Sourceforge => {
                     let matches = HashMode::sourceforge_regex()
                         .captures(manifest_url.as_str())
-                        .ok_or(HashError::MissingSourceforgeCaptures)?;
+                        .ok_or(Error::MissingSourceforgeCaptures)?;
 
                     let project = matches
                         .name("project")
-                        .ok_or(HashError::MissingSourceforgeCaptures)?
+                        .ok_or(Error::MissingSourceforgeCaptures)?
                         .as_str();
                     let file = matches
                         .name("file")
-                        .ok_or(HashError::MissingSourceforgeCaptures)?
+                        .ok_or(Error::MissingSourceforgeCaptures)?
                         .as_str();
 
                     let hashfile_url = {
@@ -404,14 +404,14 @@ impl Hash {
             let hash_extraction = autoupdate_config
                 .hash
                 .as_ref()
-                .ok_or(HashError::MissingHashExtraction)?
+                .ok_or(Error::MissingHashExtraction)?
                 .as_object()
-                .ok_or(HashError::HashExtractionUrl)?;
+                .ok_or(Error::HashExtractionUrl)?;
 
             hash_extraction
                 .url
                 .as_ref()
-                .ok_or(HashError::UrlNotFound)
+                .ok_or(Error::UrlNotFound)
                 .map(|url| url.clone().into_substituted(&submap, false))
                 .and_then(|url: String| Ok(Url::parse(&url)?))?
         };
@@ -477,10 +477,7 @@ impl Hash {
     ///
     /// # Errors
     /// - If the hash is not found
-    pub fn from_rdf(
-        source: impl AsRef<[u8]>,
-        file_name: impl AsRef<str>,
-    ) -> Result<Hash, HashError> {
+    pub fn from_rdf(source: impl AsRef<[u8]>, file_name: impl AsRef<str>) -> Result<Hash, Error> {
         Ok(formats::rdf::parse_xml(source, file_name).map(|hash| {
             let hash_type = HashType::try_from(&hash).unwrap_or_default();
             Hash { hash, hash_type }
@@ -498,7 +495,7 @@ impl Hash {
         source: impl AsRef<str>,
         substitutions: &SubstitutionMap,
         xpath: impl AsRef<str>,
-    ) -> Result<Hash, HashError> {
+    ) -> Result<Hash, Error> {
         let hash = formats::xml::parse_xml(source, substitutions, xpath)?;
         let hash_type = HashType::try_from(&hash)?;
 
@@ -514,9 +511,9 @@ impl Hash {
         source: impl AsRef<str>,
         substitutions: &SubstitutionMap,
         regex: impl AsRef<str>,
-    ) -> Result<Hash, HashError> {
+    ) -> Result<Hash, Error> {
         let hash =
-            formats::text::parse_text(source, substitutions, regex)?.ok_or(HashError::NotFound)?;
+            formats::text::parse_text(source, substitutions, regex)?.ok_or(Error::NotFound)?;
         let hash_type = HashType::try_from(&hash)?;
 
         Ok(Hash { hash, hash_type })
@@ -531,7 +528,7 @@ impl Hash {
         source: impl AsRef<[u8]>,
         substitutions: &SubstitutionMap,
         json_path: impl AsRef<str>,
-    ) -> Result<Hash, HashError> {
+    ) -> Result<Hash, Error> {
         let json = serde_json::from_slice(source.as_ref())?;
 
         let hash = formats::json::parse_json(&json, substitutions, json_path)?;
@@ -544,7 +541,7 @@ impl Hash {
     ///
     /// # Errors
     /// peepeepoopoo
-    pub fn find_hash_in_headers(_headers: &HeaderMap<HeaderValue>) -> Result<Hash, HashError> {
+    pub fn find_hash_in_headers(_headers: &HeaderMap<HeaderValue>) -> Result<Hash, Error> {
         unimplemented!("I can't find a location where this is ever used")
     }
 }

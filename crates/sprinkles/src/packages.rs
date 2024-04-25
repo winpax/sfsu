@@ -19,7 +19,7 @@ use strum::Display;
 use crate::{
     buckets::{self, Bucket},
     git::{self, Repo},
-    hash::HashError,
+    hash,
     output::{
         sectioned::{Children, Section, Text},
         wrappers::{author::Author, time::NicerTime},
@@ -911,7 +911,7 @@ impl Manifest {
 /// Errors for setting the version of a manifest
 pub enum SetVersionError {
     #[error("Could not get hash for app: {0}")]
-    HashError(#[from] HashError),
+    HashError(#[from] hash::Error),
 
     #[error("Manifest does not have `autoupdate` field")]
     MissingAutoUpdate,

@@ -5,7 +5,7 @@ use strum::{Display, EnumIter};
 use crate::hash::substitutions::{Substitute, SubstitutionMap};
 
 #[derive(Debug, thiserror::Error)]
-pub enum TextError {
+pub enum Error {
     #[error("Regex error: {0}")]
     RegexError(#[from] regex::Error),
 
@@ -60,7 +60,7 @@ pub fn parse_text(
     source: impl AsRef<str>,
     substitutions: &SubstitutionMap,
     regex: impl AsRef<str>,
-) -> Result<Option<String>, TextError> {
+) -> Result<Option<String>, Error> {
     // TODO: Incorporate file_names
 
     let regex = if regex.as_ref().is_empty() {

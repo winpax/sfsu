@@ -68,10 +68,10 @@ impl Version {
     /// # Errors
     /// Will throw an error if an invalid version string was provided.
     /// This should usually should not panic, and you should just ignore the happy path.
-    pub fn parse(&self) -> Result<ParsedVersion, ParseError> {
+    pub fn parse(&self) -> Result<ParsedVersion, Error> {
         let mut parts = self.0.split('.');
 
-        let major = parts.next().ok_or(ParseError::MissingFirstPart)?.parse()?;
+        let major = parts.next().ok_or(Error::MissingFirstPart)?.parse()?;
         let minor = parts.next().and_then(|part| part.parse().ok());
         let patch = parts.next().and_then(|part| part.parse().ok());
         let build = parts.next().map(String::from);
@@ -156,7 +156,7 @@ impl TryFrom<&Version> for semver::Version {
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 /// Errors that can occur when parsing a version string
-pub enum ParseError {
+pub enum Error {
     #[error("Failed to parse integer: {0}")]
     ParseInt(#[from] ParseIntError),
 
