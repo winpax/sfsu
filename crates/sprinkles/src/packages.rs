@@ -48,26 +48,13 @@ use manifest::{InstallConfig, StringArray};
 #[macro_export]
 /// Get a field from a manifest based on the architecture
 macro_rules! arch_config {
-    ($field:ident.$arch:expr) => {{
-        let arch = match $arch {
-            $crate::Architecture::Arm64 => &$field.arm64,
-            $crate::Architecture::X64 => &$field.x64,
-            $crate::Architecture::X86 => &$field.x86,
-        };
-
-        let config = if let Some(arch) = arch {
-            Some(arch)
-        } else {
-            match $crate::Architecture::ARCH {
-                // Find alternative options for the other architectures
-                // For arm64 and x86 there are no alternatives so we can just return None
-                $crate::Architecture::X64 => $field.x86.as_ref(),
-                _ => None,
-            }
-        };
-
-        config
-    }};
+    ($field:ident.$arch:expr) => {
+        match $arch {
+            $crate::Architecture::Arm64 => $field.arm64.as_ref(),
+            $crate::Architecture::X64 => $field.x64.as_ref(),
+            $crate::Architecture::X86 => $field.x86.as_ref(),
+        }
+    };
 
     ($field:ident) => {
         arch_config!($field.$crate::Architecture::ARCH)
