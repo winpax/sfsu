@@ -40,7 +40,7 @@ release-all: clean
     just release i686
     just release aarch64
 
-release-beta-all: clean
+beta-release-all: clean
     just beta-release x86_64
     just beta-release i686
     just beta-release aarch64
