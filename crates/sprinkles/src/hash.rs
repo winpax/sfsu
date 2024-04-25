@@ -416,20 +416,20 @@ impl Hash {
                 .and_then(|url: String| Ok(Url::parse(&url)?))?
         };
 
-        let source = BlockingClient::new().get(url.as_str()).send()?;
+        let source = AsyncClient::new().get(url.as_str()).send().await?;
 
         if hash_mode == HashMode::HashUrl {
-            let hash = source.text()?;
+            let hash = source.text().await?;
             let hash_type = HashType::try_from(&hash).unwrap_or_default();
 
             return Ok(Hash { hash, hash_type });
         }
 
         let hash = match hash_mode {
-            HashMode::Extract(regex) => Hash::from_text(source.text()?, &submap, regex),
-            HashMode::Xpath(xpath) => Hash::find_hash_in_xml(source.text()?, &submap, xpath),
-            HashMode::Json(json_path) => Hash::from_json(source.bytes()?, &submap, json_path),
-            HashMode::Rdf => Hash::from_rdf(source.bytes()?, url.remote_filename()),
+            HashMode::Extract(regex) => Hash::from_text(source.text().await?, &submap, regex),
+            HashMode::Xpath(xpath) => Hash::find_hash_in_xml(source.text().await?, &submap, xpath),
+            HashMode::Json(json_path) => Hash::from_json(source.bytes().await?, &submap, json_path),
+            HashMode::Rdf => Hash::from_rdf(source.bytes().await?, url.remote_filename()),
             _ => unreachable!(),
         }?;
 

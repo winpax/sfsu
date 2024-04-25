@@ -7,9 +7,13 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use bytes::BytesMut;
 use digest::Digest;
+use futures::{Stream, StreamExt, TryStreamExt};
 use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 use reqwest::{Response, StatusCode};
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio_util::codec::{BytesCodec, FramedRead};
 
 use crate::{
     hash::{url_ext::UrlExt, HashType},
@@ -182,12 +186,13 @@ impl Downloader {
     ///
     /// # Errors
     /// - If the file cannot be written to the cache
-    pub async fn download(mut self) -> Result<(PathBuf, Vec<u8>), Error> {
+    pub async fn download(self) -> Result<(PathBuf, Vec<u8>), Error> {
+        let file_name = self.cache.file_name.clone();
         let hash_bytes = match self.cache.hash_type {
-            HashType::SHA512 => self.handle_buf::<sha2::Sha512>(),
-            HashType::SHA256 => self.handle_buf::<sha2::Sha256>(),
-            HashType::SHA1 => self.handle_buf::<sha1::Sha1>(),
-            HashType::MD5 => self.handle_buf::<md5::Md5>(),
+            HashType::SHA512 => self.handle_buf::<sha2::Sha512>().await,
+            HashType::SHA256 => self.handle_buf::<sha2::Sha256>().await,
+            HashType::SHA1 => self.handle_buf::<sha1::Sha1>().await,
+            HashType::MD5 => self.handle_buf::<md5::Md5>().await,
         }?;
 
         // Hash;
@@ -206,69 +211,118 @@ impl Downloader {
         //     reader.consume(chunk_length);
         // }
 
-        Ok((self.cache.file_name.clone(), hash_bytes))
+        Ok((file_name, hash_bytes))
     }
 
-    fn handle_buf<D: Digest>(&mut self) -> Result<Vec<u8>, Error> {
-        enum Source<'a> {
-            Cache(File),
-            Network(&'a mut Response),
+    async fn handle_buf<D: Digest>(self) -> Result<Vec<u8>, Error> {
+        use tokio::fs::File;
+
+        enum Source<
+            T: futures_core::Stream<Item = reqwest::Result<bytes::Bytes>> + std::marker::Unpin,
+        > {
+            Cache(futures::prelude::stream::IntoStream<FramedRead<File, BytesCodec>>),
+            Network(T),
         }
 
-        impl<'a> Read for Source<'a> {
-            fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
-                match self {
-                    Source::Cache(file) => file.read(buf),
-                    Source::Network(resp) => resp.read(buf),
+        impl<T> Stream for Source<T>
+        where
+            T: futures_core::Stream<Item = reqwest::Result<bytes::Bytes>> + std::marker::Unpin,
+        {
+            type Item = reqwest::Result<bytes::Bytes>;
+
+            fn poll_next(
+                self: std::pin::Pin<&mut Self>,
+                cx: &mut std::task::Context<'_>,
+            ) -> std::task::Poll<Option<Self::Item>> {
+                match self.get_mut() {
+                    Source::Cache(file) => {
+                        std::pin::pin!(file).poll_next(cx).map(|bytes| match bytes {
+                            Some(Ok(bytes)) => Some(Ok(BytesMut::freeze(bytes))),
+                            _ => None,
+                        })
+                    }
+                    Source::Network(resp) => resp.poll_next_unpin(cx),
                 }
             }
         }
 
-        let reader = if self.cache.cache_path.exists() {
+        // impl<'a> tokio_stream::Stream for Source<'a> {
+        //     type Item = bytes::Bytes;
+
+        //     fn poll_next(
+        //         self: std::pin::Pin<&mut Self>,
+        //         cx: &mut std::task::Context<'_>,
+        //     ) -> std::task::Poll<Option<Self::Item>> {
+        //         match self {
+        //             Source::Cache(file) => {
+        //                 let mut buf = vec![];
+
+        //                 file.read(&mut buf).then(|buf_length| async {
+        //                     if buf.is_empty() {
+        //                         None
+        //                     } else {
+        //                         Some(buf)
+        //                     }
+        //                 });
+        //             }
+        //             Source::Network(resp) => todo!(),
+        //         }
+        //         todo!()
+        //     }
+        // }
+        // impl<'a> Read for Source<'a> {
+        //     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+        //         match self {
+        //             Source::Cache(file) => file.read(buf),
+        //             Source::Network(resp) => resp.read(buf),
+        //         }
+        //     }
+        // }
+        let cache_path = self.cache.cache_path.clone();
+
+        let mut reader = if cache_path.exists() {
             debug!("Loading from cache");
             if let Some(pb) = &self.pb {
                 pb.set_prefix("📦");
             }
-            Source::Cache(File::open(&self.cache.cache_path)?)
+            let file = File::open(&cache_path).await?;
+            let stream = FramedRead::new(file, BytesCodec::new());
+
+            Source::Cache(stream.into_stream())
         } else {
             debug!("Downloading via network");
-            Source::Network(self.resp.by_ref())
+            Source::Network(self.resp.bytes_stream())
         };
 
-        let mut cache_file = match reader {
+        let mut cache_file = match &reader {
             Source::Cache(_) => None,
-            Source::Network(_) => Some(File::create(&self.cache.cache_path)?),
+            Source::Network(_) => Some(File::create(&cache_path).await?),
         };
-        let mut reader = BufReader::new(reader);
 
         let mut hasher = D::new();
 
-        loop {
-            let chunk = reader.fill_buf().unwrap();
-            if chunk.is_empty() {
-                break;
-            }
+        while let Some(Ok(chunk)) = reader.next().await {
+            hasher.update(&chunk);
 
-            hasher.update(chunk);
-            cache_file.as_mut().map(|f| f.write_all(chunk));
+            if let Some(cache_file) = cache_file.as_mut() {
+                cache_file.write_all(&chunk).await?;
+            }
 
             let chunk_length = chunk.len();
 
             if let Some(pb) = &self.pb {
                 pb.inc(chunk_length as u64);
             }
-
-            reader.consume(chunk_length);
         }
 
         Ok(hasher.finalize()[..].to_vec())
     }
 }
 
-impl Drop for Downloader {
-    fn drop(&mut self) {
-        // There is no code that would drop this message
-        // As such this should be safe
-        unsafe { core::ptr::drop_in_place(std::ptr::from_ref::<str>(self.message).cast_mut()) };
-    }
-}
+// impl Drop for Downloader {
+//     fn drop(&mut self) {
+//         // There is no code that would drop this message
+//         // As such this should be safe
+//         unsafe { core::ptr::drop_in_place(std::ptr::from_ref::<str>(self.message).cast_mut()) };
+//     }
+// }

@@ -28,23 +28,15 @@ impl super::Command for Args {
     async fn runner(self) -> Result<(), anyhow::Error> {
         let mp = MultiProgress::new();
 
-        let downloaders =
-            futures::future::try_join_all(self.packages.into_iter().map(|package| async move {
-                eprintln!("Downloading {}...", package.name().unwrap_or_default());
-
-                if package.version.is_some() {
-                    eprint!("Attempting to generate manifest");
-                }
+        eprint!("Attempting to generate manifest(s)");
+        let downloaders = futures::future::try_join_all(self.packages.into_iter().map(|package| {
+            let mp = mp.clone();
+            async move {
                 let manifest = package.manifest().await?;
-                if let Some(version) = &package.version {
-                    eprint!("\r📜 Generated manifest for version {version}");
-                    eprintln!();
-                }
 
                 let dl = Handle::open_manifest(Scoop::cache_path(), &manifest)?;
-                let output_file = dl.file_name.clone();
 
-                match Downloader::new(dl, &AsyncClient::new(), Some(&mp)) {
+                let downloader = match Downloader::new(dl, &AsyncClient::new(), Some(&mp)).await {
                     Ok(dl) => anyhow::Ok(dl),
                     Err(e) => match e {
                         sprinkles::cache::Error::ErrorCode(status) => {
@@ -52,31 +44,43 @@ impl super::Command for Args {
                         }
                         _ => Err(e.into()),
                     },
-                }
-            }))
-            .await?;
+                }?;
+
+                anyhow::Ok((downloader, manifest))
+            }
+        }))
+        .await?;
+        eprintln!("\r📜 Generated manifest for any and all mismatched versions");
 
         let threads = downloaders
             .into_iter()
-            .map(|dl| tokio::spawn(async { dl.download().await }))
-            .collect_vec();
+            .map(|(dl, hash)| tokio::spawn(async move { (dl.download().await, hash) }));
 
-        // if let Some(actual_hash) = manifest.install_config().hash {
-        //     let hash = encode_hex(&hash);
-        //     if actual_hash == hash {
-        //         eprintln!("🔒 Hash matched: {hash}");
-        //     } else {
-        //         abandon!("🔓 Hash mismatch: expected {actual_hash}, found {hash}");
-        //     }
-        // } else {
-        //     warn!("🔓 No hash provided, skipping hash check");
-        // }
+        let results = futures::future::try_join_all(threads).await?;
 
-        // eprintln!(
-        //     "✅ Downloaded {} to {}",
-        //     manifest.name,
-        //     output_file.display()
-        // );
+        for result in results {
+            let (result, manifest) = result;
+            let (output_file, hash) = result?;
+
+            eprintln!("Checking {} hash...", manifest.name);
+
+            if let Some(actual_hash) = manifest.install_config().hash {
+                let hash = encode_hex(&hash);
+                if actual_hash == hash {
+                    eprintln!("🔒 Hash matched: {hash}");
+                } else {
+                    abandon!("🔓 Hash mismatch: expected {actual_hash}, found {hash}");
+                }
+            } else {
+                warn!("🔓 No hash provided, skipping hash check");
+            }
+
+            eprintln!(
+                "✅ Downloaded {} to {}",
+                manifest.name,
+                output_file.display()
+            );
+        }
 
         Ok(())
     }

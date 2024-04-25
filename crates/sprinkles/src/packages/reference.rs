@@ -170,10 +170,12 @@ impl Package {
             let mut manifest = match &self.manifest {
                 ManifestRef::File(path) => Manifest::from_path(path)?,
                 ManifestRef::Url(url) => {
-                    let manifest_string = crate::requests::BlockingClient::new()
+                    let manifest_string = crate::requests::AsyncClient::new()
                         .get(url.to_string())
-                        .send()?
-                        .text()?;
+                        .send()
+                        .await?
+                        .text()
+                        .await?;
 
                     Manifest::from_str(manifest_string)?
                 }

@@ -5,7 +5,7 @@ use criterion::{black_box, criterion_group, criterion_main, BatchSize, Criterion
 use sprinkles::{
     cache::{Downloader, Handle},
     packages::reference::Package,
-    requests::BlockingClient,
+    requests::{AsyncClient, BlockingClient},
     Scoop,
 };
 
@@ -79,12 +79,12 @@ fn criterion_benchmark(c: &mut Criterion) {
                             .unwrap(),
                     )
                     .unwrap(),
-                    BlockingClient::new(),
+                    AsyncClient::new(),
                 )
             },
             |dl| async {
                 let (dl, client) = dl.await;
-                black_box(Downloader::new(dl, &client, None).unwrap())
+                black_box(Downloader::new(dl, &client, None).await.unwrap())
             },
             BatchSize::SmallInput,
         );
