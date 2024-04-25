@@ -19,12 +19,15 @@ use strum::Display;
 use crate::{
     buckets::{self, Bucket},
     git::{self, Repo},
-    hash,
+    hash::{
+        self,
+        substitutions::{Substitute, SubstitutionMap},
+    },
     output::{
         sectioned::{Children, Section, Text},
         wrappers::{author::Author, time::NicerTime},
     },
-    Scoop,
+    Architecture, Scoop,
 };
 
 pub mod downloading;
@@ -381,7 +384,7 @@ impl MatchCriteria {
         if let Some(manifest) = manifest {
             let binaries = manifest
                 .architecture
-                .merge_default(manifest.install_config.clone())
+                .merge_default(manifest.install_config.clone(), Architecture::ARCH)
                 .bin
                 .map(|b| b.to_vec())
                 .unwrap_or_default();
@@ -520,29 +523,29 @@ impl InstallManifest {
 impl Manifest {
     #[must_use]
     /// Get the install config for a given architecture
-    pub fn install_config(&self) -> InstallConfig {
+    pub fn install_config(&self, arch: Architecture) -> InstallConfig {
         self.architecture
             .as_ref()
-            .merge_default(self.install_config.clone())
+            .merge_default(self.install_config.clone(), arch)
     }
 
     #[must_use]
     /// Get the autoupdate config for the default architecture
-    pub fn autoupdate_config(&self) -> Option<AutoupdateConfig> {
+    pub fn autoupdate_config(&self, arch: Architecture) -> Option<AutoupdateConfig> {
         let autoupdate = self.autoupdate.as_ref()?;
 
         Some(
             autoupdate
                 .architecture
                 .clone()
-                .merge_default(autoupdate.default_config.clone()),
+                .merge_default(autoupdate.default_config.clone(), arch),
         )
     }
 
     #[must_use]
     /// Get the download urls for a given architecture
-    pub fn download_url(&self) -> Option<DownloadUrl> {
-        let urls = self.install_config().url?;
+    pub fn download_url(&self, arch: Architecture) -> Option<DownloadUrl> {
+        let urls = self.install_config(arch).url?;
 
         // Some(urls.into_iter().map(DownloadUrl::from_string).collect())
         Some(DownloadUrl::from_string(urls))
@@ -581,7 +584,7 @@ impl Manifest {
         match self
             .architecture
             .as_ref()
-            .merge_default(self.install_config.clone())
+            .merge_default(self.install_config.clone(), Architecture::ARCH)
             .bin
         {
             Some(AliasArray::NestedArray(StringArray::String(ref binary))) => {
@@ -710,6 +713,23 @@ impl Manifest {
         }
     }
 
+    fn get_new_url(&self, autoupdate: &AutoupdateConfig) -> Option<String> {
+        if let Some(autoupdate_url) = &autoupdate.url {
+            debug!("Autoupdate Url: {autoupdate_url}");
+
+            let mut submap = SubstitutionMap::new();
+            submap.append_version(&self.version);
+
+            let new_url = autoupdate_url.clone().into_substituted(&submap, false);
+
+            debug!("Subbed Autoupdate Url: {new_url}");
+
+            Some(new_url)
+        } else {
+            None
+        }
+    }
+
     #[cfg(feature = "manifest-hashes")]
     /// Set the manifest version and get the hash for the manifest
     ///
@@ -719,60 +739,44 @@ impl Manifest {
     pub async fn set_version(&mut self, version: String) -> Result<(), Error> {
         use quork::traits::list::ListVariants;
 
-        use crate::hash::{
-            substitutions::{Substitute, SubstitutionMap},
-            Hash,
-        };
+        use crate::hash::Hash;
 
         self.version = version.into();
 
         let autoupdate = self.autoupdate.as_ref().ok_or(Error::MissingAutoUpdate)?;
 
-        let autoupdate = autoupdate
-            .architecture
-            .merge_default(autoupdate.default_config.clone());
+        // TODO: This sets the same hash and url for all architectures
+        for arch in crate::Architecture::VARIANTS {
+            let arch_autoupdate = autoupdate
+                .architecture
+                .merge_default(autoupdate.default_config.clone(), arch);
 
-        let new_url = if let Some(autoupdate_url) = autoupdate.url {
-            debug!("Autoupdate Url: {autoupdate_url}");
+            let arch_url = self.get_new_url(&arch_autoupdate);
 
-            let mut submap = SubstitutionMap::new();
-            submap.append_version(&self.version);
-
-            let new_url = autoupdate_url.into_substituted(&submap, false);
-
-            debug!("Subbed Autoupdate Url: {new_url}");
-
-            Some(new_url)
-        } else {
-            None
-        };
-
-        if let Some(arch_config) = &mut self.architecture {
-            // TODO: This sets the same hash and url for all architectures
-            for arch in crate::Architecture::VARIANTS {
+            if let Some(arch_config) = &mut self.architecture {
                 Self::update_field(
                     arch_field!(arch => arch_config.url as mut),
                     &mut self.install_config.url,
-                    new_url.clone(),
+                    arch_url,
                 );
+            } else {
+                self.install_config.url = self.get_new_url(&autoupdate.default_config);
             }
-        } else {
-            self.install_config.url = new_url;
         }
 
-        let hash = Hash::get_for_app(self).await?;
+        for arch in crate::Architecture::VARIANTS {
+            let hash = Hash::get_for_app(self, arch).await?;
 
-        if let Some(arch_config) = &mut self.architecture {
-            // TODO: This sets the same hash and url for all architectures
-            for arch in crate::Architecture::VARIANTS {
+            if let Some(arch_config) = &mut self.architecture {
+                // TODO: This sets the same hash and url for all architectures
                 Self::update_field(
                     arch_field!(arch => arch_config.hash as mut),
                     &mut self.install_config.hash,
                     Some(hash.hash()),
                 );
+            } else {
+                self.install_config.hash = Some(hash.hash());
             }
-        } else {
-            self.install_config.hash = Some(hash.hash());
         }
 
         // TODO: Handle other autoupdate fields
@@ -964,7 +968,7 @@ pub trait MergeDefaults {
     type Default;
 
     /// Merge the architecture specific autoupdate config with the arch agnostic one
-    fn merge_default(&self, default: Self::Default) -> Self::Default;
+    fn merge_default(&self, default: Self::Default, arch: Architecture) -> Self::Default;
 }
 
 impl MergeDefaults for Option<AutoupdateArchitecture> {
@@ -972,12 +976,12 @@ impl MergeDefaults for Option<AutoupdateArchitecture> {
 
     #[must_use]
     /// Merge the architecture specific autoupdate config with the arch agnostic one
-    fn merge_default(&self, default: Self::Default) -> Self::Default {
+    fn merge_default(&self, default: Self::Default, arch: Architecture) -> Self::Default {
         let Some(config) = self else {
             return default;
         };
 
-        let config = arch_config!(config => clone);
+        let config = arch_config!(config.arch => clone);
 
         AutoupdateConfig {
             bin: config.bin.or(default.bin),
@@ -998,12 +1002,12 @@ impl MergeDefaults for Option<&ManifestArchitecture> {
     #[allow(deprecated)]
     #[must_use]
     /// Merge the architecture specific autoupdate config with the arch agnostic one
-    fn merge_default(&self, default: Self::Default) -> Self::Default {
+    fn merge_default(&self, default: Self::Default, arch: Architecture) -> Self::Default {
         let Some(config) = self else {
             return default;
         };
 
-        let config = arch_config!(config => clone);
+        let config = arch_config!(config.arch => clone);
 
         InstallConfig {
             bin: config.bin.or(default.bin),
@@ -1029,8 +1033,8 @@ impl MergeDefaults for Option<ManifestArchitecture> {
     #[allow(deprecated)]
     #[must_use]
     /// Merge the architecture specific autoupdate config with the arch agnostic one
-    fn merge_default(&self, default: Self::Default) -> Self::Default {
-        self.as_ref().merge_default(default)
+    fn merge_default(&self, default: Self::Default, arch: Architecture) -> Self::Default {
+        self.as_ref().merge_default(default, arch)
     }
 }
 
@@ -1049,7 +1053,7 @@ impl HashExtractionOrArrayOfHashExtractions {
 mod tests {
     use std::error::Error;
 
-    use crate::{buckets::Bucket, packages::MergeDefaults};
+    use crate::{buckets::Bucket, packages::MergeDefaults, Architecture};
     use rayon::prelude::*;
 
     #[test]
@@ -1078,7 +1082,7 @@ mod tests {
             if let Some(autoupdate) = &manifest.autoupdate {
                 let autoupdate_config = autoupdate
                     .architecture
-                    .merge_default(autoupdate.default_config.clone());
+                    .merge_default(autoupdate.default_config.clone(), Architecture::ARCH);
 
                 assert!(
                     autoupdate_config.url.is_some(),

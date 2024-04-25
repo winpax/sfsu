@@ -13,7 +13,7 @@ use sprinkles::{
         manifest::{AliasArray, StringArray},
         reference, Manifest, MergeDefaults,
     },
-    semver, Scoop,
+    semver, Architecture, Scoop,
 };
 
 #[derive(Debug, Clone, Parser)]
@@ -134,7 +134,7 @@ impl Args {
             license: manifest.license,
             binaries: manifest
                 .architecture
-                .merge_default(manifest.install_config.clone())
+                .merge_default(manifest.install_config.clone(), Architecture::ARCH)
                 .bin
                 .map(|b| match b {
                     AliasArray::NestedArray(StringArray::String(bin)) => bin.to_string(),

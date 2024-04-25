@@ -21,7 +21,7 @@ use crate::{
         Manifest, MergeDefaults,
     },
     requests::AsyncClient,
-    Scoop,
+    Architecture, Scoop,
 };
 
 use self::substitutions::Substitute;
@@ -207,10 +207,10 @@ impl HashMode {
     ///
     /// # Panics
     /// - Invalid regexes
-    pub fn from_manifest(manifest: &Manifest) -> Option<Self> {
+    pub fn from_manifest(manifest: &Manifest, arch: Architecture) -> Option<Self> {
         let install_config = manifest
             .architecture
-            .merge_default(manifest.install_config.clone());
+            .merge_default(manifest.install_config.clone(), arch);
 
         if let Some(url) = install_config.url {
             if Self::fosshub_regex().is_match(&url) {
@@ -226,7 +226,10 @@ impl HashMode {
             .autoupdate
             .as_ref()
             .and_then(|autoupdate| autoupdate.architecture.clone())
-            .merge_default(manifest.autoupdate.as_ref().unwrap().default_config.clone());
+            .merge_default(
+                manifest.autoupdate.as_ref().unwrap().default_config.clone(),
+                arch,
+            );
 
         Self::from_autoupdate_config(&autoupdate_config)
     }
@@ -309,15 +312,15 @@ impl Hash {
     /// - If the hash is not found in the XML
     /// - If the hash is not found in the text
     /// - If the hash is not found in the JSON
-    pub async fn get_for_app(manifest: &Manifest) -> Result<Hash, Error> {
+    pub async fn get_for_app(manifest: &Manifest, arch: Architecture) -> Result<Hash, Error> {
         let autoupdate_config = manifest
-            .autoupdate_config()
+            .autoupdate_config(arch)
             .ok_or(Error::MissingAutoupdateConfig)?;
 
-        let mut hash_mode = HashMode::from_manifest(manifest).unwrap_or_default();
+        let mut hash_mode = HashMode::from_manifest(manifest, arch).unwrap_or_default();
 
         if hash_mode == HashMode::Download {
-            let cache_handle = Handle::open_manifest(Scoop::cache_path(), manifest)?;
+            let cache_handle = Handle::open_manifest(Scoop::cache_path(), manifest, arch)?;
 
             let downloader = Downloader::new(cache_handle, &AsyncClient::new(), None).await?;
 
@@ -338,7 +341,7 @@ impl Hash {
         }
 
         let manifest_url = manifest
-            .install_config()
+            .install_config(arch)
             .url
             .as_ref()
             .ok_or(Error::UrlNotFound)
@@ -638,7 +641,9 @@ mod tests {
             .get_manifest("googlechrome")
             .unwrap();
 
-        let hash = Hash::get_for_app(&manifest).await.unwrap();
+        let hash = Hash::get_for_app(&manifest, Architecture::ARCH)
+            .await
+            .unwrap();
 
         let actual_hash = manifest
             .architecture
@@ -666,11 +671,11 @@ mod tests {
         pub async fn test(self) -> anyhow::Result<()> {
             let manifest = self.package.manifest().await?;
 
-            let hash = Hash::get_for_app(&manifest).await?;
+            let hash = Hash::get_for_app(&manifest, Architecture::ARCH).await?;
 
             let actual_hash = manifest
                 .architecture
-                .merge_default(manifest.install_config)
+                .merge_default(manifest.install_config, Architecture::ARCH)
                 .hash
                 .unwrap();
 

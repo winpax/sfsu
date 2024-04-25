@@ -16,7 +16,7 @@ use tokio_util::codec::{BytesCodec, FramedRead};
 use crate::{
     hash::{url_ext::UrlExt, HashType},
     packages::Manifest,
-    progress,
+    progress, Architecture,
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -70,11 +70,17 @@ impl Handle {
     /// # Errors
     /// - IO errors
     /// - Missing download URL
-    pub fn open_manifest(cache_path: impl AsRef<Path>, manifest: &Manifest) -> Result<Self, Error> {
+    pub fn open_manifest(
+        cache_path: impl AsRef<Path>,
+        manifest: &Manifest,
+        arch: Architecture,
+    ) -> Result<Self, Error> {
         let name = &manifest.name;
         let version = &manifest.version;
 
-        let url = manifest.download_url().ok_or(Error::MissingDownloadUrl)?;
+        let url = manifest
+            .download_url(arch)
+            .ok_or(Error::MissingDownloadUrl)?;
 
         let file_name = PathBuf::from(&url);
 

@@ -7,7 +7,7 @@ use sprinkles::{
     hash::encode_hex,
     packages::reference::Package,
     requests::AsyncClient,
-    Scoop,
+    Architecture, Scoop,
 };
 
 #[derive(Debug, Clone, Parser)]
@@ -31,7 +31,7 @@ impl super::Command for Args {
             async move {
                 let manifest = package.manifest().await?;
 
-                let dl = Handle::open_manifest(Scoop::cache_path(), &manifest)?;
+                let dl = Handle::open_manifest(Scoop::cache_path(), &manifest, Architecture::ARCH)?;
 
                 let downloader = match Downloader::new(dl, &AsyncClient::new(), Some(&mp)).await {
                     Ok(dl) => anyhow::Ok(dl),
@@ -61,7 +61,7 @@ impl super::Command for Args {
 
             eprintln!("Checking {} hash...", manifest.name);
 
-            if let Some(actual_hash) = manifest.install_config().hash {
+            if let Some(actual_hash) = manifest.install_config(Architecture::ARCH).hash {
                 let hash = encode_hex(&hash);
                 if actual_hash == hash {
                     eprintln!("🔒 Hash matched: {hash}");
