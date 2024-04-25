@@ -13,7 +13,7 @@ package.publish = false
 package.version = "1.10.3"
 
 [workspace.dependencies]
-chrono = { version = ">=0.4.37", features = [
+chrono = { version = ">=0.4.38", features = [
     "clock",
     "serde",
     "std",
