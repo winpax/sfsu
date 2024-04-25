@@ -33,7 +33,7 @@ build_time:{}
 build_env:{},{}
 libgit2:{}"#,
             PKG_VERSION,
-            sprinkles::versions::VERSION,
+            sprinkles::__versions::VERSION,
             BRANCH,
             TAG,
             SHORT_COMMIT,

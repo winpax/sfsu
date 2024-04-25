@@ -36,7 +36,8 @@ pub mod shell;
 pub mod stream;
 pub mod version;
 
-pub mod versions {
+#[doc(hidden)]
+pub mod __versions {
     //! Version information
 
     /// Sprinkles library version
