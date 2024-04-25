@@ -9,7 +9,7 @@ use std::{
 
 use digest::Digest;
 use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
-use reqwest::{blocking::Response, StatusCode};
+use reqwest::{Response, StatusCode};
 
 use crate::{
     hash::{url_ext::UrlExt, HashType},
@@ -89,12 +89,12 @@ impl Handle {
     ///
     /// # Errors
     /// - If the request fails
-    pub fn begin_download(
+    pub async fn begin_download(
         self,
-        client: &impl Deref<Target = reqwest::blocking::Client>,
+        client: &impl Deref<Target = reqwest::Client>,
         mp: Option<&MultiProgress>,
     ) -> Result<Downloader, Error> {
-        Downloader::new(self, client, mp)
+        Downloader::new(self, client, mp).await
     }
 }
 
@@ -117,12 +117,12 @@ impl Downloader {
     /// # Panics
     /// - A non-empty file name
     /// - Invalid progress style template
-    pub fn new(
+    pub async fn new(
         cache: Handle,
-        client: &impl Deref<Target = reqwest::blocking::Client>,
+        client: &impl Deref<Target = reqwest::Client>,
         mp: Option<&MultiProgress>,
     ) -> Result<Self, Error> {
-        let resp = client.get(&cache.url).send()?;
+        let resp = client.get(&cache.url).send().await?;
 
         if !resp.status().is_success() {
             return Err(Error::ErrorCode(resp.status()));

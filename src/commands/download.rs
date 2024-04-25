@@ -9,7 +9,7 @@ use sprinkles::{
     cache::{Downloader, Handle},
     hash::encode_hex,
     packages::reference::Package,
-    requests::BlockingClient,
+    requests::AsyncClient,
     Scoop,
 };
 
@@ -27,10 +27,9 @@ impl super::Command for Args {
 
     async fn runner(self) -> Result<(), anyhow::Error> {
         let mp = MultiProgress::new();
-        let client = BlockingClient::new();
 
         let downloaders =
-            futures::future::try_join_all(self.packages.into_iter().map(|package| async {
+            futures::future::try_join_all(self.packages.into_iter().map(|package| async move {
                 eprintln!("Downloading {}...", package.name().unwrap_or_default());
 
                 if package.version.is_some() {
@@ -45,7 +44,7 @@ impl super::Command for Args {
                 let dl = Handle::open_manifest(Scoop::cache_path(), &manifest)?;
                 let output_file = dl.file_name.clone();
 
-                match Downloader::new(dl, &client, Some(&mp)) {
+                match Downloader::new(dl, &AsyncClient::new(), Some(&mp)) {
                     Ok(dl) => anyhow::Ok(dl),
                     Err(e) => match e {
                         sprinkles::cache::Error::ErrorCode(status) => {
@@ -59,7 +58,7 @@ impl super::Command for Args {
 
         let threads = downloaders
             .into_iter()
-            .map(|dl| tokio::spawn(dl.download))
+            .map(|dl| tokio::spawn(async { dl.download().await }))
             .collect_vec();
 
         // if let Some(actual_hash) = manifest.install_config().hash {

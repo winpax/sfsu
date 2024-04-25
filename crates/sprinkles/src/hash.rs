@@ -20,7 +20,7 @@ use crate::{
         },
         Manifest, MergeDefaults,
     },
-    requests::BlockingClient,
+    requests::{AsyncClient, BlockingClient},
     Scoop,
 };
 
@@ -319,7 +319,7 @@ impl Hash {
         if hash_mode == HashMode::Download {
             let cache_handle = Handle::open_manifest(Scoop::cache_path(), manifest)?;
 
-            let downloader = Downloader::new(cache_handle, &BlockingClient::new(), None)?;
+            let downloader = Downloader::new(cache_handle, &AsyncClient::new(), None).await?;
 
             let (_, hash) = downloader.download().await?;
 
