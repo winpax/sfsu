@@ -23,6 +23,10 @@ impl super::Command for Args {
     const BETA: bool = true;
 
     async fn runner(self) -> Result<(), anyhow::Error> {
+        if self.packages.is_empty() {
+            abandon!("No packages provided")
+        }
+
         let mp = MultiProgress::new();
 
         eprint!("Attempting to generate manifest(s)");
@@ -59,16 +63,18 @@ impl super::Command for Args {
             let (result, manifest) = result;
             let (output_file, hash) = result?;
 
-            eprintln!("Checking {} hash...", manifest.name);
+            eprint!("🔓 Checking {} hash...", manifest.name);
 
             if let Some(actual_hash) = manifest.install_config(Architecture::ARCH).hash {
                 let hash = encode_hex(&hash);
                 if actual_hash == hash {
-                    eprintln!("🔒 Hash matched: {hash}");
+                    eprintln!("\r🔒 Hash matched: {hash}");
                 } else {
+                    eprintln!();
                     abandon!("🔓 Hash mismatch: expected {actual_hash}, found {hash}");
                 }
             } else {
+                eprintln!();
                 warn!("🔓 No hash provided, skipping hash check");
             }
 
