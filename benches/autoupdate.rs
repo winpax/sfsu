@@ -6,7 +6,7 @@ use sprinkles::{
     cache::{Downloader, Handle},
     packages::reference::Package,
     requests::{AsyncClient, BlockingClient},
-    Scoop,
+    Architecture, Scoop,
 };
 
 fn criterion_benchmark(c: &mut Criterion) {
@@ -45,7 +45,8 @@ fn criterion_benchmark(c: &mut Criterion) {
                     .unwrap()
             },
             |manifest| async {
-                Handle::open_manifest(Scoop::cache_path(), &manifest.await).unwrap()
+                Handle::open_manifest(Scoop::cache_path(), &manifest.await, Architecture::ARCH)
+                    .unwrap()
             },
             BatchSize::SmallInput,
         );
@@ -77,6 +78,7 @@ fn criterion_benchmark(c: &mut Criterion) {
                             .manifest()
                             .await
                             .unwrap(),
+                        Architecture::ARCH,
                     )
                     .unwrap(),
                     AsyncClient::new(),
