@@ -40,7 +40,7 @@ futures = "0.3.30"
 getset = { version = "0.1.2", optional = true }
 git2.workspace = true
 heck = "0.5"
-indicatif = { version = "0.17", features = ["improved_unicode", "rayon"] }
+indicatif.workspace = true
 itertools = "0.12"
 log.workspace = true
 md-5 = "0.10.6"
@@ -49,7 +49,13 @@ quick-xml = { version = "0.31.0", optional = true, features = ["serialize"] }
 quork = "0.6"
 rayon = "1.10"
 regex = "1.10"
-reqwest = { version = "0.12", features = ["blocking"] }
+reqwest = { version = "0.12", features = [
+    "blocking",
+    "brotli",
+    "deflate",
+    "gzip",
+    "stream",
+] }
 semver = { version = "1.0", features = ["serde"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0", features = ["preserve_order"] }
