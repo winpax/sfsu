@@ -34,7 +34,7 @@ impl Command for Args {
 
     async fn runner(self) -> anyhow::Result<()> {
         if let Some(command) = self.command {
-            command.run()
+            command.run().await
         } else {
             if self.json {
                 let mut map = Map::new();
@@ -55,9 +55,11 @@ impl Command for Args {
                 println!("{output}");
             } else {
                 println!("Outdated Apps:");
-                Commands::Apps(apps::Args { json: self.json }).run()?;
+                Commands::Apps(apps::Args { json: self.json }).run().await?;
                 println!("\nOutdated Buckets:");
-                Commands::Buckets(buckets::Args { json: self.json }).run()?;
+                Commands::Buckets(buckets::Args { json: self.json })
+                    .run()
+                    .await?;
             }
 
             Ok(())

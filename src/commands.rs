@@ -47,7 +47,7 @@ pub trait Command {
 
     async fn runner(self) -> Result<(), anyhow::Error>;
 
-    fn run(self) -> Result<(), anyhow::Error>
+    async fn run(self) -> Result<(), anyhow::Error>
     where
         Self: Sized,
     {
@@ -81,10 +81,7 @@ pub trait Command {
             );
         }
 
-        tokio::runtime::Builder::new_multi_thread()
-            .enable_all()
-            .build()?
-            .block_on(async { self.runner().await })
+        self.runner().await
     }
 }
 

@@ -101,7 +101,10 @@ fn main() -> anyhow::Result<()> {
 
     debug!("Running command: {:?}", args.command);
 
-    args.command.run()
+    tokio::runtime::Builder::new_multi_thread()
+        .enable_all()
+        .build()?
+        .block_on(async { args.command.run().await })
 }
 
 // /// Get the owner of a file path

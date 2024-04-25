@@ -26,6 +26,6 @@ pub struct Args {
 impl super::Command for Args {
     #[inline]
     async fn runner(self) -> Result<(), anyhow::Error> {
-        self.command.run()
+        self.command.run().await
     }
 }

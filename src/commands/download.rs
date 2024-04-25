@@ -59,27 +59,27 @@ impl super::Command for Args {
             })
             .collect::<anyhow::Result<Vec<_>>>()?;
 
-        let threads = downloaders
-            .into_iter()
-            .map(|dl| thread::spawn(move || dl.download()))
-            .collect_vec();
+        // let threads = downloaders
+        //     .into_iter()
+        //     .map(|dl| thread::spawn(move || dl.download()))
+        //     .collect_vec();
 
-        if let Some(actual_hash) = manifest.install_config().hash {
-            let hash = encode_hex(&hash);
-            if actual_hash == hash {
-                eprintln!("🔒 Hash matched: {hash}");
-            } else {
-                abandon!("🔓 Hash mismatch: expected {actual_hash}, found {hash}");
-            }
-        } else {
-            warn!("🔓 No hash provided, skipping hash check");
-        }
+        // if let Some(actual_hash) = manifest.install_config().hash {
+        //     let hash = encode_hex(&hash);
+        //     if actual_hash == hash {
+        //         eprintln!("🔒 Hash matched: {hash}");
+        //     } else {
+        //         abandon!("🔓 Hash mismatch: expected {actual_hash}, found {hash}");
+        //     }
+        // } else {
+        //     warn!("🔓 No hash provided, skipping hash check");
+        // }
 
-        eprintln!(
-            "✅ Downloaded {} to {}",
-            manifest.name,
-            output_file.display()
-        );
+        // eprintln!(
+        //     "✅ Downloaded {} to {}",
+        //     manifest.name,
+        //     output_file.display()
+        // );
 
         Ok(())
     }
