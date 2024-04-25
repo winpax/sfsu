@@ -17,7 +17,7 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    fn runner(self) -> Result<(), anyhow::Error> {
+    async fn runner(self) -> Result<(), anyhow::Error> {
         let shell = self.shell;
         let shell_config = shell.config();
         let enabled_hooks: Vec<CommandsHooks> = {

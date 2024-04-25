@@ -3,7 +3,7 @@
 struct DummyStruct;
 
 impl DummyStruct {
-    pub fn run(self) -> anyhow::Result<()> {
+    pub async fn run(self) -> anyhow::Result<()> {
         println!("Hello, world!");
 
         Ok(())

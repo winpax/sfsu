@@ -47,7 +47,7 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    fn runner(mut self) -> anyhow::Result<()> {
+    async fn runner(mut self) -> anyhow::Result<()> {
         #[cfg(not(feature = "v2"))]
         if self.package.bucket().is_none() {
             if let Some(bucket) = &self.bucket {
