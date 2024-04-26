@@ -10,6 +10,8 @@
 mod commands;
 mod logging;
 
+use std::io::IsTerminal;
+
 use clap::Parser;
 
 use commands::Commands;
@@ -94,7 +96,7 @@ fn main() -> anyhow::Result<()> {
         args.verbose
     })?;
 
-    if args.no_color {
+    if args.no_color || !std::io::stdout().is_terminal() {
         debug!("Colour disabled globally");
         owo_colors::set_override(false);
     }
