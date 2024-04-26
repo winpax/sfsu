@@ -10,7 +10,10 @@
 mod commands;
 mod logging;
 
-use std::io::IsTerminal;
+use std::{
+    io::IsTerminal,
+    sync::atomic::{AtomicBool, Ordering},
+};
 
 use clap::Parser;
 
@@ -85,6 +88,8 @@ struct Args {
     disable_git: bool,
 }
 
+pub(crate) static COLOR_ENABLED: AtomicBool = AtomicBool::new(true);
+
 fn main() -> anyhow::Result<()> {
     logging::panics::handle();
 
@@ -99,6 +104,7 @@ fn main() -> anyhow::Result<()> {
     if args.no_color || !std::io::stdout().is_terminal() {
         debug!("Colour disabled globally");
         owo_colors::set_override(false);
+        COLOR_ENABLED.store(false, Ordering::Relaxed);
     }
 
     debug!("Running command: {:?}", args.command);
