@@ -1,15 +1,14 @@
-use std::{fs::File, io::Read};
+use std::{fs::File, io::Read, sync::atomic::Ordering};
 
 use clap::Parser;
 use sprinkles::{calm_panic::abandon, packages::reference};
+
+use crate::COLOR_ENABLED;
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
     #[clap(help = "The manifest to display")]
     package: reference::Package,
-
-    #[clap(from_global)]
-    no_color: bool,
 }
 
 impl super::Command for Args {
@@ -31,15 +30,15 @@ impl super::Command for Args {
             buf
         };
 
-        if self.no_color {
-            print!("{}", String::from_utf8_lossy(&manifest_content));
-        } else {
+        if COLOR_ENABLED.load(Ordering::Relaxed) {
             use bat::PrettyPrinter;
 
             PrettyPrinter::new()
                 .input_from_bytes(&manifest_content)
                 .language("json")
                 .print()?;
+        } else {
+            print!("{}", String::from_utf8_lossy(&manifest_content));
         }
 
         Ok(())
