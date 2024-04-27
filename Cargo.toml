@@ -4,7 +4,7 @@ edition = "2021"
 license = { workspace = true }
 name = "sfsu"
 publish.workspace = true
-version = "1.11.0-beta.4"
+version.workspace = true
 
 [workspace]
 members = ["crates/*"]
