@@ -2345,7 +2345,7 @@ dependencies = [
 
 [[package]]
 name = "sfsu"
-version = "1.10.4"
+version = "1.11.0-beta.4"
 dependencies = [
  "anyhow",
  "bat",
