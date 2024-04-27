@@ -2364,6 +2364,7 @@ dependencies = [
  "quork",
  "rayon",
  "regex",
+ "serde",
  "serde_json",
  "sfsu-derive",
  "shadow-rs",
