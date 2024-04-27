@@ -128,4 +128,6 @@ pub enum Commands {
     Export(export::Args),
     /// Check for common issues
     Checkup(checkup::Args),
+    /// Show or clear the download cache
+    Cache(cache::Args),
 }
