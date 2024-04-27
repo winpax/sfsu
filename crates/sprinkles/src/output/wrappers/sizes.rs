@@ -8,29 +8,30 @@ use serde::Serialize;
 const SUFFIX: [&str; 9] = ["B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"];
 const UNIT: f64 = 1024.0;
 
-#[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 /// A size in bytes.
-pub struct Size(f64);
+pub struct Size(u64);
 
 impl Size {
     #[must_use]
     /// Create a new size.
-    pub fn new(size: f64) -> Self {
+    pub fn new(size: u64) -> Self {
         Self(size)
     }
 }
 
 impl Display for Size {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if self.0 <= 0.0 {
+        let size = self.0 as f64;
+        if size <= 0.0 {
             return write!(f, "0 B");
         }
 
         #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
-        let log = (self.0.ln() / UNIT.ln()).floor() as usize;
+        let log = (size.ln() / UNIT.ln()).floor() as usize;
         let i = min(log, SUFFIX.len() - 1);
         #[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
-        let size = self.0 / UNIT.powi(i as i32);
+        let size = size / UNIT.powi(i as i32);
 
         write!(f, "{:.2} {}", size, SUFFIX[i])
     }
@@ -51,29 +52,26 @@ mod tests {
 
     #[test]
     fn test_size() {
-        assert_eq!(Size(0.0).to_string(), "0 B");
-        assert_eq!(Size(1024.0).to_string(), "1.00 KiB");
-        assert_eq!(Size(1024.0 * 1024.0).to_string(), "1.00 MiB");
-        assert_eq!(Size(1024.0 * 1024.0 * 1024.0).to_string(), "1.00 GiB");
+        assert_eq!(Size(0).to_string(), "0 B");
+        assert_eq!(Size(1024).to_string(), "1.00 KiB");
+        assert_eq!(Size(1024 * 1024).to_string(), "1.00 MiB");
+        assert_eq!(Size(1024 * 1024 * 1024).to_string(), "1.00 GiB");
+        assert_eq!(Size(1024 * 1024 * 1024 * 1024).to_string(), "1.00 TiB");
         assert_eq!(
-            Size(1024.0 * 1024.0 * 1024.0 * 1024.0).to_string(),
-            "1.00 TiB"
-        );
-        assert_eq!(
-            Size(1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0).to_string(),
+            Size(1024 * 1024 * 1024 * 1024 * 1024).to_string(),
             "1.00 PiB"
         );
         assert_eq!(
-            Size(1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0).to_string(),
+            Size(1024 * 1024 * 1024 * 1024 * 1024 * 1024).to_string(),
             "1.00 EiB"
         );
-        assert_eq!(
-            Size(1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0).to_string(),
-            "1.00 ZiB"
-        );
-        assert_eq!(
-            Size(1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0).to_string(),
-            "1.00 YiB"
-        );
+        // assert_eq!(
+        //     Size(1024 * 1024 * 1024 * 1024 * 1024 * 1024 * 1024).to_string(),
+        //     "1.00 ZiB"
+        // );
+        // assert_eq!(
+        //     Size(1024 * 1024 * 1024 * 1024 * 1024 * 1024 * 1024 * 1024).to_string(),
+        //     "1.00 YiB"
+        // );
     }
 }
