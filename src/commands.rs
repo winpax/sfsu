@@ -1,4 +1,5 @@
 pub mod bucket;
+pub mod cache;
 pub mod cat;
 pub mod checkup;
 pub mod depends;
