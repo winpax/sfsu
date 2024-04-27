@@ -3,10 +3,12 @@
 use std::cmp::min;
 use std::fmt::Display;
 
+use serde::Serialize;
+
 const SUFFIX: [&str; 9] = ["B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"];
 const UNIT: f64 = 1024.0;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
 /// A size in bytes.
 pub struct Size(f64);
 
@@ -31,6 +33,15 @@ impl Display for Size {
         let size = self.0 / UNIT.powi(i as i32);
 
         write!(f, "{:.2} {}", size, SUFFIX[i])
+    }
+}
+
+impl Serialize for Size {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&self.to_string())
     }
 }
 

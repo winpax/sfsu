@@ -3,7 +3,10 @@ use std::os::windows::fs::MetadataExt;
 use anyhow::Context;
 use clap::Parser;
 use serde::Serialize;
-use sprinkles::{output::wrappers::sizes::Size, Scoop};
+use sprinkles::{
+    output::{structured::Structured, wrappers::sizes::Size},
+    Scoop,
+};
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
@@ -11,12 +14,12 @@ pub struct Args {
     json: bool,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, PartialEq, PartialOrd)]
 struct CacheEntry {
     name: String,
     version: String,
-    url: String,
     size: Size,
+    url: String,
 }
 
 impl super::Command for Args {
@@ -25,30 +28,38 @@ impl super::Command for Args {
 
         let mut dir = tokio::fs::read_dir(cache_path).await?;
 
-        while let Some(entry) = dir.next_entry().await? {
-            let metadata = entry.metadata().await?;
+        let cache_entries =
+            futures::future::try_join_all(dir.next_entry().await?.iter().map(|entry| async {
+                let metadata = entry.metadata().await?;
 
-            let cache_entry = {
-                let name = entry.file_name();
-                let mut parts = name.to_string_lossy().split('#');
+                let cache_entry = {
+                    let name = entry.file_name();
+                    let name = name.to_string_lossy();
+                    let mut parts = name.split('#');
 
-                let name = parts.next().context("No name")?;
-                let version = parts.next().context("No version")?;
-                let url = parts.next().context("No url")?;
-                let size = Size::new(metadata.file_size() as f64);
+                    let name = parts.next().context("No name")?;
+                    let version = parts.next().context("No version")?;
+                    let url = parts.next().context("No url")?;
 
-                CacheEntry {
-                    name: name.to_string(),
-                    version: version.to_string(),
-                    url: url.to_string(),
-                    size,
-                }
-            };
+                    #[allow(clippy::cast_precision_loss)]
+                    let size = Size::new(metadata.file_size() as f64);
 
-            #[allow(clippy::cast_precision_loss)]
-            let size = Size::new(metadata.file_size() as f64);
-            println!("{name}, {size} bytes");
-        }
+                    CacheEntry {
+                        name: name.to_string(),
+                        version: version.to_string(),
+                        url: url.to_string(),
+                        size,
+                    }
+                };
+
+                anyhow::Ok(serde_json::to_value(cache_entry)?)
+            }))
+            .await?;
+
+        // TODO: Figure out max length so urls aren't truncated unless they need to be
+        let data = Structured::new(&cache_entries).with_max_length(50);
+
+        println!("{data}");
 
         Ok(())
 
