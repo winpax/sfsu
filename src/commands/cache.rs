@@ -2,15 +2,12 @@ use std::os::windows::fs::MetadataExt;
 
 use anyhow::Context;
 use clap::Parser;
-use rayon::prelude::*;
 use serde::Serialize;
 use sprinkles::{
     output::{structured::Structured, wrappers::sizes::Size},
     Scoop,
 };
 use tokio::task::JoinSet;
-
-use crate::commands::cache;
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
