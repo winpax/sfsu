@@ -10,7 +10,7 @@ version.workspace = true
 members = ["crates/*"]
 package.license = "Apache-2.0"
 package.publish = false
-package.version = "1.10.4"
+package.version = "1.11.0-beta.4"
 
 [workspace.dependencies]
 chrono = { version = ">=0.4.38", features = [
@@ -83,7 +83,7 @@ regex.workspace = true
 serde_json = { version = "1.0", features = ["preserve_order"] }
 sfsu-derive = { path = "./crates/derive" }
 shadow-rs = "0.27"
-sprinkles = { version = "*", path = "crates/sprinkles" }
+sprinkles = { version = "1.11.0-beta.4", path = "crates/sprinkles" }
 tokio = { version = "1.37", features = ["full"] }
 
 [dev-dependencies]
