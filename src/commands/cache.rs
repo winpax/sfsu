@@ -5,7 +5,7 @@ use clap::{Parser, Subcommand};
 use regex::Regex;
 use serde::Serialize;
 use sfsu_derive::Runnable;
-use sprinkles::{output::wrappers::sizes::Size, Scoop};
+use sprinkles::{abandon, output::wrappers::sizes::Size, Scoop};
 use tokio::task::JoinSet;
 
 mod rm;
@@ -79,6 +79,10 @@ impl CacheEntry {
 
             cache_entries
         };
+
+        if cache_entries.is_empty() {
+            abandon!("No cache entries found");
+        }
 
         cache_entries.sort();
 

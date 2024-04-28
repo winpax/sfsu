@@ -1,10 +1,12 @@
 use clap::Parser;
 use sprinkles::{
-    abandon, bright_yellow,
+    bright_yellow,
     output::{structured::Structured, wrappers::sizes::Size},
 };
 
-use crate::commands::{cache::CacheEntry, Command};
+use crate::commands::Command;
+
+use super::CacheEntry;
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
@@ -18,10 +20,6 @@ pub struct Args {
 impl Command for Args {
     async fn runner(self) -> Result<(), anyhow::Error> {
         let cache_entries = CacheEntry::match_paths(&self.apps).await?;
-
-        if cache_entries.is_empty() {
-            abandon!("No cache entries found");
-        }
 
         let total_size = cache_entries
             .iter()
