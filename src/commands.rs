@@ -1,4 +1,5 @@
 pub mod bucket;
+pub mod cache;
 pub mod cat;
 pub mod checkup;
 pub mod depends;
@@ -127,4 +128,7 @@ pub enum Commands {
     Export(export::Args),
     /// Check for common issues
     Checkup(checkup::Args),
+    #[cfg(feature = "download")]
+    /// Show or clear the download cache
+    Cache(cache::Args),
 }

@@ -2,7 +2,7 @@
 //!
 //! This module provides ways to exit the program with an error message, without panicking
 
-use std::fmt::{Debug, Display};
+use std::fmt::Debug;
 
 /// Trait for unwrapping `Result` and `Option` without panicking
 pub trait CalmUnwrap<T> {
@@ -17,48 +17,40 @@ impl<T, E: Debug> CalmUnwrap<T> for Result<T, E> {
     fn calm_unwrap(self) -> T {
         match self {
             Ok(v) => v,
-            Err(e) => __calm_panic(format!("`Result` had error value: {e:?}")),
+            Err(e) => abandon!("`Result` had error value: {e:?}"),
         }
     }
 
     fn calm_expect(self, msg: impl AsRef<str>) -> T {
         match self {
             Ok(v) => v,
-            Err(e) => __calm_panic(format!("{}. {e:?}", msg.as_ref())),
+            Err(e) => abandon!("{}. {e:?}", msg.as_ref()),
         }
     }
 }
 
 impl<T> CalmUnwrap<T> for Option<T> {
     fn calm_unwrap(self) -> T {
-        match self {
-            Some(v) => v,
-            None => __calm_panic("Option had no value"),
-        }
+        self.unwrap_or_else(|| abandon!("Option had no value"))
     }
 
     fn calm_expect(self, msg: impl AsRef<str>) -> T {
-        match self {
-            Some(v) => v,
-            None => __calm_panic(msg.as_ref()),
-        }
+        self.unwrap_or_else(|| abandon!("{}", msg.as_ref()))
     }
-}
-
-#[doc(hidden)]
-// TODO: Add option to not pass any message
-pub fn __calm_panic(msg: impl Display) -> ! {
-    use owo_colors::OwoColorize;
-    eprintln!("{}", msg.to_string().red());
-    std::process::exit(1);
 }
 
 #[macro_export]
 /// Abandon the current execution with a message
 macro_rules! abandon {
-    ($($t:tt)*) => {
-        $crate::calm_panic::__calm_panic(format!($($t)*))
+    () => {
+        abandon!("Abandoned execution");
     };
+
+    ($($t:tt)*) => {{
+        use $crate::output::colours::red;
+        red!($($t)*);
+        std::process::exit(1);
+    }};
 }
 
 pub use abandon;

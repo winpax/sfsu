@@ -150,7 +150,7 @@ impl<'a> Structured<'a> {
 
         Structured {
             objects,
-            max_length: None,
+            max_length: Some(30),
         }
     }
 
