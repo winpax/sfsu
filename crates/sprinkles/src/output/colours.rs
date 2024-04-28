@@ -1,3 +1,5 @@
+//! Coloured output print macros.
+
 use sfsu_derive::generate;
 
 generate!(black);
