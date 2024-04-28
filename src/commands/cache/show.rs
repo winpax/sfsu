@@ -2,8 +2,10 @@ use std::os::windows::fs::MetadataExt;
 
 use anyhow::Context;
 use clap::Parser;
+use regex::Regex;
 use serde::Serialize;
 use sprinkles::{
+    abandon,
     output::{structured::Structured, wrappers::sizes::Size},
     Scoop,
 };
@@ -32,16 +34,29 @@ impl Command for Args {
     async fn runner(self) -> Result<(), anyhow::Error> {
         let cache_path = Scoop::cache_path();
 
+        let patterns = self
+            .apps
+            .into_iter()
+            .filter_map(|pattern| Regex::new(&format!("^{pattern}#")).ok())
+            .collect::<Vec<_>>();
+
         let mut set = JoinSet::new();
         let mut dir = tokio::fs::read_dir(cache_path).await?;
 
         while let Some(entry) = dir.next_entry().await? {
+            let file_name = entry.file_name();
+            let file_name = file_name.to_string_lossy();
+
+            if !patterns.iter().any(|pattern| pattern.is_match(&file_name)) {
+                continue;
+            }
+
+            let file_name = file_name.to_string();
+
             set.spawn(async move {
                 let metadata = entry.metadata().await?;
 
-                let name = entry.file_name();
-                let name = name.to_string_lossy();
-                let mut parts = name.split('#');
+                let mut parts = file_name.split('#');
 
                 let name = parts.next().context("No name")?;
                 let version = parts.next().context("No version")?;
@@ -71,6 +86,10 @@ impl Command for Args {
 
             cache_entries
         };
+
+        if cache_entries.is_empty() {
+            abandon!("No cache entries found");
+        }
 
         cache_entries.sort();
 

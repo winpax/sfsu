@@ -22,7 +22,7 @@ pub struct Args {
     #[clap(
         global = true,
         help = "Glob pattern(s) for apps to show cache entries for",
-        default_value = "*"
+        default_value = ".*?"
     )]
     apps: Vec<String>,
 
