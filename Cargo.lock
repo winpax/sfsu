@@ -2345,12 +2345,13 @@ dependencies = [
 
 [[package]]
 name = "sfsu"
-version = "1.10.4"
+version = "1.11.0-beta.4"
 dependencies = [
  "anyhow",
  "bat",
  "chrono",
  "clap",
+ "console",
  "criterion",
  "futures",
  "git2",
@@ -2471,7 +2472,7 @@ dependencies = [
 
 [[package]]
 name = "sprinkles"
-version = "1.10.4"
+version = "1.11.0-beta.4"
 dependencies = [
  "anyhow",
  "base64 0.22.0",
@@ -2479,6 +2480,7 @@ dependencies = [
  "cfg-if",
  "chrono",
  "clap",
+ "console",
  "derive_more",
  "digest",
  "directories",
