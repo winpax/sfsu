@@ -1,6 +1,7 @@
 use clap::Parser;
 use indicatif::MultiProgress;
 
+use regex::Regex;
 use sprinkles::{
     abandon,
     cache::{Downloader, Handle},
@@ -58,7 +59,7 @@ impl super::Command for Args {
 
         let threads = downloaders
             .into_iter()
-            .map(|(dl, hash)| tokio::spawn(async move { (dl.download().await, hash) }));
+            .map(|(dl, manifest)| tokio::spawn(async move { (dl.download().await, manifest) }));
 
         let results = futures::future::try_join_all(threads).await?;
 
@@ -70,6 +71,10 @@ impl super::Command for Args {
 
             if let Some(actual_hash) = manifest.install_config(Architecture::ARCH).hash {
                 let hash = encode_hex(&hash);
+                let actual_hash = Regex::new("(sha5?12?|md5):")
+                    .unwrap()
+                    .replace(&actual_hash, "");
+
                 if actual_hash == hash {
                     eprintln!("\r🔒 Hash matched: {hash}");
                 } else {

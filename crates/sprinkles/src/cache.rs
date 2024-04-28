@@ -86,10 +86,16 @@ impl Handle {
 
         let file_name = format!("{}#{}#{}", name, version, file_name.display());
 
+        let hash_type = manifest
+            .install_config(Architecture::ARCH)
+            .hash
+            .and_then(|hash| HashType::try_from(&hash).ok())
+            .unwrap_or(HashType::SHA256);
+
         Self::new(
             cache_path.as_ref(),
             PathBuf::from(file_name),
-            HashType::default(),
+            hash_type,
             url.url,
         )
     }
