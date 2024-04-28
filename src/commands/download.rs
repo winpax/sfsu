@@ -58,7 +58,7 @@ impl super::Command for Args {
 
         let threads = downloaders
             .into_iter()
-            .map(|(dl, hash)| tokio::spawn(async move { (dl.download().await, hash) }));
+            .map(|(dl, manifest)| tokio::spawn(async move { (dl.download().await, manifest) }));
 
         let results = futures::future::try_join_all(threads).await?;
 
