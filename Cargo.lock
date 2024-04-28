@@ -2354,6 +2354,7 @@ dependencies = [
  "criterion",
  "futures",
  "git2",
+ "glob",
  "human-panic",
  "indicatif",
  "itertools 0.12.1",

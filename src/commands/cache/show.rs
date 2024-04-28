@@ -22,6 +22,9 @@ struct CacheEntry {
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
     #[clap(from_global)]
+    pub apps: Vec<String>,
+
+    #[clap(from_global)]
     pub json: bool,
 }
 
