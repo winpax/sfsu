@@ -1,8 +1,7 @@
-
 use clap::Parser;
 use sprinkles::{
     abandon,
-    output::structured::Structured,
+    output::{structured::Structured, wrappers::sizes::Size},
 };
 
 use crate::commands::{cache::CacheEntry, Command};
@@ -23,6 +22,12 @@ impl Command for Args {
         if cache_entries.is_empty() {
             abandon!("No cache entries found");
         }
+
+        let total_size = cache_entries
+            .iter()
+            .fold(Size::new(0), |acc, entry| acc + entry.size);
+
+        warn!("Total: {} files, {total_size}", cache_entries.len());
 
         let values = cache_entries
             .into_iter()
