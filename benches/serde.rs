@@ -55,7 +55,7 @@ fn criterion_benchmark(c: &mut Criterion) {
 
     c.bench_function("converting human sizes", |b| {
         b.iter(|| {
-            black_box(Size::new(1024 * 1024 * 1024 * 1024 * 1024 * 1024 * 1024).to_string());
+            black_box(Size::new(1024 * 1024 * 1024 * 1024 * 1024 * 1024).to_string());
         });
     });
 }
