@@ -83,6 +83,8 @@ impl Display for TruncateOrPad {
     }
 }
 
+#[deprecated]
+#[allow(dead_code, unused_variables)]
 fn print_headers(
     f: &mut std::fmt::Formatter<'_>,
     headers: &[&String],
@@ -233,7 +235,12 @@ impl<'a> Display for Structured<'a> {
 
         let access_lengths = evened_access_lengths;
 
-        print_headers(f, &headers, self.max_length, &access_lengths)?;
+        for (i, header) in headers.iter().enumerate() {
+            let header_size = access_lengths[i];
+
+            let truncated = TruncateOrPad(Header::new(header).to_string(), header_size).to_string();
+            write!(f, "{truncated}{WALL}")?;
+        }
 
         // Enter new row
         writeln!(f)?;
