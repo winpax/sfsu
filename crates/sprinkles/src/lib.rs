@@ -1,5 +1,6 @@
 #![feature(let_chains)]
 #![feature(inline_const)]
+#![feature(const_black_box)]
 #![doc = include_str!("../README.md")]
 #![warn(
     clippy::all,
@@ -62,12 +63,12 @@ extern crate log;
 
 /// Ensure supported environment
 mod const_assertions {
-    use super::Scoop;
-
     #[allow(unused)]
-    const fn eval<T>(_: &T) {}
+    const fn eval<T>(dummy: &T) {
+        std::hint::black_box(dummy);
+    }
 
-    const _: () = eval(&Scoop::arch());
+    const _: () = assert!(cfg!(windows), "Only windows is supported");
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, ListVariants)]
@@ -85,7 +86,14 @@ pub enum Architecture {
 
 impl Architecture {
     /// Get the architecture of the current environment
-    pub const ARCH: Self = {
+    pub const ARCH: Self = Self::from_env();
+
+    #[must_use]
+    /// Get the architecture of the current environment
+    ///
+    /// # Panics
+    /// - Unsupported environment
+    pub const fn from_env() -> Self {
         if cfg!(target_arch = "x86_64") {
             Self::X64
         } else if cfg!(target_arch = "x86") {
@@ -95,15 +103,6 @@ impl Architecture {
         } else {
             panic!("Unsupported architecture")
         }
-    };
-
-    #[must_use]
-    /// Get the architecture of the current environment
-    ///
-    /// # Panics
-    /// - Unsupported environment
-    pub const fn from_env() -> Self {
-        Self::ARCH
     }
 
     #[must_use]
