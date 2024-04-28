@@ -1,5 +1,6 @@
 use proc_macro::TokenStream;
 use proc_macro_error::proc_macro_error;
+use quote::quote;
 use syn::{parse_macro_input, DeriveInput};
 
 mod hooks;
@@ -22,4 +23,35 @@ pub fn derive_hook_enum(input: TokenStream) -> TokenStream {
 #[proc_macro_error]
 pub fn derive_key_value(input: TokenStream) -> TokenStream {
     keyvalue::keyvalue(parse_macro_input!(input as DeriveInput)).into()
+}
+
+#[proc_macro]
+#[proc_macro_error]
+pub fn generate(input: TokenStream) -> TokenStream {
+    let ident = syn::parse_macro_input!(input as syn::Ident);
+    let bright_ident = syn::Ident::new(&format!("bright_{}", ident), ident.span());
+
+    quote! {
+        #[macro_export]
+        #[doc = concat!("Colorize a string with the `", stringify!(#ident), "` color.")]
+        macro_rules! #ident {
+            ($($arg:tt)*) => {{
+                use owo_colors::OwoColorize;
+                eprintln!("{}", format_args!($($arg)*).#ident())
+            }};
+        }
+
+        #[macro_export]
+        #[doc = concat!("Colorize a string with the `", stringify!(#bright_ident), "` color.")]
+        macro_rules! #bright_ident {
+            ($($arg:tt)*) => {{
+                use owo_colors::OwoColorize;
+                eprintln!("{}", format_args!($($arg)*).#bright_ident())
+            }};
+        }
+
+        pub use #ident;
+        pub use #bright_ident;
+    }
+    .into()
 }

@@ -1,6 +1,6 @@
 use clap::Parser;
 use sprinkles::{
-    abandon,
+    abandon, bright_yellow,
     output::{structured::Structured, wrappers::sizes::Size},
 };
 
@@ -27,7 +27,7 @@ impl Command for Args {
             .iter()
             .fold(Size::new(0), |acc, entry| acc + entry.size);
 
-        warn!("Total: {} files, {total_size}", cache_entries.len());
+        bright_yellow!("Total: {} files, {total_size}", cache_entries.len());
 
         let values = cache_entries
             .into_iter()
