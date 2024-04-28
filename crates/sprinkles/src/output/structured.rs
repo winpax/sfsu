@@ -62,13 +62,7 @@ impl<T: Display> Display for OptionalTruncate<T> {
     }
 }
 
-cfg_if::cfg_if! {
-    if #[cfg(feature = "v2")] {
-        const WALL: &str = " ";
-    } else {
-        const WALL: &str = " | ";
-    }
-}
+const WALL: &str = " | ";
 
 struct TruncateOrPad(String, usize);
 
