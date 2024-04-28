@@ -62,6 +62,23 @@ impl<T: Display> Display for OptionalTruncate<T> {
     }
 }
 
+const WALL: &str = " | ";
+
+struct TruncateOrPad(String, usize);
+
+impl Display for TruncateOrPad {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let length = self.1 - WALL.len();
+        if self.0.len() > length {
+            write!(f, "{}...", &self.0[0..length - 3])
+        } else {
+            write!(f, "{:width$}", self.0, width = length)
+        }
+    }
+}
+
+#[deprecated]
+#[allow(dead_code, unused_variables)]
 fn print_headers(
     f: &mut std::fmt::Formatter<'_>,
     headers: &[&String],
@@ -81,7 +98,7 @@ fn print_headers(
                 let truncated = OptionalTruncate::new(Header::new(header))
                     .with_length(max_length)
                     .to_string();
-                write!(f, "{:header_size$} ", truncated.bright_green())?;
+                write!(f, "{:header_size$}{WALL}", truncated.bright_green())?;
 
                 Ok(truncated.len())
             })
@@ -94,7 +111,7 @@ fn print_headers(
 
             let underscores = "-".repeat(length);
 
-            write!(f, "{:header_size$} ", underscores.bright_green())?;
+            write!(f, "{:header_size$}{WALL}", underscores.bright_green())?;
         }
     }
 
@@ -102,8 +119,8 @@ fn print_headers(
     for (i, header) in headers.iter().enumerate() {
         let header_size = access_lengths[i];
 
-        let truncated = OptionalTruncate::new(Header::new(header)).with_length(max_length);
-        write!(f, "{truncated:header_size$} | ")?;
+        let truncated = TruncateOrPad(Header::new(header).to_string(), header_size).to_string();
+        write!(f, "{truncated}{WALL}")?;
     }
 
     Ok(())
@@ -151,7 +168,11 @@ impl<'a> Display for Structured<'a> {
 
         let contestants = {
             // TODO: Make this dynamic largest header
-            let default_width = "Updated".len();
+            let default_width = headers
+                .iter()
+                .map(|header| header.len())
+                .max()
+                .unwrap_or(const { "Updated".len() });
 
             let mut v = vec![default_width];
             v.extend(headers.iter().map(|s| s.len()));
@@ -183,7 +204,8 @@ impl<'a> Display for Structured<'a> {
                                     // TODO: Fix suffix
                                     .with_suffix("...")
                                     .to_string()
-                                    .len(),
+                                    .len()
+                                    + WALL.len(),
                             );
 
                             *contestants.iter().max().unwrap()
@@ -191,7 +213,28 @@ impl<'a> Display for Structured<'a> {
                         .collect()
                 });
 
-        print_headers(f, &headers, self.max_length, &access_lengths)?;
+        #[allow(
+            clippy::cast_precision_loss,
+            clippy::cast_possible_truncation,
+            clippy::cast_sign_loss
+        )]
+        let evened_access_lengths = {
+            let term_columns: f64 = console::Term::stdout().size().1.into();
+            let total = access_lengths.iter().sum::<usize>() as f64;
+            let percents = access_lengths.iter().map(|s| ((*s) as f64) / total);
+            let even_parts = percents.map(|p| (p * term_columns).floor() as usize);
+
+            even_parts.collect::<Vec<_>>()
+        };
+
+        let access_lengths = evened_access_lengths;
+
+        for (i, header) in headers.iter().enumerate() {
+            let header_size = access_lengths[i];
+
+            let truncated = TruncateOrPad(Header::new(header).to_string(), header_size).to_string();
+            write!(f, "{truncated}{WALL}")?;
+        }
 
         // Enter new row
         writeln!(f)?;
@@ -221,16 +264,12 @@ impl<'a> Display for Structured<'a> {
                     })
                     .unwrap_or_default();
 
-                let with_suffix = match element.len().cmp(&value_size) {
-                    std::cmp::Ordering::Greater => format!("{}...", &element[0..value_size - 3]),
-                    std::cmp::Ordering::Equal => element.to_string(),
-                    std::cmp::Ordering::Less => format!("{element:value_size$}"),
-                };
+                let with_suffix = TruncateOrPad(element, value_size);
 
                 #[cfg(feature = "v2")]
-                write!(f, "{with_suffix} ")?;
+                write!(f, "{with_suffix}{WALL}")?;
                 #[cfg(not(feature = "v2"))]
-                write!(f, "{with_suffix} | ")?;
+                write!(f, "{with_suffix}{WALL}")?;
             }
 
             // Enter new row
