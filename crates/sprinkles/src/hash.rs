@@ -157,22 +157,21 @@ impl TryFrom<&String> for HashType {
     type Error = Error;
 
     fn try_from(value: &String) -> Result<Self, Error> {
-        if let Some(hash_type) = value
-            .starts_with("sha512:")
-            .then_some(HashType::SHA512)
-            .or_else(|| value.starts_with("sha1:").then_some(HashType::SHA1))
-            .or_else(|| value.starts_with("md5:").then_some(HashType::MD5))
-        {
-            Ok(hash_type)
-        } else {
-            match value.len() {
-                64 => Ok(HashType::SHA256),
-                40 => Ok(HashType::SHA1),
-                32 => Ok(HashType::MD5),
-                128 => Ok(HashType::SHA512),
-                _ => Err(Error::InvalidHash),
-            }
+        match value.len() {
+            64 => Ok(HashType::SHA256),
+            40 => Ok(HashType::SHA1),
+            32 => Ok(HashType::MD5),
+            128 => Ok(HashType::SHA512),
+            _ => Err(Error::InvalidHash),
         }
+        .or_else(|_| {
+            value
+                .starts_with("sha512:")
+                .then_some(HashType::SHA512)
+                .or_else(|| value.starts_with("sha1:").then_some(HashType::SHA1))
+                .or_else(|| value.starts_with("md5:").then_some(HashType::MD5))
+                .ok_or(Error::InvalidHash)
+        })
     }
 }
 
