@@ -62,14 +62,23 @@ impl<T: Display> Display for OptionalTruncate<T> {
     }
 }
 
+cfg_if::cfg_if! {
+    if #[cfg(feature = "v2")] {
+        const WALL: &str = " ";
+    } else {
+        const WALL: &str = " | ";
+    }
+}
+
 struct TruncateOrPad(String, usize);
 
 impl Display for TruncateOrPad {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if self.0.len() > self.1 {
-            write!(f, "{}...", &self.0[0..self.1 - 3])
+        let length = self.1 - WALL.len();
+        if self.0.len() > length {
+            write!(f, "{}...", &self.0[0..length - 3])
         } else {
-            write!(f, "{:width$}", self.0, width = self.1)
+            write!(f, "{:width$}", self.0, width = length)
         }
     }
 }
@@ -93,7 +102,7 @@ fn print_headers(
                 let truncated = OptionalTruncate::new(Header::new(header))
                     .with_length(max_length)
                     .to_string();
-                write!(f, "{:header_size$} ", truncated.bright_green())?;
+                write!(f, "{:header_size$}{WALL}", truncated.bright_green())?;
 
                 Ok(truncated.len())
             })
@@ -106,7 +115,7 @@ fn print_headers(
 
             let underscores = "-".repeat(length);
 
-            write!(f, "{:header_size$} ", underscores.bright_green())?;
+            write!(f, "{:header_size$}{WALL}", underscores.bright_green())?;
         }
     }
 
@@ -115,10 +124,8 @@ fn print_headers(
         let header_size = access_lengths[i];
 
         let truncated = TruncateOrPad(Header::new(header).to_string(), header_size).to_string();
-        dbg!(truncated.len());
-        write!(f, "{truncated}")?;
+        write!(f, "{truncated}{WALL}")?;
     }
-    dbg!(console::Term::stdout().size().1);
 
     Ok(())
 }
@@ -197,7 +204,8 @@ impl<'a> Display for Structured<'a> {
                                     // TODO: Fix suffix
                                     .with_suffix("...")
                                     .to_string()
-                                    .len(),
+                                    .len()
+                                    + WALL.len(),
                             );
 
                             *contestants.iter().max().unwrap()
@@ -254,9 +262,9 @@ impl<'a> Display for Structured<'a> {
                 let with_suffix = TruncateOrPad(element, value_size);
 
                 #[cfg(feature = "v2")]
-                write!(f, "{with_suffix} ")?;
+                write!(f, "{with_suffix}{WALL}")?;
                 #[cfg(not(feature = "v2"))]
-                write!(f, "{with_suffix}")?;
+                write!(f, "{with_suffix}{WALL}")?;
             }
 
             // Enter new row
