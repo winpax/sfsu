@@ -62,6 +62,8 @@ pub fn parse_text(
 ) -> Result<Option<String>, Error> {
     // TODO: Incorporate file_names
 
+    debug!("Parsing from regex: {}", regex.as_ref());
+
     let regex = if regex.as_ref().is_empty() {
         r"^\s*([a-fA-F0-9]+)\s*$".to_string()
     } else {
@@ -81,16 +83,20 @@ pub fn parse_text(
         Regex::new(&regex)?
     };
 
+    debug!("Source: {}", source.as_ref());
+
     let hash = substituted
         .captures(source.as_ref())
-        .and_then(|capture| {
+        .and_then(|captures| {
             // Get the first capture group (i.e the actual hash value)
-            capture.get(1)
+            captures.get(1)
         })
         .map(|hash| hash.as_str().replace(' ', ""));
 
     // Convert base64 encoded hashes
     let hash = if let Some(hash) = hash {
+        debug!("Found hash: {hash}");
+
         let base64_regex = Regex::new(
             r"^(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=|[A-Za-z0-9+\/]{4})$",
         )
@@ -99,6 +105,7 @@ pub fn parse_text(
         base64_regex
             .find(&hash)
             .and_then(|base64_hash| {
+                debug!("Found base64 hash");
                 let invalid_base64 =
                     Regex::new(r"^[a-fA-F0-9]+$").expect("valid \"invalid base64\" regex");
 

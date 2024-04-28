@@ -164,6 +164,14 @@ impl TryFrom<&String> for HashType {
             128 => Ok(HashType::SHA512),
             _ => Err(Error::InvalidHash),
         }
+        .or_else(|_| {
+            value
+                .starts_with("sha512:")
+                .then_some(HashType::SHA512)
+                .or_else(|| value.starts_with("sha1:").then_some(HashType::SHA1))
+                .or_else(|| value.starts_with("md5:").then_some(HashType::MD5))
+                .ok_or(Error::InvalidHash)
+        })
     }
 }
 
@@ -427,6 +435,8 @@ impl Hash {
 
             return Ok(Hash { hash, hash_type });
         }
+
+        debug!("Hash mode: {:?}", hash_mode);
 
         let hash = match hash_mode {
             HashMode::Extract(regex) => Hash::from_text(source.text().await?, &submap, regex),
