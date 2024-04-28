@@ -4,6 +4,7 @@
 //!
 //! NOTE: These types are not meant to be used directly by the user. They are used internally by the sprinkles library and sfsu to generate output.
 
+pub mod colours;
 pub mod sectioned;
 pub mod structured;
 pub mod wrappers;
