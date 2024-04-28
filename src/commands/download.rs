@@ -33,7 +33,10 @@ impl super::Command for Args {
         let downloaders = futures::future::try_join_all(self.packages.into_iter().map(|package| {
             let mp = mp.clone();
             async move {
-                let manifest = package.manifest().await?;
+                let manifest = match package.manifest().await {
+                    Ok(manifest) => manifest,
+                    Err(e) => abandon!("\rFailed to generate manifest: {e}"),
+                };
 
                 let dl = Handle::open_manifest(Scoop::cache_path(), &manifest, Architecture::ARCH)?;
 
