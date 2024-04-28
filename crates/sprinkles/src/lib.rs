@@ -1,4 +1,5 @@
 #![feature(let_chains)]
+#![feature(inline_const)]
 #![doc = include_str!("../README.md")]
 #![warn(
     clippy::all,
