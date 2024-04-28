@@ -61,7 +61,7 @@ opt-level = 3
 [features]
 beta = ["download", "sprinkles/beta"]
 default = []
-download = []
+download = ["sprinkles/manifest-hashes"]
 # Breaking changes are locked behind this feature flag
 v2 = ["sprinkles/v2"]
 
