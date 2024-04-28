@@ -1,6 +1,6 @@
 use clap::Parser;
-use colored::Colorize as _;
-use sfsu::{
+use sprinkles::{
+    calm_panic::abandon,
     output::sectioned::{Children, Section, Sections},
     packages::reference::{self, Package},
 };
@@ -20,19 +20,15 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    fn runner(mut self) -> Result<(), anyhow::Error> {
+    async fn runner(mut self) -> Result<(), anyhow::Error> {
         if let Some(bucket) = self.bucket {
-            self.package.set_bucket(bucket);
+            self.package.set_bucket(bucket)?;
         }
 
-        let manifests = self.package.list_manifests();
+        let manifests = self.package.list_manifests().await?;
 
         if manifests.is_empty() {
-            eprintln!(
-                "Could not find any packages matching: {}",
-                self.package.to_string().red()
-            );
-            std::process::exit(1);
+            abandon!("Could not find any packages matching: {}", self.package);
         };
 
         if self.json {
@@ -40,7 +36,7 @@ impl super::Command for Args {
             return Ok(());
         }
 
-        let output: Sections<reference::Package> = manifests
+        let output: Sections<reference::ManifestRef> = manifests
             .into_iter()
             .filter_map(|manifest| {
                 Children::from(manifest.depends())

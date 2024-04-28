@@ -1,7 +1,7 @@
 use clap::Parser;
 use itertools::Itertools;
 use rayon::prelude::*;
-use sfsu::buckets::Bucket;
+use sprinkles::buckets::Bucket;
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
@@ -10,7 +10,7 @@ pub struct Args {
 }
 
 impl super::super::Command for Args {
-    fn runner(self) -> Result<(), anyhow::Error> {
+    async fn runner(self) -> Result<(), anyhow::Error> {
         self.run_direct(true)?;
 
         Ok(())

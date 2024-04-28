@@ -1,8 +1,8 @@
 use clap::{Parser, ValueEnum};
-use colored::Colorize;
+use owo_colors::OwoColorize;
 use rayon::prelude::*;
 
-use sfsu::{output::structured::Structured, packages::MinInfo};
+use sprinkles::{output::structured::Structured, packages::MinInfo};
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
@@ -35,7 +35,7 @@ pub enum SortBy {
 }
 
 impl super::Command for Args {
-    fn runner(self) -> Result<(), anyhow::Error> {
+    async fn runner(self) -> Result<(), anyhow::Error> {
         let mut outputs = MinInfo::list_installed(self.bucket.as_ref())?;
 
         outputs.par_sort_by(|a, b| match self.sort_by {
@@ -65,9 +65,7 @@ impl super::Command for Args {
                 .map(serde_json::to_value)
                 .collect::<Result<Vec<_>, _>>()?;
 
-            let outputs =
-                Structured::new(&["Name", "Version", "Source", "Updated", "Notes"], &values)
-                    .with_max_length(30);
+            let outputs = Structured::new(&values).with_max_length(30);
 
             print!("{outputs}");
         }

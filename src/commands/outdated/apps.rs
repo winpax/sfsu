@@ -1,7 +1,7 @@
 use clap::Parser;
 use rayon::prelude::*;
 use serde_json::Value;
-use sfsu::{
+use sprinkles::{
     buckets::Bucket,
     output::structured::Structured,
     packages::{install, outdated},
@@ -14,7 +14,7 @@ pub struct Args {
 }
 
 impl super::super::Command for Args {
-    fn runner(self) -> Result<(), anyhow::Error> {
+    async fn runner(self) -> Result<(), anyhow::Error> {
         self.run_direct(true)?;
 
         Ok(())
@@ -74,7 +74,7 @@ impl Args {
             } else {
                 // TODO: Add a better way to add colours than this
                 // TODO: p.s this doesnt work atm
-                // use colored::Colorize;
+                // use owo_colors::OwoColorize;
                 // let values = values
                 //     .into_par_iter()
                 //     .map(|mut value| {
@@ -90,8 +90,7 @@ impl Args {
                 //     })
                 //     .collect::<Vec<_>>();
 
-                let outputs =
-                    Structured::new(&["Name", "Current", "Available"], &values).with_max_length(30);
+                let outputs = Structured::new(&values).with_max_length(30);
 
                 print!("{outputs}");
             }

@@ -1,5 +1,5 @@
 use clap::Parser;
-use sfsu::{calm_panic::calm_panic, packages::reference};
+use sprinkles::{calm_panic::abandon, packages::reference};
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
@@ -8,14 +8,14 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    fn runner(self) -> Result<(), anyhow::Error> {
+    async fn runner(self) -> Result<(), anyhow::Error> {
         let manifest = self
             .package
             .first()
             .ok_or(anyhow::anyhow!("Package not found"))?;
 
         let Some(homepage) = manifest.homepage else {
-            calm_panic("No homepage found for package");
+            abandon!("No homepage found for package");
         };
 
         open::that_detached(homepage)?;

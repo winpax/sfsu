@@ -1,6 +1,6 @@
 use clap::Parser;
 
-use sfsu::{
+use sprinkles::{
     buckets::Bucket,
     output::sectioned::{Children, Section, Sections, Text},
     packages::Manifest,
@@ -25,7 +25,7 @@ impl super::Command for Args {
         })
     }
 
-    fn runner(self) -> Result<(), anyhow::Error> {
+    async fn runner(self) -> Result<(), anyhow::Error> {
         let buckets = Bucket::one_or_all(self.bucket)?;
 
         let manifests: Vec<(String, String, Manifest)> = buckets

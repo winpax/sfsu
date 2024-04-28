@@ -1,6 +1,7 @@
 use std::{fs::File, io::Write};
 
-use log::LevelFilter;
+use log::{Level, LevelFilter};
+use owo_colors::OwoColorize;
 
 pub mod panics;
 
@@ -11,7 +12,7 @@ pub struct Logger {
 
 impl Logger {
     pub fn new(verbose: bool) -> Self {
-        Self::from_file(sfsu::Scoop::new_log().expect("new log"), verbose)
+        Self::from_file(sprinkles::Scoop::new_log_sync().expect("new log"), verbose)
     }
 
     pub fn from_file(file: File, verbose: bool) -> Self {
@@ -33,17 +34,21 @@ impl log::Log for Logger {
         if self.verbose {
             true
         } else {
-            metadata.level() > log::Level::Trace
+            metadata.level() < Level::Debug
         }
     }
 
     fn log(&self, record: &log::Record<'_>) {
-        // TODO: Add a queue of sorts because this doesn't work well with multiple threads
-        if record.metadata().level() == log::Level::Trace {
-            eprintln!("{}: {}", record.level(), record.args());
-        } else {
-            writeln!(&self.file, "{}: {}", record.level(), record.args())
-                .expect("writing to log file");
+        if self.enabled(record.metadata()) {
+            match record.metadata().level() {
+                Level::Error => eprintln!("{}", record.args().red()),
+                Level::Warn => eprintln!("{}", record.args().yellow()),
+                _ => {
+                    // TODO: Add a queue of sorts because this doesn't work well with multiple threads
+                    writeln!(&self.file, "{}: {}", record.level(), record.args())
+                        .expect("writing to log file");
+                }
+            }
         }
     }
 

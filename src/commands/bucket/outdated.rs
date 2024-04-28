@@ -1,6 +1,6 @@
 use clap::Parser;
 use itertools::Itertools;
-use sfsu::{
+use sprinkles::{
     buckets::Bucket,
     output::sectioned::{Children, Section},
 };
@@ -21,7 +21,7 @@ impl commands::Command for Args {
         })
     }
 
-    fn runner(self) -> anyhow::Result<()> {
+    async fn runner(self) -> anyhow::Result<()> {
         let buckets = Bucket::list_all()?;
 
         let outdated_buckets = buckets

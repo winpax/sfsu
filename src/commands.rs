@@ -1,7 +1,11 @@
 pub mod bucket;
 pub mod cat;
+pub mod checkup;
 pub mod depends;
 pub mod describe;
+#[cfg(feature = "beta")]
+pub mod download;
+pub mod export;
 pub mod home;
 pub mod hook;
 pub mod info;
@@ -15,6 +19,7 @@ pub mod update;
 use clap::Subcommand;
 
 use sfsu_derive::{Hooks, Runnable};
+use sprinkles::calm_panic::abandon;
 
 pub struct DeprecationWarning {
     /// Deprecation message
@@ -34,26 +39,29 @@ pub enum DeprecationMessage {
 
 // TODO: Run command could return `impl Display` and print that itself
 pub trait Command {
+    const BETA: bool = false;
+    const NEEDS_ELEVATION: bool = false;
+
     fn deprecated() -> Option<DeprecationWarning> {
         None
     }
 
-    fn runner(self) -> Result<(), anyhow::Error>;
+    async fn runner(self) -> Result<(), anyhow::Error>;
 
-    fn run(self) -> Result<(), anyhow::Error>
+    async fn run(self) -> Result<(), anyhow::Error>
     where
         Self: Sized,
     {
-        if let Some(deprecation_warning) = Self::deprecated() {
-            use colored::Colorize as _;
+        use owo_colors::OwoColorize;
 
+        if let Some(deprecation_warning) = Self::deprecated() {
             let mut output = String::from("DEPRECATED: ");
 
             match deprecation_warning.message {
                 DeprecationMessage::Replacement(replacement) => {
                     output += &format!("Use `{replacement}` instead. ");
                 }
-                DeprecationMessage::Warning(warning) => output += &warning,
+                DeprecationMessage::Warning(warning) => output += warning,
             }
 
             if let Some(version) = deprecation_warning.version {
@@ -63,7 +71,18 @@ pub trait Command {
             println!("{}\n", output.yellow());
         }
 
-        self.runner()
+        if Self::NEEDS_ELEVATION && !quork::root::is_root()? {
+            abandon!("This command requires elevation. Please run as an administrator.");
+        }
+
+        if Self::BETA {
+            println!(
+                "{}\n",
+                "This command is in beta and may not work as expected. Please report any and all bugs you find!".yellow()
+            );
+        }
+
+        self.runner().await
     }
 }
 
@@ -73,6 +92,7 @@ pub enum Commands {
     Search(search::Args),
     /// List all installed packages
     List(list::Args),
+    #[no_hook]
     /// Generate hooks for the given shell
     Hook(hook::Args),
     #[cfg(not(feature = "v2"))]
@@ -91,6 +111,9 @@ pub enum Commands {
     Outdated(outdated::Args),
     /// List the dependencies of a given package, in the order that they will be installed
     Depends(depends::Args),
+    #[cfg(feature = "beta")]
+    /// Download the specified app.
+    Download(download::Args),
     /// Show status and check for new app versions
     Status(status::Args),
     #[cfg_attr(not(feature = "v2"), no_hook)]
@@ -100,4 +123,8 @@ pub enum Commands {
     Home(home::Args),
     /// Show content of specified manifest
     Cat(cat::Args),
+    /// Exports installed apps, buckets (and optionally configs) in JSON format
+    Export(export::Args),
+    /// Check for common issues
+    Checkup(checkup::Args),
 }

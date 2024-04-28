@@ -1,29 +1,72 @@
-#![warn(clippy::all, clippy::pedantic, rust_2018_idioms)]
+#![warn(
+    clippy::all,
+    clippy::pedantic,
+    rust_2018_idioms,
+    rust_2024_compatibility
+)]
 
 // TODO: Replace regex with glob
 
 mod commands;
 mod logging;
-mod opt;
+
+use std::{
+    io::IsTerminal,
+    sync::atomic::{AtomicBool, Ordering},
+};
 
 use clap::Parser;
 
 use commands::Commands;
 
-shadow_rs::shadow!(build);
+mod versions {
+    #![allow(clippy::needless_raw_string_hashes)]
+    include!(concat!(env!("OUT_DIR"), "/shadow.rs"));
+
+    pub const SFSU_LONG_VERSION: &str = {
+        use shadow_rs::formatcp;
+
+        const LIBGIT2_VERSION: &str = env!("LIBGIT2_VERSION");
+
+        formatcp!(
+            r#"{}
+sprinkles {}
+branch:{}
+tag:{}
+commit_hash:{}
+build_time:{}
+build_env:{},{}
+libgit2:{}"#,
+            PKG_VERSION,
+            sprinkles::__versions::VERSION,
+            BRANCH,
+            TAG,
+            SHORT_COMMIT,
+            BUILD_TIME,
+            RUST_VERSION,
+            RUST_CHANNEL,
+            LIBGIT2_VERSION
+        )
+    };
+}
 
 #[macro_use]
 extern crate log;
 
 /// Scoop utilities that can replace the slowest parts of Scoop, and run anywhere from 30-100 times faster
 #[derive(Debug, Parser)]
-#[clap(about, long_about, version, long_version = build::CLAP_LONG_VERSION, author)]
+#[clap(about, long_about, version, long_version = versions::SFSU_LONG_VERSION, author)]
 #[allow(clippy::struct_excessive_bools)]
 struct Args {
     #[command(subcommand)]
     command: Commands,
 
-    #[clap(long, global = true, help = "Disable terminal formatting")]
+    #[clap(
+        long,
+        global = true,
+        help = "Disable terminal formatting",
+        env = "NO_COLOR"
+    )]
     no_color: bool,
 
     #[clap(
@@ -33,36 +76,43 @@ struct Args {
     )]
     json: bool,
 
-    #[clap(
-        long,
-        global = true,
-        help = "Enable verbose logging, and additional information in output"
-    )]
+    #[clap(short, long, global = true, help = "Enable verbose logging")]
     verbose: bool,
 
     #[clap(
         long,
         global = true,
-        help = "Disable using git commands for certain parts of the program. Allows sfsu to work entirely if you don't have git installed, but can negatively affect performance."
+        help = "Disable using git commands for certain parts of the program. Allows sfsu to work entirely if you don't have git installed, but can negatively affect performance.",
+        env = "DISABLE_GIT"
     )]
     disable_git: bool,
 }
+
+pub(crate) static COLOR_ENABLED: AtomicBool = AtomicBool::new(true);
 
 fn main() -> anyhow::Result<()> {
     logging::panics::handle();
 
     let args = Args::parse();
 
-    logging::Logger::init(args.verbose)?;
+    logging::Logger::init(if cfg!(debug_assertions) {
+        true
+    } else {
+        args.verbose
+    })?;
 
-    if args.no_color {
+    if args.no_color || !std::io::stdout().is_terminal() {
         debug!("Colour disabled globally");
-        colored::control::set_override(false);
+        owo_colors::set_override(false);
+        COLOR_ENABLED.store(false, Ordering::Relaxed);
     }
 
     debug!("Running command: {:?}", args.command);
 
-    args.command.run()
+    tokio::runtime::Builder::new_multi_thread()
+        .enable_all()
+        .build()?
+        .block_on(async { args.command.run().await })
 }
 
 // /// Get the owner of a file path

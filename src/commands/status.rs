@@ -1,13 +1,13 @@
 use std::fmt::Write;
 
 use clap::{Parser, ValueEnum};
-use colored::Colorize as _;
+use owo_colors::OwoColorize;
 use parking_lot::Mutex;
 use quork::prelude::*;
 use rayon::prelude::*;
 use serde_json::Value;
 
-use sfsu::{
+use sprinkles::{
     buckets::Bucket,
     git::Repo,
     output::{
@@ -38,7 +38,7 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    fn runner(self) -> anyhow::Result<()> {
+    async fn runner(self) -> anyhow::Result<()> {
         let value = Mutex::new(Value::default());
 
         let pb = indicatif::ProgressBar::new(3).with_style(style(None, None));
@@ -222,7 +222,7 @@ impl Args {
             // } else {
             // TODO: Add a better way to add colours than this
             // TODO: p.s this doesnt work atm
-            // use colored::Colorize;
+            // use owo_colors::OwoColorize;
             // let values = values
             //     .into_par_iter()
             //     .map(|mut value| {
@@ -238,17 +238,7 @@ impl Args {
             //     })
             //     .collect::<Vec<_>>();
 
-            let outputs = Structured::new(
-                &[
-                    "Name",
-                    "Current",
-                    "Available",
-                    "Missing Dependencies",
-                    "Info",
-                ],
-                &values,
-            )
-            .with_max_length(30);
+            let outputs = Structured::new(&values).with_max_length(30);
 
             write!(output, "{outputs}")?;
             // }
