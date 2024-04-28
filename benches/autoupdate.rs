@@ -2,7 +2,7 @@ use std::{str::FromStr, time::Duration};
 
 use criterion::{black_box, criterion_group, criterion_main, BatchSize, Criterion};
 
-#[cfg(feature = "manifest-hashes")]
+#[cfg(feature = "beta")]
 use sprinkles::{
     cache::{Downloader, Handle},
     packages::reference::Package,
@@ -10,7 +10,7 @@ use sprinkles::{
     Architecture, Scoop,
 };
 
-#[cfg(feature = "manifest-hashes")]
+#[cfg(feature = "beta")]
 fn criterion_benchmark(c: &mut Criterion) {
     let runtime = tokio::runtime::Builder::new_multi_thread()
         .enable_all()
@@ -96,9 +96,6 @@ fn criterion_benchmark(c: &mut Criterion) {
 
     slow.finish();
 }
-
-#[cfg(not(feature = "manifest-hashes"))]
-fn criterion_benchmark(c: &mut Criterion) {}
 
 criterion_group!(benches, criterion_benchmark);
 criterion_main!(benches);
