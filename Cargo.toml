@@ -39,6 +39,10 @@ name = "searching"
 
 [[bench]]
 harness = false
+name = "ref-matching"
+
+[[bench]]
+harness = false
 name = "serde"
 
 [[bench]]
