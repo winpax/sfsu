@@ -62,6 +62,18 @@ impl<T: Display> Display for OptionalTruncate<T> {
     }
 }
 
+struct TruncateOrPad(String, usize);
+
+impl Display for TruncateOrPad {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if self.0.len() > self.1 {
+            write!(f, "{}...", &self.0[0..self.1 - 3])
+        } else {
+            write!(f, "{:width$}", self.0, width = self.1)
+        }
+    }
+}
+
 fn print_headers(
     f: &mut std::fmt::Formatter<'_>,
     headers: &[&String],
@@ -102,8 +114,8 @@ fn print_headers(
     for (i, header) in headers.iter().enumerate() {
         let header_size = access_lengths[i];
 
-        let truncated = OptionalTruncate::new(Header::new(header)).with_length(max_length);
-        write!(f, "{truncated:header_size$} | ")?;
+        let truncated = TruncateOrPad(Header::new(header).to_string(), header_size);
+        write!(f, "{truncated} | ")?;
     }
 
     Ok(())
@@ -191,6 +203,22 @@ impl<'a> Display for Structured<'a> {
                         .collect()
                 });
 
+        #[allow(
+            clippy::cast_precision_loss,
+            clippy::cast_possible_truncation,
+            clippy::cast_sign_loss
+        )]
+        let evened_access_lengths = {
+            let term_columns: f64 = console::Term::stdout().size().1.into();
+            let total = access_lengths.iter().sum::<usize>() as f64;
+            let percents = access_lengths.iter().map(|s| ((*s) as f64) / total);
+            let even_parts = percents.map(|p| (p * term_columns).round() as usize);
+
+            even_parts.collect::<Vec<_>>()
+        };
+
+        let access_lengths = evened_access_lengths;
+
         print_headers(f, &headers, self.max_length, &access_lengths)?;
 
         // Enter new row
@@ -221,11 +249,7 @@ impl<'a> Display for Structured<'a> {
                     })
                     .unwrap_or_default();
 
-                let with_suffix = match element.len().cmp(&value_size) {
-                    std::cmp::Ordering::Greater => format!("{}...", &element[0..value_size - 3]),
-                    std::cmp::Ordering::Equal => element.to_string(),
-                    std::cmp::Ordering::Less => format!("{element:value_size$}"),
-                };
+                let with_suffix = TruncateOrPad(element, value_size);
 
                 #[cfg(feature = "v2")]
                 write!(f, "{with_suffix} ")?;
