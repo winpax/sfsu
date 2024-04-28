@@ -114,9 +114,11 @@ fn print_headers(
     for (i, header) in headers.iter().enumerate() {
         let header_size = access_lengths[i];
 
-        let truncated = TruncateOrPad(Header::new(header).to_string(), header_size);
-        write!(f, "{truncated} | ")?;
+        let truncated = TruncateOrPad(Header::new(header).to_string(), header_size).to_string();
+        dbg!(truncated.len());
+        write!(f, "{truncated}")?;
     }
+    dbg!(console::Term::stdout().size().1);
 
     Ok(())
 }
@@ -212,7 +214,7 @@ impl<'a> Display for Structured<'a> {
             let term_columns: f64 = console::Term::stdout().size().1.into();
             let total = access_lengths.iter().sum::<usize>() as f64;
             let percents = access_lengths.iter().map(|s| ((*s) as f64) / total);
-            let even_parts = percents.map(|p| (p * term_columns).round() as usize);
+            let even_parts = percents.map(|p| (p * term_columns).floor() as usize);
 
             even_parts.collect::<Vec<_>>()
         };
@@ -254,7 +256,7 @@ impl<'a> Display for Structured<'a> {
                 #[cfg(feature = "v2")]
                 write!(f, "{with_suffix} ")?;
                 #[cfg(not(feature = "v2"))]
-                write!(f, "{with_suffix} | ")?;
+                write!(f, "{with_suffix}")?;
             }
 
             // Enter new row
