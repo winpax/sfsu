@@ -80,7 +80,7 @@ pub enum Architecture {
 
 impl Architecture {
     /// Get the architecture of the current environment
-    pub const ARCH: Self = Self::from_env();
+    pub const ARCH: Self = Self::X64;
 
     #[must_use]
     /// Get the architecture of the current environment

@@ -8,6 +8,7 @@ use sprinkles::{
     calm_panic::CalmUnwrap,
     output::sectioned::{Children, Section, Sections},
     packages::SearchMode,
+    Architecture,
 };
 
 #[derive(Debug, Clone, Parser)]
@@ -78,6 +79,7 @@ impl super::Command for Args {
                                     self.installed,
                                     &pattern,
                                     self.mode,
+                                    Architecture::ARCH,
                                 )
                             })
                             .collect::<Vec<_>>();

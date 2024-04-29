@@ -88,7 +88,7 @@ impl Handle {
         let file_name = format!("{}#{}#{}", name, version, file_name.display());
 
         let hash_type = manifest
-            .install_config(Architecture::ARCH)
+            .install_config(arch)
             .hash
             .and_then(|hash| HashType::try_from(&hash).ok())
             .unwrap_or(HashType::SHA256);

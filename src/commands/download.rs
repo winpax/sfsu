@@ -12,6 +12,7 @@ use sprinkles::{
 };
 
 #[derive(Debug, Clone, Parser)]
+// TODO: Pass architecture
 pub struct Args {
     #[clap(help = "The packages to download")]
     packages: Vec<Package>,

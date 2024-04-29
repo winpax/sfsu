@@ -361,6 +361,7 @@ impl MatchCriteria {
         manifest: Option<&Manifest>,
         mode: SearchMode,
         pattern: &Regex,
+        arch: Architecture,
     ) -> Self {
         let file_name = file_name.to_string();
 
@@ -373,7 +374,7 @@ impl MatchCriteria {
         if let Some(manifest) = manifest {
             let binaries = manifest
                 .architecture
-                .merge_default(manifest.install_config.clone(), Architecture::ARCH)
+                .merge_default(manifest.install_config.clone(), arch)
                 .bin
                 .map(|b| b.to_vec())
                 .unwrap_or_default();
@@ -569,11 +570,11 @@ impl Manifest {
 
     #[must_use]
     /// Check if the manifest binaries matche the given regex
-    pub fn binary_matches(&self, regex: &Regex) -> Option<Vec<String>> {
+    pub fn binary_matches(&self, regex: &Regex, arch: Architecture) -> Option<Vec<String>> {
         match self
             .architecture
             .as_ref()
-            .merge_default(self.install_config.clone(), Architecture::ARCH)
+            .merge_default(self.install_config.clone(), arch)
             .bin
         {
             Some(AliasArray::NestedArray(StringArray::String(ref binary))) => {
@@ -631,6 +632,7 @@ impl Manifest {
         installed_only: bool,
         pattern: &Regex,
         mode: SearchMode,
+        arch: Architecture,
     ) -> Option<Section<Text<String>>> {
         use owo_colors::OwoColorize;
 
@@ -647,6 +649,7 @@ impl Manifest {
             },
             mode,
             pattern,
+            arch,
         );
 
         if !match_output.name && match_output.bins.is_empty() {
