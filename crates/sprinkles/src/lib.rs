@@ -1,4 +1,3 @@
-#![feature(inline_const)]
 #![feature(const_black_box)]
 #![doc = include_str!("../README.md")]
 #![warn(
