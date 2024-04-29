@@ -653,7 +653,7 @@ impl Manifest {
             return None;
         }
 
-        let is_installed = is_installed(&self.name, Some(bucket));
+        let is_installed = self.is_installed(Some(bucket.as_ref()));
         if installed_only && !is_installed {
             return None;
         }
@@ -686,6 +686,12 @@ impl Manifest {
         .with_title(title);
 
         Some(package)
+    }
+
+    #[must_use]
+    /// Check if the manifest is installed
+    pub fn is_installed(&self, bucket: Option<&str>) -> bool {
+        is_installed(&self.name, bucket)
     }
 
     fn update_field<T>(

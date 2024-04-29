@@ -144,6 +144,14 @@ pub enum Error {
 pub struct Scoop;
 
 impl Scoop {
+    /// Load the Scoop configuration
+    ///
+    /// # Errors
+    /// - Could not load the configuration
+    pub fn config() -> std::io::Result<config::Scoop> {
+        config::Scoop::load()
+    }
+
     #[must_use]
     /// Get the system architecture
     pub const fn arch() -> Architecture {
@@ -336,8 +344,6 @@ impl Scoop {
     /// # Errors
     /// - Creating the file fails
     pub fn new_log_sync() -> Result<File, Error> {
-        use std::fs::File;
-
         let logs_dir = Self::logging_dir()?;
         let date = Local::now();
 
