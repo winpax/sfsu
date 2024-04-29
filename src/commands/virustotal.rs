@@ -105,7 +105,7 @@ impl super::Command for Args {
                 let hash = manifest.install_config(self.arch).hash;
 
                 if let Some(hash) = hash {
-                    let file_info = client.clone().file_info(&hash)?;
+                    let file_info = client.clone().file_info(&hash.to_string())?;
 
                     return anyhow::Ok(Some((manifest, file_info)));
                 }
@@ -133,11 +133,14 @@ impl super::Command for Args {
 
             let file_status = Status::from_stats(detected, total);
 
-            let info = format_args!(
-                "{}/{}: {detected}/{total}. See more at {}",
-                manifest.bucket,
-                manifest.name,
-                todo!()
+            let file_url = format!(
+                "https://www.virustotal.com/gui/url/{hash}",
+                hash = manifest.install_config(self.arch).hash.unwrap()
+            );
+
+            let info = format!(
+                "{}/{}: {detected}/{total}. See more at {file_url}",
+                manifest.bucket, manifest.name,
             );
 
             match file_status {

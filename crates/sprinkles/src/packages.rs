@@ -778,10 +778,10 @@ impl Manifest {
                 Self::update_field(
                     arch_field!(arch => arch_config.hash as mut),
                     &mut self.install_config.hash,
-                    Some(hash.hash()),
+                    Some(hash),
                 );
             } else {
-                self.install_config.hash = Some(hash.hash());
+                self.install_config.hash = Some(hash);
             }
         }
 
@@ -1061,37 +1061,25 @@ impl HashExtractionOrArrayOfHashExtractions {
 mod tests {
     use std::error::Error;
 
-    use crate::{buckets::Bucket, packages::MergeDefaults, Architecture};
+    use crate::{buckets::Bucket, Architecture};
     use rayon::prelude::*;
 
     #[test]
     fn test_parse_all_manifests() -> Result<(), Box<dyn Error>> {
-        // Some manifests (ahem unityhub) are broken and don't follow Scoop's spec
-        // This list is used to skip those manifests
-        // because go fuck yourself
-        const BROKEN_MANIFESTS: &[&str] = &["unityhub"];
-
         let buckets = Bucket::list_all()?;
 
         let manifests = buckets
             .into_par_iter()
             .flat_map(|bucket| bucket.list_packages())
             .flatten()
+            .filter(|manifest| manifest.autoupdate_config(Architecture::ARCH).is_some())
             .collect::<Vec<_>>();
 
         manifests.par_iter().for_each(|manifest| {
             assert!(!manifest.name.is_empty());
             assert!(!manifest.bucket.is_empty());
 
-            if BROKEN_MANIFESTS.contains(&manifest.name.as_str()) {
-                return;
-            }
-
-            if let Some(autoupdate) = &manifest.autoupdate {
-                let autoupdate_config = autoupdate
-                    .architecture
-                    .merge_default(autoupdate.default_config.clone(), Architecture::ARCH);
-
+            if let Some(autoupdate_config) = &manifest.autoupdate_config(Architecture::ARCH) {
                 assert!(
                     autoupdate_config.url.is_some(),
                     "URL is missing in package: {}",
