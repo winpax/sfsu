@@ -1,16 +1,33 @@
 use clap::Parser;
-use indicatif::{ParallelProgressIterator, ProgressBar};
 use rayon::prelude::*;
 use regex::Regex;
 use sprinkles::{
-    abandon,
-    buckets::Bucket,
-    calm_panic::CalmUnwrap,
-    packages::{manifest, SearchMode},
-    progress::{style, ProgressOptions},
-    requests::user_agent,
-    Architecture, Scoop,
+    abandon, buckets::Bucket, calm_panic::CalmUnwrap, green, packages::SearchMode, red,
+    requests::user_agent, yellow, Architecture, Scoop,
 };
+
+enum Status {
+    Malicious,
+    Suspicious,
+    Undetected,
+}
+
+impl Status {
+    #[allow(clippy::cast_precision_loss, clippy::cast_sign_loss)]
+    pub fn from_stats(dangerous: i64, total: i64) -> Self {
+        let dangerous = dangerous as f64;
+        let total = total as f64;
+        let ratio = dangerous / total;
+
+        if ratio > 0.1 {
+            Self::Malicious
+        } else if dangerous > 0.0 {
+            Self::Suspicious
+        } else {
+            Self::Undetected
+        }
+    }
+}
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
@@ -91,16 +108,46 @@ impl super::Command for Args {
             .collect::<Result<Vec<_>, _>>()?;
 
         for (manifest, file_info) in matches {
-            println!(
-                "{}",
-                console::style(&format!(
-                    "{}/{}: {:?}",
+            let Some(stats) = file_info
+                .data
+                .and_then(|data| data.attributes)
+                .and_then(|attributes| attributes.last_analysis_stats)
+            else {
+                red!("No data found for {}", manifest.name);
+                continue;
+            };
+
+            let dangerous = stats
+                .malicious
+                .map(|m| m + stats.suspicious.unwrap_or_default())
+                .unwrap_or_default();
+            let total = dangerous + stats.undetected.unwrap_or_default();
+
+            let file_status = Status::from_stats(dangerous, total);
+
+            match file_status {
+                Status::Malicious => red!(
+                    "{}/{}: {}/{}",
                     manifest.bucket,
                     manifest.name,
-                    file_info.data.unwrap().attributes.unwrap()
-                ))
-                .bold()
-            );
+                    dangerous,
+                    total
+                ),
+                Status::Suspicious => yellow!(
+                    "{}/{}: {}/{}",
+                    manifest.bucket,
+                    manifest.name,
+                    dangerous,
+                    total
+                ),
+                Status::Undetected => green!(
+                    "{}/{}: {}/{}",
+                    manifest.bucket,
+                    manifest.name,
+                    dangerous,
+                    total
+                ),
+            }
         }
 
         Ok(())
