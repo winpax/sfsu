@@ -33,6 +33,8 @@ pub mod calm_panic;
 pub mod config;
 pub mod diagnostics;
 pub mod git;
+#[doc(hidden)]
+pub mod hacks;
 #[cfg(feature = "manifest-hashes")]
 pub mod hash;
 pub mod output;
