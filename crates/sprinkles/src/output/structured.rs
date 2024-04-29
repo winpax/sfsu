@@ -5,6 +5,8 @@ use std::fmt::Display;
 use itertools::Itertools;
 use serde_json::{Map, Value};
 
+use crate::inline_const;
+
 use super::wrappers::header::Header;
 
 pub mod vertical;
@@ -172,7 +174,7 @@ impl<'a> Display for Structured<'a> {
                 .iter()
                 .map(|header| header.len())
                 .max()
-                .unwrap_or(const { "Updated".len() });
+                .unwrap_or(inline_const!(usize "Updated".len()));
 
             let mut v = vec![default_width];
             v.extend(headers.iter().map(|s| s.len()));

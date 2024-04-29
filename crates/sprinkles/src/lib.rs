@@ -1,6 +1,3 @@
-#![feature(let_chains)]
-#![feature(inline_const)]
-#![feature(const_black_box)]
 #![doc = include_str!("../README.md")]
 #![warn(
     clippy::all,
@@ -33,6 +30,8 @@ pub mod calm_panic;
 pub mod config;
 pub mod diagnostics;
 pub mod git;
+#[doc(hidden)]
+pub mod hacks;
 #[cfg(feature = "manifest-hashes")]
 pub mod hash;
 pub mod output;
@@ -63,11 +62,6 @@ extern crate log;
 
 /// Ensure supported environment
 mod const_assertions {
-    #[allow(unused)]
-    const fn eval<T>(dummy: &T) {
-        std::hint::black_box(dummy);
-    }
-
     const _: () = assert!(cfg!(windows), "Only windows is supported");
 }
 

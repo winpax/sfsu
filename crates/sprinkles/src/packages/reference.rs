@@ -7,7 +7,10 @@ use itertools::Itertools;
 use url::Url;
 
 use super::{CreateManifest, Manifest};
-use crate::buckets::{self, Bucket};
+use crate::{
+    buckets::{self, Bucket},
+    let_chain,
+};
 
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
@@ -207,11 +210,9 @@ impl Package {
         };
 
         #[cfg(feature = "manifest-hashes")]
-        if let Ok(manifest) = manifest.as_mut()
-            && let Some(version) = &self.version
-        {
+        let_chain!(let Ok(manifest) = manifest.as_mut(); let Some(version) = &self.version; {
             manifest.set_version(version.clone()).await?;
-        }
+        });
 
         manifest
     }

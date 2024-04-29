@@ -19,6 +19,7 @@ use strum::Display;
 use crate::{
     buckets::{self, Bucket},
     git::{self, Repo},
+    let_chain,
     output::{
         sectioned::{Children, Section, Text},
         wrappers::{author::Author, time::NicerTime},
@@ -692,13 +693,18 @@ impl Manifest {
         default_field: &mut Option<T>,
         value: Option<T>,
     ) {
-        if let Some(arch_field) = arch_field
-            && let Some(value) = value
-        {
+        let_chain!(let Some(arch_field) = arch_field; let Some(value) = value; {
             *arch_field = value;
-        } else {
+        }; else {
             *default_field = value;
-        }
+        });
+        // if let Some(arch_field) = arch_field
+        //     && let Some(value) = value
+        // {
+        //     *arch_field = value;
+        // } else {
+        //     *default_field = value;
+        // }
     }
 
     #[cfg(feature = "manifest-hashes")]
