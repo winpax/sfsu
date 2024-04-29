@@ -132,6 +132,7 @@ pub enum Commands {
     #[cfg(feature = "download")]
     /// Show or clear the download cache
     Cache(cache::Args),
+    #[cfg(feature = "beta")]
     /// Scan a file with VirusTotal
     Virustotal(virustotal::Args),
 }

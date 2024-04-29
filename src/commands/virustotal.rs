@@ -133,28 +133,17 @@ impl super::Command for Args {
 
             let file_status = Status::from_stats(detected, total);
 
+            let info = format_args!(
+                "{}/{}: {detected}/{total}. See more at {}",
+                manifest.bucket,
+                manifest.name,
+                todo!()
+            );
+
             match file_status {
-                Status::Malicious => red!(
-                    "{}/{}: {}/{}",
-                    manifest.bucket,
-                    manifest.name,
-                    detected,
-                    total
-                ),
-                Status::Suspicious => yellow!(
-                    "{}/{}: {}/{}",
-                    manifest.bucket,
-                    manifest.name,
-                    detected,
-                    total
-                ),
-                Status::Undetected => green!(
-                    "{}/{}: {}/{}",
-                    manifest.bucket,
-                    manifest.name,
-                    detected,
-                    total
-                ),
+                Status::Malicious => red!("{info}"),
+                Status::Suspicious => yellow!("{info}"),
+                Status::Undetected => green!("{info}"),
             }
         }
 
