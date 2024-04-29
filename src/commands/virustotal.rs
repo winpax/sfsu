@@ -61,7 +61,7 @@ pub struct Args {
     )]
     arch: Architecture,
 
-    #[clap(short, long, help = "Scan all installed apps")]
+    #[clap(short = 'A', long, help = "Scan all installed apps")]
     all: bool,
 
     #[clap(from_global)]
@@ -82,6 +82,7 @@ impl super::Command for Args {
             Scoop::installed_apps()?
                 .into_par_iter()
                 .map(|path| path.join("current").join("manifest.json"))
+                .filter(|path| path.exists())
                 // The closure is redundant, but it's necessary to avoid a rust-analyzer error
                 .map(|path| Manifest::from_path(path))
                 .collect::<Result<_, _>>()?
@@ -106,13 +107,13 @@ impl super::Command for Args {
 
                 if let Some(hash) = install_config.hash {
                     if let Ok(file_info) = client.clone().file_info(&hash.to_string()) {
-                        return anyhow::Ok(Some((manifest, file_info)));
+                        anyhow::Ok(Some((manifest, file_info)))
                     } else {
-                        return anyhow::Ok(None);
+                        anyhow::Ok(None)
                     }
+                } else {
+                    anyhow::Ok(None)
                 }
-
-                anyhow::Ok(None)
             })
             .filter_map(Result::transpose)
             .collect::<Result<Vec<_>, _>>()?;
