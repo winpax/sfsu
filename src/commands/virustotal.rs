@@ -116,9 +116,9 @@ impl super::Command for Args {
             .into_par_iter()
             .progress_with_style(style(Some(ProgressOptions::PosLen), None))
             .map(|manifest| {
-                let hash = manifest.install_config(self.arch).hash;
+                let install_config = manifest.install_config(self.arch);
 
-                if let Some(hash) = hash {
+                if let Some(hash) = install_config.hash {
                     if let Ok(file_info) = client.clone().file_info(&hash.to_string()) {
                         return anyhow::Ok(Some((manifest, file_info)));
                     } else {
