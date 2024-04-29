@@ -778,10 +778,10 @@ impl Manifest {
                 Self::update_field(
                     arch_field!(arch => arch_config.hash as mut),
                     &mut self.install_config.hash,
-                    Some(hash.hash()),
+                    Some(hash),
                 );
             } else {
-                self.install_config.hash = Some(hash.hash());
+                self.install_config.hash = Some(hash);
             }
         }
 
