@@ -1,8 +1,14 @@
 use clap::Parser;
+use indicatif::{ParallelProgressIterator, ProgressBar};
 use rayon::prelude::*;
 use regex::Regex;
 use sprinkles::{
-    abandon, buckets::Bucket, calm_panic::CalmUnwrap, packages::SearchMode, requests::user_agent,
+    abandon,
+    buckets::Bucket,
+    calm_panic::CalmUnwrap,
+    packages::{manifest, SearchMode},
+    progress::{style, ProgressOptions},
+    requests::user_agent,
     Architecture, Scoop,
 };
 
@@ -84,6 +90,19 @@ impl super::Command for Args {
             .filter_map(Result::transpose)
             .collect::<Result<Vec<_>, _>>()?;
 
-        todo!()
+        for (manifest, file_info) in matches {
+            println!(
+                "{}",
+                console::style(&format!(
+                    "{}/{}: {:?}",
+                    manifest.bucket,
+                    manifest.name,
+                    file_info.data.unwrap().attributes.unwrap()
+                ))
+                .bold()
+            );
+        }
+
+        Ok(())
     }
 }
