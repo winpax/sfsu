@@ -74,15 +74,7 @@ impl super::Command for Args {
                 let hash = manifest.install_config(Architecture::ARCH).hash;
 
                 if let Some(hash) = hash {
-                    let file_info = {
-                        let client = client.clone();
-                        move || client.file_info(&hash)
-                    };
-                    // tokio::task::spawn_blocking(
-                    // )
-                    // .await??
-
-                    let file_info = file_info()?;
+                    let file_info = client.clone().file_info(&hash)?;
 
                     return anyhow::Ok(Some((manifest, file_info)));
                 }
