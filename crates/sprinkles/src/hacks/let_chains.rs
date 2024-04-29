@@ -1,16 +1,16 @@
 #[macro_export]
 macro_rules! let_chain {
-    (let Some($pat:ident) = $expr:expr; $(let Some($pat2:ident) = $expr2:expr $(;)?)+ $(; else $else:expr)?) => {{
+    (let Some($pat:ident) = $expr:expr; $(let Some($pat2:ident) = $expr2:expr ;)+ $then:expr $(; else $else:expr)?) => {{
         if let Some($pat) = $expr {
-            let_chain!($(let Some($pat2) = $expr2 ;)+ $(; else $else)?)
+            let_chain!($(let Some($pat2) = $expr2 ;)+ $then $(; else $else)?)
         } else {
             $($else)?
         }
     }};
 
-    (let Some($pat:ident) = $expr:expr; $(; else $else:expr)?) => {{
+    (let Some($pat:ident) = $expr:expr; $then:expr $(; else $else:expr)?) => {{
         if let Some($pat) = $expr {
-            $pat
+            $then
         } else {
             $($else)?
         }
@@ -21,6 +21,10 @@ macro_rules! let_chain {
 mod tests {
     #[test]
     fn test_let_chain() {
-        let_chain!(let Some(x) = Some(1); let Some(y) = Some(2); else 0);
+        let result = let_chain!(let Some(x) = Some(1); let Some(y) = Some(2); let Some(z) = Some(3); {
+            (x, y, z)
+        }; else panic!("nope"));
+
+        assert_eq!(result, (1, 2, 3));
     }
 }
