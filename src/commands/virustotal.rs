@@ -1,9 +1,17 @@
 use clap::Parser;
+use indicatif::ParallelProgressIterator;
 use rayon::prelude::*;
 use regex::Regex;
 use sprinkles::{
-    abandon, buckets::Bucket, calm_panic::CalmUnwrap, green, packages::SearchMode, red,
-    requests::user_agent, yellow, Architecture, Scoop,
+    abandon,
+    buckets::Bucket,
+    calm_panic::CalmUnwrap,
+    green,
+    packages::SearchMode,
+    progress::{style, ProgressOptions},
+    red,
+    requests::user_agent,
+    yellow, Architecture, Scoop,
 };
 
 enum Status {
@@ -31,6 +39,7 @@ impl Status {
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
+    // TODO: Use manifest reference and -a flag for scanning installed apps
     #[clap(help = "The regex pattern to search for, using Rust Regex syntax")]
     pattern: String,
 
@@ -93,7 +102,7 @@ impl super::Command for Args {
             Bucket::list_all()?
         };
 
-        let matches = matching_buckets
+        let manifests = matching_buckets
             .into_par_iter()
             .flat_map(
                 |bucket| match bucket.matches(false, &pattern, SearchMode::Name) {
@@ -101,13 +110,20 @@ impl super::Command for Args {
                     _ => vec![],
                 },
             )
+            .collect::<Vec<_>>();
+
+        let matches = manifests
+            .into_par_iter()
+            .progress_with_style(style(Some(ProgressOptions::PosLen), None))
             .map(|manifest| {
                 let hash = manifest.install_config(self.arch).hash;
 
                 if let Some(hash) = hash {
-                    let file_info = client.clone().file_info(&hash.to_string())?;
-
-                    return anyhow::Ok(Some((manifest, file_info)));
+                    if let Ok(file_info) = client.clone().file_info(&hash.to_string()) {
+                        return anyhow::Ok(Some((manifest, file_info)));
+                    } else {
+                        return anyhow::Ok(None);
+                    }
                 }
 
                 anyhow::Ok(None)
