@@ -14,6 +14,7 @@ use std::{
     fmt,
     fs::File,
     path::{Path, PathBuf},
+    str::FromStr,
 };
 
 use chrono::Local;
@@ -78,6 +79,19 @@ pub enum Architecture {
     X86,
 }
 
+impl FromStr for Architecture {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(match s {
+            "64bit" => Self::X64,
+            "32bit" => Self::X86,
+            "arm64" => Self::Arm64,
+            _ => return Err(Error::UnsupportedArchitecture),
+        })
+    }
+}
+
 impl Architecture {
     /// Get the architecture of the current environment
     pub const ARCH: Self = Self::X64;
@@ -138,6 +152,8 @@ pub enum Error {
     TimeoutCreatingLog,
     #[error("Error creating log file: {0}")]
     CreatingLog(#[from] std::io::Error),
+    #[error("Unsupported architecture")]
+    UnsupportedArchitecture,
 }
 
 /// The Scoop install reference

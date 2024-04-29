@@ -44,6 +44,14 @@ pub struct Args {
     #[clap(short, long, help = "The bucket to exclusively search in")]
     bucket: Option<String>,
 
+    #[clap(
+        short,
+        long,
+        help = "Use the specified architecture, if the app supports it",
+        default_value_t = Architecture::ARCH
+    )]
+    arch: Architecture,
+
     #[clap(from_global)]
     json: bool,
 }
@@ -94,7 +102,7 @@ impl super::Command for Args {
                 },
             )
             .map(|manifest| {
-                let hash = manifest.install_config(Architecture::ARCH).hash;
+                let hash = manifest.install_config(self.arch).hash;
 
                 if let Some(hash) = hash {
                     let file_info = client.clone().file_info(&hash)?;
@@ -117,34 +125,34 @@ impl super::Command for Args {
                 continue;
             };
 
-            let dangerous = stats
+            let detected = stats
                 .malicious
                 .map(|m| m + stats.suspicious.unwrap_or_default())
                 .unwrap_or_default();
-            let total = dangerous + stats.undetected.unwrap_or_default();
+            let total = detected + stats.undetected.unwrap_or_default();
 
-            let file_status = Status::from_stats(dangerous, total);
+            let file_status = Status::from_stats(detected, total);
 
             match file_status {
                 Status::Malicious => red!(
                     "{}/{}: {}/{}",
                     manifest.bucket,
                     manifest.name,
-                    dangerous,
+                    detected,
                     total
                 ),
                 Status::Suspicious => yellow!(
                     "{}/{}: {}/{}",
                     manifest.bucket,
                     manifest.name,
-                    dangerous,
+                    detected,
                     total
                 ),
                 Status::Undetected => green!(
                     "{}/{}: {}/{}",
                     manifest.bucket,
                     manifest.name,
-                    dangerous,
+                    detected,
                     total
                 ),
             }
