@@ -1,4 +1,3 @@
-#![feature(is_sorted)]
 #![warn(
     clippy::all,
     clippy::pedantic,
