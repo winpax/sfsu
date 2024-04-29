@@ -1,4 +1,3 @@
-#![feature(const_black_box)]
 #![doc = include_str!("../README.md")]
 #![warn(
     clippy::all,
@@ -63,11 +62,6 @@ extern crate log;
 
 /// Ensure supported environment
 mod const_assertions {
-    #[allow(unused)]
-    const fn eval<T>(dummy: &T) {
-        std::hint::black_box(dummy);
-    }
-
     const _: () = assert!(cfg!(windows), "Only windows is supported");
 }
 
