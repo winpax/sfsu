@@ -58,8 +58,6 @@ pub struct Args {
 
 impl super::Command for Args {
     async fn runner(self) -> Result<(), anyhow::Error> {
-        // TODO: Implement rate limits
-
         let config = Scoop::config()?;
         let api_key = config
             .virustotal_api_key
