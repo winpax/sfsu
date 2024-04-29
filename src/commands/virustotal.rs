@@ -7,7 +7,7 @@ use sprinkles::{
     buckets::Bucket,
     calm_panic::CalmUnwrap,
     green,
-    packages::SearchMode,
+    packages::{reference::Package, SearchMode},
     progress::{style, ProgressOptions},
     red,
     requests::user_agent,
@@ -40,8 +40,8 @@ impl Status {
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
     // TODO: Use manifest reference and -a flag for scanning installed apps
-    #[clap(help = "The regex pattern to search for, using Rust Regex syntax")]
-    pattern: String,
+    #[clap(help = "The apps to scan for viruses")]
+    apps: Vec<Package>,
 
     #[clap(
         short,
@@ -74,43 +74,18 @@ impl super::Command for Args {
 
         let client = vt3::VtClient::new(&api_key).user_agent(&user_agent());
 
-        let (bucket, raw_pattern) =
-            if let Some((bucket, raw_pattern)) = self.pattern.split_once('/') {
-                // Bucket flag overrides bucket/package syntax
-                (
-                    Some(self.bucket.unwrap_or(bucket.to_string())),
-                    raw_pattern.to_string(),
-                )
-            } else {
-                (self.bucket, self.pattern)
-            };
+        let manifests = {
+            let manifests = self
+                .apps
+                .into_iter()
+                .map(|reference| async move { reference.list_manifests().await });
 
-        let pattern = {
-            Regex::new(&format!(
-                "{}{raw_pattern}",
-                if self.case_sensitive { "" } else { "(?i)" },
-            ))
-            .calm_expect(
-                "Invalid Regex provided. See https://docs.rs/regex/latest/regex/ for more info",
-            )
+            futures::future::try_join_all(manifests)
+                .await?
+                .into_par_iter()
+                .flatten()
+                .collect::<Vec<_>>()
         };
-
-        let matching_buckets: Vec<Bucket> = if let Some(Ok(bucket)) = bucket.map(Bucket::from_name)
-        {
-            vec![bucket]
-        } else {
-            Bucket::list_all()?
-        };
-
-        let manifests = matching_buckets
-            .into_par_iter()
-            .flat_map(
-                |bucket| match bucket.matches(false, &pattern, SearchMode::Name) {
-                    Ok(manifests) => manifests,
-                    _ => vec![],
-                },
-            )
-            .collect::<Vec<_>>();
 
         let matches = manifests
             .into_par_iter()
