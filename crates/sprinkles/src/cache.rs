@@ -15,6 +15,7 @@ use tokio_util::codec::{BytesCodec, FramedRead};
 
 use crate::{
     hash::{url_ext::UrlExt, HashType},
+    let_chain,
     packages::Manifest,
     progress, Architecture,
 };
@@ -148,11 +149,9 @@ impl Downloader {
 
         let pb = mp.map(|mp| {
             let message = {
-                if let Ok(parsed_url) = url::Url::parse(&cache.url)
-                    && let Some(leaf) = parsed_url.leaf()
-                {
+                let_chain!(let Ok(parsed_url) = url::Url::parse(&cache.url); let Some(leaf) = parsed_url.leaf(); {
                     leaf
-                } else {
+                }; else {
                     cache
                         .file_name
                         .to_string_lossy()
@@ -160,7 +159,7 @@ impl Downloader {
                         .next_back()
                         .expect("non-empty file name")
                         .to_string()
-                }
+                })
             };
 
             let pb = mp.add(

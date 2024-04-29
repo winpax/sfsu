@@ -28,27 +28,29 @@ pub trait UrlExt {
 
 impl UrlExt for Url {
     fn remote_filename(&self) -> String {
-        let basename = self.leaf().expect("url leaf");
+        let leaf = self.leaf().expect("url leaf");
 
         let query_regex = Regex::new(r".*[?=]+([\w._-]+)").expect("valid query regex");
         let version_regex = Regex::new(r"^[v.\d]+$").expect("valid version regex");
 
         if let Some(query_filename) = query_regex
-            .captures(&basename)
+            .captures(&leaf)
             .and_then(|captures| captures.get(1).map(|capture| capture.as_str().to_string()))
         {
-            query_filename
-        } else if let Some(leaf) = self.leaf()
-            && (!basename.contains('.') || version_regex.is_match(&basename))
-        {
-            leaf
-        } else if let Some(fragment) = self.fragment()
-            && !basename.contains('.')
-        {
-            fragment.trim_matches('#').trim_matches('/').to_string()
-        } else {
-            basename
+            return query_filename;
         }
+
+        if !leaf.contains('.') || version_regex.is_match(&leaf) {
+            return leaf;
+        }
+
+        if !leaf.contains('.') {
+            if let Some(fragment) = self.fragment() {
+                return fragment.trim_matches('#').trim_matches('/').to_string();
+            }
+        }
+
+        leaf
     }
 
     fn strip_fragment(&mut self) {
@@ -118,6 +120,13 @@ mod tests {
         let mut url = Url::parse("https://example.com/#fragment").unwrap();
         url.strip_fragment();
         assert_eq!(url.as_str(), "https://example.com/");
+    }
+
+    #[test]
+    fn test_basename() {
+        let  url = Url::parse("https://github.com/abbodi1406/vcredist/releases/download/v0.80.0/VisualCppRedist_AIO_x86_x64_80.zip").unwrap();
+        let basename = url.remote_filename();
+        assert_eq!(basename.as_str(), "VisualCppRedist_AIO_x86_x64_80.zip");
     }
 
     #[test]
