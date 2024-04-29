@@ -9,6 +9,16 @@ use derive_more::Deref;
 use reqwest::header::HeaderMap;
 
 #[must_use]
+/// Get user agent for sfsu
+pub fn user_agent() -> String {
+    use std::env::consts::{ARCH, OS};
+
+    const VERSION: &str = env!("CARGO_PKG_VERSION");
+
+    format!("Scoop/1.0 (+https://scoop.sh/) sfsu/{VERSION} ({ARCH}) ({OS})")
+}
+
+#[must_use]
 /// Construct default headers for requests
 ///
 /// # Panics
@@ -19,18 +29,7 @@ pub fn default_headers() -> HeaderMap {
     let mut headers = HeaderMap::new();
 
     headers.insert(ACCEPT, HeaderValue::from_static("*/*"));
-    headers.insert(
-        USER_AGENT,
-        {
-            use std::env::consts::{ARCH, OS};
-
-            const VERSION: &str = env!("CARGO_PKG_VERSION");
-
-            format!("Scoop/1.0 (+https://scoop.sh/) sfsu/{VERSION} ({ARCH}) ({OS})")
-        }
-        .parse()
-        .unwrap(),
-    );
+    headers.insert(USER_AGENT, user_agent().parse().unwrap());
 
     headers
 }

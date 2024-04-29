@@ -2382,6 +2382,7 @@ dependencies = [
  "shadow-rs",
  "sprinkles",
  "tokio",
+ "vt3",
  "winres",
 ]
 

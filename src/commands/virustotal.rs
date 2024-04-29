@@ -1,7 +1,10 @@
 use clap::Parser;
 use rayon::prelude::*;
 use regex::Regex;
-use sprinkles::{abandon, buckets::Bucket, calm_panic::CalmUnwrap, packages::SearchMode, Scoop};
+use sprinkles::{
+    abandon, buckets::Bucket, calm_panic::CalmUnwrap, packages::SearchMode, requests::user_agent,
+    virustotal, Architecture, Scoop,
+};
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
@@ -28,6 +31,8 @@ impl super::Command for Args {
         let api_key = config
             .virustotal_api_key
             .unwrap_or_else(|| abandon!("No virustotal api key found"));
+
+        let client = virustotal::VtClient::new(&api_key);
 
         let (bucket, raw_pattern) =
             if let Some((bucket, raw_pattern)) = self.pattern.split_once('/') {
@@ -65,6 +70,32 @@ impl super::Command for Args {
                     _ => vec![],
                 },
             )
+            .map(|manifest| async move {
+                let hash = manifest.install_config(Architecture::ARCH).hash;
+
+                if let Some(hash) = hash {
+                    let file_info = client.file_info(&hash).await.ok()?;
+
+                    if file_info
+                        .data
+                        .as_ref()
+                        .unwrap()
+                        .attributes.as_ref()
+                        .unwrap()
+                        .last_analysis_stats.as_ref()
+                        .unwrap()
+                        .harmless
+                        .unwrap()
+                        > 0
+                    {
+                        Some((manifest, file_info))
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                }
+            })
             .collect();
 
         todo!()

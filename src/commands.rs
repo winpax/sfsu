@@ -133,5 +133,5 @@ pub enum Commands {
     /// Show or clear the download cache
     Cache(cache::Args),
     /// Scan a file with VirusTotal
-    VirusTotal(virustotal::Args),
+    Virustotal(virustotal::Args),
 }
