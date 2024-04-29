@@ -42,7 +42,6 @@ pub mod shell;
 #[cfg(not(feature = "v2"))]
 pub mod stream;
 pub mod version;
-pub mod virustotal;
 
 #[doc(hidden)]
 pub mod __versions {

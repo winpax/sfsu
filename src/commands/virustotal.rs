@@ -3,7 +3,7 @@ use rayon::prelude::*;
 use regex::Regex;
 use sprinkles::{
     abandon, buckets::Bucket, calm_panic::CalmUnwrap, packages::SearchMode, requests::user_agent,
-    virustotal, Architecture, Scoop,
+    Architecture, Scoop,
 };
 
 #[derive(Debug, Clone, Parser)]
@@ -32,7 +32,7 @@ impl super::Command for Args {
             .virustotal_api_key
             .unwrap_or_else(|| abandon!("No virustotal api key found"));
 
-        let client = virustotal::VtClient::new(&api_key);
+        let client = vt3::VtClient::new(&api_key).user_agent(&user_agent());
 
         let (bucket, raw_pattern) =
             if let Some((bucket, raw_pattern)) = self.pattern.split_once('/') {
@@ -62,41 +62,35 @@ impl super::Command for Args {
             Bucket::list_all()?
         };
 
-        let mut matches: Vec<_> = matching_buckets
-            .par_iter()
+        let matches = matching_buckets
+            .into_par_iter()
             .flat_map(
                 |bucket| match bucket.matches(false, &pattern, SearchMode::Name) {
                     Ok(manifests) => manifests,
                     _ => vec![],
                 },
             )
-            .map(|manifest| async move {
+            .map(|manifest| {
                 let hash = manifest.install_config(Architecture::ARCH).hash;
 
                 if let Some(hash) = hash {
-                    let file_info = client.file_info(&hash).await.ok()?;
+                    let file_info = {
+                        let client = client.clone();
+                        move || client.file_info(&hash)
+                    };
+                    // tokio::task::spawn_blocking(
+                    // )
+                    // .await??
 
-                    if file_info
-                        .data
-                        .as_ref()
-                        .unwrap()
-                        .attributes.as_ref()
-                        .unwrap()
-                        .last_analysis_stats.as_ref()
-                        .unwrap()
-                        .harmless
-                        .unwrap()
-                        > 0
-                    {
-                        Some((manifest, file_info))
-                    } else {
-                        None
-                    }
-                } else {
-                    None
+                    let file_info = file_info()?;
+
+                    return anyhow::Ok(Some((manifest, file_info)));
                 }
+
+                anyhow::Ok(None)
             })
-            .collect();
+            .filter_map(Result::transpose)
+            .collect::<Result<Vec<_>, _>>()?;
 
         todo!()
     }
