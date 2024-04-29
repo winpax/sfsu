@@ -403,6 +403,7 @@ impl Default for MatchCriteria {
     }
 }
 
+/// Localised functions for creating manifests
 pub trait CreateManifest
 where
     Self: for<'a> Deserialize<'a>,
@@ -430,9 +431,11 @@ where
         serde_json::from_str(trimmed)
     }
 
+    /// Set the name of the manifest. Not meant to be used directly.
     #[must_use]
     fn with_name(self, path: impl AsRef<Path>) -> Self;
 
+    /// Set the bucket of the manifest. Not meant to be used directly.
     #[must_use]
     fn with_bucket(self, path: impl AsRef<Path>) -> Self;
 }
