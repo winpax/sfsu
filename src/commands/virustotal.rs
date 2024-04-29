@@ -7,7 +7,7 @@ use sprinkles::{
     buckets::Bucket,
     calm_panic::CalmUnwrap,
     green,
-    packages::{reference::Package, SearchMode},
+    packages::{reference::Package, CreateManifest, Manifest, SearchMode},
     progress::{style, ProgressOptions},
     red,
     requests::user_agent,
@@ -61,6 +61,9 @@ pub struct Args {
     )]
     arch: Architecture,
 
+    #[clap(short, long, help = "Scan all installed apps")]
+    all: bool,
+
     #[clap(from_global)]
     json: bool,
 }
@@ -74,7 +77,15 @@ impl super::Command for Args {
 
         let client = vt3::VtClient::new(&api_key).user_agent(&user_agent());
 
-        let manifests = {
+        #[allow(clippy::redundant_closure)]
+        let manifests = if self.all {
+            Scoop::installed_apps()?
+                .into_par_iter()
+                .map(|path| path.join("current").join("manifest.json"))
+                // The closure is redundant, but it's necessary to avoid a rust-analyzer error
+                .map(|path| Manifest::from_path(path))
+                .collect::<Result<_, _>>()?
+        } else {
             let manifests = self
                 .apps
                 .into_iter()

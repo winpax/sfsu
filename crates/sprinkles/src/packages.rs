@@ -403,7 +403,7 @@ impl Default for MatchCriteria {
     }
 }
 
-pub(crate) trait CreateManifest
+pub trait CreateManifest
 where
     Self: for<'a> Deserialize<'a>,
 {
