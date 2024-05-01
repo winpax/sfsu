@@ -4,7 +4,7 @@ use serde_json::Value;
 use sprinkles::{
     buckets::Bucket,
     output::structured::Structured,
-    packages::{install, outdated},
+    packages::models::{install, outdated},
 };
 
 #[derive(Debug, Clone, Parser)]

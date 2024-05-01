@@ -9,8 +9,10 @@ use sprinkles::{
         wrappers::{alias_vec::AliasVec, bool::NicerBool, time::NicerTime},
     },
     packages::{
-        info::PackageInfo,
-        manifest::{AliasArray, StringArray},
+        models::{
+            info::PackageInfo,
+            manifest::{AliasArray, StringArray},
+        },
         reference, Manifest, MergeDefaults,
     },
     semver, Architecture, Scoop,

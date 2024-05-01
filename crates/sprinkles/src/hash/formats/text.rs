@@ -176,7 +176,7 @@ mod tests {
     use super::*;
 
     use crate::{
-        buckets::Bucket, packages::manifest::HashExtractionOrArrayOfHashExtractions,
+        buckets::Bucket, packages::models::manifest::HashExtractionOrArrayOfHashExtractions,
         requests::Client,
     };
 

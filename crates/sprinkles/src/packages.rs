@@ -34,19 +34,13 @@ use crate::hash::{
 };
 
 pub mod downloading;
-pub mod export;
-pub mod info;
-pub mod install;
-pub mod manifest;
-pub mod outdated;
+pub mod models;
 pub mod reference;
-pub mod status;
 
-pub use install::Manifest as InstallManifest;
-pub use manifest::Manifest;
+pub use models::{install::Manifest as InstallManifest, manifest::Manifest};
 
 use downloading::DownloadUrl;
-use manifest::{InstallConfig, StringArray};
+use models::manifest::{InstallConfig, StringArray};
 
 #[macro_export]
 /// Get a field from a manifest based on the architecture
@@ -143,8 +137,8 @@ macro_rules! arch_field {
 pub use arch_config;
 pub use arch_field;
 
-use self::manifest::{
-    AliasArray, AutoupdateArchitecture, AutoupdateConfig, HashExtraction,
+use self::models::manifest::{
+    self, AliasArray, AutoupdateArchitecture, AutoupdateConfig, HashExtraction,
     HashExtractionOrArrayOfHashExtractions, ManifestArchitecture,
 };
 
