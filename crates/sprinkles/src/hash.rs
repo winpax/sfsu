@@ -617,7 +617,10 @@ mod tests {
 
     use crate::{
         buckets::Bucket,
-        packages::{manifest::HashExtractionOrArrayOfHashExtractions, reference},
+        packages::{
+            manifest::{HashExtractionOrArrayOfHashExtractions, TOrArrayOfTs},
+            reference,
+        },
         requests::BlockingClient,
     };
 
@@ -707,16 +710,9 @@ mod tests {
             .await
             .unwrap();
 
-        let actual_hash = manifest
-            .architecture
-            .unwrap()
-            .x64
-            .unwrap()
-            .hash
-            .unwrap()
-            .to_string();
+        let actual_hash = manifest.architecture.unwrap().x64.unwrap().hash.unwrap();
 
-        assert_eq!(actual_hash, hash[0].hash());
+        assert_eq!(actual_hash, TOrArrayOfTs::from_vec_or_default(hash));
     }
 
     pub struct TestHandler {
@@ -741,7 +737,7 @@ mod tests {
                 .hash
                 .unwrap();
 
-            assert_eq!(actual_hash, hash[0].hash());
+            assert_eq!(actual_hash, TOrArrayOfTs::from_vec_or_default(hash));
 
             Ok(())
         }

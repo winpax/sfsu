@@ -79,20 +79,24 @@ impl Handle {
         let name = &manifest.name;
         let version = &manifest.version;
 
-        manifest
+        let download_urls = manifest
             .download_urls(arch)
             .ok_or(Error::MissingDownloadUrl)?
-            .into_iter()
-            .map(|url| {
+            .into_iter();
+
+        let hash_types = manifest
+            .install_config(arch)
+            .hash
+            .map(|hash| hash.map(|hash| hash.hash_type()).to_vec())
+            .unwrap_or_default()
+            .into_iter();
+
+        download_urls
+            .zip(hash_types)
+            .map(|(url, hash_type)| {
                 let file_name = PathBuf::from(&url);
 
                 let file_name = format!("{}#{}#{}", name, version, file_name.display());
-
-                let hash_type = manifest
-                    .install_config(arch)
-                    .hash
-                    .map(|hash| hash.hash_type())
-                    .unwrap_or_default();
 
                 Self::new(
                     cache_path.as_ref(),
