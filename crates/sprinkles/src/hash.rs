@@ -122,6 +122,12 @@ impl Hash {
     // }
 
     #[must_use]
+    /// Get the hash with no prefix
+    pub fn no_prefix(&self) -> &str {
+        &self.hash
+    }
+
+    #[must_use]
     /// Get the hash type
     pub fn hash_type(&self) -> HashType {
         self.hash_type
@@ -366,11 +372,11 @@ impl Hash {
             let downloaders = futures::future::try_join_all(downloaders).await?;
 
             let hashes = downloaders.into_iter().map(Downloader::download);
-            let (_, hashes): (Vec<_>, Vec<_>) = futures::future::try_join_all(hashes)
+            let hashes = futures::future::try_join_all(hashes)
                 .await?
                 .into_iter()
-                .map(|(path, hash)| (path, Self::from_hex(&hash)))
-                .unzip();
+                .map(|hash| hash.computed_hash)
+                .collect();
 
             return Ok(hashes);
 

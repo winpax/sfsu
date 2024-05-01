@@ -16,7 +16,7 @@ use tokio_util::codec::{BytesCodec, FramedRead};
 use crate::{
     hash::{url_ext::UrlExt, Hash, HashType},
     let_chain,
-    packages::Manifest,
+    packages::{manifest::TOrArrayOfTs, Manifest},
     progress, Architecture,
 };
 
@@ -35,6 +35,17 @@ pub enum Error {
 }
 
 #[derive(Debug)]
+/// Result for downloading
+pub struct DownloadResult {
+    /// Output file name
+    pub file_name: PathBuf,
+    /// The computed hash
+    pub computed_hash: Hash,
+    /// The hash stored in the manifest
+    pub actual_hash: Hash,
+}
+
+#[derive(Debug)]
 /// A cache handle
 pub struct Handle {
     url: String,
@@ -43,6 +54,7 @@ pub struct Handle {
     /// The cache output file path
     cache_path: PathBuf,
     hash_type: HashType,
+    actual_hash: Hash,
 }
 
 impl Handle {
@@ -55,6 +67,7 @@ impl Handle {
         file_name: impl Into<PathBuf>,
         hash_type: HashType,
         url: String,
+        actual_hash: Hash,
     ) -> Result<Self, Error> {
         let file_name = file_name.into();
         let cache_path = cache_path.as_ref().join(&file_name);
@@ -63,6 +76,7 @@ impl Handle {
             file_name,
             cache_path,
             hash_type,
+            actual_hash,
         })
     }
 
@@ -84,16 +98,17 @@ impl Handle {
             .ok_or(Error::MissingDownloadUrl)?
             .into_iter();
 
-        let hash_types = manifest
+        let hashes = manifest
             .install_config(arch)
             .hash
-            .map(|hash| hash.map(Hash::hash_type).to_vec())
+            .map(TOrArrayOfTs::to_vec)
+            // .map(|hash| hash.map(Hash::hash_type).to_vec())
             .unwrap_or_default()
             .into_iter();
 
         download_urls
-            .zip(hash_types)
-            .map(|(url, hash_type)| {
+            .zip(hashes)
+            .map(|(url, hash)| {
                 let file_name = PathBuf::from(&url);
 
                 let file_name = format!("{}#{}#{}", name, version, file_name.display());
@@ -101,8 +116,9 @@ impl Handle {
                 Self::new(
                     cache_path.as_ref(),
                     PathBuf::from(file_name),
-                    hash_type,
+                    hash.hash_type(),
                     url.url,
+                    hash,
                 )
             })
             .collect()
@@ -190,7 +206,9 @@ impl Downloader {
     ///
     /// # Errors
     /// - If the file cannot be written to the cache
-    pub async fn download(self) -> Result<(PathBuf, Vec<u8>), Error> {
+    pub async fn download(self) -> Result<DownloadResult, Error> {
+        let actual_hash = self.cache.actual_hash.clone();
+
         let file_name = self.cache.file_name.clone();
         let hash_bytes = match self.cache.hash_type {
             HashType::SHA512 => self.handle_buf::<sha2::Sha512>().await,
@@ -199,7 +217,11 @@ impl Downloader {
             HashType::MD5 => self.handle_buf::<md5::Md5>().await,
         }?;
 
-        Ok((file_name, hash_bytes))
+        Ok(DownloadResult {
+            file_name,
+            computed_hash: Hash::from_hex(&hash_bytes),
+            actual_hash,
+        })
     }
 
     async fn handle_buf<D: Digest>(self) -> Result<Vec<u8>, Error> {

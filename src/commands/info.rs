@@ -139,13 +139,13 @@ impl Args {
                 .merge_default(manifest.install_config.clone(), arch)
                 .bin
                 .map(|b| match b {
-                    AliasArray::NestedArray(StringArray::String(bin)) => bin.to_string(),
-                    AliasArray::NestedArray(StringArray::StringArray(bins)) => bins.join(" | "),
+                    AliasArray::NestedArray(StringArray::Single(bin)) => bin.to_string(),
+                    AliasArray::NestedArray(StringArray::Array(bins)) => bins.join(" | "),
                     AliasArray::AliasArray(bins) => bins
                         .into_iter()
                         .map(|bin_union| match bin_union {
-                            StringArray::String(bin) => bin,
-                            StringArray::StringArray(mut bin_alias) => bin_alias.remove(0),
+                            StringArray::Single(bin) => bin,
+                            StringArray::Array(mut bin_alias) => bin_alias.remove(0),
                         })
                         .join(" | "),
                 }),
