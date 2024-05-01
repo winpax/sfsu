@@ -2,7 +2,10 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::{packages::{CreateManifest,Result}, Architecture, Scoop};
+use crate::{
+    packages::{CreateManifest, Result},
+    Architecture, Scoop,
+};
 
 #[derive(Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 /// The install manifest
