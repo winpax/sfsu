@@ -120,7 +120,7 @@ pub struct InstallConfig {
     pub pre_uninstall: Option<StringArray>,
     pub shortcuts: Option<Vec<Vec<String>>>,
     pub uninstaller: Option<Uninstaller>,
-    pub url: Option<String>,
+    pub url: Option<StringArray>,
 }
 
 #[skip_serializing_none]
@@ -206,7 +206,7 @@ pub struct AutoupdateConfig {
     pub hash: Option<HashExtractionOrArrayOfHashExtractions>,
     pub installer: Option<PurpleInstaller>,
     pub shortcuts: Option<Vec<Vec<String>>>,
-    pub url: Option<String>,
+    pub url: Option<StringArray>,
 }
 
 #[skip_serializing_none]
@@ -314,14 +314,14 @@ pub enum Checkver {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum TOrArrayOfTs<T> {
-    T(T),
+    Single(T),
     Array(Vec<T>),
 }
 
 impl<T> TOrArrayOfTs<T> {
     pub fn to_vec(self) -> Vec<T> {
         match self {
-            TOrArrayOfTs::T(t) => vec![t],
+            TOrArrayOfTs::Single(t) => vec![t],
             TOrArrayOfTs::Array(array) => array,
         }
     }
@@ -333,6 +333,15 @@ impl<T> TOrArrayOfTs<T> {
 pub enum StringArray {
     String(String),
     StringArray(Vec<String>),
+}
+
+impl StringArray {
+    pub fn map<T>(&self, f: impl Fn(&str) -> T) -> TOrArrayOfTs<T> {
+        match self {
+            StringArray::String(s) => TOrArrayOfTs::Single(f(s)),
+            StringArray::StringArray(s) => TOrArrayOfTs::Array(s.iter().map(|s| f(s)).collect()),
+        }
+    }
 }
 
 impl Display for StringArray {

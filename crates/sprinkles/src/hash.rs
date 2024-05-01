@@ -3,6 +3,7 @@
 use std::{io::BufRead, num::ParseIntError};
 
 use formats::{json, text};
+use itertools::Itertools;
 use regex::Regex;
 use reqwest::{
     header::{HeaderMap, HeaderValue},
@@ -17,10 +18,12 @@ use crate::{
     packages::{
         manifest::{
             AutoupdateConfig, HashExtractionOrArrayOfHashExtractions, HashMode as ManifestHashMode,
+            StringArray,
         },
         Manifest, MergeDefaults,
     },
     requests::AsyncClient,
+    version::Version,
     Architecture, Scoop,
 };
 
@@ -220,7 +223,7 @@ impl HashMode {
             .architecture
             .merge_default(manifest.install_config.clone(), arch);
 
-        if let Some(url) = install_config.url {
+        if let Some(StringArray::String(url)) = install_config.url {
             if Self::fosshub_regex().is_match(&url) {
                 return Some(Self::Fosshub);
             }
@@ -325,7 +328,7 @@ impl Hash {
             .autoupdate_config(arch)
             .ok_or(Error::MissingAutoupdateConfig)?;
 
-        let mut hash_mode = HashMode::from_manifest(manifest, arch).unwrap_or_default();
+        let hash_mode = HashMode::from_manifest(manifest, arch).unwrap_or_default();
 
         if hash_mode == HashMode::Download {
             let cache_handle = Handle::open_manifest(Scoop::cache_path(), manifest, arch)?;
@@ -348,14 +351,35 @@ impl Hash {
             // };
         }
 
-        let manifest_url = manifest
+        let manifest_urls = manifest
             .install_config(arch)
             .url
             .as_ref()
-            .ok_or(Error::UrlNotFound)
-            .and_then(|url| Ok(Url::parse(url)?))?;
+            .ok_or(Error::UrlNotFound)?
+            .to_vec()
+            .into_iter()
+            .map(|urls| Url::parse(&urls).map_err(Error::InvalidUrl))
+            .collect::<Result<Vec<_>, _>>()?;
 
-        let submap = SubstitutionMap::from_all(&manifest.version, &manifest_url);
+        manifest_urls.into_iter().map(|manifest_url| {
+            Self::get_for_url(
+                hash_mode.clone(),
+                manifest_url,
+                &manifest.version,
+                &autoupdate_config,
+            )
+        });
+
+        todo!()
+    }
+
+    async fn get_for_url(
+        mut hash_mode: HashMode,
+        manifest_url: Url,
+        version: &Version,
+        autoupdate_config: &AutoupdateConfig,
+    ) -> Result<Hash, Error> {
+        let submap = SubstitutionMap::from_all(version, &manifest_url);
 
         let url = if matches!(hash_mode, HashMode::Fosshub | HashMode::Sourceforge) {
             let (url, regex): (Url, String) = match hash_mode {
