@@ -36,8 +36,7 @@ pub fn generate(input: TokenStream) -> TokenStream {
         #[doc = concat!("Colorize a string with the `", stringify!(#ident), "` color.")]
         macro_rules! #ident {
             ($($arg:tt)*) => {{
-                use owo_colors::OwoColorize;
-                eprintln!("{}", format_args!($($arg)*).#ident())
+                eprintln!("{}", console::style(format_args!($($arg)*)).#ident())
             }};
         }
 
@@ -45,8 +44,7 @@ pub fn generate(input: TokenStream) -> TokenStream {
         #[doc = concat!("Colorize a string with the `", stringify!(#bright_ident), "` color.")]
         macro_rules! #bright_ident {
             ($($arg:tt)*) => {{
-                use owo_colors::OwoColorize;
-                eprintln!("{}", format_args!($($arg)*).#bright_ident())
+                eprintln!("{}", console::style(format_args!($($arg)*)).#ident().bright())
             }};
         }
 

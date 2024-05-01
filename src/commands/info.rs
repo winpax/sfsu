@@ -1,6 +1,5 @@
 use clap::Parser;
 use itertools::Itertools;
-use owo_colors::OwoColorize;
 
 use sprinkles::{
     calm_panic::abandon,
@@ -26,7 +25,7 @@ pub struct Args {
     #[clap(
         short,
         long,
-        help = format!("The bucket to exclusively search in. {}", "DEPRECATED: Use <bucket>/<package> syntax instead".yellow())
+        help = format!("The bucket to exclusively search in. {}", console::style("DEPRECATED: Use <bucket>/<package> syntax instead").yellow())
     )]
     bucket: Option<String>,
 

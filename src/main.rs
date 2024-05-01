@@ -103,7 +103,8 @@ fn main() -> anyhow::Result<()> {
 
     if args.no_color || !std::io::stdout().is_terminal() {
         debug!("Colour disabled globally");
-        owo_colors::set_override(false);
+        console::set_colors_enabled(false);
+        console::set_colors_enabled_stderr(false);
         COLOR_ENABLED.store(false, Ordering::Relaxed);
     }
 

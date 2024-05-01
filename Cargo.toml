@@ -28,7 +28,6 @@ indicatif = { version = "0.17", features = [
 ] }
 itertools = "0.12"
 log = { version = "0.4", features = ["std"] }
-owo-colors = { version = "4.0", features = ["supports-colors"] }
 quork = "0.6"
 rayon = "1.10"
 regex = "1.10"
@@ -83,7 +82,6 @@ indicatif.workspace = true
 itertools.workspace = true
 log = { workspace = true }
 open = "5.1"
-owo-colors.workspace = true
 parking_lot = "0.12"
 quork.workspace = true
 rayon.workspace = true

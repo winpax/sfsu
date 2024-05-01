@@ -20,7 +20,7 @@ pub mod update;
 use clap::Subcommand;
 
 use sfsu_derive::{Hooks, Runnable};
-use sprinkles::calm_panic::abandon;
+use sprinkles::{calm_panic::abandon, yellow};
 
 pub struct DeprecationWarning {
     /// Deprecation message
@@ -53,8 +53,6 @@ pub trait Command {
     where
         Self: Sized,
     {
-        use owo_colors::OwoColorize;
-
         if let Some(deprecation_warning) = Self::deprecated() {
             let mut output = String::from("DEPRECATED: ");
 
@@ -69,7 +67,7 @@ pub trait Command {
                 output += &format!("Will be removed in v{version}. ");
             }
 
-            println!("{}\n", output.yellow());
+            yellow!("{output}\n");
         }
 
         if Self::NEEDS_ELEVATION && !quork::root::is_root()? {
@@ -77,9 +75,8 @@ pub trait Command {
         }
 
         if Self::BETA {
-            println!(
-                "{}\n",
-                "This command is in beta and may not work as expected. Please report any and all bugs you find!".yellow()
+            yellow!(
+                "This command is in beta and may not work as expected. Please report any and all bugs you find!\n",
             );
         }
 
