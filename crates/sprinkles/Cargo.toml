@@ -37,7 +37,7 @@ console.workspace = true
 derive_more = "0.99"
 digest = { version = "0.10", features = ["std"], optional = true }
 directories = "5.0"
-dunce = "1.0"
+dunce = "1.0.4"
 futures.workspace = true
 getset = { version = "0.1", optional = true }
 git2.workspace = true
