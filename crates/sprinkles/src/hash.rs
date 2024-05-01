@@ -17,10 +17,12 @@ use crate::{
     packages::{
         manifest::{
             AutoupdateConfig, HashExtractionOrArrayOfHashExtractions, HashMode as ManifestHashMode,
+            StringArray,
         },
         Manifest, MergeDefaults,
     },
     requests::AsyncClient,
+    version::Version,
     Architecture, Scoop,
 };
 
@@ -118,6 +120,12 @@ impl Hash {
     // pub fn hash(&self) -> String {
     //     self.to_string()
     // }
+
+    #[must_use]
+    /// Get the hash with no prefix
+    pub fn no_prefix(&self) -> &str {
+        &self.hash
+    }
 
     #[must_use]
     /// Get the hash type
@@ -248,7 +256,7 @@ impl HashMode {
             .architecture
             .merge_default(manifest.install_config.clone(), arch);
 
-        if let Some(url) = install_config.url {
+        if let Some(StringArray::Single(url)) = install_config.url {
             if Self::fosshub_regex().is_match(&url) {
                 return Some(Self::Fosshub);
             }
@@ -348,21 +356,29 @@ impl Hash {
     /// - If the hash is not found in the XML
     /// - If the hash is not found in the text
     /// - If the hash is not found in the JSON
-    pub async fn get_for_app(manifest: &Manifest, arch: Architecture) -> Result<Hash, Error> {
+    pub async fn get_for_app(manifest: &Manifest, arch: Architecture) -> Result<Vec<Hash>, Error> {
         let autoupdate_config = manifest
             .autoupdate_config(arch)
             .ok_or(Error::MissingAutoupdateConfig)?;
 
-        let mut hash_mode = HashMode::from_manifest(manifest, arch).unwrap_or_default();
+        let hash_mode = HashMode::from_manifest(manifest, arch).unwrap_or_default();
 
         if hash_mode == HashMode::Download {
-            let cache_handle = Handle::open_manifest(Scoop::cache_path(), manifest, arch)?;
+            let cache_handles = Handle::open_manifest(Scoop::cache_path(), manifest, arch)?;
 
-            let downloader = Downloader::new(cache_handle, &AsyncClient::new(), None).await?;
+            let downloaders = cache_handles.into_iter().map(|handle| async move {
+                Downloader::new(handle, &AsyncClient::new(), None).await
+            });
+            let downloaders = futures::future::try_join_all(downloaders).await?;
 
-            let (_, hash) = downloader.download().await?;
+            let hashes = downloaders.into_iter().map(Downloader::download);
+            let hashes = futures::future::try_join_all(hashes)
+                .await?
+                .into_iter()
+                .map(|hash| hash.computed_hash)
+                .collect();
 
-            return Ok(Self::from_hex(&hash));
+            return Ok(hashes);
 
             // return if let Some(dl_url) = manifest
             //     .architecture
@@ -376,14 +392,35 @@ impl Hash {
             // };
         }
 
-        let manifest_url = manifest
+        let manifest_urls = manifest
             .install_config(arch)
             .url
-            .as_ref()
-            .ok_or(Error::UrlNotFound)
-            .and_then(|url| Ok(Url::parse(url)?))?;
+            .clone()
+            .ok_or(Error::UrlNotFound)?
+            .to_vec()
+            .into_iter()
+            .map(|urls| Url::parse(&urls).map_err(Error::InvalidUrl))
+            .collect::<Result<Vec<_>, _>>()?;
 
-        let submap = SubstitutionMap::from_all(&manifest.version, &manifest_url);
+        let hashes = manifest_urls.into_iter().map(|manifest_url| {
+            Self::get_for_url(
+                hash_mode.clone(),
+                manifest_url,
+                &manifest.version,
+                &autoupdate_config,
+            )
+        });
+
+        futures::future::try_join_all(hashes).await
+    }
+
+    async fn get_for_url(
+        mut hash_mode: HashMode,
+        manifest_url: Url,
+        version: &Version,
+        autoupdate_config: &AutoupdateConfig,
+    ) -> Result<Hash, Error> {
+        let submap = SubstitutionMap::from_all(version, &manifest_url);
 
         let url = if matches!(hash_mode, HashMode::Fosshub | HashMode::Sourceforge) {
             let (url, regex): (Url, String) = match hash_mode {
@@ -593,7 +630,10 @@ mod tests {
 
     use crate::{
         buckets::Bucket,
-        packages::{manifest::HashExtractionOrArrayOfHashExtractions, reference},
+        packages::{
+            manifest::{HashExtractionOrArrayOfHashExtractions, TOrArrayOfTs},
+            reference,
+        },
         requests::BlockingClient,
     };
 
@@ -654,7 +694,7 @@ mod tests {
             .text()
             .unwrap();
 
-        let Some(url) = autoupdate.url else {
+        let Some(StringArray::Single(url)) = autoupdate.url else {
             unreachable!()
         };
 
@@ -668,7 +708,7 @@ mod tests {
 
         let actual_hash = manifest.architecture.unwrap().x64.unwrap().hash.unwrap();
 
-        assert_eq!(actual_hash, hash);
+        assert_eq!(actual_hash.single().unwrap(), hash);
     }
 
     #[ignore = "replaced"]
@@ -683,16 +723,9 @@ mod tests {
             .await
             .unwrap();
 
-        let actual_hash = manifest
-            .architecture
-            .unwrap()
-            .x64
-            .unwrap()
-            .hash
-            .unwrap()
-            .to_string();
+        let actual_hash = manifest.architecture.unwrap().x64.unwrap().hash.unwrap();
 
-        assert_eq!(actual_hash, hash.hash);
+        assert_eq!(actual_hash, TOrArrayOfTs::from_vec_or_default(hash));
     }
 
     pub struct TestHandler {
@@ -717,7 +750,7 @@ mod tests {
                 .hash
                 .unwrap();
 
-            assert_eq!(actual_hash, hash);
+            assert_eq!(actual_hash, TOrArrayOfTs::from_vec_or_default(hash));
 
             Ok(())
         }
@@ -810,7 +843,15 @@ mod tests {
         let manifest = package.manifest().await?;
 
         assert_eq!(
-            manifest.architecture.unwrap().x64.unwrap().hash.unwrap(),
+            manifest
+                .architecture
+                .unwrap()
+                .x64
+                .unwrap()
+                .hash
+                .unwrap()
+                .single()
+                .unwrap(),
             Hash::from_str("84344247cc06339d0dc675a49af81c37f9488e873e74e9701498d06f8e4db588")
                 .unwrap()
         );
@@ -827,7 +868,15 @@ mod tests {
         manifest.set_version("1.10.2".to_string()).await?;
 
         assert_eq!(
-            manifest.architecture.unwrap().x64.unwrap().hash.unwrap(),
+            manifest
+                .architecture
+                .unwrap()
+                .x64
+                .unwrap()
+                .hash
+                .unwrap()
+                .single()
+                .unwrap(),
             Hash::from_str("84344247cc06339d0dc675a49af81c37f9488e873e74e9701498d06f8e4db588")
                 .unwrap()
         );

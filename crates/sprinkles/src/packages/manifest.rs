@@ -108,8 +108,8 @@ pub struct InstallConfig {
     pub checkver: Option<Checkver>,
     /// The directories to extract to
     pub extract_dir: Option<StringArray>,
-    /// The hash of the package
-    pub hash: Option<Hash>,
+    /// The hash(es) of the package
+    pub hash: Option<TOrArrayOfTs<Hash>>,
     /// The installer configuration
     pub installer: Option<Installer>,
     #[deprecated(since = "1.10.0")]
@@ -120,8 +120,7 @@ pub struct InstallConfig {
     pub pre_uninstall: Option<StringArray>,
     pub shortcuts: Option<Vec<Vec<String>>>,
     pub uninstaller: Option<Uninstaller>,
-    // TODO: Use vec of strings
-    pub url: Option<String>,
+    pub url: Option<StringArray>,
 }
 
 #[skip_serializing_none]
@@ -207,7 +206,7 @@ pub struct AutoupdateConfig {
     pub hash: Option<HashExtractionOrArrayOfHashExtractions>,
     pub installer: Option<PurpleInstaller>,
     pub shortcuts: Option<Vec<Vec<String>>>,
-    pub url: Option<String>,
+    pub url: Option<StringArray>,
 }
 
 #[skip_serializing_none]
@@ -270,27 +269,17 @@ pub enum AliasArray {
     AliasArray(Vec<StringArray>),
 }
 
-impl StringArray {
-    #[must_use]
-    pub fn to_vec(&self) -> Vec<String> {
-        match self {
-            StringArray::String(s) => vec![s.clone()],
-            StringArray::StringArray(string_array) => string_array.clone(),
-        }
-    }
-}
-
 impl AliasArray {
     #[must_use]
     pub fn to_vec(&self) -> Vec<String> {
         match self {
-            AliasArray::NestedArray(StringArray::String(s)) => vec![s.clone()],
-            AliasArray::NestedArray(StringArray::StringArray(s)) => s.clone(),
+            AliasArray::NestedArray(StringArray::Single(s)) => vec![s.clone()],
+            AliasArray::NestedArray(StringArray::Array(s)) => s.clone(),
             AliasArray::AliasArray(s) => s
                 .iter()
                 .flat_map(|s| match s {
-                    StringArray::String(s) => vec![s.clone()],
-                    StringArray::StringArray(s) => s.clone(),
+                    StringArray::Single(s) => vec![s.clone()],
+                    StringArray::Array(s) => s.clone(),
                 })
                 .collect(),
         }
@@ -314,33 +303,99 @@ pub enum Checkver {
 #[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(untagged)]
+// TODO: Implement serializing manually so as to enable serializing null if it is an empty array
 pub enum TOrArrayOfTs<T> {
-    T(T),
+    Single(T),
     Array(Vec<T>),
 }
 
 impl<T> TOrArrayOfTs<T> {
+    pub fn map<O>(&self, f: impl Fn(&T) -> O) -> TOrArrayOfTs<O> {
+        match self {
+            Self::Single(s) => TOrArrayOfTs::Single(f(s)),
+            Self::Array(s) => TOrArrayOfTs::Array(s.iter().map(f).collect()),
+        }
+    }
+
     pub fn to_vec(self) -> Vec<T> {
         match self {
-            TOrArrayOfTs::T(t) => vec![t],
+            TOrArrayOfTs::Single(t) => vec![t],
             TOrArrayOfTs::Array(array) => array,
+        }
+    }
+
+    #[must_use]
+    // It won't panic because it is guaranteed to have at least one element
+    #[allow(clippy::missing_panics_doc)]
+    pub fn from_vec(array: Vec<T>) -> Option<Self> {
+        if array.is_empty() {
+            None
+        } else if array.len() == 1 {
+            Some(TOrArrayOfTs::Single(array.into_iter().next().unwrap()))
+        } else {
+            Some(TOrArrayOfTs::Array(array))
+        }
+    }
+
+    #[must_use]
+    // It won't panic because it is guaranteed to have at least one element
+    #[allow(clippy::missing_panics_doc)]
+    pub fn from_vec_or_default(array: Vec<T>) -> Self {
+        if array.len() == 1 {
+            TOrArrayOfTs::Single(array.into_iter().next().unwrap())
+        } else {
+            TOrArrayOfTs::Array(array)
+        }
+    }
+
+    pub fn to_option(self) -> Option<Self> {
+        match self {
+            TOrArrayOfTs::Single(_) => Some(self),
+            TOrArrayOfTs::Array(array) => {
+                if array.is_empty() {
+                    None
+                } else {
+                    Some(TOrArrayOfTs::Array(array))
+                }
+            }
+        }
+    }
+
+    /// Returns Some(T) if it is a single value, None otherwise
+    pub fn single(self) -> Option<T> {
+        match self {
+            TOrArrayOfTs::Single(t) => Some(t),
+            TOrArrayOfTs::Array(_) => None,
+        }
+    }
+
+    /// Returns Some(Vec<T>) if it is an array, None otherwise
+    pub fn array(self) -> Option<Vec<T>> {
+        match self {
+            TOrArrayOfTs::Single(_) => None,
+            TOrArrayOfTs::Array(array) => Some(array),
         }
     }
 }
 
-#[skip_serializing_none]
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(untagged)]
-pub enum StringArray {
-    String(String),
-    StringArray(Vec<String>),
-}
+impl<A> FromIterator<A> for TOrArrayOfTs<A> {
+    fn from_iter<T: IntoIterator<Item = A>>(iter: T) -> Self {
+        let vec: Vec<A> = iter.into_iter().collect();
 
-impl Display for StringArray {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.to_vec().iter().format(", ").fmt(f)
+        Self::from_vec_or_default(vec)
     }
 }
+
+impl<T: Display> Display for TOrArrayOfTs<T>
+where
+    Self: Clone,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.clone().to_vec().iter().format(", ").fmt(f)
+    }
+}
+
+pub type StringArray = TOrArrayOfTs<String>;
 
 #[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]

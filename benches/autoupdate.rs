@@ -82,7 +82,8 @@ fn criterion_benchmark(c: &mut Criterion) {
                             .unwrap(),
                         Architecture::ARCH,
                     )
-                    .unwrap(),
+                    .unwrap()
+                    .remove(0),
                     AsyncClient::new(),
                 )
             },
