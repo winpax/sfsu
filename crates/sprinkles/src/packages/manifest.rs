@@ -325,6 +325,32 @@ impl<T> TOrArrayOfTs<T> {
             TOrArrayOfTs::Array(array) => array,
         }
     }
+
+    pub fn from_vec(array: Vec<T>) -> Option<Self> {
+        if array.is_empty() {
+            None
+        } else if array.len() == 1 {
+            Some(TOrArrayOfTs::Single(array.into_iter().next().unwrap()))
+        } else {
+            Some(TOrArrayOfTs::Array(array))
+        }
+    }
+
+    pub fn from_vec_or_default(array: Vec<T>) -> Self {
+        if array.len() == 1 {
+            TOrArrayOfTs::Single(array.into_iter().next().unwrap())
+        } else {
+            TOrArrayOfTs::Array(array)
+        }
+    }
+}
+
+impl<A> FromIterator<A> for TOrArrayOfTs<A> {
+    fn from_iter<T: IntoIterator<Item = A>>(iter: T) -> Self {
+        let vec: Vec<A> = iter.into_iter().collect();
+
+        Self::from_vec_or_default(vec)
+    }
 }
 
 #[skip_serializing_none]
