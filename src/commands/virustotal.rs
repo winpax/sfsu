@@ -78,7 +78,7 @@ impl super::Command for Args {
             .virustotal_api_key
             .unwrap_or_else(|| abandon!("No virustotal api key found"));
 
-        let client = vt3::VtClient::new(&api_key).user_agent(&user_agent());
+        let client = vt3::VtClient::new(&api_key).user_agent(user_agent());
 
         #[allow(clippy::redundant_closure)]
         let manifests = if self.all {
