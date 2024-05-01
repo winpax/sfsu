@@ -1,7 +1,6 @@
 use std::fmt::Write;
 
 use clap::{Parser, ValueEnum};
-use owo_colors::OwoColorize;
 use parking_lot::Mutex;
 use quork::prelude::*;
 use rayon::prelude::*;
@@ -96,7 +95,10 @@ impl Args {
             writeln!(
                 output,
                 "{}",
-                "Scoop is out of date. Run `scoop update` to get the latest changes.".yellow()
+                console::style(
+                    "Scoop is out of date. Run `scoop update` to get the latest changes."
+                )
+                .yellow()
             )?;
         } else {
             writeln!(output, "Scoop app is up to date.")?;
@@ -154,8 +156,10 @@ impl Args {
                 writeln!(
                     output,
                     "{}",
-                    "Bucket(s) are out of date. Run `scoop update` to get the latest changes."
-                        .yellow()
+                    console::style(
+                        "Bucket(s) are out of date. Run `scoop update` to get the latest changes."
+                    )
+                    .yellow()
                 )?;
             } else {
                 writeln!(output, "All buckets up to date.")?;

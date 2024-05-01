@@ -1,7 +1,7 @@
 use std::{fs::File, io::Write};
 
 use log::{Level, LevelFilter};
-use owo_colors::OwoColorize;
+use sprinkles::{eprintln_red, eprintln_yellow};
 
 pub mod panics;
 
@@ -41,8 +41,8 @@ impl log::Log for Logger {
     fn log(&self, record: &log::Record<'_>) {
         if self.enabled(record.metadata()) {
             match record.metadata().level() {
-                Level::Error => eprintln!("{}", record.args().red()),
-                Level::Warn => eprintln!("{}", record.args().yellow()),
+                Level::Error => eprintln_red!("{}", record.args()),
+                Level::Warn => eprintln_yellow!("{}", record.args()),
                 _ => {
                     // TODO: Add a queue of sorts because this doesn't work well with multiple threads
                     writeln!(&self.file, "{}: {}", record.level(), record.args())

@@ -46,7 +46,6 @@ indicatif.workspace = true
 itertools.workspace = true
 log.workspace = true
 md-5 = "0.10"
-owo-colors.workspace = true
 quick-xml = { version = "0.31", optional = true, features = ["serialize"] }
 quork = "0.6"
 rayon.workspace = true

@@ -626,8 +626,6 @@ impl Manifest {
         pattern: &Regex,
         mode: SearchMode,
     ) -> Option<Section<Text<String>>> {
-        use owo_colors::OwoColorize;
-
         // TODO: Better display of output
 
         // This may be a bit of a hack, but it works
@@ -653,7 +651,7 @@ impl Manifest {
         }
 
         let styled_package_name = if self.name == pattern.to_string() {
-            self.name.bold().to_string()
+            console::style(&self.name).bold().to_string()
         } else {
             self.name.clone()
         };
@@ -670,7 +668,13 @@ impl Manifest {
             let bins = match_output
                 .bins
                 .iter()
-                .map(|output| Text::new(format!("{}{}", crate::output::WHITESPACE, output.bold())))
+                .map(|output| {
+                    Text::new(format!(
+                        "{}{}",
+                        crate::output::WHITESPACE,
+                        console::style(output).bold()
+                    ))
+                })
                 .collect_vec();
 
             Section::new(Children::from(bins))

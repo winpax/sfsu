@@ -1,12 +1,12 @@
 //! Coloured output print macros.
 
-use sfsu_derive::generate;
+use sfsu_derive::generate_colour_macros;
 
-generate!(black);
-generate!(red);
-generate!(green);
-generate!(yellow);
-generate!(blue);
-generate!(magenta);
-generate!(cyan);
-generate!(white);
+generate_colour_macros!(black);
+generate_colour_macros!(red);
+generate_colour_macros!(green);
+generate_colour_macros!(yellow);
+generate_colour_macros!(blue);
+generate_colour_macros!(magenta);
+generate_colour_macros!(cyan);
+generate_colour_macros!(white);
