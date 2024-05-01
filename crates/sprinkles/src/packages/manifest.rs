@@ -313,7 +313,7 @@ impl<T> TOrArrayOfTs<T> {
     pub fn map<O>(&self, f: impl Fn(&T) -> O) -> TOrArrayOfTs<O> {
         match self {
             Self::Single(s) => TOrArrayOfTs::Single(f(s)),
-            Self::Array(s) => TOrArrayOfTs::Array(s.iter().map(|s| f(s)).collect()),
+            Self::Array(s) => TOrArrayOfTs::Array(s.iter().map(f).collect()),
         }
     }
 
@@ -324,6 +324,9 @@ impl<T> TOrArrayOfTs<T> {
         }
     }
 
+    #[must_use]
+    // It won't panic because it is guaranteed to have at least one element
+    #[allow(clippy::missing_panics_doc)]
     pub fn from_vec(array: Vec<T>) -> Option<Self> {
         if array.is_empty() {
             None
@@ -334,6 +337,9 @@ impl<T> TOrArrayOfTs<T> {
         }
     }
 
+    #[must_use]
+    // It won't panic because it is guaranteed to have at least one element
+    #[allow(clippy::missing_panics_doc)]
     pub fn from_vec_or_default(array: Vec<T>) -> Self {
         if array.len() == 1 {
             TOrArrayOfTs::Single(array.into_iter().next().unwrap())
