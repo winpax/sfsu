@@ -1,14 +1,9 @@
 use clap::{Parser, ValueEnum};
-use indicatif::{ParallelProgressIterator, ProgressBar};
-use itertools::Itertools;
+use indicatif::ProgressBar;
 use rayon::prelude::*;
-use regex::Regex;
 use sprinkles::{
-    abandon,
-    buckets::Bucket,
-    calm_panic::CalmUnwrap,
-    green,
-    packages::{reference::Package, CreateManifest, Manifest, SearchMode},
+    abandon, green,
+    packages::{reference::Package, CreateManifest, Manifest},
     progress::{style, ProgressOptions},
     red,
     requests::user_agent,
@@ -117,12 +112,12 @@ impl super::Command for Args {
                 let install_config = manifest.install_config(self.arch);
 
                 let result = if let Some(hash) = install_config.hash {
-                    match tokio::task::spawn_blocking(move || client.file_info(&hash.to_string()))
-                        .await?
-                    {
-                        Ok(file_info) => anyhow::Ok(Some((manifest, file_info))),
-                        Err(e) => anyhow::Ok(None),
-                    }
+                    // TODO: Handle certain recoverable errors
+                    let result =
+                        tokio::task::spawn_blocking(move || client.file_info(&hash.to_string()))
+                            .await??;
+
+                    anyhow::Ok(Some((manifest, result)))
                 } else {
                     anyhow::Ok(None)
                 };
