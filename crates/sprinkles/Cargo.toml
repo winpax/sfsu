@@ -39,7 +39,7 @@ digest = { version = "0.10", features = ["std"], optional = true }
 directories = "5.0"
 dunce = "1.0"
 futures.workspace = true
-getset = { version = "0.1", optional = true }
+getset = { version = "0.1.2", optional = true }
 git2.workspace = true
 heck = "0.5"
 indicatif.workspace = true
