@@ -1,5 +1,6 @@
-use clap::Parser;
-use indicatif::ParallelProgressIterator;
+use clap::{Parser, ValueEnum};
+use indicatif::{ParallelProgressIterator, ProgressBar};
+use itertools::Itertools;
 use rayon::prelude::*;
 use regex::Regex;
 use sprinkles::{
@@ -14,10 +15,11 @@ use sprinkles::{
     yellow, Architecture, Scoop,
 };
 
+#[derive(Debug, Copy, Clone, ValueEnum, PartialEq, Eq, PartialOrd, Ord)]
 enum Status {
-    Malicious,
-    Suspicious,
     Undetected,
+    Suspicious,
+    Malicious,
 }
 
 impl Status {
@@ -52,6 +54,12 @@ pub struct Args {
 
     #[clap(short, long, help = "The bucket to exclusively search in")]
     bucket: Option<String>,
+
+    #[clap(
+        long,
+        help = "Only show apps with a higher status than the specified one"
+    )]
+    filter: Option<Status>,
 
     #[clap(
         short,
@@ -99,24 +107,34 @@ impl super::Command for Args {
                 .collect::<Vec<_>>()
         };
 
-        let matches = manifests
-            .into_par_iter()
-            .progress_with_style(style(Some(ProgressOptions::PosLen), None))
-            .map(|manifest| {
+        let pb = ProgressBar::new(manifests.len() as u64)
+            .with_style(style(Some(ProgressOptions::PosLen), None));
+
+        let matches = manifests.into_iter().map(|manifest| {
+            let client = client.clone();
+            let pb = pb.clone();
+            async move {
                 let install_config = manifest.install_config(self.arch);
 
-                if let Some(hash) = install_config.hash {
-                    if let Ok(file_info) = client.clone().file_info(&hash.to_string()) {
-                        anyhow::Ok(Some((manifest, file_info)))
-                    } else {
-                        anyhow::Ok(None)
+                let result = if let Some(hash) = install_config.hash {
+                    match tokio::task::spawn_blocking(move || client.file_info(&hash.to_string()))
+                        .await?
+                    {
+                        Ok(file_info) => anyhow::Ok(Some((manifest, file_info))),
+                        Err(e) => anyhow::Ok(None),
                     }
                 } else {
                     anyhow::Ok(None)
-                }
-            })
-            .filter_map(Result::transpose)
-            .collect::<Result<Vec<_>, _>>()?;
+                };
+
+                pb.inc(1);
+                result
+            }
+        });
+        let matches = futures::future::try_join_all(matches)
+            .await?
+            .into_iter()
+            .flatten();
 
         for (manifest, file_info) in matches {
             let Some(stats) = file_info
@@ -136,6 +154,12 @@ impl super::Command for Args {
 
             let file_status = Status::from_stats(detected, total);
 
+            if let Some(filter) = self.filter {
+                if file_status <= filter {
+                    continue;
+                }
+            }
+
             let file_url = format!(
                 "https://www.virustotal.com/gui/url/{hash}",
                 hash = manifest.install_config(self.arch).hash.unwrap()
@@ -154,5 +178,16 @@ impl super::Command for Args {
         }
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_status_ord() {
+        assert!(Status::Malicious > Status::Suspicious);
+        assert!(Status::Suspicious > Status::Undetected);
     }
 }
