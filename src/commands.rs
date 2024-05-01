@@ -1,3 +1,4 @@
+pub mod backup;
 pub mod bucket;
 pub mod cache;
 pub mod cat;
@@ -131,4 +132,7 @@ pub enum Commands {
     #[cfg(feature = "download")]
     /// Show or clear the download cache
     Cache(cache::Args),
+    #[cfg(feature = "beta")]
+    /// Backup the specified app
+    Backup(backup::Args),
 }
