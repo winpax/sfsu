@@ -354,6 +354,22 @@ impl<T> TOrArrayOfTs<T> {
             }
         }
     }
+
+    /// Returns Some(T) if it is a single value, None otherwise
+    pub fn single(self) -> Option<T> {
+        match self {
+            TOrArrayOfTs::Single(t) => Some(t),
+            TOrArrayOfTs::Array(array) => None,
+        }
+    }
+
+    /// Returns Some(Vec<T>) if it is an array, None otherwise
+    pub fn array(self) -> Option<Vec<T>> {
+        match self {
+            TOrArrayOfTs::Single(_) => None,
+            TOrArrayOfTs::Array(array) => Some(array),
+        }
+    }
 }
 
 impl<A> FromIterator<A> for TOrArrayOfTs<A> {

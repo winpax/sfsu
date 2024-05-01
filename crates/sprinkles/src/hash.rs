@@ -695,7 +695,7 @@ mod tests {
 
         let actual_hash = manifest.architecture.unwrap().x64.unwrap().hash.unwrap();
 
-        assert_eq!(actual_hash, hash);
+        assert_eq!(actual_hash.single().unwrap(), hash);
     }
 
     #[ignore = "replaced"]
@@ -830,7 +830,15 @@ mod tests {
         let manifest = package.manifest().await?;
 
         assert_eq!(
-            manifest.architecture.unwrap().x64.unwrap().hash.unwrap(),
+            manifest
+                .architecture
+                .unwrap()
+                .x64
+                .unwrap()
+                .hash
+                .unwrap()
+                .single()
+                .unwrap(),
             Hash::from_str("84344247cc06339d0dc675a49af81c37f9488e873e74e9701498d06f8e4db588")
                 .unwrap()
         );
@@ -847,7 +855,15 @@ mod tests {
         manifest.set_version("1.10.2".to_string()).await?;
 
         assert_eq!(
-            manifest.architecture.unwrap().x64.unwrap().hash.unwrap(),
+            manifest
+                .architecture
+                .unwrap()
+                .x64
+                .unwrap()
+                .hash
+                .unwrap()
+                .single()
+                .unwrap(),
             Hash::from_str("84344247cc06339d0dc675a49af81c37f9488e873e74e9701498d06f8e4db588")
                 .unwrap()
         );
