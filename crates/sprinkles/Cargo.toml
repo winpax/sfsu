@@ -81,4 +81,4 @@ windows-version = "0.1"
 winreg = "0.52"
 
 [dev-dependencies]
-anyhow = "1.0"
+anyhow = "1.0.82"
