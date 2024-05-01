@@ -3,7 +3,6 @@
 use std::{fmt::Display, io::BufRead, num::ParseIntError, str::FromStr};
 
 use formats::{json, text};
-use itertools::Itertools;
 use regex::Regex;
 use reqwest::{
     header::{HeaderMap, HeaderValue},
@@ -359,13 +358,21 @@ impl Hash {
         let hash_mode = HashMode::from_manifest(manifest, arch).unwrap_or_default();
 
         if hash_mode == HashMode::Download {
-            let cache_handle = Handle::open_manifest(Scoop::cache_path(), manifest, arch)?;
+            let cache_handles = Handle::open_manifest(Scoop::cache_path(), manifest, arch)?;
 
-            let downloader = Downloader::new(cache_handle, &AsyncClient::new(), None).await?;
+            let downloaders = cache_handles.into_iter().map(|handle| async move {
+                Downloader::new(handle, &AsyncClient::new(), None).await
+            });
+            let downloaders = futures::future::try_join_all(downloaders).await?;
 
-            let (_, hash) = downloader.download().await?;
+            let hashes = downloaders.into_iter().map(Downloader::download);
+            let (_, hashes): (Vec<_>, Vec<_>) = futures::future::try_join_all(hashes)
+                .await?
+                .into_iter()
+                .map(|(path, hash)| (path, Self::from_hex(&hash)))
+                .unzip();
 
-            return Ok(vec![Self::from_hex(&hash)]);
+            return Ok(hashes);
 
             // return if let Some(dl_url) = manifest
             //     .architecture
@@ -382,7 +389,7 @@ impl Hash {
         let manifest_urls = manifest
             .install_config(arch)
             .url
-            .as_ref()
+            .clone()
             .ok_or(Error::UrlNotFound)?
             .to_vec()
             .into_iter()

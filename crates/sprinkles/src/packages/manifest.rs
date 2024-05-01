@@ -359,7 +359,7 @@ impl<T> TOrArrayOfTs<T> {
     pub fn single(self) -> Option<T> {
         match self {
             TOrArrayOfTs::Single(t) => Some(t),
-            TOrArrayOfTs::Array(array) => None,
+            TOrArrayOfTs::Array(_) => None,
         }
     }
 
@@ -380,9 +380,12 @@ impl<A> FromIterator<A> for TOrArrayOfTs<A> {
     }
 }
 
-impl<T: Display> Display for TOrArrayOfTs<T> {
+impl<T: Display> Display for TOrArrayOfTs<T>
+where
+    Self: Clone,
+{
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.to_vec().iter().format(", ").fmt(f)
+        self.clone().to_vec().iter().format(", ").fmt(f)
     }
 }
 

@@ -734,6 +734,7 @@ impl Manifest {
             submap.append_version(&self.version);
 
             let new_urls = autoupdate_urls
+                .clone()
                 .to_vec()
                 .into_iter()
                 .map(|url| url.into_substituted(&submap, false));
