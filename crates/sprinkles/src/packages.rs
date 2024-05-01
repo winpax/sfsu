@@ -674,7 +674,13 @@ impl Manifest {
             let bins = match_output
                 .bins
                 .iter()
-                .map(|output| Text::new(format!("{}{}", crate::output::WHITESPACE, console::style(output).bold())))
+                .map(|output| {
+                    Text::new(format!(
+                        "{}{}",
+                        crate::output::WHITESPACE,
+                        console::style(output).bold()
+                    ))
+                })
                 .collect_vec();
 
             Section::new(Children::from(bins))

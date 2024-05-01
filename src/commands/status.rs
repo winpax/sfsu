@@ -156,8 +156,10 @@ impl Args {
                 writeln!(
                     output,
                     "{}",
-                    console::style("Bucket(s) are out of date. Run `scoop update` to get the latest changes.")
-                        .yellow()
+                    console::style(
+                        "Bucket(s) are out of date. Run `scoop update` to get the latest changes."
+                    )
+                    .yellow()
                 )?;
             } else {
                 writeln!(output, "All buckets up to date.")?;

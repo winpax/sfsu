@@ -1,5 +1,8 @@
 use clap::Parser;
-use sprinkles::{eprintln_bright_yellow, output::{structured::Structured, wrappers::sizes::Size}};
+use sprinkles::{
+    eprintln_bright_yellow,
+    output::{structured::Structured, wrappers::sizes::Size},
+};
 
 use crate::commands::Command;
 
