@@ -20,7 +20,7 @@ pub mod update;
 use clap::Subcommand;
 
 use sfsu_derive::{Hooks, Runnable};
-use sprinkles::{calm_panic::abandon, yellow};
+use sprinkles::{calm_panic::abandon, eprintln_yellow};
 
 pub struct DeprecationWarning {
     /// Deprecation message
@@ -67,7 +67,7 @@ pub trait Command {
                 output += &format!("Will be removed in v{version}. ");
             }
 
-            yellow!("{output}\n");
+            eprintln_yellow!("{output}\n");
         }
 
         if Self::NEEDS_ELEVATION && !quork::root::is_root()? {
@@ -75,7 +75,7 @@ pub trait Command {
         }
 
         if Self::BETA {
-            yellow!(
+            eprintln_yellow!(
                 "This command is in beta and may not work as expected. Please report any and all bugs you find!\n",
             );
         }

@@ -47,8 +47,8 @@ macro_rules! abandon {
     };
 
     ($($t:tt)*) => {{
-        use $crate::output::colours::red;
-        red!($($t)*);
+        use $crate::output::colours::eprintln_red;
+        eprintln_red!($($t)*);
         std::process::exit(1);
     }};
 }
