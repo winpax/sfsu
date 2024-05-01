@@ -36,7 +36,7 @@ clap = { version = "4.5", features = ["derive"] }
 console.workspace = true
 derive_more = "0.99"
 digest = { version = "0.10", features = ["std"], optional = true }
-directories = "5.0"
+directories = "5.0.1"
 dunce = "1.0"
 futures.workspace = true
 getset = { version = "0.1", optional = true }
