@@ -3,11 +3,14 @@
   "extends": ["config:base"],
   "packageRules": [
     {
-      "matchUpdateTypes": ["minor"],
+      "matchUpdateTypes": ["minor", "patch"],
       "matchCurrentVersion": "!/^0/",
       "automerge": true
     }
   ],
+  "patch": {
+    "enabled": false
+  },
   "lockFileMaintenance": {
     "enabled": true,
     "automerge": false,
