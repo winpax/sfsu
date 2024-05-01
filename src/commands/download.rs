@@ -76,7 +76,7 @@ impl super::Command for Args {
         for result in results {
             let result = result?;
 
-            eprint!("🔓 Checking {} hash...", result.file_name.display());
+            eprint!("🔓 Checking {} hash...", result.file_name.url);
 
             let actual_hash = result.actual_hash.no_prefix();
 
@@ -94,7 +94,7 @@ impl super::Command for Args {
             //     warn!("🔓 No hash provided, skipping hash check");
             // }
 
-            eprintln!("✅ Downloaded {}", result.file_name.display());
+            eprintln!("✅ Downloaded {}", result.file_name.url);
         }
 
         Ok(())

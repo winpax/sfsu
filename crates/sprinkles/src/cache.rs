@@ -1,6 +1,7 @@
 //! Cache helpers
 
 use std::{
+    fmt::Display,
     ops::Deref,
     path::{Path, PathBuf},
 };
@@ -32,13 +33,59 @@ pub enum Error {
     ErrorCode(StatusCode),
     #[error("Missing download url in manifest")]
     MissingDownloadUrl,
+    #[error("Non-utf8 file name")]
+    InvalidFileName,
+    #[error("Missing parts in output file name")]
+    MissingParts,
+}
+
+#[derive(Debug, Clone)]
+/// The file name to download
+pub struct DownloadFileName {
+    /// Package name
+    pub name: String,
+    /// Package version
+    pub version: String,
+    /// Escaped download url
+    pub url: String,
+}
+
+impl Display for DownloadFileName {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}#{}#{}", self.name, self.version, self.url)
+    }
+}
+
+impl TryFrom<&Path> for DownloadFileName {
+    type Error = Error;
+
+    fn try_from(path: &Path) -> Result<Self, Self::Error> {
+        let file_name = path
+            .file_name()
+            .ok_or(Error::InvalidFileName)?
+            .to_string_lossy();
+        let mut parts = file_name.split('#');
+
+        let name = parts.next().ok_or(Error::MissingParts)?.to_string();
+        let version = parts.next().ok_or(Error::MissingParts)?.to_string();
+        let url = parts.next().ok_or(Error::MissingParts)?.to_string();
+
+        Ok(Self { name, version, url })
+    }
+}
+
+impl From<DownloadFileName> for PathBuf {
+    fn from(name: DownloadFileName) -> Self {
+        let file_name = name.to_string();
+        PathBuf::from(file_name)
+    }
 }
 
 #[derive(Debug)]
 /// Result for downloading
 pub struct DownloadResult {
     /// Output file name
-    pub file_name: PathBuf,
+    pub file_name: DownloadFileName,
     /// The computed hash
     pub computed_hash: Hash,
     /// The hash stored in the manifest
@@ -218,7 +265,7 @@ impl Downloader {
         }?;
 
         Ok(DownloadResult {
-            file_name,
+            file_name: file_name.as_path().try_into()?,
             computed_hash: Hash::from_hex(&hash_bytes),
             actual_hash,
         })
