@@ -11,7 +11,7 @@ use itertools::Itertools as _;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 
-use crate::{version::Version, Architecture};
+use crate::{hash::Hash, version::Version, Architecture};
 
 #[skip_serializing_none]
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
@@ -108,8 +108,8 @@ pub struct InstallConfig {
     pub checkver: Option<Checkver>,
     /// The directories to extract to
     pub extract_dir: Option<StringArray>,
-    /// The hash of the package
-    pub hash: Option<TOrArrayOfTs<String>>,
+    /// The hash(es) of the package
+    pub hash: Option<TOrArrayOfTs<Hash>>,
     /// The installer configuration
     pub installer: Option<Installer>,
     #[deprecated(since = "1.10.0")]

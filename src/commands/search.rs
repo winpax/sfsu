@@ -4,7 +4,11 @@ use clap::Parser;
 use regex::Regex;
 
 use sprinkles::{
-    buckets::Bucket, calm_panic::CalmUnwrap, output::sectioned::Sections, packages::SearchMode,
+    buckets::Bucket,
+    calm_panic::CalmUnwrap,
+    output::sectioned::{Children, Section, Sections},
+    packages::SearchMode,
+    Architecture,
 };
 
 #[derive(Debug, Clone, Parser)]
@@ -66,7 +70,29 @@ impl super::Command for Args {
             .par_iter()
             .filter_map(
                 |bucket| match bucket.matches(self.installed, &pattern, self.mode) {
-                    Ok(Some(section)) => Some(section),
+                    Ok(manifest) => {
+                        let sections = manifest
+                            .into_par_iter()
+                            .filter_map(|manifest| {
+                                manifest.parse_output(
+                                    &manifest.bucket,
+                                    self.installed,
+                                    &pattern,
+                                    self.mode,
+                                    Architecture::ARCH,
+                                )
+                            })
+                            .collect::<Vec<_>>();
+
+                        if sections.is_empty() {
+                            None
+                        } else {
+                            let section = Section::new(Children::from(sections))
+                                .with_title(format!("'{}' bucket:", bucket.name()));
+
+                            Some(section)
+                        }
+                    }
                     _ => None,
                 },
             )

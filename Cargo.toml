@@ -94,6 +94,7 @@ sfsu-derive = { path = "./crates/derive" }
 shadow-rs = "0.27"
 sprinkles = { version = "1.11.0-beta.4", path = "crates/sprinkles" }
 tokio = { version = "1.37", features = ["full"] }
+vt3 = "0.7.3"
 
 [dev-dependencies]
 chrono.workspace = true

@@ -361,6 +361,7 @@ impl MatchCriteria {
         manifest: Option<&Manifest>,
         mode: SearchMode,
         pattern: &Regex,
+        arch: Architecture,
     ) -> Self {
         let file_name = file_name.to_string();
 
@@ -373,7 +374,7 @@ impl MatchCriteria {
         if let Some(manifest) = manifest {
             let binaries = manifest
                 .architecture
-                .merge_default(manifest.install_config.clone(), Architecture::ARCH)
+                .merge_default(manifest.install_config.clone(), arch)
                 .bin
                 .map(|b| b.to_vec())
                 .unwrap_or_default();
@@ -402,7 +403,8 @@ impl Default for MatchCriteria {
     }
 }
 
-pub(crate) trait CreateManifest
+/// Localised functions for creating manifests
+pub trait CreateManifest
 where
     Self: for<'a> Deserialize<'a>,
 {
@@ -429,9 +431,11 @@ where
         serde_json::from_str(trimmed)
     }
 
+    /// Set the name of the manifest. Not meant to be used directly.
     #[must_use]
     fn with_name(self, path: impl AsRef<Path>) -> Self;
 
+    /// Set the bucket of the manifest. Not meant to be used directly.
     #[must_use]
     fn with_bucket(self, path: impl AsRef<Path>) -> Self;
 }
@@ -573,11 +577,11 @@ impl Manifest {
 
     #[must_use]
     /// Check if the manifest binaries matche the given regex
-    pub fn binary_matches(&self, regex: &Regex) -> Option<Vec<String>> {
+    pub fn binary_matches(&self, regex: &Regex, arch: Architecture) -> Option<Vec<String>> {
         match self
             .architecture
             .as_ref()
-            .merge_default(self.install_config.clone(), Architecture::ARCH)
+            .merge_default(self.install_config.clone(), arch)
             .bin
         {
             Some(AliasArray::NestedArray(StringArray::Single(ref binary))) => {
@@ -635,6 +639,7 @@ impl Manifest {
         installed_only: bool,
         pattern: &Regex,
         mode: SearchMode,
+        arch: Architecture,
     ) -> Option<Section<Text<String>>> {
         use owo_colors::OwoColorize;
 
@@ -651,13 +656,14 @@ impl Manifest {
             },
             mode,
             pattern,
+            arch,
         );
 
         if !match_output.name && match_output.bins.is_empty() {
             return None;
         }
 
-        let is_installed = is_installed(&self.name, Some(bucket));
+        let is_installed = self.is_installed(Some(bucket.as_ref()));
         if installed_only && !is_installed {
             return None;
         }
@@ -690,6 +696,12 @@ impl Manifest {
         .with_title(title);
 
         Some(package)
+    }
+
+    #[must_use]
+    /// Check if the manifest is installed
+    pub fn is_installed(&self, bucket: Option<&str>) -> bool {
+        is_installed(&self.name, bucket)
     }
 
     fn update_field<T>(
@@ -1059,37 +1071,25 @@ impl HashExtractionOrArrayOfHashExtractions {
 mod tests {
     use std::error::Error;
 
-    use crate::{buckets::Bucket, packages::MergeDefaults, Architecture};
+    use crate::{buckets::Bucket, Architecture};
     use rayon::prelude::*;
 
     #[test]
     fn test_parse_all_manifests() -> Result<(), Box<dyn Error>> {
-        // Some manifests (ahem unityhub) are broken and don't follow Scoop's spec
-        // This list is used to skip those manifests
-        // because go fuck yourself
-        const BROKEN_MANIFESTS: &[&str] = &["unityhub"];
-
         let buckets = Bucket::list_all()?;
 
         let manifests = buckets
             .into_par_iter()
             .flat_map(|bucket| bucket.list_packages())
             .flatten()
+            .filter(|manifest| manifest.autoupdate_config(Architecture::ARCH).is_some())
             .collect::<Vec<_>>();
 
         manifests.par_iter().for_each(|manifest| {
             assert!(!manifest.name.is_empty());
             assert!(!manifest.bucket.is_empty());
 
-            if BROKEN_MANIFESTS.contains(&manifest.name.as_str()) {
-                return;
-            }
-
-            if let Some(autoupdate) = &manifest.autoupdate {
-                let autoupdate_config = autoupdate
-                    .architecture
-                    .merge_default(autoupdate.default_config.clone(), Architecture::ARCH);
-
+            if let Some(autoupdate_config) = &manifest.autoupdate_config(Architecture::ARCH) {
                 assert!(
                     autoupdate_config.url.is_some(),
                     "URL is missing in package: {}",

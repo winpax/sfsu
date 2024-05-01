@@ -1475,6 +1475,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6877bb514081ee2a7ff5ef9de3281f14a4dd4bceac4c09388074a6b5df8a139a"
 
 [[package]]
+name = "mime_guess"
+version = "2.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4192263c238a5f0d0c6bfd21f336a313a4ce1c450542449ca191bb657b4642ef"
+dependencies = [
+ "mime",
+ "unicase",
+]
+
+[[package]]
 name = "minimal-lexical"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2051,6 +2061,7 @@ dependencies = [
  "js-sys",
  "log",
  "mime",
+ "mime_guess",
  "native-tls",
  "once_cell",
  "percent-encoding",
@@ -2371,6 +2382,7 @@ dependencies = [
  "shadow-rs",
  "sprinkles",
  "tokio",
+ "vt3",
  "winres",
 ]
 
@@ -2516,6 +2528,7 @@ dependencies = [
  "tokio-util",
  "url",
  "urlencoding",
+ "vt3",
  "which",
  "windows 0.56.0",
  "windows-version",
@@ -3094,6 +3107,19 @@ name = "version_check"
 version = "0.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
+
+[[package]]
+name = "vt3"
+version = "0.7.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a5798cdbd57cb56b40cf519b1ae197f5382263663c0d15798e9ef2e0bc8a6785"
+dependencies = [
+ "base64 0.22.0",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "thiserror",
+]
 
 [[package]]
 name = "walkdir"

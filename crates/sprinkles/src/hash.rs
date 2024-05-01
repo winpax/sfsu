@@ -1,6 +1,6 @@
 //! Manifest hashing utilities
 
-use std::{io::BufRead, num::ParseIntError};
+use std::{fmt::Display, io::BufRead, num::ParseIntError, str::FromStr};
 
 use formats::{json, text};
 use itertools::Itertools;
@@ -30,6 +30,7 @@ use crate::{
 use self::substitutions::Substitute;
 
 pub(crate) mod formats;
+pub(crate) mod hash_serde;
 pub(crate) mod substitutions;
 pub(crate) mod url_ext;
 
@@ -115,30 +116,16 @@ pub struct Hash {
 }
 
 impl Hash {
-    #[must_use]
-    /// Get the hash string
-    pub fn hash(&self) -> String {
-        self.to_string()
-    }
+    // #[must_use]
+    // /// Get the hash string
+    // pub fn hash(&self) -> String {
+    //     self.to_string()
+    // }
 
     #[must_use]
     /// Get the hash type
     pub fn hash_type(&self) -> HashType {
         self.hash_type
-    }
-}
-
-impl std::fmt::Display for Hash {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let prefix = match self.hash_type {
-            HashType::SHA512 => "sha512:",
-            HashType::SHA256 => "",
-            HashType::SHA1 => "sha1:",
-            HashType::MD5 => "md5:",
-        };
-
-        write!(f, "{prefix}")?;
-        write!(f, "{}", self.hash)
     }
 }
 
@@ -160,6 +147,14 @@ impl TryFrom<&String> for HashType {
     type Error = Error;
 
     fn try_from(value: &String) -> Result<Self, Error> {
+        Self::from_str(value)
+    }
+}
+
+impl FromStr for HashType {
+    type Err = Error;
+
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
         match value.len() {
             64 => Ok(HashType::SHA256),
             40 => Ok(HashType::SHA1),
@@ -175,6 +170,39 @@ impl TryFrom<&String> for HashType {
                 .or_else(|| value.starts_with("md5:").then_some(HashType::MD5))
                 .ok_or(Error::InvalidHash)
         })
+    }
+}
+
+impl Display for HashType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            HashType::SHA512 => write!(f, "sha512:"),
+            HashType::SHA1 => write!(f, "sha1:"),
+            HashType::MD5 => write!(f, "md5:"),
+            HashType::SHA256 => Ok(()),
+        }
+    }
+}
+
+impl FromStr for Hash {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let hash_type = HashType::from_str(s)?;
+        let hash = s.strip_prefix(&hash_type.to_string()).unwrap();
+
+        Ok(Hash {
+            hash: hash.to_string(),
+            hash_type,
+        })
+    }
+}
+
+impl Display for Hash {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let prefix = self.hash_type.to_string();
+
+        write!(f, "{prefix}{}", self.hash)
     }
 }
 
@@ -664,7 +692,7 @@ mod tests {
 
         let actual_hash = manifest.architecture.unwrap().x64.unwrap().hash.unwrap();
 
-        assert_eq!(actual_hash, hash.hash);
+        assert_eq!(actual_hash, hash);
     }
 
     #[ignore = "replaced"]
@@ -807,7 +835,8 @@ mod tests {
 
         assert_eq!(
             manifest.architecture.unwrap().x64.unwrap().hash.unwrap(),
-            "84344247cc06339d0dc675a49af81c37f9488e873e74e9701498d06f8e4db588"
+            Hash::from_str("84344247cc06339d0dc675a49af81c37f9488e873e74e9701498d06f8e4db588")
+                .unwrap()
         );
 
         Ok(())
@@ -823,7 +852,8 @@ mod tests {
 
         assert_eq!(
             manifest.architecture.unwrap().x64.unwrap().hash.unwrap(),
-            "84344247cc06339d0dc675a49af81c37f9488e873e74e9701498d06f8e4db588"
+            Hash::from_str("84344247cc06339d0dc675a49af81c37f9488e873e74e9701498d06f8e4db588")
+                .unwrap()
         );
 
         Ok(())

@@ -12,6 +12,7 @@ use sprinkles::{
 };
 
 #[derive(Debug, Clone, Parser)]
+// TODO: Pass architecture
 pub struct Args {
     #[clap(help = "The packages to download")]
     packages: Vec<Package>,
@@ -73,7 +74,8 @@ impl super::Command for Args {
                 let hash = encode_hex(&hash);
                 let actual_hash = Regex::new("(sha5?12?|md5):")
                     .unwrap()
-                    .replace(&actual_hash, "");
+                    .replace(&actual_hash.to_string(), "")
+                    .to_string();
 
                 if actual_hash == hash {
                     eprintln!("\r🔒 Hash matched: {hash}");

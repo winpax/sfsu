@@ -18,6 +18,7 @@ use sprinkles::{
 
 #[derive(Debug, Clone, Parser)]
 #[allow(clippy::struct_excessive_bools)]
+// TODO: Pass architecture
 pub struct Args {
     #[clap(help = "The package to get info from")]
     package: reference::Package,
@@ -82,10 +83,10 @@ impl super::Command for Args {
                         .unwrap_or(std::cmp::Ordering::Equal)
                 }).expect("something went terribly wrong (no manifests found even though we just checked for manifests)");
 
-            self.print_manifest(latest, &installed_apps)?;
+            self.print_manifest(latest, &installed_apps, Architecture::ARCH)?;
         } else {
             for manifest in manifests {
-                self.print_manifest(manifest, &installed_apps)?;
+                self.print_manifest(manifest, &installed_apps, Architecture::ARCH)?;
             }
         }
 
@@ -98,6 +99,7 @@ impl Args {
         &self,
         manifest: Manifest,
         installed_apps: &[std::path::PathBuf],
+        arch: Architecture,
     ) -> anyhow::Result<()> {
         // TODO: Remove this and just create the pathbuf from the package name
         let install_path = {
@@ -134,7 +136,7 @@ impl Args {
             license: manifest.license,
             binaries: manifest
                 .architecture
-                .merge_default(manifest.install_config.clone(), Architecture::ARCH)
+                .merge_default(manifest.install_config.clone(), arch)
                 .bin
                 .map(|b| match b {
                     AliasArray::NestedArray(StringArray::String(bin)) => bin.to_string(),

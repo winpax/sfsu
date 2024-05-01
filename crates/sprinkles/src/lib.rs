@@ -14,6 +14,7 @@ use std::{
     fmt,
     fs::File,
     path::{Path, PathBuf},
+    str::FromStr,
 };
 
 use chrono::Local;
@@ -78,9 +79,22 @@ pub enum Architecture {
     X86,
 }
 
+impl FromStr for Architecture {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(match s {
+            "64bit" => Self::X64,
+            "32bit" => Self::X86,
+            "arm64" => Self::Arm64,
+            _ => return Err(Error::UnsupportedArchitecture),
+        })
+    }
+}
+
 impl Architecture {
     /// Get the architecture of the current environment
-    pub const ARCH: Self = Self::from_env();
+    pub const ARCH: Self = Self::X64;
 
     #[must_use]
     /// Get the architecture of the current environment
@@ -138,12 +152,22 @@ pub enum Error {
     TimeoutCreatingLog,
     #[error("Error creating log file: {0}")]
     CreatingLog(#[from] std::io::Error),
+    #[error("Unsupported architecture")]
+    UnsupportedArchitecture,
 }
 
 /// The Scoop install reference
 pub struct Scoop;
 
 impl Scoop {
+    /// Load the Scoop configuration
+    ///
+    /// # Errors
+    /// - Could not load the configuration
+    pub fn config() -> std::io::Result<config::Scoop> {
+        config::Scoop::load()
+    }
+
     #[must_use]
     /// Get the system architecture
     pub const fn arch() -> Architecture {
@@ -336,8 +360,6 @@ impl Scoop {
     /// # Errors
     /// - Creating the file fails
     pub fn new_log_sync() -> Result<File, Error> {
-        use std::fs::File;
-
         let logs_dir = Self::logging_dir()?;
         let date = Local::now();
 

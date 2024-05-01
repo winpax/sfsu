@@ -11,7 +11,6 @@ use regex::Regex;
 
 use crate::{
     git::{self, Repo},
-    output::sectioned::{Children, Section, Text},
     packages::{self, CreateManifest, InstallManifest, Manifest, SearchMode},
     Scoop,
 };
@@ -205,10 +204,10 @@ impl Bucket {
         installed_only: bool,
         search_regex: &Regex,
         search_mode: SearchMode,
-    ) -> packages::Result<Option<Section<Section<Text<String>>>>> {
+    ) -> packages::Result<Vec<Manifest>> {
         // Ignore loose files in the buckets dir
         if !self.path().is_dir() {
-            return Ok(None);
+            return Ok(vec![]);
         }
 
         let bucket_contents = self.list_package_names()?;
@@ -218,14 +217,12 @@ impl Bucket {
             .filter_map(|manifest_name| {
                 // Ignore non-matching manifests
                 if search_mode.eager_name_matches(manifest_name, search_regex) {
-                    match self.get_manifest(manifest_name) {
-                        Ok(manifest) => manifest.parse_output(
-                            self.name(),
-                            installed_only,
-                            search_regex,
-                            search_mode,
-                        ),
-                        Err(_) => None,
+                    let manifest = self.get_manifest(manifest_name).ok()?;
+
+                    if !installed_only || manifest.is_installed(Some(&self.name())) {
+                        Some(manifest)
+                    } else {
+                        None
                     }
                 } else {
                     None
@@ -233,15 +230,7 @@ impl Bucket {
             })
             .collect::<Vec<_>>();
 
-        if matches.is_empty() {
-            Ok(None)
-        } else {
-            Ok(Some(
-                Section::new(Children::from(matches))
-                    // TODO: Remove quotes and bold bucket name
-                    .with_title(format!("'{}' bucket:", self.name())),
-            ))
-        }
+        Ok(matches)
     }
 
     /// List all used buckets
