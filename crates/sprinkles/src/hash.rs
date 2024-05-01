@@ -20,7 +20,7 @@ use crate::{
         },
         Manifest, MergeDefaults,
     },
-    requests::AsyncClient,
+    requests::{AsyncClient, Client},
     Architecture, Scoop,
 };
 
@@ -330,7 +330,7 @@ impl Hash {
         if hash_mode == HashMode::Download {
             let cache_handle = Handle::open_manifest(Scoop::cache_path(), manifest, arch)?;
 
-            let downloader = Downloader::new(cache_handle, &AsyncClient::new(), None).await?;
+            let downloader = Downloader::new::<AsyncClient>(cache_handle, None).await?;
 
             let (_, hash) = downloader.download().await?;
 
@@ -427,7 +427,7 @@ impl Hash {
                 .and_then(|url: String| Ok(Url::parse(&url)?))?
         };
 
-        let source = AsyncClient::new().get(url.as_str()).send().await?;
+        let source = Client::asynchronous().get(url.as_str()).send().await?;
 
         if hash_mode == HashMode::HashUrl {
             let hash = source.text().await?;
@@ -566,7 +566,7 @@ mod tests {
     use crate::{
         buckets::Bucket,
         packages::{manifest::HashExtractionOrArrayOfHashExtractions, reference},
-        requests::BlockingClient,
+        requests::Client,
     };
 
     use super::*;
@@ -619,12 +619,7 @@ mod tests {
         let url = x64_cfg.url.unwrap().to_string();
         let xpath = x64_cfg.xpath.unwrap().to_string();
 
-        let source = BlockingClient::new()
-            .get(url)
-            .send()
-            .unwrap()
-            .text()
-            .unwrap();
+        let source = Client::blocking().get(url).send().unwrap().text().unwrap();
 
         let Some(url) = autoupdate.url else {
             unreachable!()
