@@ -323,7 +323,7 @@ impl Hash {
     /// - If the hash is not found in the XML
     /// - If the hash is not found in the text
     /// - If the hash is not found in the JSON
-    pub async fn get_for_app(manifest: &Manifest, arch: Architecture) -> Result<Hash, Error> {
+    pub async fn get_for_app(manifest: &Manifest, arch: Architecture) -> Result<Vec<Hash>, Error> {
         let autoupdate_config = manifest
             .autoupdate_config(arch)
             .ok_or(Error::MissingAutoupdateConfig)?;
@@ -337,7 +337,7 @@ impl Hash {
 
             let (_, hash) = downloader.download().await?;
 
-            return Ok(Self::from_hex(&hash));
+            return Ok(vec![Self::from_hex(&hash)]);
 
             // return if let Some(dl_url) = manifest
             //     .architecture
@@ -361,7 +361,7 @@ impl Hash {
             .map(|urls| Url::parse(&urls).map_err(Error::InvalidUrl))
             .collect::<Result<Vec<_>, _>>()?;
 
-        manifest_urls.into_iter().map(|manifest_url| {
+        let hashes = manifest_urls.into_iter().map(|manifest_url| {
             Self::get_for_url(
                 hash_mode.clone(),
                 manifest_url,
@@ -370,7 +370,7 @@ impl Hash {
             )
         });
 
-        todo!()
+        futures::future::try_join_all(hashes).await
     }
 
     async fn get_for_url(
@@ -650,7 +650,7 @@ mod tests {
             .text()
             .unwrap();
 
-        let Some(url) = autoupdate.url else {
+        let Some(StringArray::String(url)) = autoupdate.url else {
             unreachable!()
         };
 
@@ -688,7 +688,7 @@ mod tests {
             .unwrap()
             .to_string();
 
-        assert_eq!(actual_hash, hash.hash);
+        assert_eq!(actual_hash, hash[0].hash());
     }
 
     pub struct TestHandler {
@@ -713,7 +713,7 @@ mod tests {
                 .hash
                 .unwrap();
 
-            assert_eq!(actual_hash, hash.hash());
+            assert_eq!(actual_hash, hash[0].hash());
 
             Ok(())
         }
