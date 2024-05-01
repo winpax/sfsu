@@ -28,7 +28,7 @@ manifest-hashes = [
 v2 = []
 
 [dependencies]
-anyhow = "1.0"
+anyhow = "1.0.82"
 base64 = { version = "0.22", optional = true }
 bytes = "1.6"
 cfg-if = "1.0"
