@@ -18,7 +18,7 @@ chrono = { version = ">=0.4.38", features = [
     "serde",
     "std",
 ], default-features = false }
-console = { version = "0.15.8", features = ["windows-console-colors"] }
+console = { version = "0.15", features = ["windows-console-colors"] }
 futures = "0.3"
 git2 = "0.18"
 indicatif = { version = "0.17", features = [
@@ -66,9 +66,9 @@ download = ["sprinkles/manifest-hashes"]
 v2 = ["sprinkles/v2"]
 
 [dependencies]
-anyhow = "1.0.82"
+anyhow = "1.0"
 bat = "0.24"
-clap = { version = "4.5.4", features = [
+clap = { version = "4.5", features = [
     "derive",
     "env",
     "string",
