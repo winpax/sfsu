@@ -28,9 +28,9 @@ use crate::{
 };
 
 #[cfg(feature = "manifest-hashes")]
-use crate::hash::{
-    self,
-    substitutions::{Substitute, SubstitutionMap},
+use crate::{
+    hash::{self, substitutions::SubstitutionMap},
+    packages::manifest::TOrArrayOfTs,
 };
 
 pub mod downloading;
@@ -533,11 +533,15 @@ impl Manifest {
 
     #[must_use]
     /// Get the download urls for a given architecture
-    pub fn download_url(&self, arch: Architecture) -> Option<DownloadUrl> {
+    pub fn download_urls(&self, arch: Architecture) -> Option<Vec<DownloadUrl>> {
         let urls = self.install_config(arch).url?;
 
-        // Some(urls.into_iter().map(DownloadUrl::from_string).collect())
-        Some(DownloadUrl::from_string(urls))
+        Some(
+            urls.to_vec()
+                .into_iter()
+                .map(DownloadUrl::from_string)
+                .collect(),
+        )
     }
 
     #[must_use]
@@ -576,14 +580,14 @@ impl Manifest {
             .merge_default(self.install_config.clone(), Architecture::ARCH)
             .bin
         {
-            Some(AliasArray::NestedArray(StringArray::String(ref binary))) => {
+            Some(AliasArray::NestedArray(StringArray::Single(ref binary))) => {
                 if regex.is_match(binary) {
-                    Some(vec![binary.clone()])
+                    Some(vec![binary.to_string()])
                 } else {
                     None
                 }
             }
-            Some(AliasArray::NestedArray(StringArray::StringArray(ref binaries))) => {
+            Some(AliasArray::NestedArray(StringArray::Array(ref binaries))) => {
                 let matched: Vec<_> = binaries
                     .iter()
                     .filter(|binary| regex.is_match(binary))
@@ -708,18 +712,21 @@ impl Manifest {
     }
 
     #[cfg(feature = "manifest-hashes")]
-    fn get_new_url(&self, autoupdate: &AutoupdateConfig) -> Option<String> {
-        if let Some(autoupdate_url) = &autoupdate.url {
-            debug!("Autoupdate Url: {autoupdate_url}");
+    fn get_new_urls(&self, autoupdate: &AutoupdateConfig) -> Option<TOrArrayOfTs<String>> {
+        use crate::hash::substitutions::Substitute;
+
+        if let Some(autoupdate_urls) = &autoupdate.url {
+            debug!("Autoupdate Urls: {autoupdate_urls}");
 
             let mut submap = SubstitutionMap::new();
             submap.append_version(&self.version);
 
-            let new_url = autoupdate_url.clone().into_substituted(&submap, false);
+            let new_urls = autoupdate_urls
+                .to_vec()
+                .into_iter()
+                .map(|url| url.into_substituted(&submap, false));
 
-            debug!("Subbed Autoupdate Url: {new_url}");
-
-            Some(new_url)
+            Some(new_urls.collect())
         } else {
             None
         }
@@ -746,7 +753,7 @@ impl Manifest {
                 .architecture
                 .merge_default(autoupdate.default_config.clone(), arch);
 
-            let arch_url = self.get_new_url(&arch_autoupdate);
+            let arch_url = self.get_new_urls(&arch_autoupdate);
 
             if let Some(arch_config) = &mut self.architecture {
                 Self::update_field(
@@ -755,12 +762,12 @@ impl Manifest {
                     arch_url,
                 );
             } else {
-                self.install_config.url = self.get_new_url(&autoupdate.default_config);
+                self.install_config.url = self.get_new_urls(&autoupdate.default_config);
             }
         }
 
         for arch in crate::Architecture::VARIANTS {
-            let Ok(hash) = Hash::get_for_app(self, arch).await else {
+            let Ok(hashes) = Hash::get_for_app(self, arch).await else {
                 continue;
             };
 
@@ -769,10 +776,10 @@ impl Manifest {
                 Self::update_field(
                     arch_field!(arch => arch_config.hash as mut),
                     &mut self.install_config.hash,
-                    Some(hash.hash()),
+                    TOrArrayOfTs::from_vec(hashes),
                 );
             } else {
-                self.install_config.hash = Some(hash.hash());
+                self.install_config.hash = TOrArrayOfTs::from_vec(hashes);
             }
         }
 

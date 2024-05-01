@@ -75,30 +75,33 @@ impl Handle {
         cache_path: impl AsRef<Path>,
         manifest: &Manifest,
         arch: Architecture,
-    ) -> Result<Self, Error> {
+    ) -> Result<Vec<Self>, Error> {
         let name = &manifest.name;
         let version = &manifest.version;
 
-        let url = manifest
-            .download_url(arch)
-            .ok_or(Error::MissingDownloadUrl)?;
+        manifest
+            .download_urls(arch)
+            .ok_or(Error::MissingDownloadUrl)?
+            .into_iter()
+            .map(|url| {
+                let file_name = PathBuf::from(&url);
 
-        let file_name = PathBuf::from(&url);
+                let file_name = format!("{}#{}#{}", name, version, file_name.display());
 
-        let file_name = format!("{}#{}#{}", name, version, file_name.display());
+                let hash_type = manifest
+                    .install_config(Architecture::ARCH)
+                    .hash
+                    .and_then(|hash| HashType::try_from(&hash).ok())
+                    .unwrap_or(HashType::SHA256);
 
-        let hash_type = manifest
-            .install_config(Architecture::ARCH)
-            .hash
-            .and_then(|hash| HashType::try_from(&hash).ok())
-            .unwrap_or(HashType::SHA256);
-
-        Self::new(
-            cache_path.as_ref(),
-            PathBuf::from(file_name),
-            hash_type,
-            url.url,
-        )
+                Self::new(
+                    cache_path.as_ref(),
+                    PathBuf::from(file_name),
+                    hash_type,
+                    url.url,
+                )
+            })
+            .collect()
     }
 
     /// Create a new downloader

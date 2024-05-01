@@ -223,7 +223,7 @@ impl HashMode {
             .architecture
             .merge_default(manifest.install_config.clone(), arch);
 
-        if let Some(StringArray::String(url)) = install_config.url {
+        if let Some(StringArray::Single(url)) = install_config.url {
             if Self::fosshub_regex().is_match(&url) {
                 return Some(Self::Fosshub);
             }
@@ -650,7 +650,7 @@ mod tests {
             .text()
             .unwrap();
 
-        let Some(StringArray::String(url)) = autoupdate.url else {
+        let Some(StringArray::Single(url)) = autoupdate.url else {
             unreachable!()
         };
 

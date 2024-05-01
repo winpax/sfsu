@@ -109,7 +109,7 @@ pub struct InstallConfig {
     /// The directories to extract to
     pub extract_dir: Option<StringArray>,
     /// The hash of the package
-    pub hash: Option<String>,
+    pub hash: Option<TOrArrayOfTs<String>>,
     /// The installer configuration
     pub installer: Option<Installer>,
     #[deprecated(since = "1.10.0")]
@@ -269,27 +269,17 @@ pub enum AliasArray {
     AliasArray(Vec<StringArray>),
 }
 
-impl StringArray {
-    #[must_use]
-    pub fn to_vec(&self) -> Vec<String> {
-        match self {
-            StringArray::String(s) => vec![s.clone()],
-            StringArray::StringArray(string_array) => string_array.clone(),
-        }
-    }
-}
-
 impl AliasArray {
     #[must_use]
     pub fn to_vec(&self) -> Vec<String> {
         match self {
-            AliasArray::NestedArray(StringArray::String(s)) => vec![s.clone()],
-            AliasArray::NestedArray(StringArray::StringArray(s)) => s.clone(),
+            AliasArray::NestedArray(StringArray::Single(s)) => vec![s.clone()],
+            AliasArray::NestedArray(StringArray::Array(s)) => s.clone(),
             AliasArray::AliasArray(s) => s
                 .iter()
                 .flat_map(|s| match s {
-                    StringArray::String(s) => vec![s.clone()],
-                    StringArray::StringArray(s) => s.clone(),
+                    StringArray::Single(s) => vec![s.clone()],
+                    StringArray::Array(s) => s.clone(),
                 })
                 .collect(),
         }
@@ -313,12 +303,20 @@ pub enum Checkver {
 #[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(untagged)]
+// TODO: Implement serializing manually so as to enable serializing null if it is an empty array
 pub enum TOrArrayOfTs<T> {
     Single(T),
     Array(Vec<T>),
 }
 
 impl<T> TOrArrayOfTs<T> {
+    pub fn map<O>(&self, f: impl Fn(&T) -> O) -> TOrArrayOfTs<O> {
+        match self {
+            Self::Single(s) => TOrArrayOfTs::Single(f(s)),
+            Self::Array(s) => TOrArrayOfTs::Array(s.iter().map(|s| f(s)).collect()),
+        }
+    }
+
     pub fn to_vec(self) -> Vec<T> {
         match self {
             TOrArrayOfTs::Single(t) => vec![t],
@@ -343,6 +341,19 @@ impl<T> TOrArrayOfTs<T> {
             TOrArrayOfTs::Array(array)
         }
     }
+
+    pub fn to_option(self) -> Option<Self> {
+        match self {
+            TOrArrayOfTs::Single(_) => Some(self),
+            TOrArrayOfTs::Array(array) => {
+                if array.is_empty() {
+                    None
+                } else {
+                    Some(TOrArrayOfTs::Array(array))
+                }
+            }
+        }
+    }
 }
 
 impl<A> FromIterator<A> for TOrArrayOfTs<A> {
@@ -353,28 +364,13 @@ impl<A> FromIterator<A> for TOrArrayOfTs<A> {
     }
 }
 
-#[skip_serializing_none]
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(untagged)]
-pub enum StringArray {
-    String(String),
-    StringArray(Vec<String>),
-}
-
-impl StringArray {
-    pub fn map<T>(&self, f: impl Fn(&str) -> T) -> TOrArrayOfTs<T> {
-        match self {
-            StringArray::String(s) => TOrArrayOfTs::Single(f(s)),
-            StringArray::StringArray(s) => TOrArrayOfTs::Array(s.iter().map(|s| f(s)).collect()),
-        }
-    }
-}
-
-impl Display for StringArray {
+impl<T: Display> Display for TOrArrayOfTs<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.to_vec().iter().format(", ").fmt(f)
     }
 }
+
+pub type StringArray = TOrArrayOfTs<String>;
 
 #[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
