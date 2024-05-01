@@ -14,7 +14,7 @@ use tokio::io::AsyncWriteExt;
 use tokio_util::codec::{BytesCodec, FramedRead};
 
 use crate::{
-    hash::{url_ext::UrlExt, HashType},
+    hash::{url_ext::UrlExt, Hash, HashType},
     let_chain,
     packages::Manifest,
     progress, Architecture,
@@ -87,7 +87,7 @@ impl Handle {
         let hash_types = manifest
             .install_config(arch)
             .hash
-            .map(|hash| hash.map(|hash| hash.hash_type()).to_vec())
+            .map(|hash| hash.map(Hash::hash_type).to_vec())
             .unwrap_or_default()
             .into_iter();
 
