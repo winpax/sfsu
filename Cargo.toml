@@ -19,7 +19,7 @@ chrono = { version = ">=0.4.38", features = [
     "std",
 ], default-features = false }
 console = { version = "0.15", features = ["windows-console-colors"] }
-futures = "0.3"
+futures = "0.3.30"
 git2 = "0.18"
 indicatif = { version = "0.17", features = [
     "improved_unicode",
