@@ -41,7 +41,7 @@ impl super::Command for Args {
 
                 let dl = Handle::open_manifest(Scoop::cache_path(), &manifest, Architecture::ARCH)?;
 
-                let downloader = match Downloader::new(dl, &AsyncClient::new(), Some(&mp)).await {
+                let downloader = match Downloader::new::<AsyncClient>(dl, Some(&mp)).await {
                     Ok(dl) => anyhow::Ok(dl),
                     Err(e) => match e {
                         sprinkles::cache::Error::ErrorCode(status) => {

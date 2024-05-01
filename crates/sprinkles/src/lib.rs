@@ -336,8 +336,6 @@ impl Scoop {
     /// # Errors
     /// - Creating the file fails
     pub fn new_log_sync() -> Result<File, Error> {
-        use std::fs::File;
-
         let logs_dir = Self::logging_dir()?;
         let date = Local::now();
 

@@ -69,7 +69,7 @@ pub fn parse_xml(input: impl AsRef<[u8]>, file_name: impl AsRef<str>) -> Result<
 
 #[cfg(test)]
 mod tests {
-    use crate::requests::BlockingClient;
+    use crate::requests::Client;
 
     use super::*;
 
@@ -77,7 +77,7 @@ mod tests {
     pub fn test_finding_imagemagick_hashes() {
         const RDF_URL: &str = "https://download.imagemagick.org/archive/binaries/digest.rdf";
 
-        let rdf_file = BlockingClient::new()
+        let rdf_file = Client::blocking()
             .get(RDF_URL)
             .send()
             .unwrap()

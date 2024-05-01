@@ -6,7 +6,7 @@ use criterion::{black_box, criterion_group, criterion_main, BatchSize, Criterion
 use sprinkles::{
     cache::{Downloader, Handle},
     packages::reference::Package,
-    requests::{AsyncClient, BlockingClient},
+    requests::{AsyncClient, Client},
     Architecture, Scoop,
 };
 
@@ -30,11 +30,11 @@ fn criterion_benchmark(c: &mut Criterion) {
     });
 
     c.bench_function("create clients", |b| {
-        b.iter(|| black_box(BlockingClient::new()));
+        b.iter(|| black_box(Client::blocking()));
     });
 
     c.bench_function("create async clients", |b| {
-        b.iter(|| black_box(sprinkles::requests::AsyncClient::new()));
+        b.iter(|| black_box(Client::asynchronous()));
     });
 
     c.bench_function("open handle", |b| {
@@ -72,23 +72,20 @@ fn criterion_benchmark(c: &mut Criterion) {
     slow.bench_function("create downloader", |b| {
         b.to_async(&runtime).iter_batched(
             || async {
-                (
-                    Handle::open_manifest(
-                        Scoop::cache_path(),
-                        &Package::from_str("extras/sfsu")
-                            .unwrap()
-                            .manifest()
-                            .await
-                            .unwrap(),
-                        Architecture::ARCH,
-                    )
-                    .unwrap(),
-                    AsyncClient::new(),
+                Handle::open_manifest(
+                    Scoop::cache_path(),
+                    &Package::from_str("extras/sfsu")
+                        .unwrap()
+                        .manifest()
+                        .await
+                        .unwrap(),
+                    Architecture::ARCH,
                 )
+                .unwrap()
             },
             |dl| async {
-                let (dl, client) = dl.await;
-                black_box(Downloader::new(dl, &client, None).await.unwrap())
+                let dl = dl.await;
+                black_box(Downloader::new::<AsyncClient>(dl, None).await.unwrap())
             },
             BatchSize::SmallInput,
         );

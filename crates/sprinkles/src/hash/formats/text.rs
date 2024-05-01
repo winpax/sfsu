@@ -177,7 +177,7 @@ mod tests {
 
     use crate::{
         buckets::Bucket, packages::manifest::HashExtractionOrArrayOfHashExtractions,
-        requests::BlockingClient,
+        requests::Client,
     };
 
     #[test]
@@ -202,7 +202,7 @@ mod tests {
                 panic!("No hash extraction found");
             };
 
-        let text_file: String = BlockingClient::new()
+        let text_file: String = Client::blocking()
             .get(text_url)
             .send()
             .unwrap()
@@ -248,7 +248,7 @@ mod tests {
         substitutions.insert("$url".to_string(), no_fragment.clone());
         substitutions.insert("$baseurl".to_string(), no_fragment);
 
-        let response = BlockingClient::new().get(text_url).send().unwrap();
+        let response = Client::blocking().get(text_url).send().unwrap();
         let text_file = response.text().unwrap();
 
         let hash = "md5:".to_string()
