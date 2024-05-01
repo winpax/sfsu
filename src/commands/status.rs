@@ -14,7 +14,7 @@ use sprinkles::{
         sectioned::{Children, Section},
         structured::Structured,
     },
-    packages::{install, status::Info},
+    packages::models::{install, status::Info},
     progress::style,
 };
 

@@ -2,9 +2,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::{Architecture, Scoop};
-
-use super::CreateManifest;
+use crate::{packages::{CreateManifest,Result}, Architecture, Scoop};
 
 #[derive(Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 /// The install manifest
@@ -41,7 +39,7 @@ impl Manifest {
     ///
     /// # Errors
     /// - Missing or invalid manifest
-    pub fn get_manifest(&self) -> super::Result<super::manifest::Manifest> {
+    pub fn get_manifest(&self) -> Result<super::manifest::Manifest> {
         let manifest_path = Scoop::apps_path()
             .join(&self.name)
             .join("current")

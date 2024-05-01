@@ -15,7 +15,7 @@ use crate::{
     cache::{self, Downloader, Handle},
     hash::url_ext::UrlExt,
     packages::{
-        manifest::{
+        models::manifest::{
             AutoupdateConfig, HashExtractionOrArrayOfHashExtractions, HashMode as ManifestHashMode,
         },
         Manifest, MergeDefaults,
@@ -565,7 +565,7 @@ mod tests {
 
     use crate::{
         buckets::Bucket,
-        packages::{manifest::HashExtractionOrArrayOfHashExtractions, reference},
+        packages::{models::manifest::HashExtractionOrArrayOfHashExtractions, reference},
         requests::Client,
     };
 

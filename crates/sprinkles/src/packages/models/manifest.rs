@@ -40,7 +40,7 @@ pub struct Manifest {
     /// Undocumented: Found at <https://github.com/se35710/scoop-java/search?l=JSON&q=cookie>
     pub cookie: Option<HashMap<String, Option<serde_json::Value>>>,
     /// The dependencies of the package
-    pub depends: Option<TOrArrayOfTs<super::reference::ManifestRef>>,
+    pub depends: Option<TOrArrayOfTs<crate::packages::reference::ManifestRef>>,
     /// The description of the package
     pub description: Option<String>,
     /// Extract to dir or dirs
