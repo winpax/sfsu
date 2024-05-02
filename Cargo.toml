@@ -32,6 +32,7 @@ quork = "0.6"
 rayon = "1.10"
 regex = "1.10"
 serde = { version = "1.0", features = ["derive"] }
+sfsu-derive = { version = "0.1.0", path = "./crates/derive" }
 
 [[bench]]
 harness = false
@@ -88,7 +89,7 @@ rayon.workspace = true
 regex.workspace = true
 serde.workspace = true
 serde_json = { version = "1.0", features = ["preserve_order"] }
-sfsu-derive = { path = "./crates/derive" }
+sfsu-derive.workspace = true
 shadow-rs = "0.27"
 sprinkles = { version = "1.11.0-beta.4", path = "crates/sprinkles" }
 tokio = { version = "1.37", features = ["full"] }
