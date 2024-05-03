@@ -1929,6 +1929,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "quork"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f19c9373a5b9405accf452745904c378679608f83021aa2751bf22f3265d3926"
+dependencies = [
+ "cc",
+ "cfg-if",
+ "nix",
+ "quork-proc",
+ "thiserror",
+ "windows 0.56.0",
+]
+
+[[package]]
 name = "quork-proc"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2337,7 +2351,7 @@ dependencies = [
 
 [[package]]
 name = "sfsu"
-version = "1.11.0-beta.6"
+version = "1.11.0"
 dependencies = [
  "anyhow",
  "bat",
@@ -2353,7 +2367,7 @@ dependencies = [
  "log",
  "open",
  "parking_lot",
- "quork",
+ "quork 0.7.0",
  "rayon",
  "regex",
  "serde",
@@ -2374,7 +2388,7 @@ dependencies = [
  "proc-macro-crate 3.1.0",
  "proc-macro-error",
  "proc-macro2",
- "quork",
+ "quork 0.7.0",
  "quote",
  "strum",
  "syn 2.0.60",
@@ -2463,7 +2477,7 @@ dependencies = [
 
 [[package]]
 name = "sprinkles"
-version = "1.11.0-beta.6"
+version = "1.11.0"
 dependencies = [
  "anyhow",
  "base64 0.22.1",
@@ -2485,7 +2499,7 @@ dependencies = [
  "log",
  "md-5",
  "quick-xml",
- "quork",
+ "quork 0.6.3",
  "rayon",
  "regex",
  "reqwest",

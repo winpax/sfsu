@@ -12,7 +12,7 @@ members = ["crates/*"]
 package.license = "Apache-2.0"
 package.publish = false
 package.rust-version = "1.75.0"
-package.version = "1.11.0-beta.6"
+package.version = "1.11.0"
 
 [workspace.dependencies]
 chrono = { version = ">=0.4.38", features = [
@@ -30,7 +30,7 @@ indicatif = { version = "0.17", features = [
 ] }
 itertools = "0.12"
 log = { version = "0.4", features = ["std"] }
-quork = "0.6"
+quork = "0.7.0"
 rayon = "1.10"
 regex = "1.10"
 serde = { version = "1.0", features = ["derive"] }
