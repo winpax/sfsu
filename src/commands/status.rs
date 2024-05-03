@@ -8,13 +8,13 @@ use serde_json::Value;
 
 use sprinkles::{
     buckets::Bucket,
-    git::Repo,
     output::{
         sectioned::{Children, Section},
         structured::Structured,
     },
     packages::models::{install, status::Info},
     progress::style,
+    Scoop,
 };
 
 #[derive(Debug, Copy, Clone, ValueEnum, ListVariants)]
@@ -87,9 +87,7 @@ impl super::Command for Args {
 
 impl Args {
     fn handle_scoop(&self, value: &Mutex<Value>, output: &mut dyn Write) -> anyhow::Result<()> {
-        let scoop_repo = Repo::scoop_app()?;
-
-        let is_outdated = scoop_repo.outdated()?;
+        let is_outdated = Scoop::outdated()?;
 
         if self.json {
             value.lock()["scoop"] = serde_json::to_value(is_outdated)?;

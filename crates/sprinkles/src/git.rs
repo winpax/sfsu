@@ -3,7 +3,7 @@
 use std::{ffi::OsStr, fmt::Display, process::Command};
 
 use derive_more::Deref;
-use git2::{Commit, DiffOptions, Direction, FetchOptions, Progress, Remote, Repository, Sort};
+use git2::{Commit, DiffOptions, Direction, FetchOptions, Oid, Progress, Remote, Repository, Sort};
 use indicatif::ProgressBar;
 
 use crate::{buckets::Bucket, Scoop};
@@ -87,6 +87,27 @@ impl Repo {
         self.find_remote("origin").ok()
     }
 
+    /// Checkout to another branch
+    ///
+    /// # Errors
+    /// - Git error
+    /// - No active branch
+    /// - No remote named "origin"
+    pub fn checkout(&self, branch: &str) -> Result<()> {
+        let branch = format!("refs/heads/{branch}");
+        self.0.set_head(&branch)?;
+        self.0.checkout_head(None)?;
+
+        // Reset to ensure the working directory is clean
+        self.0.reset(
+            self.latest_commit()?.as_object(),
+            git2::ResetType::Hard,
+            None,
+        )?;
+
+        Ok(())
+    }
+
     /// Get the current branch
     ///
     /// # Errors
@@ -116,29 +137,48 @@ impl Repo {
         Ok(())
     }
 
-    /// Checks if the bucket is outdated
+    /// Get the latest commit in the remote repository
     ///
     /// # Errors
     /// - No remote named "origin"
-    pub fn outdated(&self) -> Result<bool> {
+    /// - Missing head
+    pub fn latest_remote_commit(&self) -> Result<Oid> {
         let mut remote = self
             .origin()
             .ok_or(Error::MissingRemote("origin".to_string()))?;
 
         let connection = remote.connect_auth(Direction::Fetch, None, None)?;
 
-        let head = connection.list()?.first().ok_or(Error::MissingHead)?;
+        let current_branch = self.current_branch()?;
+        let head = connection
+            .list()?
+            .iter()
+            .find(|head| {
+                let name = head.name();
+                name == format!("refs/heads/{current_branch}")
+            })
+            .ok_or(Error::MissingHead)?;
 
-        debug!(
-            "{}\t{} from repo '{}'",
-            head.oid(),
-            head.name(),
-            self.path().display()
-        );
+        Ok(head.oid())
+    }
+
+    /// Checks if the bucket is outdated
+    ///
+    /// # Errors
+    /// - No remote named "origin"
+    pub fn outdated(&self) -> Result<bool> {
+        let head = self.latest_remote_commit()?;
 
         let local_head = self.latest_commit()?;
 
-        Ok(local_head.id() != head.oid())
+        debug!(
+            "{}/{} from repo '{}'",
+            head,
+            local_head.id(),
+            self.path().display()
+        );
+
+        Ok(local_head.id() != head)
     }
 
     /// Get the latest commit
