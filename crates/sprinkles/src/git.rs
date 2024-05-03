@@ -87,6 +87,21 @@ impl Repo {
         self.find_remote("origin").ok()
     }
 
+    pub fn set_branch(&self, branch: &str) -> Result<()> {
+        let branch = format!("refs/heads/{branch}");
+        self.0.set_head(&branch)?;
+        self.0.checkout_head(None)?;
+
+        // Reset to ensure the working directory is clean
+        self.0.reset(
+            self.latest_commit()?.as_object(),
+            git2::ResetType::Hard,
+            None,
+        )?;
+
+        Ok(())
+    }
+
     /// Get the current branch
     ///
     /// # Errors
@@ -143,9 +158,14 @@ impl Repo {
     pub fn outdated(&self) -> Result<bool> {
         let head = self.latest_remote_commit()?;
 
-        debug!("{} from repo '{}'", head, self.path().display());
-
         let local_head = self.latest_commit()?;
+
+        debug!(
+            "{}/{} from repo '{}'",
+            head,
+            local_head.id(),
+            self.path().display()
+        );
 
         Ok(local_head.id() != head)
     }
