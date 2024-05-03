@@ -16,7 +16,7 @@ use gix::{
 };
 use indicatif::ProgressBar;
 
-use crate::{buckets::Bucket, Scoop};
+use crate::{buckets::Bucket, output::colours::println_green, Scoop};
 
 use self::pull::ProgressCallback;
 
@@ -166,6 +166,7 @@ impl Repo {
     /// # Errors
     /// - No remote named "origin"
     pub fn outdated(&self) -> Result<bool> {
+        self.fetch()?;
         let origin = self.origin_result()?;
         let map = origin
             .connect(Direction::Fetch)?
@@ -175,8 +176,6 @@ impl Repo {
             )
             .unwrap();
 
-        dbg!(self.0.path());
-
         let head = map
             .remote_refs
             .iter()
@@ -185,12 +184,30 @@ impl Repo {
                     ref full_ref_name,
                     object: object_id,
                 } => {
-                    dbg!(full_ref_name);
-                    Some(self.0.find_object(object_id).ok()?.into_commit())
+                    let head = self.0.head().ok()?;
+                    let ref_name = head.referent_name()?.as_bstr();
+                    if ref_name == full_ref_name {
+                        dbg!(self.0.path(), full_ref_name);
+                        Some(self.0.find_object(object_id).ok()?.into_commit())
+                    } else {
+                        None
+                    }
                 }
                 _ => None,
             })
             .ok_or(Error::MissingHeadOpt)?;
+
+        println_green!(
+            "HEAD: {} = {}",
+            self.0
+                .path()
+                .parent()
+                .unwrap()
+                .file_name()
+                .unwrap()
+                .to_string_lossy(),
+            head.id()
+        );
 
         debug!(
             "{}\t{} from repo '{}'",
