@@ -11,7 +11,7 @@ version.workspace = true
 members = ["crates/*"]
 package.license = "Apache-2.0"
 package.publish = false
-package.rust-version = "1.77.2"
+package.rust-version = "1.75.0"
 package.version = "1.11.0-beta.5"
 
 [workspace.dependencies]

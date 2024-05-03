@@ -17,7 +17,7 @@ fn main() -> shadow_rs::SdResult<()> {
         let (major, minor, patch) = libgit2_version.libgit2_version();
 
         println!(
-            "cargo::rustc-env=LIBGIT2_VERSION={}.{}.{}",
+            "cargo:rustc-env=LIBGIT2_VERSION={}.{}.{}",
             major, minor, patch
         );
     }
