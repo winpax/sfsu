@@ -4,12 +4,14 @@ edition = "2021"
 license = { workspace = true }
 name = "sfsu"
 publish.workspace = true
+rust-version.workspace = true
 version.workspace = true
 
 [workspace]
 members = ["crates/*"]
 package.license = "Apache-2.0"
 package.publish = false
+package.rust-version = "1.75.0"
 package.version = "1.11.0-beta.5"
 
 [workspace.dependencies]
