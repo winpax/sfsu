@@ -1,6 +1,7 @@
 use std::{fs::File, io::Write};
 
 use log::{Level, LevelFilter};
+use rayon::iter::{ParallelBridge, ParallelIterator};
 use sprinkles::{eprintln_red, eprintln_yellow};
 
 pub mod panics;
@@ -10,8 +11,15 @@ pub struct Logger {
     verbose: bool,
 }
 
+#[allow(dead_code)]
 impl Logger {
-    pub fn new(verbose: bool) -> Self {
+    const LEVEL_FILTER: LevelFilter = LevelFilter::Trace;
+
+    pub async fn new(verbose: bool) -> Self {
+        Self::from_file(sprinkles::Scoop::new_log().await.expect("new log"), verbose)
+    }
+
+    pub fn new_sync(verbose: bool) -> Self {
         Self::from_file(sprinkles::Scoop::new_log_sync().expect("new log"), verbose)
     }
 
@@ -19,11 +27,34 @@ impl Logger {
         Self { file, verbose }
     }
 
-    pub fn init(verbose: bool) -> Result<(), log::SetLoggerError> {
-        log::set_boxed_logger(Box::new(Logger::new(verbose)))?;
-        log::set_max_level(LevelFilter::Trace);
+    pub async fn init(verbose: bool) -> Result<(), log::SetLoggerError> {
+        log::set_boxed_logger(Box::new(Logger::new(verbose).await))?;
+        log::set_max_level(Self::LEVEL_FILTER);
 
         debug!("Initialized logger");
+
+        Ok(())
+    }
+
+    pub fn init_sync(verbose: bool) -> Result<(), log::SetLoggerError> {
+        log::set_boxed_logger(Box::new(Logger::new_sync(verbose)))?;
+        log::set_max_level(Self::LEVEL_FILTER);
+
+        debug!("Initialized logger");
+
+        Ok(())
+    }
+
+    pub fn cleanup_logs() -> anyhow::Result<()> {
+        let logging_dir = sprinkles::Scoop::logging_dir()?;
+
+        let logs = std::fs::read_dir(logging_dir)?.collect::<Result<Vec<_>, _>>()?;
+
+        logs.into_iter()
+            .rev()
+            .skip(10)
+            .par_bridge()
+            .try_for_each(|entry| std::fs::remove_file(entry.path()))?;
 
         Ok(())
     }
