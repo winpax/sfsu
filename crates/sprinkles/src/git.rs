@@ -3,11 +3,14 @@
 use std::{ffi::OsStr, fmt::Display, process::Command, sync::atomic::AtomicBool};
 
 use derive_more::Deref;
-use git2::{Commit, DiffOptions, Direction, FetchOptions, Progress, Sort};
+use git2::{DiffOptions, FetchOptions, Progress, Sort};
 use gix::{
+    bstr::{ByteSlice, B},
     clone::PrepareFetch,
     create::{self, Kind, Options},
-    repository, Remote, Repository,
+    remote, repository,
+    traverse::commit::simple::Sorting,
+    Commit, Remote, Repository,
 };
 use indicatif::ProgressBar;
 
@@ -54,13 +57,23 @@ pub enum Error {
     #[error("Cannot find reference: {0}")]
     MissingReference(#[from] gix::reference::find::existing::Error),
     #[error("Cannot find remote: {0}")]
-    MissingRemote(#[from] gix::remote::find::existing::Error),
-    #[error("Missing head in remote")]
-    MissingHead,
+    MissingRemote(#[from] remote::find::existing::Error),
+    #[error("Git connection error: {0}")]
+    GitoxideConnection(#[from] remote::connect::Error),
+    #[error("Missing head in remote: {0}")]
+    MissingHead(#[from] gix::reference::head_commit::Error),
+    #[error("Peel to commit: {0}")]
+    PeelCommit(#[from] gix::head::peel::to_commit::Error),
     #[error("Cloning: {0}")]
     CloneError(#[from] gix::clone::Error),
+    #[error("Traversing: {0}")]
+    Traversing(#[from] gix::traverse::commit::simple::Error),
+    #[error("Finding commit: {0}")]
+    Finding(#[from] gix::object::find::existing::Error),
     #[error("Invalid utf8")]
     NonUtf8,
+    #[error("Invalid utf8: {0}")]
+    GixNonUtf8(#[from] gix::bstr::Utf8Error),
 }
 
 /// Repo result type
@@ -98,6 +111,12 @@ impl Repo {
         self.find_remote("origin").ok()
     }
 
+    #[must_use]
+    /// Get the origin remote
+    pub fn origin_result(&self) -> Result<Remote<'_>> {
+        Ok(self.find_remote("origin")?)
+    }
+
     /// Get the current branch
     ///
     /// # Errors
@@ -118,7 +137,7 @@ impl Repo {
 
         // Fetch the latest changes from the remote repository
         let mut fetch = PrepareFetch::new(
-            *remote.url(gix::remote::Direction::Fetch).unwrap(),
+            *remote.url(remote::Direction::Fetch).unwrap(),
             self.path(),
             match self.kind() {
                 repository::Kind::Submodule => create::Kind::WithWorktree,
@@ -139,24 +158,20 @@ impl Repo {
     /// # Errors
     /// - No remote named "origin"
     pub fn outdated(&self) -> Result<bool> {
-        let mut remote = self
-            .origin()
-            .ok_or(Error::MissingRemote("origin".to_string()))?;
+        let head = self.0.head_commit()?;
 
-        let connection = remote.connect_auth(Direction::Fetch, None, None)?;
-
-        let head = connection.list()?.first().ok_or(Error::MissingHead)?;
+        // let head = connection.list()?.first().ok_or(Error::MissingHead)?;
 
         debug!(
             "{}\t{} from repo '{}'",
-            head.oid(),
-            head.name(),
+            head.id(),
+            head.message().unwrap().summary(),
             self.path().display()
         );
 
         let local_head = self.latest_commit()?;
 
-        Ok(local_head.id() != head.oid())
+        Ok(local_head.id() != head.id())
     }
 
     /// Get the latest commit
@@ -165,7 +180,7 @@ impl Repo {
     /// - Missing head
     /// - Missing latest commit
     pub fn latest_commit(&self) -> Result<Commit<'_>> {
-        Ok(self.0.head()?.peel_to_commit()?)
+        Ok(self.0.head()?.peel_to_commit_in_place()?)
     }
 
     /// Update the bucket by pulling any changes
@@ -241,24 +256,23 @@ impl Repo {
 
         // let post_pull_commit = self.latest_commit()?;
 
-        let mut revwalk = self.revwalk()?;
-        revwalk.push_head()?;
-        revwalk.set_sorting(Sort::TOPOLOGICAL)?;
+        let mut revwalk = self
+            .rev_walk([self.latest_commit()?.id])
+            .sorting(Sorting::ByCommitTimeNewestFirst);
 
         let mut changelog = Vec::new();
-        for oid in revwalk {
-            let oid = oid?;
+        for oid in revwalk.all().unwrap() {
+            let commit_info = oid?;
 
-            if oid == current_commit.id() {
+            if commit_info.id() == current_commit.id() {
                 break;
             }
 
-            let commmit = self.find_commit(oid)?;
+            let commit = commit_info.object()?;
 
-            if let Some(msg) = commmit.message() {
-                if let Some(first_line) = msg.lines().next() {
-                    changelog.push(first_line.trim().to_string());
-                }
+            if let Ok(msg) = commit.message() {
+                let summary = msg.summary();
+                changelog.push(B(summary.trim()).to_str()?.to_string());
             }
         }
 
