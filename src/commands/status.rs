@@ -34,6 +34,9 @@ pub struct Args {
 
     #[clap(short = 'O', long, help = "Only check the provided sections of Scoop")]
     only: Vec<Command>,
+
+    #[clap(short = 'H', long, help = "Ignore held packages")]
+    ignore_held: bool,
 }
 
 impl super::Command for Args {
