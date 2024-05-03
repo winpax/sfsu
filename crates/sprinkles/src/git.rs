@@ -1,9 +1,14 @@
 //! Scoop git helpers
 
-use std::{ffi::OsStr, fmt::Display, process::Command};
+use std::{ffi::OsStr, fmt::Display, process::Command, sync::atomic::AtomicBool};
 
 use derive_more::Deref;
-use git2::{Commit, DiffOptions, Direction, FetchOptions, Progress, Remote, Repository, Sort};
+use git2::{Commit, DiffOptions, Direction, FetchOptions, Progress, Sort};
+use gix::{
+    clone::PrepareFetch,
+    create::{self, Kind, Options},
+    repository, Remote, Repository,
+};
 use indicatif::ProgressBar;
 
 use crate::{buckets::Bucket, Scoop};
@@ -44,16 +49,22 @@ pub enum Error {
     NoActiveBranch,
     #[error("Git error: {0}")]
     Git2(#[from] git2::Error),
-    #[error("No remote named {0}")]
-    MissingRemote(String),
+    #[error("Open Repo error: {0}")]
+    OpenRepo(#[from] gix::open::Error),
+    #[error("Cannot find reference: {0}")]
+    MissingReference(#[from] gix::reference::find::existing::Error),
+    #[error("Cannot find remote: {0}")]
+    MissingRemote(#[from] gix::remote::find::existing::Error),
     #[error("Missing head in remote")]
     MissingHead,
+    #[error("Cloning: {0}")]
+    CloneError(#[from] gix::clone::Error),
     #[error("Invalid utf8")]
     NonUtf8,
 }
 
 /// Repo result type
-pub type Result<T> = std::result::Result<T, Error>;
+pub type Result<T, E = Error> = std::result::Result<T, E>;
 
 #[derive(Deref)]
 /// A git repository
@@ -65,7 +76,7 @@ impl Repo {
     /// # Errors
     /// - The bucket could not be opened as a repository
     pub fn from_bucket(bucket: &Bucket) -> Result<Self> {
-        let repo = Repository::open(bucket.path())?;
+        let repo = gix::open(bucket.path())?;
 
         Ok(Self(repo))
     }
@@ -76,7 +87,7 @@ impl Repo {
     /// - The Scoop app could not be opened as a repository
     pub fn scoop_app() -> Result<Self> {
         let scoop_path = Scoop::apps_path().join("scoop").join("current");
-        let repo = Repository::open(scoop_path)?;
+        let repo = gix::open(scoop_path)?;
 
         Ok(Self(repo))
     }
@@ -92,11 +103,7 @@ impl Repo {
     /// # Errors
     /// - No active branch
     pub fn current_branch(&self) -> Result<String> {
-        self.0
-            .head()?
-            .shorthand()
-            .ok_or(Error::NoActiveBranch)
-            .map(std::string::ToString::to_string)
+        Ok(self.0.head()?.name().to_path().display().to_string())
     }
 
     /// Fetch latest changes in the repo
@@ -107,11 +114,22 @@ impl Repo {
     pub fn fetch(&self) -> Result<()> {
         let current_branch = self.current_branch()?;
 
+        let mut remote = self.find_remote("origin")?;
+
         // Fetch the latest changes from the remote repository
-        let mut fetch_options = FetchOptions::new();
-        fetch_options.update_fetchhead(true);
-        let mut remote = self.0.find_remote("origin")?;
-        remote.fetch(&[current_branch], Some(&mut fetch_options), None)?;
+        let mut fetch = PrepareFetch::new(
+            *remote.url(gix::remote::Direction::Fetch).unwrap(),
+            self.path(),
+            match self.kind() {
+                repository::Kind::Submodule => create::Kind::WithWorktree,
+                repository::Kind::Bare => create::Kind::Bare,
+                repository::Kind::WorkTree { is_linked } => create::Kind::WithWorktree,
+            },
+            Options::default(),
+            *self.open_options(),
+        )?;
+        let pb = crate::progress::ProgressBar::new(0);
+        fetch.fetch_only(pb, &AtomicBool::new(false));
 
         Ok(())
     }

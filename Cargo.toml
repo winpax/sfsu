@@ -21,6 +21,7 @@ chrono = { version = ">=0.4.38", features = [
 console = { version = "0.15", features = ["windows-console-colors"] }
 futures = "0.3"
 git2 = "0.18"
+gix = { version = "0.62", features = ["blocking-network-client"] }
 indicatif = { version = "0.17", features = [
     "improved_unicode",
     "rayon",
@@ -78,6 +79,7 @@ clap = { version = "4.5", features = [
 console.workspace = true
 futures.workspace = true
 git2.workspace = true
+gix.workspace = true
 human-panic = "2.0"
 indicatif.workspace = true
 itertools.workspace = true
@@ -101,5 +103,6 @@ git2 = { workspace = true }
 
 [build-dependencies]
 git2.workspace = true
+gix.workspace = true
 shadow-rs = "0.27"
 winres = "0.1"

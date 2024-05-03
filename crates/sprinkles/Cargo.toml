@@ -41,6 +41,7 @@ dunce = "1.0"
 futures.workspace = true
 getset = { version = "0.1", optional = true }
 git2.workspace = true
+gix.workspace = true
 heck = "0.5"
 indicatif.workspace = true
 itertools.workspace = true
