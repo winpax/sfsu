@@ -2337,7 +2337,7 @@ dependencies = [
 
 [[package]]
 name = "sfsu"
-version = "1.11.0-beta.6"
+version = "1.10.5"
 dependencies = [
  "anyhow",
  "bat",
@@ -2463,7 +2463,7 @@ dependencies = [
 
 [[package]]
 name = "sprinkles"
-version = "1.11.0-beta.6"
+version = "1.10.5"
 dependencies = [
  "anyhow",
  "base64 0.22.1",
