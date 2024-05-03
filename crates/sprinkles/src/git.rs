@@ -3,7 +3,7 @@
 use std::{ffi::OsStr, fmt::Display, process::Command};
 
 use derive_more::Deref;
-use git2::{Commit, DiffOptions, Direction, FetchOptions, Progress, Remote, Repository, Sort};
+use git2::{Commit, DiffOptions, Direction, FetchOptions, Oid, Progress, Remote, Repository, Sort};
 use indicatif::ProgressBar;
 
 use crate::{buckets::Bucket, Scoop};
@@ -116,29 +116,38 @@ impl Repo {
         Ok(())
     }
 
-    /// Checks if the bucket is outdated
-    ///
-    /// # Errors
-    /// - No remote named "origin"
-    pub fn outdated(&self) -> Result<bool> {
+    pub fn latest_remote_commit(&self) -> Result<Oid> {
         let mut remote = self
             .origin()
             .ok_or(Error::MissingRemote("origin".to_string()))?;
 
         let connection = remote.connect_auth(Direction::Fetch, None, None)?;
 
-        let head = connection.list()?.first().ok_or(Error::MissingHead)?;
+        let current_branch = self.current_branch()?;
+        let head = connection
+            .list()?
+            .iter()
+            .find(|head| {
+                let name = head.name();
+                name == format!("refs/heads/{current_branch}")
+            })
+            .ok_or(Error::MissingHead)?;
 
-        debug!(
-            "{}\t{} from repo '{}'",
-            head.oid(),
-            head.name(),
-            self.path().display()
-        );
+        Ok(head.oid())
+    }
+
+    /// Checks if the bucket is outdated
+    ///
+    /// # Errors
+    /// - No remote named "origin"
+    pub fn outdated(&self) -> Result<bool> {
+        let head = self.latest_remote_commit()?;
+
+        debug!("{} from repo '{}'", head, self.path().display());
 
         let local_head = self.latest_commit()?;
 
-        Ok(local_head.id() != head.oid())
+        Ok(local_head.id() != head)
     }
 
     /// Get the latest commit
