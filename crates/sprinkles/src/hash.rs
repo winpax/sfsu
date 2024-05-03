@@ -734,6 +734,25 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn test_finding_vcredistaio_hashes() -> anyhow::Result<()> {
+        let package = reference::Package::from_str("extras/vcredist-aio")?;
+
+        let handler = TestHandler::new(package);
+
+        handler.test().await?;
+
+        Ok(())
+    }
+
+    // #[tokio::test]
+    // async fn test_finding_imagemagick_hashes() -> anyhow::Result<()> {
+    //     let package = reference::Package::from_str("main/imagemagick")?;
+    //     let handler = TestHandler::new(package);
+    //     handler.test().await?;
+    //     Ok(())
+    // }
+
+    #[tokio::test]
     async fn test_keepass() -> anyhow::Result<()> {
         let package = reference::Package::from_str("extras/keepass")?;
 
