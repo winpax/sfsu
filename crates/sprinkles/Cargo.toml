@@ -48,7 +48,7 @@ itertools.workspace = true
 log.workspace = true
 md-5 = "0.10"
 quick-xml = { version = "0.31", optional = true, features = ["serialize"] }
-quork = "0.6"
+quork = "0.7.0"
 rayon.workspace = true
 regex.workspace = true
 reqwest = { version = "0.12", features = [
