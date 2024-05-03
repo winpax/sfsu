@@ -6,6 +6,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use gix::remote::Direction;
 use rayon::prelude::*;
 use regex::Regex;
 
@@ -292,12 +293,11 @@ impl Bucket {
     /// - The bucket's origin remote could not be found
     /// - The remote's url is not utf8
     /// - The remote's url is not set
-    pub fn source(&self) -> Result<String> {
+    pub fn source(&self, direction: Direction) -> Result<String> {
         Ok(self
             .open_repo()?
-            .origin()
-            .ok_or(git::Error::MissingRemote("origin".to_string()))?
-            .url()
+            .origin_result()?
+            .url(direction)
             .map(std::string::ToString::to_string)
             .ok_or(git::Error::NonUtf8)?)
     }

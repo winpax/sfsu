@@ -42,6 +42,7 @@ futures.workspace = true
 getset = { version = "0.1", optional = true }
 git2.workspace = true
 gix.workspace = true
+gix-object = "0.42.1"
 heck = "0.5"
 indicatif.workspace = true
 itertools.workspace = true

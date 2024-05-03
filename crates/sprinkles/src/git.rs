@@ -3,11 +3,11 @@
 use std::{ffi::OsStr, fmt::Display, process::Command, sync::atomic::AtomicBool};
 
 use derive_more::Deref;
-use git2::{DiffOptions, FetchOptions, Progress, Sort};
+use git2::{DiffOptions, Progress};
 use gix::{
     bstr::{ByteSlice, B},
     clone::PrepareFetch,
-    create::{self, Kind, Options},
+    create::{self, Options},
     remote, repository,
     traverse::commit::simple::Sorting,
     Commit, Remote, Repository,

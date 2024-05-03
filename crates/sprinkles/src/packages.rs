@@ -8,7 +8,7 @@ use std::{
 
 use chrono::{DateTime, FixedOffset, Local};
 use clap::{Parser, ValueEnum};
-use git2::Commit;
+use gix::{object::tree::diff::Action, Commit};
 use itertools::Itertools;
 use quork::traits::truthy::ContainsTruth as _;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
@@ -254,6 +254,32 @@ pub enum Error {
     TimeError(#[from] SystemTimeError),
     #[error("Could not find executable in path: {0}")]
     MissingInPath(#[from] which::Error),
+    #[error("Open Repo error: {0}")]
+    OpenRepo(#[from] gix::open::Error),
+    #[error("Cannot find reference: {0}")]
+    MissingReference(#[from] gix::reference::find::existing::Error),
+    #[error("Cannot find remote: {0}")]
+    MissingRemote(#[from] gix::remote::find::existing::Error),
+    #[error("Git connection error: {0}")]
+    GitoxideConnection(#[from] gix::remote::connect::Error),
+    #[error("Missing head in remote: {0}")]
+    MissingHead(#[from] gix::reference::head_commit::Error),
+    #[error("Peel to commit: {0}")]
+    PeelCommit(#[from] gix::head::peel::to_commit::Error),
+    #[error("Cloning: {0}")]
+    CloneError(#[from] gix::clone::Error),
+    #[error("Traversing: {0}")]
+    Traversing(#[from] gix::traverse::commit::simple::Error),
+    #[error("Finding commit: {0}")]
+    Finding(#[from] gix::object::find::existing::Error),
+    #[error("Revwalk error: {0}")]
+    Revwalk(#[from] gix::revision::walk::Error),
+    #[error("Commit error: {0}")]
+    Object(#[from] gix::object::commit::Error),
+    #[error("Diff error: {0}")]
+    Diffing(#[from] gix::diff::new_rewrites::Error),
+    #[error("Decoding commit: {0}")]
+    Decoding(#[from] gix_object::decode::Error),
     #[error("Git delta did not have a path")]
     DeltaNoPath,
     #[error("Cannot find git commit where package was updated")]
@@ -273,6 +299,8 @@ pub enum Error {
     MissingAutoUpdate,
     #[error("Manifest architecture section does not have `autoupdate` field")]
     MissingArchAutoUpdate,
+    #[error("Missing parent commit")]
+    MissingParent,
 }
 
 /// The result type for package operations
@@ -796,8 +824,8 @@ impl Manifest {
     #[must_use]
     /// Check if the commit's message matches the name of the manifest
     pub fn commit_message_matches(&self, commit: &Commit<'_>) -> bool {
-        if let Some(message) = commit.message() {
-            message.starts_with(&self.name)
+        if let Ok(message) = commit.message() {
+            message.summary().to_string().starts_with(&self.name)
         } else {
             false
         }
@@ -808,22 +836,42 @@ impl Manifest {
     /// # Errors
     /// - Git2 errors
     pub fn commit_diff_matches(&self, repo: &Repo, commit: &Commit<'_>) -> Result<bool> {
-        let mut diff_options = Repo::default_diff_options();
+        // let mut diff_options = Repo::default_diff_options();
 
         let tree = commit.tree()?;
-        let parent_tree = commit.parent(0)?.tree()?;
+        let parent_tree = commit
+            .parent_ids()
+            .next()
+            .ok_or(Error::MissingParent)?
+            .object()?
+            .into_commit()
+            .tree()?;
 
         let manifest_path = format!("bucket/{}.json", self.name);
 
-        let diff = repo.diff_tree_to_tree(
-            Some(&parent_tree),
-            Some(&tree),
-            Some(diff_options.pathspec(&manifest_path)),
-        )?;
+        let mut files_changed: usize = 0;
+
+        parent_tree
+            .changes()?
+            .track_filename()
+            .for_each_to_obtain_tree(&tree, |change| {
+                if change.location == manifest_path {
+                    files_changed += 1;
+                    Ok::<_, Error>(Action::Cancel)
+                } else {
+                    Ok(Action::Continue)
+                }
+            });
+
+        // let diff = repo.diff_tree_to_tree(
+        //     Some(&parent_tree),
+        //     Some(&tree),
+        //     Some(diff_options.pathspec(&manifest_path)),
+        // )?;
 
         // Given that the diffoptions ensure that we only match the specific manifest
         // we are safe to return as soon as we find a commit thats changed anything
-        Ok(diff.stats()?.files_changed() != 0)
+        Ok(files_changed != 0)
     }
 
     /// Get the time and author of the commit where this manifest was last changed
@@ -842,15 +890,16 @@ impl Manifest {
         if disable_git {
             let repo = Repo::from_bucket(&bucket)?;
 
-            let mut revwalk = repo.revwalk()?;
-            revwalk.push_head()?;
-            revwalk.set_sorting(git2::Sort::TOPOLOGICAL)?;
+            let mut revwalk = repo
+                .rev_walk([repo.head()?.id().unwrap()])
+                .sorting(gix::traverse::commit::simple::Sorting::ByCommitTimeNewestFirst);
 
             let updated_commit = revwalk
+                .all()?
                 .find_map(|oid| {
                     let find_commit = || {
                         // TODO: Add tests using personal bucket to ensure that different methods return the same info
-                        let commit = repo.find_commit(oid?)?;
+                        let commit = oid?.object()?;
 
                         #[cfg(not(feature = "info-difftrees"))]
                         if self.commit_message_matches(&commit) {
@@ -878,9 +927,9 @@ impl Manifest {
                 .ok_or(Error::NoUpdatedCommit)??;
 
             let date_time = {
-                let time = updated_commit.time();
-                let secs = time.seconds();
-                let offset = time.offset_minutes() * 60;
+                let time = updated_commit.time()?;
+                let secs = time.seconds;
+                let offset = time.offset * 60;
 
                 let utc_time = DateTime::from_timestamp(secs, 0).ok_or(Error::InvalidTime)?;
 
@@ -890,7 +939,7 @@ impl Manifest {
             };
 
             let author_wrapped =
-                Author::from_signature(updated_commit.author()).with_show_emails(!hide_emails);
+                Author::from_signature(updated_commit.author()?).with_show_emails(!hide_emails);
 
             Ok((
                 Some(date_time.to_string()),

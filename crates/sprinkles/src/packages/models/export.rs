@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     buckets::{Bucket as SfsuBucket, Error as BucketError},
-    config,
+    config, git,
     packages::{Error as PackageError, MinInfo},
 };
 
@@ -22,6 +22,8 @@ pub enum Error {
     #[error("Failed to list installed apps: {0}")]
     /// An error occurred while listing the installed apps
     PackageError(#[from] PackageError),
+    #[error("Failed to convert bucket: {0}")]
+    GitError(#[from] git::Error),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -106,18 +108,18 @@ impl From<MinInfo> for App {
 }
 
 impl TryFrom<SfsuBucket> for Bucket {
-    type Error = BucketError;
+    type Error = Error;
 
     fn try_from(bucket: SfsuBucket) -> Result<Self, Self::Error> {
         let name = bucket.name();
         let manifests = bucket.manifests()?;
-        let source = bucket.source()?;
+        let source = bucket.source(gix::remote::Direction::Fetch)?;
 
         let updated = {
             let repo = bucket.open_repo()?;
             let latest_commit = repo.latest_commit()?;
-            let time = latest_commit.time();
-            let secs = time.seconds();
+            let time = latest_commit.time().map_err(PackageError::from)?;
+            let secs = time.seconds;
             // let offset = time.offset_minutes() * 60;
 
             let utc_time = DateTime::from_timestamp(secs, 0).ok_or(BucketError::InvalidTime)?;

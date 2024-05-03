@@ -3,19 +3,19 @@
 use std::fmt::Display;
 
 use derive_more::Deref;
-use git2::Signature;
+use gix::actor::SignatureRef;
 
 #[derive(Deref)]
 #[must_use]
 /// A wrapper around a git signature to display the author
 pub struct Author<'a> {
     #[deref]
-    signature: Signature<'a>,
+    signature: SignatureRef<'a>,
     show_emails: bool,
 }
 
-impl<'a> From<Signature<'a>> for Author<'a> {
-    fn from(signature: Signature<'a>) -> Self {
+impl<'a> From<SignatureRef<'a>> for Author<'a> {
+    fn from(signature: SignatureRef<'a>) -> Self {
         Self {
             signature,
             show_emails: true,
@@ -25,7 +25,7 @@ impl<'a> From<Signature<'a>> for Author<'a> {
 
 impl<'a> Author<'a> {
     /// Create a new author from the provided signature
-    pub fn from_signature(signature: Signature<'a>) -> Self {
+    pub fn from_signature(signature: SignatureRef<'a>) -> Self {
         Self {
             signature,
             show_emails: true,
@@ -41,14 +41,13 @@ impl<'a> Author<'a> {
 
 impl<'a> Display for Author<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let user_name = self.name().unwrap_or("No name");
+        let user_name = self.name;
 
         user_name.fmt(f)?;
 
         if self.show_emails {
-            if let Some(user_email) = self.email() {
-                write!(f, " <{user_email}>")?;
-            }
+            self.email.fmt(f);
+            // write!(f, " <{user_email}>")?;
         }
 
         Ok(())
