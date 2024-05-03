@@ -181,6 +181,7 @@ mod tests {
     };
 
     #[test]
+    #[ignore = "replaced by testhandler tests"]
     fn test_finding_vcredistaio_hashes() {
         let manifest = Bucket::from_name("extras")
             .unwrap()
