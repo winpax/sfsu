@@ -2,7 +2,6 @@ use std::{str::FromStr, time::Duration};
 
 use criterion::{black_box, criterion_group, criterion_main, BatchSize, Criterion};
 
-#[cfg(feature = "beta")]
 use sprinkles::{
     cache::{Downloader, Handle},
     packages::reference::Package,
@@ -10,7 +9,6 @@ use sprinkles::{
     Architecture, Scoop,
 };
 
-#[cfg(feature = "beta")]
 fn criterion_benchmark(c: &mut Criterion) {
     let runtime = tokio::runtime::Builder::new_multi_thread()
         .enable_all()
