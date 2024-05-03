@@ -43,6 +43,7 @@ getset = { version = "0.1", optional = true }
 git2.workspace = true
 gix.workspace = true
 gix-object = "0.42.1"
+gix-transport = { version = "0.42.0", features = ["http-client-reqwest"] }
 heck = "0.5"
 indicatif.workspace = true
 itertools.workspace = true

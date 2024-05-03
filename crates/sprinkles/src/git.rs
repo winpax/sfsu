@@ -8,9 +8,11 @@ use gix::{
     bstr::{ByteSlice, B},
     clone::PrepareFetch,
     create::{self, Options},
-    remote, repository,
+    protocol::handshake,
+    remote::{self, Direction},
+    repository,
     traverse::commit::simple::Sorting,
-    Commit, Remote, Repository,
+    Commit, ObjectId, Remote, Repository,
 };
 use indicatif::ProgressBar;
 
@@ -62,6 +64,8 @@ pub enum Error {
     GitoxideConnection(#[from] remote::connect::Error),
     #[error("Missing head in remote: {0}")]
     MissingHead(#[from] gix::reference::head_commit::Error),
+    #[error("Missing head in remote")]
+    MissingHeadOpt,
     #[error("Peel to commit: {0}")]
     PeelCommit(#[from] gix::head::peel::to_commit::Error),
     #[error("Cloning: {0}")]
@@ -162,9 +166,31 @@ impl Repo {
     /// # Errors
     /// - No remote named "origin"
     pub fn outdated(&self) -> Result<bool> {
-        let head = self.0.head_commit()?;
+        let origin = self.origin_result()?;
+        let map = origin
+            .connect(Direction::Fetch)?
+            .ref_map(
+                gix::progress::Discard,
+                gix::remote::ref_map::Options::default(),
+            )
+            .unwrap();
 
-        // let head = connection.list()?.first().ok_or(Error::MissingHead)?;
+        dbg!(self.0.path());
+
+        let head = map
+            .remote_refs
+            .iter()
+            .find_map(|reference| match reference {
+                &handshake::Ref::Direct {
+                    ref full_ref_name,
+                    object: object_id,
+                } => {
+                    dbg!(full_ref_name);
+                    Some(self.0.find_object(object_id).ok()?.into_commit())
+                }
+                _ => None,
+            })
+            .ok_or(Error::MissingHeadOpt)?;
 
         debug!(
             "{}\t{} from repo '{}'",
