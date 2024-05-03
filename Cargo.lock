@@ -1916,20 +1916,6 @@ dependencies = [
 
 [[package]]
 name = "quork"
-version = "0.6.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e88dec3dfe01a0755c70dd49c8ab8982cda24f63c8fad207fa9141653720447c"
-dependencies = [
- "cc",
- "cfg-if",
- "nix",
- "quork-proc",
- "thiserror",
- "windows 0.54.0",
-]
-
-[[package]]
-name = "quork"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f19c9373a5b9405accf452745904c378679608f83021aa2751bf22f3265d3926"
@@ -1939,7 +1925,7 @@ dependencies = [
  "nix",
  "quork-proc",
  "thiserror",
- "windows 0.56.0",
+ "windows",
 ]
 
 [[package]]
@@ -2367,7 +2353,7 @@ dependencies = [
  "log",
  "open",
  "parking_lot",
- "quork 0.7.0",
+ "quork",
  "rayon",
  "regex",
  "serde",
@@ -2388,7 +2374,7 @@ dependencies = [
  "proc-macro-crate 3.1.0",
  "proc-macro-error",
  "proc-macro2",
- "quork 0.7.0",
+ "quork",
  "quote",
  "strum",
  "syn 2.0.60",
@@ -2499,7 +2485,7 @@ dependencies = [
  "log",
  "md-5",
  "quick-xml",
- "quork 0.6.3",
+ "quork",
  "rayon",
  "regex",
  "reqwest",
@@ -2521,7 +2507,7 @@ dependencies = [
  "url",
  "urlencoding",
  "which",
- "windows 0.56.0",
+ "windows",
  "windows-version",
  "winreg",
 ]
@@ -3257,16 +3243,6 @@ checksum = "712e227841d057c1ee1cd2fb22fa7e5a5461ae8e48fa2ca79ec42cfc1931183f"
 
 [[package]]
 name = "windows"
-version = "0.54.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9252e5725dbed82865af151df558e754e4a3c2c30818359eb17465f1346a1b49"
-dependencies = [
- "windows-core 0.54.0",
- "windows-targets 0.52.5",
-]
-
-[[package]]
-name = "windows"
 version = "0.56.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1de69df01bdf1ead2f4ac895dc77c9351aefff65b2f3db429a343f9cbf05e132"
@@ -3281,16 +3257,6 @@ version = "0.52.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "33ab640c8d7e35bf8ba19b884ba838ceb4fba93a4e8c65a9059d08afcfc683d9"
 dependencies = [
- "windows-targets 0.52.5",
-]
-
-[[package]]
-name = "windows-core"
-version = "0.54.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "12661b9c89351d684a50a8a643ce5f608e20243b9fb84687800163429f161d65"
-dependencies = [
- "windows-result",
  "windows-targets 0.52.5",
 ]
 
