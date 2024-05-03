@@ -40,7 +40,7 @@ impl super::Command for Args {
             .with_prefix(format!("🍨 {:<longest_bucket_name$}", "Scoop"))
             .with_finish(ProgressFinish::WithMessage(FINISH_MESSAGE.into()));
 
-        let scoop_changelog = if scoop_repo.outdated()? {
+        let scoop_changelog = if Scoop::outdated()? {
             let mut changelog = if self.changelog {
                 scoop_repo.pull_with_changelog(Some(&|stats, thin| {
                     __stats_callback(&stats, thin, &pb);
