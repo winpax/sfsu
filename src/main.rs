@@ -18,6 +18,7 @@ use std::{
 use clap::Parser;
 
 use commands::Commands;
+use logging::Logger;
 
 mod versions {
     #![allow(clippy::needless_raw_string_hashes)]
@@ -90,16 +91,21 @@ struct Args {
 
 pub(crate) static COLOR_ENABLED: AtomicBool = AtomicBool::new(true);
 
-fn main() -> anyhow::Result<()> {
+#[tokio::main(flavor = "multi_thread")]
+async fn main() -> anyhow::Result<()> {
     logging::panics::handle();
 
     let args = Args::parse();
 
-    logging::Logger::init(if cfg!(debug_assertions) {
+    Logger::init(if cfg!(debug_assertions) {
         true
     } else {
         args.verbose
-    })?;
+    })
+    .await?;
+
+    // Spawn a task to cleanup logs in the background
+    tokio::spawn(async { Logger::cleanup_logs().await });
 
     if args.no_color || !std::io::stdout().is_terminal() {
         debug!("Colour disabled globally");
@@ -110,10 +116,9 @@ fn main() -> anyhow::Result<()> {
 
     debug!("Running command: {:?}", args.command);
 
-    tokio::runtime::Builder::new_multi_thread()
-        .enable_all()
-        .build()?
-        .block_on(async { args.command.run().await })
+    args.command.run().await?;
+
+    Ok(())
 }
 
 // /// Get the owner of a file path
