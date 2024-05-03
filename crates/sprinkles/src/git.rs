@@ -87,7 +87,13 @@ impl Repo {
         self.find_remote("origin").ok()
     }
 
-    pub fn set_branch(&self, branch: &str) -> Result<()> {
+    /// Checkout to another branch
+    ///
+    /// # Errors
+    /// - Git error
+    /// - No active branch
+    /// - No remote named "origin"
+    pub fn checkout(&self, branch: &str) -> Result<()> {
         let branch = format!("refs/heads/{branch}");
         self.0.set_head(&branch)?;
         self.0.checkout_head(None)?;
@@ -131,6 +137,11 @@ impl Repo {
         Ok(())
     }
 
+    /// Get the latest commit in the remote repository
+    ///
+    /// # Errors
+    /// - No remote named "origin"
+    /// - Missing head
     pub fn latest_remote_commit(&self) -> Result<Oid> {
         let mut remote = self
             .origin()

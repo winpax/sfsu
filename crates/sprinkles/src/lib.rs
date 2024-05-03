@@ -387,7 +387,7 @@ impl Scoop {
         let scoop_config_branch = config.scoop_branch.unwrap_or("master".into());
 
         if current_branch != scoop_config_branch {
-            scoop_repo.set_branch(&scoop_config_branch)?;
+            scoop_repo.checkout(&scoop_config_branch)?;
             debug!("Switched to branch {}", scoop_config_branch);
             return Ok(true);
         }
