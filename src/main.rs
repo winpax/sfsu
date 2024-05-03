@@ -93,6 +93,9 @@ pub(crate) static COLOR_ENABLED: AtomicBool = AtomicBool::new(true);
 
 #[tokio::main(flavor = "multi_thread")]
 async fn main() -> anyhow::Result<()> {
+    // Spawn a task to cleanup logs in the background
+    tokio::task::spawn_blocking(Logger::cleanup_logs);
+
     logging::panics::handle();
 
     let args = Args::parse();
@@ -103,9 +106,6 @@ async fn main() -> anyhow::Result<()> {
         args.verbose
     })
     .await?;
-
-    // Spawn a task to cleanup logs in the background
-    tokio::spawn(async { Logger::cleanup_logs().await });
 
     if args.no_color || !std::io::stdout().is_terminal() {
         debug!("Colour disabled globally");

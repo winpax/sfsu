@@ -1,10 +1,7 @@
-use std::{
-    fs::File,
-    io::Write,
-    sync::{atomic::AtomicUsize, Arc},
-};
+use std::{fs::File, io::Write};
 
 use log::{Level, LevelFilter};
+use rayon::iter::{ParallelBridge, ParallelIterator};
 use sprinkles::{eprintln_red, eprintln_yellow};
 
 pub mod panics;
@@ -48,36 +45,16 @@ impl Logger {
         Ok(())
     }
 
-    pub async fn cleanup_logs() -> anyhow::Result<()> {
-        use tokio::task::JoinSet;
-
+    pub fn cleanup_logs() -> anyhow::Result<()> {
         let logging_dir = sprinkles::Scoop::logging_dir()?;
 
-        let mut logs = tokio::fs::read_dir(logging_dir).await?;
-        let mut set = JoinSet::new();
+        let logs = std::fs::read_dir(logging_dir)?.collect::<Result<Vec<_>, _>>()?;
 
-        let cleaned = Arc::new(AtomicUsize::new(0));
-        while let Some(entry) = logs.next_entry().await? {
-            let cleaned = cleaned.clone();
-            set.spawn(async move {
-                use std::sync::atomic::Ordering;
-
-                let cleaned_value = cleaned.load(Ordering::Relaxed);
-                if cleaned_value > 10 {
-                    return Ok(()); // Don't do anything if we've cleaned up enough
-                }
-
-                tokio::fs::remove_file(entry.path()).await?;
-
-                cleaned.store(cleaned_value + 1, Ordering::Relaxed);
-
-                Ok::<_, tokio::io::Error>(())
-            });
-        }
-
-        while let Some(result) = set.join_next().await {
-            result??;
-        }
+        logs.into_iter()
+            .rev()
+            .skip(10)
+            .par_bridge()
+            .try_for_each(|entry| std::fs::remove_file(entry.path()))?;
 
         Ok(())
     }
