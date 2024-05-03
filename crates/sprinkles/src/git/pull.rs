@@ -163,9 +163,10 @@ pub fn pull(
     branch: Option<&str>,
     stats_cb: Option<ProgressCallback<'_>>,
 ) -> Result<(), git2::Error> {
+    let repo = unsafe { repo.into_git2() };
     let remote_name = remote.unwrap_or("origin");
     let remote_branch = branch.unwrap_or("master");
     let mut remote = repo.find_remote(remote_name)?;
-    let fetch_commit = do_fetch(repo, &[remote_branch], &mut remote, stats_cb)?;
-    do_merge(repo, remote_branch, &fetch_commit)
+    let fetch_commit = do_fetch(&repo, &[remote_branch], &mut remote, stats_cb)?;
+    do_merge(&repo, remote_branch, &fetch_commit)
 }

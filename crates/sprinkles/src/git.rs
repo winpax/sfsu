@@ -84,6 +84,10 @@ pub type Result<T, E = Error> = std::result::Result<T, E>;
 pub struct Repo(Repository);
 
 impl Repo {
+    pub unsafe fn into_git2(&self) -> git2::Repository {
+        git2::Repository::open(self.0.git_dir().parent().unwrap()).unwrap()
+    }
+
     /// Open the repository from the bucket path
     ///
     /// # Errors
@@ -137,7 +141,7 @@ impl Repo {
 
         // Fetch the latest changes from the remote repository
         let mut fetch = PrepareFetch::new(
-            *remote.url(remote::Direction::Fetch).unwrap(),
+            remote.url(remote::Direction::Fetch).unwrap().clone(),
             self.path(),
             match self.kind() {
                 repository::Kind::Submodule => create::Kind::WithWorktree,
@@ -145,7 +149,7 @@ impl Repo {
                 repository::Kind::WorkTree { is_linked } => create::Kind::WithWorktree,
             },
             Options::default(),
-            *self.open_options(),
+            self.open_options().clone(),
         )?;
         let pb = crate::progress::ProgressBar::new(0);
         fetch.fetch_only(pb, &AtomicBool::new(false));
