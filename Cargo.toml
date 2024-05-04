@@ -102,7 +102,10 @@ criterion = { version = "0.5", features = ["async_tokio", "html_reports"] }
 git2 = { workspace = true }
 
 [build-dependencies]
+contribs = { git = "https://github.com/winpax/contribs.git", version = "0.1.0" }
+dotenv = "0.15.0"
 git2.workspace = true
 shadow-rs = "0.27"
+tokio = { version = "1.37", features = ["full"] }
 toml_edit = "0.22.12"
 winres = "0.1"

@@ -2,6 +2,7 @@ pub mod bucket;
 pub mod cache;
 pub mod cat;
 pub mod checkup;
+pub mod credits;
 pub mod depends;
 pub mod describe;
 #[cfg(feature = "download")]
@@ -128,4 +129,6 @@ pub enum Commands {
     #[cfg(feature = "download")]
     /// Show or clear the download cache
     Cache(cache::Args),
+    /// Show credits
+    Credits(credits::Args),
 }
