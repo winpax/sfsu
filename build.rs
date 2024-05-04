@@ -1,4 +1,4 @@
-use toml_edit::{value, DocumentMut};
+use toml_edit::DocumentMut;
 
 const LOCKFILE: &str = include_str!("./Cargo.lock");
 const WIN_MANIFEST: &str = include_str!("./sfsu.exe.manifest");
@@ -6,7 +6,7 @@ const WIN_MANIFEST: &str = include_str!("./sfsu.exe.manifest");
 fn main() -> shadow_rs::SdResult<()> {
     let shadow_result = shadow_rs::new();
 
-    let mut doc = LOCKFILE.parse::<DocumentMut>().unwrap();
+    let doc = LOCKFILE.parse::<DocumentMut>().unwrap();
     let packages = doc.get("package").unwrap();
     let packages = packages.as_array_of_tables().unwrap();
 
@@ -25,7 +25,7 @@ fn main() -> shadow_rs::SdResult<()> {
     let packages_output = format!("pub const PACKAGES: &str = {items};");
 
     let out_path = std::env::var("OUT_DIR")?;
-    std::fs::write(out_path + "/packages.rs", packages_output);
+    std::fs::write(out_path + "/packages.rs", packages_output)?;
 
     let mut res = winres::WindowsResource::new();
     res.set_manifest(WIN_MANIFEST);
