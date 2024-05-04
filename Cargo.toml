@@ -97,6 +97,7 @@ sprinkles = { path = "crates/sprinkles" }
 tokio = { version = "1.37", features = ["full"] }
 
 [dev-dependencies]
+cargo-husky = { version = "1.5.0", features = ["user-hooks"] }
 chrono.workspace = true
 criterion = { version = "0.5", features = ["async_tokio", "html_reports"] }
 git2 = { workspace = true }
