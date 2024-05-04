@@ -488,7 +488,7 @@ dependencies = [
 [[package]]
 name = "contribs"
 version = "0.1.0"
-source = "git+https://github.com/winpax/contribs.git#b0a0296a25237c2a47b288878a12d430ec648848"
+source = "git+https://github.com/winpax/contribs.git#8b405b41206fd72118adf3cbb697a1b1bfd73b09"
 dependencies = [
  "futures-core",
  "reqwest",

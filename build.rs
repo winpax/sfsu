@@ -1,6 +1,6 @@
 use std::error::Error;
 
-use contribs::Contributors;
+use contribs::contributors::Contributors;
 use dotenv::dotenv;
 use toml_edit::DocumentMut;
 
@@ -21,12 +21,17 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         let contributors = contributors
             .into_iter()
-            .map(|contrib| {
-                let name = contrib.name.as_ref().unwrap_or(&contrib.login).clone();
-                let login = &contrib.login.clone();
+            .filter_map(|contrib| {
+                let name = contrib.name.as_ref().or(contrib.login.as_ref())?.clone();
+
+                if name == "renovate[bot]" || name == "jewlexx" {
+                    return None;
+                }
+
+                let login = contrib.login.as_ref()?.clone();
                 let url = format!("https://github.com/{login}");
 
-                format!("(\"{name}\",\"{url}\")")
+                Some(format!("(\"{name}\",\"{url}\")"))
             })
             .collect::<Vec<_>>();
         let length = contributors.len();
