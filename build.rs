@@ -15,7 +15,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     // Try and load dotenv file
     _ = dotenv();
 
-    if let Ok(api_key) = std::env::var("API_KEY") {
+    if let Ok(api_key) = std::env::var("GITHUB_TOKEN") {
         let contributors = Contributors::new(api_key, "jewlexx".into(), "sfsu".into())?;
         let contributors =
             tokio::runtime::Runtime::new()?.block_on(async move { contributors.await })?;
