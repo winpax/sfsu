@@ -43,6 +43,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         std::fs::write(out_path.clone() + "/contributors.rs", contributors_output)?;
     } else {
+        panic!("Missing github api key");
         std::fs::write(
             out_path.clone() + "/contributors.rs",
             "pub const CONTRIBUTORS: [(&str, &str); 0] = [];",
