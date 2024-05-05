@@ -7,7 +7,7 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    async fn runner(self) -> Result<(), anyhow::Error> {
+    async fn runner(self) -> anyhow::Result<()> {
         todo!()
     }
 }

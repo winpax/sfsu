@@ -78,6 +78,7 @@ clap = { version = "4.5", features = [
     "wrap_help",
 ] }
 console.workspace = true
+crossterm = "0.27.0"
 futures.workspace = true
 git2.workspace = true
 human-panic = "2.0"
@@ -87,6 +88,7 @@ log = { workspace = true }
 open = "5.1"
 parking_lot = "0.12"
 quork.workspace = true
+ratatui = { version = "0.26.2", features = ["macros"] }
 rayon.workspace = true
 regex.workspace = true
 serde.workspace = true
@@ -103,6 +105,10 @@ criterion = { version = "0.5", features = ["async_tokio", "html_reports"] }
 git2 = { workspace = true }
 
 [build-dependencies]
+contribs = { git = "https://github.com/winpax/contribs.git", version = "0.1.0" }
+dotenv = "0.15.0"
 git2.workspace = true
 shadow-rs = "0.27"
+tokio = { version = "1.37", features = ["full"] }
+toml_edit = "0.22.12"
 winres = "0.1"
