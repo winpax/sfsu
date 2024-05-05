@@ -1,4 +1,9 @@
-use std::{fmt::Display, io::stdout};
+use std::{
+    collections::VecDeque,
+    fmt::Display,
+    io::stdout,
+    time::{Duration, Instant},
+};
 
 use clap::Parser;
 use crossterm::{
@@ -6,6 +11,7 @@ use crossterm::{
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
     ExecutableCommand,
 };
+use parking_lot::Mutex;
 use ratatui::{
     backend::CrosstermBackend,
     layout::Alignment,
@@ -22,6 +28,41 @@ mod contributors {
 
 mod packages {
     include!(concat!(env!("OUT_DIR"), "/packages.rs"));
+}
+
+#[derive(Debug)]
+struct Timer {
+    timeout: Duration,
+    current: Mutex<Duration>,
+    now: Mutex<std::time::Instant>,
+}
+
+impl Timer {
+    pub fn new(timeout: Duration) -> Self {
+        Self {
+            timeout,
+            current: Mutex::new(Duration::ZERO),
+            now: Mutex::new(Instant::now()),
+        }
+    }
+
+    pub fn tick(&self) -> bool {
+        let now = Instant::now();
+        let delta = now - *self.now.lock();
+        *self.now.lock() = now;
+
+        let mut current = self.current.lock();
+        *current += delta;
+
+        debug!("Delta: {:#?}", delta);
+        debug!("Current: {:#?}", current);
+        if *current >= self.timeout {
+            *current = Duration::ZERO;
+            true
+        } else {
+            false
+        }
+    }
 }
 
 struct Url<T: Display> {
@@ -82,7 +123,7 @@ impl Args {
             ),
             Text::raw(""),
             Text::styled(
-                "💖 Many thanks to everyone who has contributed 💖",
+                "💖 Many thanks to all our incredible contributors 💖",
                 TITLE_STYLE,
             ),
         ];
@@ -93,9 +134,26 @@ impl Args {
                 .map(|(name, url)| Text::from(format!("{name} ({url})"))),
         );
 
+        if self.packages {
+            items.extend(packages::PACKAGES.into_iter().map(|(name, version)| {
+                let url = Url::new(name, format!("https://crates.io/crates/{name}"));
+                Text::from(format!("{url}: {version}"))
+            }));
+        }
+
+        let mut items: VecDeque<Text<'_>> = items.into();
+
+        let (rows, _) = console::Term::stdout().size();
+
+        let timer = if items.len() > rows as usize {
+            Some(Timer::new(Duration::from_millis(343)))
+        } else {
+            None
+        };
+
         let mut should_quit = false;
         while !should_quit {
-            terminal.draw(|f| self.ui(f, &title, &items))?;
+            terminal.draw(|f| self.ui(f, timer.as_ref(), &title, &mut items))?;
             should_quit = self.handle_events()?;
         }
 
@@ -106,7 +164,7 @@ impl Args {
     }
 
     fn handle_events(&self) -> anyhow::Result<bool> {
-        if event::poll(std::time::Duration::from_millis(50))? {
+        if event::poll(Duration::from_millis(50))? {
             if let Event::Key(key) = event::read()? {
                 if key.kind == event::KeyEventKind::Press && key.code == KeyCode::Char('q') {
                     return Ok(true);
@@ -116,7 +174,13 @@ impl Args {
         Ok(false)
     }
 
-    fn ui(&self, frame: &mut Frame<'_>, title: &str, items: &[Text<'_>]) {
+    fn ui(
+        &self,
+        frame: &mut Frame<'_>,
+        timer: Option<&Timer>,
+        title: &str,
+        items: &mut VecDeque<Text<'_>>,
+    ) {
         // println!();
 
         // if self.packages {
@@ -135,6 +199,12 @@ impl Args {
 
         //     println!("{url}");
         // }
+
+        if let Some(timer) = timer {
+            if timer.tick() {
+                debug!("{:#?}", items.pop_front());
+            }
+        }
 
         frame.render_widget(
             List::new(
