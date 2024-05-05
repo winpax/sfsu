@@ -88,13 +88,13 @@ jobs:
 
       - name: Build and Package
         env:
-          GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.CONTRIBUTORS_TOKEN }}
         if: ${{ !github.event.release.prerelease }}
         run: just release-all
 
       - name: Beta Build and Package
         env:
-          GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.CONTRIBUTORS_TOKEN }}
         if: ${{ github.event.release.prerelease }}
         run: just beta-release-all
 
