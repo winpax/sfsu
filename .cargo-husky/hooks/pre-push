@@ -1,0 +1,11 @@
+#!/bin/sh
+
+set -e
+
+echo "Running pre-push hook:"
+
+echo "Executing: cargo fmt --all -- --check"
+cargo fmt --all -- --check
+
+echo "Executing: cargo clippy --all-targets --workspace -- -D warnings"
+cargo clippy --all-targets --workspace
