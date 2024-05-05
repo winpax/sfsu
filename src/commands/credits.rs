@@ -29,6 +29,16 @@ mod packages {
     include!(concat!(env!("OUT_DIR"), "/packages.rs"));
 }
 
+mod titles {
+    pub const TITLE: &str = concat!(
+        "🚀 sfsu v",
+        env!("CARGO_PKG_VERSION"),
+        ", created by Juliette Cordor 🚀"
+    );
+    pub const CONTRIBUTORS: &str = "💖 Many thanks to all our incredible contributors 💖";
+    pub const PACKAGES: &str = "📦 And all the incredible crates we use 📦";
+}
+
 #[derive(Debug)]
 struct Timer {
     timeout: Duration,
@@ -91,7 +101,30 @@ pub struct Args {
 
 impl super::Command for Args {
     async fn runner(self) -> anyhow::Result<()> {
-        self.terminal_ui()?;
+        if console::colors_enabled() {
+            self.terminal_ui()?;
+        } else {
+            println!("{}", titles::TITLE);
+            println!();
+            println!("{}", titles::CONTRIBUTORS);
+            println!();
+
+            for (name, url) in contributors::CONTRIBUTORS {
+                let url = Url::new(name, url.to_string());
+                println!("{url}");
+            }
+
+            if self.packages {
+                println!();
+                println!("{}", titles::PACKAGES);
+                println!();
+
+                for (name, version) in packages::PACKAGES {
+                    let url = Url::new(name, format!("https://crates.io/crates/{name}"));
+                    println!("{url}: {version}");
+                }
+            }
+        }
 
         Ok(())
     }
@@ -105,11 +138,6 @@ impl Args {
         stdout().execute(EnterAlternateScreen)?;
         let mut terminal = Terminal::new(CrosstermBackend::new(stdout()))?;
 
-        let title = format!(
-            "🚀 sfsu v{}, created by Juliette Cordor 🚀",
-            env!("CARGO_PKG_VERSION")
-        );
-
         let (rows, _) = console::Term::stdout().size();
         let rows = rows as usize;
 
@@ -118,10 +146,7 @@ impl Args {
         let mut items = prefix_items;
 
         items.extend(vec![
-            Text::styled(
-                "💖 Many thanks to all our incredible contributors 💖",
-                TITLE_STYLE,
-            ),
+            Text::styled(titles::CONTRIBUTORS, TITLE_STYLE),
             Text::raw(""),
         ]);
 
@@ -134,14 +159,15 @@ impl Args {
         if self.packages {
             items.extend(vec![
                 Text::raw(""),
-                Text::styled("📦 And all the incredible crates we use 📦", TITLE_STYLE),
+                Text::styled(titles::PACKAGES, TITLE_STYLE),
                 Text::raw(""),
             ]);
 
-            items.extend(packages::PACKAGES.into_iter().map(|(name, version)| {
-                let url = Url::new(name, format!("https://crates.io/crates/{name}"));
-                Text::from(format!("{url}: {version}"))
-            }));
+            items.extend(
+                packages::PACKAGES
+                    .into_iter()
+                    .map(|(name, version)| Text::from(format!("{name}@{version}"))),
+            );
         }
 
         let mut items: VecDeque<Text<'_>> = items.into();
@@ -154,7 +180,7 @@ impl Args {
 
         let mut should_quit = false;
         while !should_quit {
-            terminal.draw(|f| Self::ui(f, timer.as_ref(), &title, &mut items))?;
+            terminal.draw(|f| Self::ui(f, timer.as_ref(), titles::TITLE, &mut items))?;
             should_quit = Self::handle_events()?;
         }
 
