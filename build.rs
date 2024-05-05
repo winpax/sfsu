@@ -43,6 +43,10 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         std::fs::write(out_path.clone() + "/contributors.rs", contributors_output)?;
     } else {
+        if std::env::var("IS_RELEASE").is_ok() {
+            panic!("No GITHUB_TOKEN found, contributors will not be updated.");
+        }
+
         std::fs::write(
             out_path.clone() + "/contributors.rs",
             "pub const CONTRIBUTORS: [(&str, &str); 0] = [];",

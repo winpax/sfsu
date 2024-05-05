@@ -18,6 +18,8 @@ permissions:
 env:
   CARGO_TERM_COLOR: always
   GITHUB_TOKEN: ${{ secrets.CONTRIBUTORS_TOKEN }}
+  IS_CI: true
+  IS_RELEASE: ${{ startsWith(github.ref, 'refs/tags/') }}
 
 jobs:
   cargo-deny:
