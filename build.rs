@@ -12,7 +12,8 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     shadow_rs::new()?;
 
-    dotenv()?;
+    // Try and load dotenv file
+    _ = dotenv();
 
     if let Ok(api_key) = std::env::var("GITHUB_API_KEY") {
         let contributors = Contributors::new(api_key, "jewlexx".into(), "sfsu".into())?;
@@ -41,7 +42,12 @@ fn main() -> Result<(), Box<dyn Error>> {
             format!("pub const CONTRIBUTORS: [(&str, &str); {length}] = {contributors};");
 
         std::fs::write(out_path.clone() + "/contributors.rs", contributors_output)?;
-    }
+    } else {
+        std::fs::write(
+            out_path.clone() + "/contributors.rs",
+            "pub const CONTRIBUTORS: [(&str, &str); 0] = [];",
+        )?;
+    };
 
     let doc = LOCKFILE.parse::<DocumentMut>().unwrap();
     let packages = doc.get("package").unwrap();
