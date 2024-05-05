@@ -130,6 +130,7 @@ pub enum Commands {
     /// Show or clear the download cache
     Cache(cache::Args),
     #[no_hook]
+    #[cfg(feature = "beta")]
     /// Show credits
     Credits(credits::Args),
 }
