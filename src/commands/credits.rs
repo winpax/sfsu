@@ -53,8 +53,6 @@ impl Timer {
         let mut current = self.current.lock();
         *current += delta;
 
-        debug!("Delta: {:#?}", delta);
-        debug!("Current: {:#?}", current);
         if *current >= self.timeout {
             *current = Duration::ZERO;
             true
@@ -185,7 +183,7 @@ impl Args {
     ) {
         if let Some(timer) = timer {
             if timer.tick() {
-                debug!("{:#?}", items.pop_front());
+                items.pop_front();
             }
         }
 
