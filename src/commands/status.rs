@@ -196,7 +196,7 @@ impl Args {
                 }
             })
             .filter(|app| {
-                let missing_deps = app.missing_dependencies.is_empty();
+                let missing_deps = !app.missing_dependencies.is_empty();
 
                 let info_exists = if let Some(ref info) = app.info {
                     // Ignore held packages if the flag is specified and there are no other reasons to show it
@@ -209,7 +209,7 @@ impl Args {
                 };
 
                 // Filter out apps that are okay
-                info_exists || !missing_deps || app.current != app.available
+                info_exists || missing_deps || app.current != app.available
             })
             .collect::<Vec<_>>();
 
