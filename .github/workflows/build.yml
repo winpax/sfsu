@@ -59,7 +59,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: Swatinem/rust-cache@v2.7.3
 
       - name: Install and setup Scoop
         uses: MinoruSekine/setup-scoop@v4
