@@ -129,6 +129,7 @@ pub enum Commands {
     #[cfg(feature = "download")]
     /// Show or clear the download cache
     Cache(cache::Args),
+    #[no_hook]
     /// Show credits
     Credits(credits::Args),
 }
