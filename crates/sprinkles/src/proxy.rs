@@ -1,3 +1,5 @@
+//! Proxy helpers
+
 use std::{num::ParseIntError, str::FromStr};
 
 use crate::let_chain;
