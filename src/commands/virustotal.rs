@@ -5,7 +5,8 @@ use clap::{Parser, ValueEnum};
 use indicatif::ProgressBar;
 use rayon::prelude::*;
 use sprinkles::{
-    abandon, eprintln_green, eprintln_red, eprintln_yellow,
+    calm_panic::CalmUnwrap,
+    eprintln_green, eprintln_red, eprintln_yellow,
     hash::Hash,
     packages::{reference::Package, CreateManifest, Manifest},
     progress::{style, ProgressOptions},
@@ -115,9 +116,9 @@ pub struct Args {
 impl super::Command for Args {
     async fn runner(self) -> Result<(), anyhow::Error> {
         let config = Scoop::config()?;
-        let api_key = config
-            .virustotal_api_key
-            .unwrap_or_else(|| abandon!("No virustotal api key found"));
+        let api_key = config.virustotal_api_key.calm_expect(
+            "No virustotal api key found.\n  Get one at https://www.virustotal.com/gui/my-apikey and set with\n  scoop config virustotal_api_key <API key>",
+        );
 
         let client = vt3::VtClient::new(&api_key).user_agent(user_agent());
 
