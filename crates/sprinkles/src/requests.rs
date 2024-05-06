@@ -47,14 +47,44 @@ pub fn default_headers() -> HeaderMap {
     headers
 }
 
+pub trait ClientLike<T>
+where
+    Self: Default,
+{
+    #[must_use]
+    fn new() -> Self {
+        Self::default()
+    }
+
+    fn client(&self) -> &T;
+}
+
+pub struct Client;
+
+impl Client {
+    #[must_use]
+    pub fn asynchronous() -> AsyncClient {
+        Self::create()
+    }
+
+    #[must_use]
+    pub fn blocking() -> BlockingClient {
+        Self::create()
+    }
+
+    #[must_use]
+    pub fn create<T, C: ClientLike<T>>() -> C {
+        C::new()
+    }
+}
+
 #[derive(Debug, Clone, Deref)]
 /// A blocking client with sane defaults for SFSU
 pub struct BlockingClient(reqwest::blocking::Client);
 
-impl BlockingClient {
-    #[must_use]
-    pub fn new() -> Self {
-        Self::default()
+impl ClientLike<reqwest::blocking::Client> for BlockingClient {
+    fn client(&self) -> &reqwest::blocking::Client {
+        &self.0
     }
 }
 
@@ -73,10 +103,9 @@ impl Default for BlockingClient {
 /// An async client with sane defaults for SFSU
 pub struct AsyncClient(reqwest::Client);
 
-impl AsyncClient {
-    #[must_use]
-    pub fn new() -> Self {
-        Self::default()
+impl ClientLike<reqwest::Client> for AsyncClient {
+    fn client(&self) -> &reqwest::Client {
+        &self.0
     }
 }
 
@@ -88,5 +117,25 @@ impl Default for AsyncClient {
                 .build()
                 .unwrap(),
         )
+    }
+}
+
+impl ClientLike<reqwest::Client> for reqwest::Client {
+    fn new() -> Self {
+        AsyncClient::new().0
+    }
+
+    fn client(&self) -> &reqwest::Client {
+        self
+    }
+}
+
+impl ClientLike<reqwest::blocking::Client> for reqwest::blocking::Client {
+    fn new() -> Self {
+        BlockingClient::new().0
+    }
+
+    fn client(&self) -> &reqwest::blocking::Client {
+        self
     }
 }

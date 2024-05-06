@@ -10,6 +10,7 @@ use super::{CreateManifest, Manifest};
 use crate::{
     buckets::{self, Bucket},
     let_chain,
+    requests::Client,
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -183,7 +184,7 @@ impl Package {
                 ManifestRef::File(path) => Manifest::from_path(path)?,
                 #[cfg(feature = "manifest-hashes")]
                 ManifestRef::Url(url) => {
-                    let manifest_string = crate::requests::AsyncClient::new()
+                    let manifest_string = Client::asynchronous()
                         .get(url.to_string())
                         .send()
                         .await?

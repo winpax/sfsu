@@ -2,7 +2,6 @@
 
 use std::{
     fmt::Display,
-    ops::Deref,
     path::{Path, PathBuf},
 };
 
@@ -17,8 +16,10 @@ use tokio_util::codec::{BytesCodec, FramedRead};
 use crate::{
     hash::{url_ext::UrlExt, Hash, HashType},
     let_chain,
-    packages::{manifest::TOrArrayOfTs, Manifest},
-    progress, Architecture,
+    packages::{models::manifest::TOrArrayOfTs, Manifest},
+    progress,
+    requests::ClientLike,
+    Architecture,
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -175,12 +176,11 @@ impl Handle {
     ///
     /// # Errors
     /// - If the request fails
-    pub async fn begin_download(
+    pub async fn begin_download<T: ClientLike<reqwest::Client>>(
         self,
-        client: &impl Deref<Target = reqwest::Client>,
         mp: Option<&MultiProgress>,
     ) -> Result<Downloader, Error> {
-        Downloader::new(self, client, mp).await
+        Downloader::new::<T>(self, mp).await
     }
 }
 
@@ -202,12 +202,11 @@ impl Downloader {
     /// # Panics
     /// - A non-empty file name
     /// - Invalid progress style template
-    pub async fn new(
+    pub async fn new<T: ClientLike<reqwest::Client>>(
         cache: Handle,
-        client: &impl Deref<Target = reqwest::Client>,
         mp: Option<&MultiProgress>,
     ) -> Result<Self, Error> {
-        let resp = client.get(&cache.url).send().await?;
+        let resp = T::new().client().get(&cache.url).send().await?;
 
         if !resp.status().is_success() {
             return Err(Error::ErrorCode(resp.status()));

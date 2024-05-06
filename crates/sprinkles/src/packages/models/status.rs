@@ -6,7 +6,7 @@ use serde::Serialize;
 
 use crate::{buckets::Bucket, packages::reference::ManifestRef, Scoop};
 
-use super::{reference, Manifest, Result};
+use crate::packages::{reference, Manifest, Result};
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq, Hash)]
 /// The status info

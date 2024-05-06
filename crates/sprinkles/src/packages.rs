@@ -34,19 +34,13 @@ use crate::{
 };
 
 pub mod downloading;
-pub mod export;
-pub mod info;
-pub mod install;
-pub mod manifest;
-pub mod outdated;
+pub mod models;
 pub mod reference;
-pub mod status;
 
-pub use install::Manifest as InstallManifest;
-pub use manifest::Manifest;
+pub use models::{install::Manifest as InstallManifest, manifest::Manifest};
 
 use downloading::DownloadUrl;
-use manifest::{InstallConfig, StringArray};
+use models::manifest::{InstallConfig, StringArray};
 
 #[macro_export]
 /// Get a field from a manifest based on the architecture
@@ -143,8 +137,8 @@ macro_rules! arch_field {
 pub use arch_config;
 pub use arch_field;
 
-use self::manifest::{
-    AliasArray, AutoupdateArchitecture, AutoupdateConfig, HashExtraction,
+use self::models::manifest::{
+    self, AliasArray, AutoupdateArchitecture, AutoupdateConfig, HashExtraction,
     HashExtractionOrArrayOfHashExtractions, ManifestArchitecture,
 };
 
@@ -641,8 +635,6 @@ impl Manifest {
         mode: SearchMode,
         arch: Architecture,
     ) -> Option<Section<Text<String>>> {
-        use owo_colors::OwoColorize;
-
         // TODO: Better display of output
 
         // This may be a bit of a hack, but it works
@@ -669,7 +661,7 @@ impl Manifest {
         }
 
         let styled_package_name = if self.name == pattern.to_string() {
-            self.name.bold().to_string()
+            console::style(&self.name).bold().to_string()
         } else {
             self.name.clone()
         };
@@ -686,7 +678,13 @@ impl Manifest {
             let bins = match_output
                 .bins
                 .iter()
-                .map(|output| Text::new(format!("{}{}", crate::output::WHITESPACE, output.bold())))
+                .map(|output| {
+                    Text::new(format!(
+                        "{}{}",
+                        crate::output::WHITESPACE,
+                        console::style(output).bold()
+                    ))
+                })
                 .collect_vec();
 
             Section::new(Children::from(bins))

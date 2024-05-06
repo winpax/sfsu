@@ -2,6 +2,7 @@ pub mod bucket;
 pub mod cache;
 pub mod cat;
 pub mod checkup;
+pub mod credits;
 pub mod depends;
 pub mod describe;
 #[cfg(feature = "download")]
@@ -21,7 +22,7 @@ pub mod virustotal;
 use clap::Subcommand;
 
 use sfsu_derive::{Hooks, Runnable};
-use sprinkles::calm_panic::abandon;
+use sprinkles::{calm_panic::abandon, eprintln_yellow};
 
 pub struct DeprecationWarning {
     /// Deprecation message
@@ -54,8 +55,6 @@ pub trait Command {
     where
         Self: Sized,
     {
-        use owo_colors::OwoColorize;
-
         if let Some(deprecation_warning) = Self::deprecated() {
             let mut output = String::from("DEPRECATED: ");
 
@@ -70,7 +69,7 @@ pub trait Command {
                 output += &format!("Will be removed in v{version}. ");
             }
 
-            println!("{}\n", output.yellow());
+            eprintln_yellow!("{output}\n");
         }
 
         if Self::NEEDS_ELEVATION && !quork::root::is_root()? {
@@ -78,9 +77,8 @@ pub trait Command {
         }
 
         if Self::BETA {
-            println!(
-                "{}\n",
-                "This command is in beta and may not work as expected. Please report any and all bugs you find!".yellow()
+            eprintln_yellow!(
+                "This command is in beta and may not work as expected. Please report any and all bugs you find!\n",
             );
         }
 
@@ -135,4 +133,8 @@ pub enum Commands {
     #[cfg(feature = "beta")]
     /// Scan a file with VirusTotal
     Virustotal(virustotal::Args),
+    #[no_hook]
+    #[cfg(feature = "beta")]
+    /// Show credits
+    Credits(credits::Args),
 }

@@ -1,7 +1,6 @@
 use std::fmt::Write;
 
 use clap::{Parser, ValueEnum};
-use owo_colors::OwoColorize;
 use parking_lot::Mutex;
 use quork::prelude::*;
 use rayon::prelude::*;
@@ -9,13 +8,13 @@ use serde_json::Value;
 
 use sprinkles::{
     buckets::Bucket,
-    git::Repo,
     output::{
         sectioned::{Children, Section},
         structured::Structured,
     },
-    packages::{install, status::Info},
+    packages::models::{install, status::Info},
     progress::style,
+    Scoop,
 };
 
 #[derive(Debug, Copy, Clone, ValueEnum, ListVariants)]
@@ -35,6 +34,9 @@ pub struct Args {
 
     #[clap(short = 'O', long, help = "Only check the provided sections of Scoop")]
     only: Vec<Command>,
+
+    #[clap(short = 'H', long, help = "Ignore held packages")]
+    ignore_held: bool,
 }
 
 impl super::Command for Args {
@@ -85,9 +87,7 @@ impl super::Command for Args {
 
 impl Args {
     fn handle_scoop(&self, value: &Mutex<Value>, output: &mut dyn Write) -> anyhow::Result<()> {
-        let scoop_repo = Repo::scoop_app()?;
-
-        let is_outdated = scoop_repo.outdated()?;
+        let is_outdated = Scoop::outdated()?;
 
         if self.json {
             value.lock()["scoop"] = serde_json::to_value(is_outdated)?;
@@ -96,7 +96,10 @@ impl Args {
             writeln!(
                 output,
                 "{}",
-                "Scoop is out of date. Run `scoop update` to get the latest changes.".yellow()
+                console::style(
+                    "Scoop is out of date. Run `scoop update` to get the latest changes."
+                )
+                .yellow()
             )?;
         } else {
             writeln!(output, "Scoop app is up to date.")?;
@@ -154,8 +157,10 @@ impl Args {
                 writeln!(
                     output,
                     "{}",
-                    "Bucket(s) are out of date. Run `scoop update` to get the latest changes."
-                        .yellow()
+                    console::style(
+                        "Bucket(s) are out of date. Run `scoop update` to get the latest changes."
+                    )
+                    .yellow()
                 )?;
             } else {
                 writeln!(output, "All buckets up to date.")?;
@@ -191,10 +196,20 @@ impl Args {
                 }
             })
             .filter(|app| {
+                let missing_deps = !app.missing_dependencies.is_empty();
+
+                let info_exists = if let Some(ref info) = app.info {
+                    // Ignore held packages if the flag is specified and there are no other reasons to show it
+                    if !missing_deps && info == "Held package" && self.ignore_held {
+                        return false;
+                    }
+                    true
+                } else {
+                    false
+                };
+
                 // Filter out apps that are okay
-                app.info.is_some()
-                    || !app.missing_dependencies.is_empty()
-                    || app.current != app.available
+                info_exists || missing_deps || app.current != app.available
             })
             .collect::<Vec<_>>();
 

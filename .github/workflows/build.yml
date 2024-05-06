@@ -17,8 +17,17 @@ permissions:
 
 env:
   CARGO_TERM_COLOR: always
+  CONTRIBUTORS_TOKEN: ${{ secrets.CONTRIBUTORS_TOKEN }}
+  IS_CI: true
+  IS_RELEASE: ${{ startsWith(github.ref, 'refs/tags/') }}
 
 jobs:
+  cargo-deny:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: EmbarkStudios/cargo-deny-action@v1
+
   clippy:
     name: Clippy
     runs-on: windows-latest
@@ -35,7 +44,7 @@ jobs:
 
   format:
     name: Formatting
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -53,7 +62,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: Swatinem/rust-cache@v2.7.3
 
       - name: Install and setup Scoop
         uses: MinoruSekine/setup-scoop@v4

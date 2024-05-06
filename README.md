@@ -5,6 +5,7 @@
 ![GitHub all releases](https://img.shields.io/github/downloads/jewlexx/sfsu/total)
 ![GitHub](https://img.shields.io/github/license/jewlexx/sfsu)
 ![Scoop Version (extras bucket)](https://img.shields.io/scoop/v/sfsu?bucket=extras)
+[![wakatime](https://wakatime.com/badge/user/69c39493-dba9-4b9d-8ae6-1a6a17e60cb4/project/ba7eaa48-0f34-4b20-95e5-4ba2e6184d39.svg)](https://wakatime.com/badge/user/69c39493-dba9-4b9d-8ae6-1a6a17e60cb4/project/ba7eaa48-0f34-4b20-95e5-4ba2e6184d39)
 
 > [!NOTE]
 > This is still under development. It currently does not replace even close to all the scoop commands, and is missing a lot of functionality.

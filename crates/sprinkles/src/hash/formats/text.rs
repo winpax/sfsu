@@ -176,11 +176,12 @@ mod tests {
     use super::*;
 
     use crate::{
-        buckets::Bucket, packages::manifest::HashExtractionOrArrayOfHashExtractions,
-        requests::BlockingClient,
+        buckets::Bucket, packages::models::manifest::HashExtractionOrArrayOfHashExtractions,
+        requests::Client,
     };
 
     #[test]
+    #[ignore = "replaced by testhandler tests"]
     fn test_finding_vcredistaio_hashes() {
         let manifest = Bucket::from_name("extras")
             .unwrap()
@@ -202,7 +203,7 @@ mod tests {
                 panic!("No hash extraction found");
             };
 
-        let text_file: String = BlockingClient::new()
+        let text_file: String = Client::blocking()
             .get(text_url)
             .send()
             .unwrap()
@@ -248,7 +249,7 @@ mod tests {
         substitutions.insert("$url".to_string(), no_fragment.clone());
         substitutions.insert("$baseurl".to_string(), no_fragment);
 
-        let response = BlockingClient::new().get(text_url).send().unwrap();
+        let response = Client::blocking().get(text_url).send().unwrap();
         let text_file = response.text().unwrap();
 
         let hash = "md5:".to_string()

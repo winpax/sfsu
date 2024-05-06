@@ -154,6 +154,8 @@ pub enum Error {
     CreatingLog(#[from] std::io::Error),
     #[error("Unsupported architecture")]
     UnsupportedArchitecture,
+    #[error("Opening and interacting with Scoop repo: {0}")]
+    Git(#[from] git::Error),
 }
 
 /// The Scoop install reference
@@ -394,5 +396,26 @@ impl Scoop {
     /// - The Scoop app could not be opened as a repository
     pub fn open_repo() -> git::Result<git::Repo> {
         git::Repo::scoop_app()
+    }
+
+    /// Check if Scoop is outdated
+    ///
+    /// # Errors
+    /// - The Scoop app could not be opened as a repository
+    /// - The Scoop app could not be checked for updates
+    pub fn outdated() -> Result<bool, Error> {
+        let config = config::Scoop::load()?;
+        let scoop_repo = git::Repo::scoop_app()?;
+
+        let current_branch = scoop_repo.current_branch()?;
+        let scoop_config_branch = config.scoop_branch.unwrap_or("master".into());
+
+        if current_branch != scoop_config_branch {
+            scoop_repo.checkout(&scoop_config_branch)?;
+            debug!("Switched to branch {}", scoop_config_branch);
+            return Ok(true);
+        }
+
+        Ok(scoop_repo.outdated()?)
     }
 }

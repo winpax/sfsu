@@ -15,13 +15,13 @@ use crate::{
     cache::{self, Downloader, Handle},
     hash::url_ext::UrlExt,
     packages::{
-        manifest::{
+        models::manifest::{
             AutoupdateConfig, HashExtractionOrArrayOfHashExtractions, HashMode as ManifestHashMode,
             StringArray,
         },
         Manifest, MergeDefaults,
     },
-    requests::AsyncClient,
+    requests::{AsyncClient, Client},
     version::Version,
     Architecture, Scoop,
 };
@@ -366,9 +366,9 @@ impl Hash {
         if hash_mode == HashMode::Download {
             let cache_handles = Handle::open_manifest(Scoop::cache_path(), manifest, arch)?;
 
-            let downloaders = cache_handles.into_iter().map(|handle| async move {
-                Downloader::new(handle, &AsyncClient::new(), None).await
-            });
+            let downloaders = cache_handles
+                .into_iter()
+                .map(|handle| async move { Downloader::new::<AsyncClient>(handle, None).await });
             let downloaders = futures::future::try_join_all(downloaders).await?;
 
             let hashes = downloaders.into_iter().map(Downloader::download);
@@ -492,7 +492,7 @@ impl Hash {
                 .and_then(|url: String| Ok(Url::parse(&url)?))?
         };
 
-        let source = AsyncClient::new().get(url.as_str()).send().await?;
+        let source = Client::asynchronous().get(url.as_str()).send().await?;
 
         if hash_mode == HashMode::HashUrl {
             let hash = source.text().await?;
@@ -631,10 +631,10 @@ mod tests {
     use crate::{
         buckets::Bucket,
         packages::{
-            manifest::{HashExtractionOrArrayOfHashExtractions, TOrArrayOfTs},
+            models::manifest::{HashExtractionOrArrayOfHashExtractions, TOrArrayOfTs},
             reference,
         },
-        requests::BlockingClient,
+        requests::Client,
     };
 
     use super::*;
@@ -687,12 +687,7 @@ mod tests {
         let url = x64_cfg.url.unwrap().to_string();
         let xpath = x64_cfg.xpath.unwrap().to_string();
 
-        let source = BlockingClient::new()
-            .get(url)
-            .send()
-            .unwrap()
-            .text()
-            .unwrap();
+        let source = Client::blocking().get(url).send().unwrap().text().unwrap();
 
         let Some(StringArray::Single(url)) = autoupdate.url else {
             unreachable!()
@@ -798,6 +793,25 @@ mod tests {
 
         Ok(())
     }
+
+    #[tokio::test]
+    async fn test_finding_vcredistaio_hashes() -> anyhow::Result<()> {
+        let package = reference::Package::from_str("extras/vcredist-aio")?;
+
+        let handler = TestHandler::new(package);
+
+        handler.test().await?;
+
+        Ok(())
+    }
+
+    // #[tokio::test]
+    // async fn test_finding_imagemagick_hashes() -> anyhow::Result<()> {
+    //     let package = reference::Package::from_str("main/imagemagick")?;
+    //     let handler = TestHandler::new(package);
+    //     handler.test().await?;
+    //     Ok(())
+    // }
 
     #[tokio::test]
     async fn test_keepass() -> anyhow::Result<()> {

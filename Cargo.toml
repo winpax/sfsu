@@ -4,13 +4,15 @@ edition = "2021"
 license = { workspace = true }
 name = "sfsu"
 publish.workspace = true
+rust-version.workspace = true
 version.workspace = true
 
 [workspace]
 members = ["crates/*"]
 package.license = "Apache-2.0"
 package.publish = false
-package.version = "1.11.0-beta.5"
+package.rust-version = "1.75.0"
+package.version = "1.11.1"
 
 [workspace.dependencies]
 chrono = { version = ">=0.4.38", features = [
@@ -18,7 +20,7 @@ chrono = { version = ">=0.4.38", features = [
     "serde",
     "std",
 ], default-features = false }
-console = { version = "0.15.8", features = ["windows-console-colors"] }
+console = { version = "0.15", features = ["windows-console-colors"] }
 futures = "0.3"
 git2 = "0.18"
 indicatif = { version = "0.17", features = [
@@ -28,11 +30,11 @@ indicatif = { version = "0.17", features = [
 ] }
 itertools = "0.12"
 log = { version = "0.4", features = ["std"] }
-owo-colors = { version = "4.0", features = ["supports-colors"] }
-quork = "0.6"
+quork = "0.7.0"
 rayon = "1.10"
 regex = "1.10"
 serde = { version = "1.0", features = ["derive"] }
+sfsu-derive = { path = "./crates/derive" }
 
 [[bench]]
 harness = false
@@ -59,8 +61,8 @@ inherits = "dev"
 opt-level = 3
 
 [features]
-beta = ["download", "sprinkles/beta"]
-default = []
+beta = ["sprinkles/beta"]
+default = ["download"]
 download = ["sprinkles/manifest-hashes"]
 # Breaking changes are locked behind this feature flag
 v2 = ["sprinkles/v2"]
@@ -76,6 +78,7 @@ clap = { version = "4.5", features = [
     "wrap_help",
 ] }
 console.workspace = true
+crossterm = "0.27.0"
 futures.workspace = true
 git2.workspace = true
 human-panic = "2.0"
@@ -83,25 +86,30 @@ indicatif.workspace = true
 itertools.workspace = true
 log = { workspace = true }
 open = "5.1"
-owo-colors.workspace = true
 parking_lot = "0.12"
 quork.workspace = true
+ratatui = { version = "0.26.2", features = ["macros"] }
 rayon.workspace = true
 regex.workspace = true
 serde.workspace = true
 serde_json = { version = "1.0", features = ["preserve_order"] }
-sfsu-derive = { path = "./crates/derive" }
+sfsu-derive.workspace = true
 shadow-rs = "0.27"
-sprinkles = { version = "1.11.0-beta.4", path = "crates/sprinkles" }
+sprinkles = { path = "crates/sprinkles" }
 tokio = { version = "1.37", features = ["full"] }
 vt3 = "0.7.3"
 
 [dev-dependencies]
+cargo-husky = { version = "1.5.0", features = ["user-hooks"] }
 chrono.workspace = true
 criterion = { version = "0.5", features = ["async_tokio", "html_reports"] }
 git2 = { workspace = true }
 
 [build-dependencies]
+contribs = { git = "https://github.com/winpax/contribs.git", version = "0.1.0" }
+dotenv = "0.15.0"
 git2.workspace = true
 shadow-rs = "0.27"
+tokio = { version = "1.37", features = ["full"] }
+toml_edit = "0.22.12"
 winres = "0.1"
