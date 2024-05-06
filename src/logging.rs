@@ -1,15 +1,16 @@
 use std::{fs::File, io::Write};
 
+use chrono::Local;
 use log::{Level, LevelFilter};
 use rayon::iter::{ParallelBridge, ParallelIterator};
-use sprinkles::contexts::ScoopContext;
+use sprinkles::contexts::{ScoopContext, User};
 
 use crate::output::colours::{eprintln_red, eprintln_yellow};
 
 pub mod panics;
 
 pub struct Logger {
-    file: File,
+    file: Option<File>,
     verbose: bool,
 }
 
@@ -18,34 +19,47 @@ impl Logger {
     const LEVEL_FILTER: LevelFilter = LevelFilter::Trace;
 
     pub async fn new(verbose: bool) -> Self {
-        Self::from_file(
-            sprinkles::contexts::User::new_log().await.expect("new log"),
-            verbose,
-        )
+        let file = async move {
+            let logs_dir = User::logging_dir()?;
+            let date = Local::now();
+            let log_file = async {
+                let mut i = 0;
+                loop {
+                    i += 1;
+
+                    let log_path =
+                        logs_dir.join(format!("sfsu-{}-{i}.log", date.format("%Y-%m-%d-%H-%M-%S")));
+
+                    if !log_path.exists() {
+                        break File::create(log_path);
+                    }
+                }
+            };
+            let timeout = async {
+                use std::time::Duration;
+                use tokio::time;
+
+                time::sleep(Duration::from_secs(5)).await;
+            };
+            let log_file = tokio::select! {
+                res = log_file => anyhow::Ok(res),
+                () = timeout => anyhow::bail!("Timeout creating new log"),
+            }??;
+
+            anyhow::Ok(log_file)
+        }
+        .await
+        .ok();
+
+        Self::from_file(file, verbose)
     }
 
-    pub fn new_sync(verbose: bool) -> Self {
-        Self::from_file(
-            sprinkles::contexts::User::new_log_sync().expect("new log"),
-            verbose,
-        )
-    }
-
-    pub fn from_file(file: File, verbose: bool) -> Self {
+    pub fn from_file(file: Option<File>, verbose: bool) -> Self {
         Self { file, verbose }
     }
 
     pub async fn init(verbose: bool) -> Result<(), log::SetLoggerError> {
         log::set_boxed_logger(Box::new(Logger::new(verbose).await))?;
-        log::set_max_level(Self::LEVEL_FILTER);
-
-        debug!("Initialized logger");
-
-        Ok(())
-    }
-
-    pub fn init_sync(verbose: bool) -> Result<(), log::SetLoggerError> {
-        log::set_boxed_logger(Box::new(Logger::new_sync(verbose)))?;
         log::set_max_level(Self::LEVEL_FILTER);
 
         debug!("Initialized logger");
@@ -84,18 +98,24 @@ impl log::Log for Logger {
                 Level::Warn => eprintln_yellow!("{}", record.args()),
                 _ => {
                     // TODO: Add a queue of sorts because this doesn't work well with multiple threads
-                    writeln!(&self.file, "{}: {}", record.level(), record.args())
-                        .expect("writing to log file");
+                    writeln!(
+                        self.file.as_ref().unwrap(),
+                        "{}: {}",
+                        record.level(),
+                        record.args()
+                    )
+                    .expect("writing to log file");
                 }
             }
         }
     }
 
     fn flush(&self) {
-        self.file
-            .try_clone()
-            .expect("cloning log file")
-            .flush()
-            .expect("flushing log file");
+        if let Some(file) = self.file.as_ref() {
+            file.try_clone()
+                .expect("cloning log file")
+                .flush()
+                .expect("flushing log file");
+        }
     }
 }

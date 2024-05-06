@@ -69,6 +69,7 @@ v2 = ["sprinkles/v2"]
 [dependencies]
 anyhow = "1.0"
 bat = "0.24"
+chrono.workspace = true
 clap = { version = "4.5", features = [
     "derive",
     "env",

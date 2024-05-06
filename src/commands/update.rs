@@ -1,3 +1,4 @@
+use anyhow::Context;
 use clap::Parser;
 use indicatif::{MultiProgress, ProgressBar, ProgressFinish};
 use itertools::Itertools;
@@ -32,7 +33,7 @@ impl super::Command for Args {
             .max()
             .unwrap_or(0);
 
-        let scoop_repo = User::open_repo()?;
+        let scoop_repo = User::open_repo().context("missing user repository")??;
 
         let pb = ProgressBar::new(1)
             .with_style(progress_style.clone())
