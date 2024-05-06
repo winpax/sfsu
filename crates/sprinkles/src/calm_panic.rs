@@ -46,9 +46,8 @@ macro_rules! abandon {
         abandon!("Abandoned execution");
     };
 
-    ($($t:tt)*) => {{
-        use $crate::output::colours::eprintln_red;
-        eprintln_red!($($t)*);
+    ($($arg:tt)*) => {{
+        eprintln!("{}", console::style(format_args!($($arg)*)).red());
         std::process::exit(1);
     }};
 }
