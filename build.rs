@@ -15,7 +15,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     // Try and load dotenv file
     _ = dotenv();
 
-    if let Ok(api_key) = std::env::var("GITHUB_TOKEN") {
+    if let Ok(api_key) = std::env::var("CONTRIBUTORS_TOKEN") {
         let contributors = Contributors::new(api_key, "jewlexx".into(), "sfsu".into())?;
         let contributors =
             tokio::runtime::Runtime::new()?.block_on(async move { contributors.await })?;
@@ -44,7 +44,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         std::fs::write(out_path.clone() + "/contributors.rs", contributors_output)?;
     } else {
         if std::env::var("IS_RELEASE").is_ok() {
-            panic!("No GITHUB_TOKEN found, contributors will not be updated.");
+            panic!("No CONTRIBUTORS_TOKEN found, contributors will not be updated.");
         }
 
         std::fs::write(
