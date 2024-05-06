@@ -201,7 +201,7 @@ impl super::Command for Args {
                 }
             });
 
-        let matches = futures::future::try_join_all(matches).await?.into_iter();
+        let matches = futures::future::try_join_all(matches).await?;
 
         for (manifest, file_status, detected, total) in matches {
             self.handle_output(manifest, file_status, detected, total)?;
