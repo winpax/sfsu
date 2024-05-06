@@ -135,6 +135,13 @@ mod ser_de {
             D: serde::Deserializer<'de>,
         {
             let s = String::deserialize(deserializer)?;
+
+            if s == "default" {
+                return Err(serde::de::Error::custom(
+                    "default proxy is not yet supported",
+                ));
+            }
+
             Proxy::from_str(&s).map_err(serde::de::Error::custom)
         }
     }
