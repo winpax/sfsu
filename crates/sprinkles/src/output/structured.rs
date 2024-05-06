@@ -72,7 +72,11 @@ impl Display for TruncateOrPad {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let length = self.1 - WALL.len();
         if self.0.len() > length {
-            write!(f, "{}...", &self.0[0..length - 3])
+            write!(
+                f,
+                "{}...",
+                &self.0[0..length.checked_sub(3).unwrap_or_default()]
+            )
         } else {
             write!(f, "{:width$}", self.0, width = length)
         }
