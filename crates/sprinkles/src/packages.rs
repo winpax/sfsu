@@ -806,8 +806,8 @@ impl Manifest {
                         self.install_config.$field = autoupdate.default_config.$field.clone().map(|s| s.into_substituted(&submap, false));
                     }
                 }
-            }
-        }}
+            }}
+        }
 
         update_field!(bin);
         update_field!(extract_dir);
