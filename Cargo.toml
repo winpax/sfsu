@@ -97,7 +97,7 @@ sfsu-derive.workspace = true
 shadow-rs = "0.27"
 sprinkles = { path = "crates/sprinkles" }
 tokio = { version = "1.37", features = ["full"] }
-vt3 = "0.7.3"
+vt3 = { git = "https://github.com/winpax/vt3.git", version = "0.7.3" }
 
 [dev-dependencies]
 cargo-husky = { version = "1.5.0", features = ["user-hooks"] }

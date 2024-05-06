@@ -1,7 +1,7 @@
 use std::{
     future::Future,
     sync::Arc,
-    task::Poll,
+    task::{Poll, Waker},
     thread,
     time::{Duration, Instant},
 };
@@ -34,6 +34,8 @@ impl RateLimiter {
     }
 
     pub fn try_wait(&self) -> WaitResult {
+        dbg!("try waiting");
+
         let mut completed = self.completed.lock();
         if let Some(new_completed) = completed.checked_sub(1) {
             *completed = new_completed;
@@ -45,25 +47,46 @@ impl RateLimiter {
         let delta = self.now.lock().elapsed();
         *self.now.lock() = Instant::now();
 
-        if let Some(remaining) = self.remaining.lock().checked_sub(delta) {
-            *self.remaining.lock() = remaining;
-            WaitResult::Pending(remaining)
+        let mut remaining = self.remaining.lock();
+
+        if let Some(new_remaining) = remaining.checked_sub(delta) {
+            *remaining = new_remaining;
+            WaitResult::Pending(new_remaining)
         } else {
-            *self.remaining.lock() = self.reset;
+            *remaining = self.reset;
             WaitResult::Ready
         }
     }
 
     pub async fn wait(&self) {
-        RateLimitWait {
-            limiter: self.clone(),
-        }
-        .await;
+        RateLimitWait::new(self.clone()).await;
     }
 }
 
 struct RateLimitWait {
+    waker: Arc<Mutex<Option<Waker>>>,
     limiter: RateLimiter,
+}
+
+impl RateLimitWait {
+    fn new(limiter: RateLimiter) -> Self {
+        let this = Self {
+            limiter,
+            waker: Arc::new(Mutex::new(None)),
+        };
+
+        let waker = this.waker.clone();
+        let timeout = this.limiter.reset;
+
+        thread::spawn(move || loop {
+            thread::sleep(timeout);
+            if let Some(waker) = waker.lock().clone() {
+                waker.wake();
+            }
+        });
+
+        this
+    }
 }
 
 impl Future for RateLimitWait {
@@ -100,17 +123,11 @@ impl Future for RateLimitWait {
             }
         }
 
+        *self.waker.lock() = Some(cx.waker().clone());
+
         match self.limiter.try_wait() {
             WaitResult::Ready => Poll::Ready(()),
-            WaitResult::Pending(remaining) => {
-                let waker = cx.waker().clone();
-                thread::spawn(move || {
-                    thread::sleep(remaining);
-                    waker.wake();
-                });
-
-                Poll::Pending
-            }
+            WaitResult::Pending(_) => Poll::Pending,
         }
     }
 }

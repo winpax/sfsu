@@ -146,7 +146,7 @@ impl super::Command for Args {
         let pb = ProgressBar::new(manifests.len() as u64)
             .with_style(style(Some(ProgressOptions::PosLen), None));
 
-        let rate_limiter = RateLimiter::new(REQUESTS_PER_MINUTE, Duration::from_secs(60));
+        let rate_limiter = RateLimiter::new(REQUESTS_PER_MINUTE, Duration::from_secs(5));
 
         let matches = manifests
             .into_iter()
@@ -177,16 +177,12 @@ impl super::Command for Args {
 
                     let result = match search_type {
                         SearchType::FileHash(hash) => {
-                            let result = tokio::task::spawn_blocking(move || {
-                                client.file_info(&hash.to_string())
-                            })
-                            .await??;
+                            let result = client.file_info_async(&hash.to_string()).await?;
 
                             serde_json::to_value(result)?
                         }
                         SearchType::Url(url) => {
-                            let result = tokio::task::spawn_blocking(move || client.url_info(&url))
-                                .await??;
+                            let result = client.url_info_async(&url).await?;
 
                             serde_json::to_value(result)?
                         }
