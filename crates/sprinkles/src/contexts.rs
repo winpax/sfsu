@@ -31,6 +31,16 @@ pub enum Error {
     Git(#[from] git::Error),
     #[error("Error joining task: {0}")]
     JoinError(#[from] tokio::task::JoinError),
+
+    #[error("{0}")]
+    Custom(#[from] Box<dyn std::error::Error + Send + Sync>),
+}
+
+impl Error {
+    /// Map a custom error into a [`Error`]
+    pub fn custom(err: impl std::error::Error + Send + Sync + 'static) -> Self {
+        Self::Custom(Box::new(err))
+    }
 }
 
 /// An adapter for Scoop-like contexts
