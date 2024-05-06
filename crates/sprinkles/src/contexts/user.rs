@@ -9,7 +9,7 @@ use rayon::prelude::*;
 
 use crate::{abandon, config, contexts::Error, git};
 
-/// The Scoop install reference
+/// User's Scoop install adapter
 pub struct User;
 
 impl super::ScoopContext<config::Scoop> for User {
