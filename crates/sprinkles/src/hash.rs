@@ -24,7 +24,7 @@ use crate::{
     },
     requests::{AsyncClient, Client},
     version::Version,
-    Architecture, Scoop,
+    Architecture,
 };
 
 use self::substitutions::Substitute;

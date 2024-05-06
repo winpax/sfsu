@@ -9,7 +9,6 @@ use indicatif::ProgressBar;
 use crate::{
     buckets::Bucket,
     contexts::{ScoopContext, User},
-    Scoop,
 };
 
 use self::pull::ProgressCallback;

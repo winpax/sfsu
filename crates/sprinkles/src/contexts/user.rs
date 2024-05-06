@@ -9,7 +9,7 @@ use rayon::prelude::*;
 
 use crate::{abandon, config, contexts::Error, git};
 
-/// The Scoop install reference
+/// User's Scoop install adapter
 pub struct User;
 
 impl super::ScoopContext<config::Scoop> for User {
@@ -248,8 +248,8 @@ impl super::ScoopContext<config::Scoop> for User {
     ///
     /// # Errors
     /// - The Scoop app could not be opened as a repository
-    fn open_repo() -> git::Result<git::Repo> {
-        git::Repo::scoop_app()
+    fn open_repo() -> Option<git::Result<git::Repo>> {
+        Some(git::Repo::scoop_app())
     }
 
     /// Check if Scoop is outdated

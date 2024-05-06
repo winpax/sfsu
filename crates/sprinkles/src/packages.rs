@@ -25,7 +25,7 @@ use crate::{
         sectioned::{Children, Section, Text},
         wrappers::{author::Author, time::NicerTime},
     },
-    Architecture, Scoop,
+    Architecture,
 };
 
 #[cfg(feature = "manifest-hashes")]

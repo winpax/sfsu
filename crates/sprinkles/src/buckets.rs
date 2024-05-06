@@ -13,7 +13,6 @@ use crate::{
     contexts::{ScoopContext, User},
     git::{self, Repo},
     packages::{self, CreateManifest, InstallManifest, Manifest, SearchMode},
-    Scoop,
 };
 
 #[derive(Debug, thiserror::Error)]

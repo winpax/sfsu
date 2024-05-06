@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     contexts::{ScoopContext, User},
     packages::{CreateManifest, Result},
-    Architecture, Scoop,
+    Architecture,
 };
 
 #[derive(Debug, Default, Deserialize, Serialize, PartialEq, Eq)]

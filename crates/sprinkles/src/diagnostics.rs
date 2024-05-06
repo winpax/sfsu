@@ -8,7 +8,6 @@ use serde::Serialize;
 use crate::{
     buckets::{self, Bucket},
     contexts::{ScoopContext, User},
-    Scoop,
 };
 
 #[derive(Debug, thiserror::Error)]

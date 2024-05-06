@@ -141,4 +141,6 @@ impl Default for Architecture {
 }
 
 #[deprecated(note = "Use `contexts::User` instead")]
+#[cfg(not(feature = "v2"))]
+/// Alias for [`contexts::User`]
 pub type Scoop = contexts::User;

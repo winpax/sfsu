@@ -8,33 +8,28 @@
 use derive_more::Deref;
 use reqwest::header::HeaderMap;
 
-use crate::{
-    contexts::{ScoopContext, User},
-    Scoop,
-};
+use crate::contexts::{ScoopContext, User};
 
 #[must_use]
+#[deprecated(note = "Use `USER_AGENT` instead")]
+#[cfg(not(feature = "v2"))]
 /// Get user agent for sfsu
 pub const fn user_agent<'a>() -> &'a str {
-    // A little type hack to allow a string reference in inline_const
-    type Stref = &'static str;
-
-    crate::inline_const!(
-        Stref
-        {
-            use const_format::formatcp;
-            use std::env::consts::{ARCH, OS};
-            const VERSION: &str = env!("CARGO_PKG_VERSION");
-
-            formatcp!(
-                "Scoop/1.0 (+https://scoop.sh/) sfsu/{} ({}) ({})",
-                VERSION,
-                ARCH,
-                OS
-            )
-        }
-    )
+    USER_AGENT
 }
+
+/// User agent for sfsu
+pub const USER_AGENT: &str = {
+    use const_format::formatcp;
+    use std::env::consts::{ARCH, OS};
+
+    formatcp!(
+        "Scoop/1.0 (+https://scoop.sh/) sfsu/{} ({}) ({})",
+        env!("CARGO_PKG_VERSION"),
+        ARCH,
+        OS
+    )
+};
 
 #[must_use]
 /// Construct default headers for requests
@@ -47,7 +42,7 @@ pub fn default_headers() -> HeaderMap {
     let mut headers = HeaderMap::new();
 
     headers.insert(header::ACCEPT, HeaderValue::from_static("*/*"));
-    headers.insert(header::USER_AGENT, user_agent().parse().unwrap());
+    headers.insert(header::USER_AGENT, USER_AGENT.parse().unwrap());
 
     headers
 }

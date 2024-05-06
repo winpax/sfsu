@@ -29,7 +29,7 @@ pub struct Manifest {
     #[serde(rename = "$schema")]
     /// The schema of the manifest
     pub schema: Option<String>,
-    #[deprecated(since = "1.10.0", note = "Use ## instead")]
+    #[deprecated(note = "Use ## instead")]
     #[serde(rename = "_comment")]
     /// A comment.
     pub comment: Option<StringArray>,
@@ -112,7 +112,7 @@ pub struct InstallConfig {
     pub hash: Option<TOrArrayOfTs<Hash>>,
     /// The installer configuration
     pub installer: Option<Installer>,
-    #[deprecated(since = "1.10.0")]
+    #[deprecated]
     pub msi: Option<StringArray>,
     pub post_install: Option<StringArray>,
     pub post_uninstall: Option<StringArray>,
@@ -219,7 +219,7 @@ pub struct HashExtraction {
     pub jsonpath: Option<String>,
     pub mode: Option<HashMode>,
     pub regex: Option<String>,
-    #[deprecated(since = "1.10.0", note = "hash type is determined automatically")]
+    #[deprecated(note = "hash type is determined automatically")]
     #[serde(rename = "type")]
     pub hash_extraction_type: Option<Type>,
     pub url: Option<String>,
