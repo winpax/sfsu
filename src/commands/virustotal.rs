@@ -14,10 +14,25 @@ use sprinkles::{
     Architecture, Scoop,
 };
 
-use crate::limits::RateLimiter;
+use crate::{
+    errors::{RecoverableError, RecoverableResult},
+    limits::RateLimiter,
+};
 
 /// `VirusTotal` limits requests to 4 per minute
 const REQUESTS_PER_MINUTE: u64 = 4;
+
+impl RecoverableError for vt3::error::VtError {
+    fn recoverable(&self) -> bool {
+        matches!(
+            self,
+            vt3::error::VtError::TransientError
+                | vt3::error::VtError::AlreadyExistsError
+                | vt3::error::VtError::NotFoundError
+                | vt3::error::VtError::NotAvailableYet
+        )
+    }
+}
 
 #[derive(Debug, Copy, Clone, ValueEnum, PartialEq, Eq, PartialOrd, Ord)]
 enum Status {
@@ -178,14 +193,25 @@ impl super::Command for Args {
 
                     let result = match search_type {
                         SearchType::FileHash(hash) => {
-                            let result = client.file_info_async(&hash.to_string()).await?;
+                            let result = client
+                                .file_info_async(&hash.to_string())
+                                .await
+                                .recoverable();
 
-                            serde_json::to_value(result)?
+                            if let Some(result) = result {
+                                serde_json::to_value(result?)?
+                            } else {
+                                return anyhow::Ok((manifest, None));
+                            }
                         }
                         SearchType::Url(url) => {
-                            let result = client.url_info_async(&url).await?;
+                            let result = client.url_info_async(&url).await.recoverable();
 
-                            serde_json::to_value(result)?
+                            if let Some(result) = result {
+                                serde_json::to_value(result?)?
+                            } else {
+                                return anyhow::Ok((manifest, None));
+                            }
                         }
                     };
 
@@ -195,17 +221,22 @@ impl super::Command for Args {
 
                     anyhow::Ok((
                         manifest,
-                        Status::from_stats(detected, total),
-                        detected,
-                        total,
+                        Some((Status::from_stats(detected, total), detected, total)),
                     ))
                 }
             });
 
         let matches = futures::future::try_join_all(matches).await?;
 
-        for (manifest, file_status, detected, total) in matches {
-            self.handle_output(manifest, file_status, detected, total)?;
+        for (manifest, result) in matches {
+            if let Some((file_status, detected, total)) = result {
+                self.handle_output(manifest, file_status, detected, total)?;
+            } else {
+                eprintln!(
+                    "Error while getting info for {}. Try again later.",
+                    manifest.name
+                );
+            }
         }
 
         Ok(())

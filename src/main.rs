@@ -8,6 +8,7 @@
 // TODO: Replace regex with glob
 
 mod commands;
+mod errors;
 mod limits;
 mod logging;
 

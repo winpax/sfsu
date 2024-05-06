@@ -34,8 +34,6 @@ impl RateLimiter {
     }
 
     pub fn try_wait(&self) -> WaitResult {
-        dbg!("try waiting");
-
         let mut completed = self.completed.lock();
         if let Some(new_completed) = completed.checked_sub(1) {
             *completed = new_completed;
