@@ -89,7 +89,7 @@ impl FromStr for Proxy {
 
         let mut parts = host.split(':');
         let host = parts.next().ok_or(Error::MissingHost)?.to_string();
-        let port = parts.next().ok_or(Error::MissingPort)?.parse()?;
+        let port = parts.next().unwrap_or("80").parse()?;
 
         Ok(Self::new(username, password, host, port))
     }
