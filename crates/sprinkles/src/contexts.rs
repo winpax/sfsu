@@ -8,6 +8,7 @@ use crate::git;
 mod global;
 mod user;
 
+use futures::Future;
 pub use global::Global;
 pub use user::User;
 
@@ -23,11 +24,13 @@ pub enum Error {
     UnsupportedArchitecture,
     #[error("Opening and interacting with Scoop repo: {0}")]
     Git(#[from] git::Error),
+    #[error("Error joining task: {0}")]
+    JoinError(#[from] tokio::task::JoinError),
 }
 
-/// An adapter for scoop contexts
+/// An adapter for Scoop-like contexts
 ///
-/// This is used to provide a common interface for scoop contexts, and to allow for mocking in tests
+/// This is used to provide a common interface for Scoop-like contexts, and to allow for mocking in tests
 ///
 /// Generally, you should not call this type directly, but instead use the [`User`] or [`Global`] types,
 /// or another type that implements [`ScoopContext`].
@@ -39,7 +42,7 @@ pub enum Error {
 /// let scoop_path = User::path();
 /// ```
 pub trait ScoopContext<C> {
-    /// Load the Scoop configuration
+    /// Load the context's configuration
     ///
     /// # Errors
     /// - Could not load the configuration
@@ -52,39 +55,34 @@ pub trait ScoopContext<C> {
     fn git_path() -> Result<PathBuf, which::Error>;
 
     #[must_use]
-    /// Gets the user's scoop path, via either the default path or as provided by the SCOOP env variable
-    ///
-    /// Will ignore the global scoop path
-    ///
-    /// # Panics
-    /// - There is no home folder
-    /// - The discovered scoop path does not exist
+    /// Gets the context's path
     fn path() -> PathBuf;
 
+    /// Get a sub path within the context's path
     fn scoop_sub_path(segment: impl AsRef<Path>) -> PathBuf;
 
     #[must_use]
-    /// Gets the user's scoop apps path
+    /// Gets the contexts's apps path
     fn apps_path() -> PathBuf;
 
     #[must_use]
-    /// Gets the user's scoop buckets path
+    /// Gets the contexts's buckets path
     fn buckets_path() -> PathBuf;
 
     #[must_use]
-    /// Gets the user's scoop cache path
+    /// Gets the contexts's cache path
     fn cache_path() -> PathBuf;
 
     #[must_use]
-    /// Gets the user's scoop persist path
+    /// Gets the contexts's persist path
     fn persist_path() -> PathBuf;
 
     #[must_use]
-    /// Gets the user's scoop shims path
+    /// Gets the contexts's shims path
     fn shims_path() -> PathBuf;
 
     #[must_use]
-    /// Gets the user's scoop workspace path
+    /// Gets the contexts's workspace path
     fn workspace_path() -> PathBuf;
 
     /// List all scoop apps and return their paths
@@ -102,6 +100,9 @@ pub trait ScoopContext<C> {
     /// - Creating the directory fails
     fn logging_dir() -> std::io::Result<PathBuf>;
 
+    #[deprecated(
+        note = "You should implement this yourself, as this function is inherently opinionated"
+    )]
     /// Create a new log file
     ///
     /// # Errors
@@ -111,6 +112,9 @@ pub trait ScoopContext<C> {
     /// - Could not convert tokio file into std file
     async fn new_log() -> Result<File, Error>;
 
+    #[deprecated(
+        note = "You should implement this yourself, as this function is inherently opinionated"
+    )]
     /// Create a new log file
     ///
     /// This function is synchronous and does not allow for timeouts.
@@ -126,16 +130,30 @@ pub trait ScoopContext<C> {
     /// - Reading app dir fails
     fn app_installed(name: impl AsRef<str>) -> std::io::Result<bool>;
 
-    /// Open Scoop app repository
+    /// Open the context's app repository, if any
     ///
     /// # Errors
     /// - The Scoop app could not be opened as a repository
-    fn open_repo() -> git::Result<git::Repo>;
+    fn open_repo() -> Option<git::Result<git::Repo>>;
 
-    /// Check if Scoop is outdated
+    /// Check if the context is outdated
     ///
-    /// # Errors
-    /// - The Scoop app could not be opened as a repository
-    /// - The Scoop app could not be checked for updates
+    /// This may manifest in different ways, depending on the context
+    ///
+    /// For [`User`] and [`Global`], this will check if the Scoop repository is outdated
+    /// and return `true` if it is.
+    ///
+    /// For implementors, this should return `true` if your provider is outdated. For example,
+    /// the binary which hooks into this trait will return `true` if there is a newer version available.
     fn outdated() -> Result<bool, Error>;
+
+    #[must_use]
+    /// Check if the context is outdated, asynchronously
+    ///
+    /// See [`ScoopContext::outdated`] for more information
+    ///
+    /// By default, this will call [`ScoopContext::outdated`] in a blocking context and return the result.
+    fn outdated_async() -> impl Future<Output = Result<bool, Error>> {
+        async { tokio::task::spawn_blocking(|| Self::outdated()).await? }
+    }
 }
