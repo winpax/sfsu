@@ -6,7 +6,11 @@ use derive_more::Deref;
 use git2::{Commit, DiffOptions, Direction, FetchOptions, Oid, Progress, Remote, Repository, Sort};
 use indicatif::ProgressBar;
 
-use crate::{buckets::Bucket, contexts::{ScoopContext, User}, Scoop};
+use crate::{
+    buckets::Bucket,
+    contexts::{ScoopContext, User},
+    Scoop,
+};
 
 use self::pull::ProgressCallback;
 
