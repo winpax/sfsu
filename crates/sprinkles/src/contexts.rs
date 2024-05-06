@@ -1,3 +1,8 @@
+#![allow(clippy::missing_errors_doc)]
+#![allow(clippy::missing_panics_doc)]
+
+//! Scoop context adapters
+
 use std::{
     fs::File,
     path::{Path, PathBuf},
@@ -43,15 +48,9 @@ pub enum Error {
 /// ```
 pub trait ScoopContext<C> {
     /// Load the context's configuration
-    ///
-    /// # Errors
-    /// - Could not load the configuration
     fn config() -> std::io::Result<C>;
 
     /// Get the git executable path
-    ///
-    /// # Errors
-    /// - Could not find `git` in path
     fn git_path() -> Result<PathBuf, which::Error>;
 
     #[must_use]
@@ -86,30 +85,15 @@ pub trait ScoopContext<C> {
     fn workspace_path() -> PathBuf;
 
     /// List all scoop apps and return their paths
-    ///
-    /// # Errors
-    /// - Reading dir fails
-    ///
-    /// # Panics
-    /// - Reading dir fails
     fn installed_apps() -> std::io::Result<Vec<PathBuf>>;
 
     /// Get the path to the log directory
-    ///
-    /// # Errors
-    /// - Creating the directory fails
     fn logging_dir() -> std::io::Result<PathBuf>;
 
     #[deprecated(
         note = "You should implement this yourself, as this function is inherently opinionated"
     )]
     /// Create a new log file
-    ///
-    /// # Errors
-    /// - Creating the file fails
-    ///
-    /// # Panics
-    /// - Could not convert tokio file into std file
     async fn new_log() -> Result<File, Error>;
 
     #[deprecated(
@@ -119,21 +103,12 @@ pub trait ScoopContext<C> {
     ///
     /// This function is synchronous and does not allow for timeouts.
     /// If for some reason there are no available log files, this function will block indefinitely.
-    ///
-    /// # Errors
-    /// - Creating the file fails
     fn new_log_sync() -> Result<File, Error>;
 
     /// Checks if the app is installed by its name
-    ///
-    /// # Errors
-    /// - Reading app dir fails
     fn app_installed(name: impl AsRef<str>) -> std::io::Result<bool>;
 
     /// Open the context's app repository, if any
-    ///
-    /// # Errors
-    /// - The Scoop app could not be opened as a repository
     fn open_repo() -> Option<git::Result<git::Repo>>;
 
     /// Check if the context is outdated
