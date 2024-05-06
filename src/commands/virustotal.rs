@@ -19,9 +19,6 @@ use crate::{
     limits::RateLimiter,
 };
 
-/// `VirusTotal` limits requests to 4 per minute
-const REQUESTS_PER_MINUTE: u64 = 4;
-
 impl RecoverableError for vt3::error::VtError {
     fn recoverable(&self) -> bool {
         matches!(
@@ -164,7 +161,7 @@ impl super::Command for Args {
         let pb = ProgressBar::new(manifests.len() as u64)
             .with_style(style(Some(ProgressOptions::PosLen), None));
 
-        let rate_limiter = RateLimiter::new(REQUESTS_PER_MINUTE, Duration::from_secs(5));
+        let rate_limiter = RateLimiter::new(4, Duration::from_secs(5));
 
         let matches = manifests
             .into_iter()
