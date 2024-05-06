@@ -29,7 +29,10 @@ use crate::{
 
 #[cfg(feature = "manifest-hashes")]
 use crate::{
-    hash::{self, substitutions::SubstitutionMap},
+    hash::{
+        self,
+        substitutions::{Substitute, SubstitutionMap},
+    },
     packages::manifest::TOrArrayOfTs,
 };
 
@@ -108,6 +111,14 @@ macro_rules! arch_field {
     // (ref mut $self:ident.$field:ident) => {
     //     arch_field!($crate::Architecture::ARCH => ref mut $self.$field)
     // };
+
+    ($self:ident.$field:ident as cloned) => {
+        arch_field!($crate::Architecture::ARCH => $self.$field as ref).cloned()
+    };
+
+    ($arch:expr => $self:ident.$field:ident as cloned) => {
+        arch_field!($arch => $self.$field as ref).cloned()
+    };
 
     ($self:ident.$field:ident as ref) => {
         arch_field!($crate::Architecture::ARCH => $self.$field as ref)
@@ -776,6 +787,32 @@ impl Manifest {
                 self.install_config.url = self.get_new_urls(&autoupdate.default_config);
             }
         }
+
+        macro_rules! update_field {
+            ($field:ident) => {{
+                let mut submap = SubstitutionMap::new();
+                submap.append_version(&self.version);
+
+                for arch in crate::Architecture::VARIANTS {
+                    if let Some(config) = &mut self.architecture {
+                        let default = arch_field!(arch => config.$field as cloned).map(|s| s.into_substituted(&submap, false));
+
+                        Self::update_field(
+                            arch_field!(arch => config.$field as mut),
+                            &mut self.install_config.$field,
+                            default,
+                        );
+                    } else {
+                        self.install_config.$field = autoupdate.default_config.$field.clone().map(|s| s.into_substituted(&submap, false));
+                    }
+                }
+            }}
+        }
+
+        update_field!(bin);
+        update_field!(extract_dir);
+        update_field!(installer);
+        update_field!(shortcuts);
 
         for arch in crate::Architecture::VARIANTS {
             let Ok(hashes) = Hash::get_for_app(self, arch).await else {

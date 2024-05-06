@@ -3,7 +3,11 @@ use std::collections::HashMap;
 use derive_more::{Deref, DerefMut};
 use url::Url;
 
-use crate::{hash::url_ext::UrlExt, version::Version};
+use crate::{
+    hash::url_ext::UrlExt,
+    packages::models::manifest::{AliasArray, Installer, StringArray, TOrArrayOfTs},
+    version::Version,
+};
 
 #[derive(Debug, Clone, Deref, DerefMut)]
 pub struct SubstitutionMap(HashMap<String, String>);
@@ -71,7 +75,12 @@ impl SubstituteBuilder {
 pub trait Substitute {
     fn substitute(&mut self, params: &SubstitutionMap, regex_escape: bool)
     where
-        Self: Clone;
+        Self: Clone,
+    {
+        let substituted = self.clone().into_substituted(params, regex_escape);
+
+        *self = substituted;
+    }
 
     #[must_use]
     fn into_substituted(self, params: &SubstitutionMap, regex_escape: bool) -> Self;
@@ -81,10 +90,64 @@ impl Substitute for String {
     fn into_substituted(self, params: &SubstitutionMap, regex_escape: bool) -> Self {
         SubstituteBuilder::String(self).substitute(params, regex_escape)
     }
+}
 
-    fn substitute(&mut self, params: &SubstitutionMap, regex_escape: bool) {
-        let substituted = self.clone().into_substituted(params, regex_escape);
+impl Substitute for TOrArrayOfTs<String> {
+    fn into_substituted(self, params: &SubstitutionMap, regex_escape: bool) -> Self {
+        self.map(|s| s.into_substituted(params, regex_escape))
+    }
+}
 
-        *self = substituted;
+impl Substitute for Vec<String> {
+    fn into_substituted(self, params: &SubstitutionMap, regex_escape: bool) -> Self {
+        self.into_iter()
+            .map(|s| s.into_substituted(params, regex_escape))
+            .collect()
+    }
+}
+
+impl Substitute for Vec<Vec<String>> {
+    fn into_substituted(self, params: &SubstitutionMap, regex_escape: bool) -> Self {
+        self.into_iter()
+            .map(|s| s.into_substituted(params, regex_escape))
+            .collect()
+    }
+}
+
+impl Substitute for AliasArray {
+    fn into_substituted(self, params: &SubstitutionMap, regex_escape: bool) -> Self {
+        match self {
+            AliasArray::NestedArray(StringArray::Single(s)) => AliasArray::NestedArray(
+                StringArray::Single(s.into_substituted(params, regex_escape)),
+            ),
+            AliasArray::NestedArray(StringArray::Array(s)) => {
+                AliasArray::NestedArray(StringArray::Array(
+                    s.into_iter()
+                        .map(|s| s.into_substituted(params, regex_escape))
+                        .collect(),
+                ))
+            }
+            AliasArray::AliasArray(s) => AliasArray::AliasArray(
+                s.into_iter()
+                    .map(|s| s.into_substituted(params, regex_escape))
+                    .collect(),
+            ),
+        }
+    }
+}
+
+impl Substitute for Installer {
+    fn into_substituted(self, params: &SubstitutionMap, regex_escape: bool) -> Self {
+        Installer {
+            file: self.file.map(|s| s.into_substituted(params, regex_escape)),
+            comment: self
+                .comment
+                .map(|s| s.into_substituted(params, regex_escape)),
+            args: self.args.map(|s| s.into_substituted(params, regex_escape)),
+            keep: self.keep,
+            script: self
+                .script
+                .map(|s| s.into_substituted(params, regex_escape)),
+        }
     }
 }
