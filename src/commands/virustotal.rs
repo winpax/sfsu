@@ -25,7 +25,7 @@ enum Status {
 
 impl Status {
     #[allow(clippy::cast_precision_loss, clippy::cast_sign_loss)]
-    pub fn from_stats(dangerous: i64, total: i64) -> Self {
+    pub fn from_stats(dangerous: u64, total: u64) -> Self {
         let dangerous = dangerous as f64;
         let total = total as f64;
         let ratio = dangerous / total;
@@ -100,6 +100,16 @@ pub struct Args {
     json: bool,
 }
 
+/// Value should be a `Root` object
+fn extract_info(value: &serde_json::Value) -> anyhow::Result<(u64, u64)> {
+    let stats = &value["data"]["attributes"]["last_analysis_stats"];
+    let detected = stats["malicious"].as_u64().context("no malicious")?
+        + stats["suspicious"].as_u64().context("no suspicious")?;
+    let total = detected + stats["undetected"].as_u64().context("no undetected")?;
+
+    Ok((detected, total))
+}
+
 impl super::Command for Args {
     async fn runner(self) -> Result<(), anyhow::Error> {
         let config = Scoop::config()?;
@@ -165,16 +175,7 @@ impl super::Command for Args {
                             })
                             .await??;
 
-                            let stats = result
-                                .data
-                                .and_then(|data| data.attributes)
-                                .and_then(|attributes| attributes.last_analysis_stats)
-                                .context("no data")?;
-                            let detected = stats
-                                .malicious
-                                .map(|m| m + stats.suspicious.unwrap_or_default())
-                                .unwrap_or_default();
-                            let total = detected + stats.undetected.unwrap_or_default();
+                            let (detected, total) = extract_info(&serde_json::to_value(result)?)?;
 
                             anyhow::Ok(Some((
                                 manifest,
@@ -187,16 +188,7 @@ impl super::Command for Args {
                             let result = tokio::task::spawn_blocking(move || client.url_info(&url))
                                 .await??;
 
-                            let stats = result
-                                .data
-                                .and_then(|data| data.attributes)
-                                .and_then(|attributes| attributes.last_analysis_stats)
-                                .context("no data")?;
-                            let detected = stats
-                                .malicious
-                                .map(|m| m + stats.suspicious.unwrap_or_default())
-                                .unwrap_or_default();
-                            let total = detected + stats.undetected.unwrap_or_default();
+                            let (detected, total) = extract_info(&serde_json::to_value(result)?)?;
 
                             anyhow::Ok(Some((
                                 manifest,
