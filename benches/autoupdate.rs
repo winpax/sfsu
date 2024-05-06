@@ -4,6 +4,7 @@ use criterion::{black_box, criterion_group, criterion_main, BatchSize, Criterion
 
 use sprinkles::{
     cache::{Downloader, Handle},
+    contexts::ScoopContext,
     packages::reference::Package,
     requests::{AsyncClient, Client},
     Architecture, Scoop,
