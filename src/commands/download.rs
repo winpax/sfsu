@@ -4,6 +4,7 @@ use indicatif::MultiProgress;
 use sprinkles::{
     abandon,
     cache::{Downloader, Handle},
+    contexts::ScoopContext,
     packages::reference::Package,
     requests::AsyncClient,
     Architecture, Scoop,

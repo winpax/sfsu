@@ -4,6 +4,7 @@ use itertools::Itertools as _;
 use quork::traits::truthy::ContainsTruth;
 use serde::Serialize;
 
+use crate::contexts::ScoopContext;
 use crate::{buckets::Bucket, packages::reference::ManifestRef, Scoop};
 
 use crate::packages::{reference, Manifest, Result};

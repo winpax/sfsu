@@ -6,6 +6,7 @@ use indicatif::ProgressBar;
 use rayon::prelude::*;
 use sprinkles::{
     calm_panic::CalmUnwrap,
+    contexts::ScoopContext,
     eprintln_green, eprintln_red, eprintln_yellow,
     hash::Hash,
     packages::{reference::Package, CreateManifest, Manifest},

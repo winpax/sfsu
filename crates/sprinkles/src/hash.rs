@@ -13,6 +13,7 @@ use url::Url;
 
 use crate::{
     cache::{self, Downloader, Handle},
+    contexts::ScoopContext,
     hash::url_ext::UrlExt,
     packages::{
         models::manifest::{

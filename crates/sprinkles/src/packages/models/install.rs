@@ -3,8 +3,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    packages::{CreateManifest, Result},
-    Architecture, Scoop,
+    contexts::ScoopContext, packages::{CreateManifest, Result}, Architecture, Scoop
 };
 
 #[derive(Debug, Default, Deserialize, Serialize, PartialEq, Eq)]

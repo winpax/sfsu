@@ -18,6 +18,7 @@ use strum::Display;
 
 use crate::{
     buckets::{self, Bucket},
+    contexts::ScoopContext,
     git::{self, Repo},
     let_chain,
     output::{

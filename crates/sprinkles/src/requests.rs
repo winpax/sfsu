@@ -8,7 +8,7 @@
 use derive_more::Deref;
 use reqwest::header::HeaderMap;
 
-use crate::Scoop;
+use crate::{contexts::ScoopContext, Scoop};
 
 #[must_use]
 /// Get user agent for sfsu

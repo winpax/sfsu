@@ -9,6 +9,7 @@ use url::Url;
 use super::{CreateManifest, Manifest};
 use crate::{
     buckets::{self, Bucket},
+    contexts::ScoopContext,
     let_chain,
     requests::Client,
 };

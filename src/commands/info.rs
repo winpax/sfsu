@@ -2,19 +2,16 @@ use clap::Parser;
 use itertools::Itertools;
 
 use sprinkles::{
-    calm_panic::abandon,
-    output::{
+    calm_panic::abandon, contexts::ScoopContext, output::{
         structured::vertical::VTable,
         wrappers::{alias_vec::AliasVec, bool::NicerBool, time::NicerTime},
-    },
-    packages::{
+    }, packages::{
         models::{
             info::PackageInfo,
             manifest::{AliasArray, StringArray},
         },
         reference, Manifest, MergeDefaults,
-    },
-    semver, Architecture, Scoop,
+    }, semver, Architecture, Scoop
 };
 
 #[derive(Debug, Clone, Parser)]

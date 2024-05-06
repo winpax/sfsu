@@ -10,6 +10,7 @@ use rayon::prelude::*;
 use regex::Regex;
 
 use crate::{
+    contexts::ScoopContext,
     git::{self, Repo},
     packages::{self, CreateManifest, InstallManifest, Manifest, SearchMode},
     Scoop,
