@@ -11,8 +11,6 @@ use sprinkles::{
     Architecture, Scoop,
 };
 
-use super::status;
-
 /// `VirusTotal` limits requests to 4 per minute
 const REQUESTS_PER_MINUTE: u64 = 4;
 
@@ -43,7 +41,7 @@ impl Status {
 #[derive(Debug, Clone)]
 enum SearchType {
     FileHash(Hash),
-    URL(String),
+    Url(String),
 }
 
 #[derive(Debug, Clone)]
@@ -153,7 +151,7 @@ impl super::Command for Args {
                     manifest
                         .install_config(self.arch)
                         .url
-                        .map(|url| url.map(SearchType::URL).to_vec())
+                        .map(|url| url.map(SearchType::Url).to_vec())
                 };
 
                 result.map(|result| {
@@ -175,32 +173,26 @@ impl super::Command for Args {
                             })
                             .await??;
 
-                            let (detected, total) = extract_info(&serde_json::to_value(result)?)?;
-
-                            anyhow::Ok(Some((
-                                manifest,
-                                Status::from_stats(detected, total),
-                                detected,
-                                total,
-                            )))
+                            serde_json::to_value(result)?
                         }
-                        SearchType::URL(url) => {
+                        SearchType::Url(url) => {
                             let result = tokio::task::spawn_blocking(move || client.url_info(&url))
                                 .await??;
 
-                            let (detected, total) = extract_info(&serde_json::to_value(result)?)?;
-
-                            anyhow::Ok(Some((
-                                manifest,
-                                Status::from_stats(detected, total),
-                                detected,
-                                total,
-                            )))
+                            serde_json::to_value(result)?
                         }
                     };
 
+                    let (detected, total) = extract_info(&serde_json::to_value(result)?)?;
+
                     pb.inc(1);
-                    result
+
+                    anyhow::Ok(Some((
+                        manifest,
+                        Status::from_stats(detected, total),
+                        detected,
+                        total,
+                    )))
                 }
             });
 
