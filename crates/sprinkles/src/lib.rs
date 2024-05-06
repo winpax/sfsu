@@ -43,6 +43,7 @@ pub mod shell;
 #[cfg(not(feature = "v2"))]
 pub mod stream;
 pub mod version;
+pub mod proxy;
 
 #[doc(hidden)]
 pub mod __versions {

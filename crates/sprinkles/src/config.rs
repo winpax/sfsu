@@ -27,6 +27,10 @@ pub struct Scoop {
     /// Scoop path
     pub root_path: Option<String>,
 
+    #[serde(skip_serializing_if = "Option::is_none")]
+    /// The proxy to use
+    pub proxy: Option<String>,
+
     #[serde(flatten)]
     /// Any other values in the config
     other: Map<String, Value>,
