@@ -9,6 +9,7 @@
 
 mod commands;
 mod logging;
+mod limits;
 
 use std::{
     io::IsTerminal,

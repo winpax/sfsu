@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use anyhow::Context;
 use clap::{Parser, ValueEnum};
 use indicatif::ProgressBar;
@@ -10,6 +12,8 @@ use sprinkles::{
     requests::user_agent,
     Architecture, Scoop,
 };
+
+use crate::limits::RateLimiter;
 
 /// `VirusTotal` limits requests to 4 per minute
 const REQUESTS_PER_MINUTE: u64 = 4;
@@ -142,6 +146,8 @@ impl super::Command for Args {
         let pb = ProgressBar::new(manifests.len() as u64)
             .with_style(style(Some(ProgressOptions::PosLen), None));
 
+        let rate_limiter = RateLimiter::new(REQUESTS_PER_MINUTE, Duration::from_secs(60));
+
         let matches = manifests
             .into_iter()
             .filter_map(|manifest| {
@@ -165,7 +171,10 @@ impl super::Command for Args {
             .map(|(manifest, search_type)| {
                 let client = client.clone();
                 let pb = pb.clone();
+                let rate_limiter = rate_limiter.clone();
                 async move {
+                    rate_limiter.wait().await;
+
                     let result = match search_type {
                         SearchType::FileHash(hash) => {
                             let result = tokio::task::spawn_blocking(move || {
