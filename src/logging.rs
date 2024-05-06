@@ -2,7 +2,9 @@ use std::{fs::File, io::Write};
 
 use log::{Level, LevelFilter};
 use rayon::iter::{ParallelBridge, ParallelIterator};
-use sprinkles::{contexts::ScoopContext, eprintln_red, eprintln_yellow};
+use sprinkles::contexts::ScoopContext;
+
+use crate::output::colours::{eprintln_red, eprintln_yellow};
 
 pub mod panics;
 

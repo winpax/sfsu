@@ -7,7 +7,6 @@ use rayon::prelude::*;
 use sprinkles::{
     calm_panic::CalmUnwrap,
     contexts::ScoopContext,
-    eprintln_green, eprintln_red, eprintln_yellow,
     hash::Hash,
     packages::{reference::Package, CreateManifest, Manifest},
     progress::{style, ProgressOptions},
@@ -18,6 +17,7 @@ use sprinkles::{
 use crate::{
     errors::{RecoverableError, RecoverableResult},
     limits::RateLimiter,
+    output::colours::{eprintln_green, eprintln_red, eprintln_yellow},
 };
 
 impl RecoverableError for vt3::error::VtError {

@@ -2,7 +2,6 @@ use proc_macro::TokenStream;
 use proc_macro_error::proc_macro_error;
 use syn::{parse_macro_input, DeriveInput};
 
-mod generate_colour_macros;
 mod hooks;
 mod inner;
 mod keyvalue;
@@ -23,12 +22,4 @@ pub fn derive_hook_enum(input: TokenStream) -> TokenStream {
 #[proc_macro_error]
 pub fn derive_key_value(input: TokenStream) -> TokenStream {
     keyvalue::keyvalue(parse_macro_input!(input as DeriveInput)).into()
-}
-
-#[proc_macro]
-#[proc_macro_error]
-pub fn generate_colour_macros(input: TokenStream) -> TokenStream {
-    let ident = syn::parse_macro_input!(input as syn::Ident);
-
-    generate_colour_macros::generate_colour_macros(ident).into()
 }
