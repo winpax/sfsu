@@ -2,12 +2,11 @@ use clap::{Parser, ValueEnum};
 use indicatif::ProgressBar;
 use rayon::prelude::*;
 use sprinkles::{
-    abandon, green,
+    abandon, eprintln_green, eprintln_red, eprintln_yellow,
     packages::{reference::Package, CreateManifest, Manifest},
     progress::{style, ProgressOptions},
-    red,
     requests::user_agent,
-    yellow, Architecture, Scoop,
+    Architecture, Scoop,
 };
 
 #[derive(Debug, Copy, Clone, ValueEnum, PartialEq, Eq, PartialOrd, Ord)]
@@ -137,7 +136,7 @@ impl super::Command for Args {
                 .and_then(|data| data.attributes)
                 .and_then(|attributes| attributes.last_analysis_stats)
             else {
-                red!("No data found for {}", manifest.name);
+                eprintln_red!("No data found for {}", manifest.name);
                 continue;
             };
 
@@ -166,10 +165,10 @@ impl super::Command for Args {
             );
 
             match file_status {
-                Status::Malicious => red!("{info}"),
-                Status::Suspicious => yellow!("{info}"),
-                Status::Undetected => green!("{info}"),
-            }
+                Status::Malicious => eprintln_red!("{info}"),
+                Status::Suspicious => eprintln_yellow!("{info}"),
+                Status::Undetected => eprintln_green!("{info}"),
+            };
         }
 
         Ok(())
