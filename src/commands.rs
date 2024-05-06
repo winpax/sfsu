@@ -17,6 +17,7 @@ pub mod outdated;
 pub mod search;
 pub mod status;
 pub mod update;
+pub mod virustotal;
 
 use clap::Subcommand;
 
@@ -129,6 +130,9 @@ pub enum Commands {
     #[cfg(feature = "download")]
     /// Show or clear the download cache
     Cache(cache::Args),
+    #[cfg(feature = "beta")]
+    /// Scan a file with `VirusTotal`
+    Virustotal(virustotal::Args),
     #[no_hook]
     /// Show credits
     Credits(credits::Args),

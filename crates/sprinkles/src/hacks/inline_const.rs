@@ -5,3 +5,5 @@ macro_rules! inline_const {
         OUTPUT
     }};
 }
+
+pub use inline_const;

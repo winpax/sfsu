@@ -80,6 +80,7 @@ fn criterion_benchmark(c: &mut Criterion) {
                     Architecture::ARCH,
                 )
                 .unwrap()
+                .remove(0)
             },
             |dl| async {
                 let dl = dl.await;

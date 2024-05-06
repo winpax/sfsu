@@ -2,7 +2,7 @@ use criterion::{black_box, criterion_group, criterion_main, BatchSize, Criterion
 
 use rayon::prelude::*;
 use regex::Regex;
-use sprinkles::{buckets::Bucket, packages::SearchMode};
+use sprinkles::{buckets::Bucket, packages::SearchMode, Architecture};
 
 fn criterion_benchmark(c: &mut Criterion) {
     // let all_buckets = Bucket::list_all().unwrap();
@@ -17,7 +17,7 @@ fn criterion_benchmark(c: &mut Criterion) {
                 .par_iter()
                 .filter_map(|bucket| {
                     match bucket.matches(false, &pattern, black_box(SearchMode::Name)) {
-                        Ok(Some(section)) => Some(section),
+                        Ok(section) => Some(section),
                         _ => None,
                     }
                 })
@@ -38,6 +38,7 @@ fn criterion_benchmark(c: &mut Criterion) {
                                 false,
                                 &pattern,
                                 black_box(SearchMode::Name),
+                                Architecture::ARCH,
                             )
                         })
                         .collect::<Vec<_>>()
@@ -104,6 +105,7 @@ fn criterion_benchmark(c: &mut Criterion) {
                                     false,
                                     black_box(&pattern),
                                     black_box(search_mode),
+                                    Architecture::ARCH,
                                 )
                         })
                         .collect::<Vec<_>>()
