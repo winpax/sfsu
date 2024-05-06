@@ -2,7 +2,7 @@
 
 use std::{num::ParseIntError, str::FromStr};
 
-use crate::let_chain;
+use crate::{abandon, let_chain};
 
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
@@ -10,6 +10,8 @@ use crate::let_chain;
 pub enum Error {
     #[error("Invalid port: {0}")]
     InvalidPort(#[from] ParseIntError),
+    #[error("Loading system proxy: {0}")]
+    SystemProxy(#[from] system_proxy::Error),
     #[error("Missing host")]
     MissingHost,
     #[error("Missing port")]
@@ -65,11 +67,24 @@ impl FromStr for Proxy {
             .split_once('@')
             .map_or((None, s), |(auth, host)| (Some(auth), host));
 
-        let (username, password) = let_chain! {
-            let Some(auth) = auth; let Some(auth) = auth.split_once(':'); {
+        let (username, password) = if let Some(auth) = auth {
+            if let Some(auth) = auth.split_once(':') {
                 (Some(auth.0.to_string()), Some(auth.1.to_string()))
-            };
-            else (None, None)
+            } else if auth == "currentuser" {
+                abandon!("sfsu does not support using the windows credentials yet");
+            } else {
+                (None, None)
+            }
+        } else {
+            (None, None)
+        };
+
+        let host = if host == "default" {
+            let sysproxy = system_proxy::SystemProxy::get_system_proxy()?;
+
+            format!("{}:{}", sysproxy.address, sysproxy.port)
+        } else {
+            host.to_string()
         };
 
         let mut parts = host.split(':');
