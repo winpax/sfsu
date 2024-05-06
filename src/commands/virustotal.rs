@@ -11,7 +11,7 @@ use sprinkles::{
     packages::{reference::Package, CreateManifest, Manifest},
     progress::{style, ProgressOptions},
     requests::user_agent,
-    Architecture, Scoop,
+    Architecture,
 };
 
 use crate::{

@@ -7,7 +7,7 @@ use sprinkles::{
     contexts::{ScoopContext, User},
     packages::reference::Package,
     requests::AsyncClient,
-    Architecture, Scoop,
+    Architecture,
 };
 
 #[derive(Debug, Clone, Parser)]

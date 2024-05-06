@@ -10,7 +10,6 @@ use sprinkles::{
     git::__stats_callback,
     output::sectioned::{Children, Section},
     progress::{style, Message, ProgressOptions},
-    Scoop,
 };
 
 #[derive(Debug, Clone, Parser)]

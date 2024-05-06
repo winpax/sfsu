@@ -15,7 +15,7 @@ use sprinkles::{
         },
         reference, Manifest, MergeDefaults,
     },
-    semver, Architecture, Scoop,
+    semver, Architecture,
 };
 
 #[derive(Debug, Clone, Parser)]

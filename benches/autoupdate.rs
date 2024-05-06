@@ -7,7 +7,7 @@ use sprinkles::{
     contexts::{ScoopContext, User},
     packages::reference::Package,
     requests::{AsyncClient, Client},
-    Architecture, Scoop,
+    Architecture,
 };
 
 fn criterion_benchmark(c: &mut Criterion) {

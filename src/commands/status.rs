@@ -15,7 +15,6 @@ use sprinkles::{
     },
     packages::models::{install, status::Info},
     progress::style,
-    Scoop,
 };
 
 #[derive(Debug, Copy, Clone, ValueEnum, ListVariants)]
