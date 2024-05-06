@@ -8,8 +8,8 @@
 // TODO: Replace regex with glob
 
 mod commands;
-mod logging;
 mod limits;
+mod logging;
 
 use std::{
     io::IsTerminal,
