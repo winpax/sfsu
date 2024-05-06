@@ -3,7 +3,7 @@ use itertools::Itertools;
 
 use sprinkles::{
     calm_panic::abandon,
-    contexts::ScoopContext,
+    contexts::{ScoopContext, User},
     output::{
         structured::vertical::VTable,
         wrappers::{alias_vec::AliasVec, bool::NicerBool, time::NicerTime},
@@ -72,7 +72,7 @@ impl super::Command for Args {
             );
         }
 
-        let installed_apps = Scoop::installed_apps()?;
+        let installed_apps = User::installed_apps()?;
 
         if self.single {
             let latest = manifests

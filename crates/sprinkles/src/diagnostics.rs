@@ -7,7 +7,7 @@ use serde::Serialize;
 
 use crate::{
     buckets::{self, Bucket},
-    contexts::ScoopContext,
+    contexts::{ScoopContext, User},
     Scoop,
 };
 
@@ -142,7 +142,7 @@ impl Diagnostics {
     pub fn check_windows_defender() -> windows::core::Result<bool> {
         use winreg::{enums::HKEY_LOCAL_MACHINE, RegKey};
 
-        let scoop_dir = Scoop::path();
+        let scoop_dir = User::path();
         let key = RegKey::predef(HKEY_LOCAL_MACHINE)
             .open_subkey(r"SOFTWARE\Microsoft\Windows Defender\Exclusions\Paths")?;
 
@@ -213,7 +213,7 @@ impl Diagnostics {
             Win32::{Foundation::MAX_PATH, Storage::FileSystem::GetVolumeInformationW},
         };
 
-        let path = Scoop::path();
+        let path = User::path();
 
         let root = {
             let mut current = path.as_path();
@@ -250,6 +250,6 @@ impl Diagnostics {
     #[must_use]
     /// Check if the user has git installed
     pub fn git_installed() -> bool {
-        Scoop::git_path().is_ok()
+        User::git_path().is_ok()
     }
 }

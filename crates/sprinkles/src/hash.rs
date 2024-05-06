@@ -13,7 +13,7 @@ use url::Url;
 
 use crate::{
     cache::{self, Downloader, Handle},
-    contexts::ScoopContext,
+    contexts::{ScoopContext, User},
     hash::url_ext::UrlExt,
     packages::{
         models::manifest::{
@@ -365,7 +365,7 @@ impl Hash {
         let hash_mode = HashMode::from_manifest(manifest, arch).unwrap_or_default();
 
         if hash_mode == HashMode::Download {
-            let cache_handles = Handle::open_manifest(Scoop::cache_path(), manifest, arch)?;
+            let cache_handles = Handle::open_manifest(User::cache_path(), manifest, arch)?;
 
             let downloaders = cache_handles
                 .into_iter()

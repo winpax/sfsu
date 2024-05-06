@@ -18,7 +18,7 @@ use strum::Display;
 
 use crate::{
     buckets::{self, Bucket},
-    contexts::ScoopContext,
+    contexts::{ScoopContext, User},
     git::{self, Repo},
     let_chain,
     output::{
@@ -177,7 +177,7 @@ impl MinInfo {
     /// - File metadata errors
     /// - Invalid time
     pub fn list_installed(bucket: Option<&String>) -> Result<Vec<Self>> {
-        let apps = Scoop::installed_apps()?;
+        let apps = User::installed_apps()?;
 
         apps.par_iter()
             .map(Self::from_path)
@@ -496,7 +496,7 @@ impl InstallManifest {
     /// - Invalid install manifest
     /// - Reading directories fails
     pub fn list_all() -> Result<Vec<Self>> {
-        Scoop::installed_apps()?
+        User::installed_apps()?
             .par_iter()
             .map(|path| Self::from_path(path.join("current/install.json")))
             .collect::<Result<Vec<_>>>()
@@ -507,7 +507,7 @@ impl InstallManifest {
     /// # Errors
     /// - Reading directories fails
     pub fn list_all_unchecked() -> Result<Vec<Self>> {
-        Ok(Scoop::installed_apps()?
+        Ok(User::installed_apps()?
             .par_iter()
             .filter_map(
                 |path| match Self::from_path(path.join("current/install.json")) {
@@ -623,7 +623,7 @@ impl Manifest {
     /// # Panics
     /// - If the file name is invalid
     pub fn list_installed() -> Result<Vec<Result<Self>>> {
-        Ok(Scoop::installed_apps()?
+        Ok(User::installed_apps()?
             .par_iter()
             .map(|path| {
                 Self::from_path(path.join("current/manifest.json")).and_then(|mut manifest| {
@@ -841,7 +841,7 @@ impl Manifest {
 
         // todo!()
 
-        let workspace_manifest_path = Scoop::workspace_path().join(format!("{}.json", self.name));
+        let workspace_manifest_path = User::workspace_path().join(format!("{}.json", self.name));
         serde_json::to_writer_pretty(std::fs::File::create(workspace_manifest_path)?, &self)
             .map_err(|e| {
                 error!("Failed to write workspace manifest: {e}");
@@ -982,7 +982,7 @@ impl Manifest {
     /// # Errors
     /// - Missing or invalid [`InstallManifest`]
     pub fn install_manifest(&self) -> Result<InstallManifest> {
-        let apps_path = Scoop::apps_path();
+        let apps_path = User::apps_path();
         let install_path = apps_path
             .join(&self.name)
             .join("current")
@@ -999,7 +999,7 @@ impl Manifest {
 /// # Panics
 /// - The file was not valid UTF-8
 pub fn is_installed(manifest_name: impl AsRef<Path>, bucket: Option<impl AsRef<str>>) -> bool {
-    let install_path = Scoop::apps_path()
+    let install_path = User::apps_path()
         .join(manifest_name)
         .join("current/install.json");
 

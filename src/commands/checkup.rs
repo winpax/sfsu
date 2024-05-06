@@ -44,7 +44,7 @@ impl super::Command for Args {
         //     println!("\tWindows Defender may slow down or disrupt installs with realtime scanning");
         //     println!(
         //         "\tConsider running: `sudo Add-MpPreference -ExclusionPath '{}'`",
-        //         Scoop::path().display()
+        //         User::path().display()
         //     );
         // }
 

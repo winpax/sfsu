@@ -5,7 +5,7 @@ use clap::{Parser, Subcommand};
 use regex::Regex;
 use serde::Serialize;
 use sfsu_derive::Runnable;
-use sprinkles::{abandon, contexts::ScoopContext, output::wrappers::sizes::Size, Scoop};
+use sprinkles::{abandon, contexts::{ScoopContext, User}, output::wrappers::sizes::Size, Scoop};
 use tokio::task::JoinSet;
 
 mod rm;
@@ -25,7 +25,7 @@ struct CacheEntry {
 
 impl CacheEntry {
     pub async fn match_paths(patterns: &[String]) -> anyhow::Result<Vec<Self>> {
-        let cache_path = Scoop::cache_path();
+        let cache_path = User::cache_path();
 
         let patterns = patterns
             .iter()

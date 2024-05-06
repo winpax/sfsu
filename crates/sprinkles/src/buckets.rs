@@ -10,7 +10,7 @@ use rayon::prelude::*;
 use regex::Regex;
 
 use crate::{
-    contexts::ScoopContext,
+    contexts::{ScoopContext, User},
     git::{self, Repo},
     packages::{self, CreateManifest, InstallManifest, Manifest, SearchMode},
     Scoop,
@@ -51,7 +51,7 @@ impl Bucket {
     /// # Errors
     /// - Bucket does not exist
     pub fn from_name(name: impl AsRef<Path>) -> Result<Self> {
-        Self::from_path(Scoop::buckets_path().join(name))
+        Self::from_path(User::buckets_path().join(name))
     }
 
     /// Open given path as a bucket
@@ -114,7 +114,7 @@ impl Bucket {
     /// - Was unable to read the bucket directory
     /// - Any listed bucket is invalid
     pub fn list_all() -> Result<Vec<Bucket>> {
-        let bucket_dir = std::fs::read_dir(Scoop::buckets_path())?;
+        let bucket_dir = std::fs::read_dir(User::buckets_path())?;
 
         bucket_dir
             .filter(|entry| entry.as_ref().is_ok_and(|entry| entry.path().is_dir()))

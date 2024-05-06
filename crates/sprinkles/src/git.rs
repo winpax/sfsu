@@ -6,7 +6,7 @@ use derive_more::Deref;
 use git2::{Commit, DiffOptions, Direction, FetchOptions, Oid, Progress, Remote, Repository, Sort};
 use indicatif::ProgressBar;
 
-use crate::{buckets::Bucket, contexts::ScoopContext, Scoop};
+use crate::{buckets::Bucket, contexts::{ScoopContext, User}, Scoop};
 
 use self::pull::ProgressCallback;
 
@@ -75,7 +75,7 @@ impl Repo {
     /// # Errors
     /// - The Scoop app could not be opened as a repository
     pub fn scoop_app() -> Result<Self> {
-        let scoop_path = Scoop::apps_path().join("scoop").join("current");
+        let scoop_path = User::apps_path().join("scoop").join("current");
         let repo = Repository::open(scoop_path)?;
 
         Ok(Self(repo))
@@ -302,7 +302,7 @@ impl Repo {
         n: usize,
         format: impl Display,
     ) -> which::Result<Command> {
-        let git_path = Scoop::git_path()?;
+        let git_path = User::git_path()?;
 
         let mut command = Command::new(git_path);
 

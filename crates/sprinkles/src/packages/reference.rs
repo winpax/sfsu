@@ -9,7 +9,7 @@ use url::Url;
 use super::{CreateManifest, Manifest};
 use crate::{
     buckets::{self, Bucket},
-    contexts::ScoopContext,
+    contexts::{ScoopContext, User},
     let_chain,
     requests::Client,
 };
@@ -303,7 +303,7 @@ impl Package {
     pub fn installed(&self) -> Result<bool, Error> {
         let name = self.name().ok_or(Error::MissingAppName)?;
 
-        Ok(crate::Scoop::app_installed(name)?)
+        Ok(User::app_installed(name)?)
     }
 }
 

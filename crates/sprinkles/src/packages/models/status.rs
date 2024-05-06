@@ -4,7 +4,7 @@ use itertools::Itertools as _;
 use quork::traits::truthy::ContainsTruth;
 use serde::Serialize;
 
-use crate::contexts::ScoopContext;
+use crate::contexts::{ScoopContext, User};
 use crate::{buckets::Bucket, packages::reference::ManifestRef, Scoop};
 
 use crate::packages::{reference, Manifest, Result};
@@ -35,11 +35,9 @@ impl Info {
     /// - Invalid package reference name
     pub fn from_manifests(local_manifest: &Manifest, bucket: &Bucket) -> Result<Self> {
         let failed = {
-            let installed = Scoop::app_installed(&local_manifest.name)?;
+            let installed = User::app_installed(&local_manifest.name)?;
 
-            let app_path = Scoop::apps_path()
-                .join(&local_manifest.name)
-                .join("current");
+            let app_path = User::apps_path().join(&local_manifest.name).join("current");
 
             !app_path.exists() && installed
         };

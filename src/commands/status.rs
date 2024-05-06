@@ -8,7 +8,7 @@ use serde_json::Value;
 
 use sprinkles::{
     buckets::Bucket,
-    contexts::ScoopContext,
+    contexts::{ScoopContext, User},
     output::{
         sectioned::{Children, Section},
         structured::Structured,
@@ -88,7 +88,7 @@ impl super::Command for Args {
 
 impl Args {
     fn handle_scoop(&self, value: &Mutex<Value>, output: &mut dyn Write) -> anyhow::Result<()> {
-        let is_outdated = Scoop::outdated()?;
+        let is_outdated = User::outdated()?;
 
         if self.json {
             value.lock()["scoop"] = serde_json::to_value(is_outdated)?;
