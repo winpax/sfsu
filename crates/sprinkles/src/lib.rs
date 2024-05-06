@@ -38,6 +38,7 @@ pub mod hash;
 pub mod output;
 pub mod packages;
 pub mod progress;
+pub mod proxy;
 pub mod requests;
 pub mod shell;
 #[cfg(not(feature = "v2"))]

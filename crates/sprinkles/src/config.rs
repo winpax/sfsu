@@ -5,6 +5,8 @@ use std::{env, path::PathBuf};
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 
+use crate::proxy::Proxy;
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 /// Scoop configuration
 pub struct Scoop {
@@ -24,8 +26,13 @@ pub struct Scoop {
     pub scoop_branch: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
+
     /// Scoop path
     pub root_path: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    /// The proxy to use
+    pub proxy: Option<Proxy>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     /// The cache path
