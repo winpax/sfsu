@@ -310,10 +310,10 @@ pub enum TOrArrayOfTs<T> {
 }
 
 impl<T> TOrArrayOfTs<T> {
-    pub fn map<O>(&self, f: impl Fn(&T) -> O) -> TOrArrayOfTs<O> {
+    pub fn map<O>(self, f: impl Fn(T) -> O) -> TOrArrayOfTs<O> {
         match self {
             Self::Single(s) => TOrArrayOfTs::Single(f(s)),
-            Self::Array(s) => TOrArrayOfTs::Array(s.iter().map(f).collect()),
+            Self::Array(s) => TOrArrayOfTs::Array(s.into_iter().map(f).collect()),
         }
     }
 

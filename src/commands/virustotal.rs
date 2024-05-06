@@ -1,13 +1,20 @@
+use anyhow::Context;
 use clap::{Parser, ValueEnum};
 use indicatif::ProgressBar;
 use rayon::prelude::*;
 use sprinkles::{
     abandon, eprintln_green, eprintln_red, eprintln_yellow,
+    hash::Hash,
     packages::{reference::Package, CreateManifest, Manifest},
     progress::{style, ProgressOptions},
     requests::user_agent,
     Architecture, Scoop,
 };
+
+use super::status;
+
+/// `VirusTotal` limits requests to 4 per minute
+const REQUESTS_PER_MINUTE: u64 = 4;
 
 #[derive(Debug, Copy, Clone, ValueEnum, PartialEq, Eq, PartialOrd, Ord)]
 enum Status {
@@ -29,6 +36,29 @@ impl Status {
             Self::Suspicious
         } else {
             Self::Undetected
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+enum SearchType {
+    FileHash(Hash),
+    URL(String),
+}
+
+#[derive(Debug, Clone)]
+struct StrippedManifest {
+    name: String,
+    bucket: String,
+    search_type: SearchType,
+}
+
+impl StrippedManifest {
+    fn new(manifest: &Manifest, search_type: SearchType) -> Self {
+        Self {
+            name: manifest.name.clone(),
+            bucket: manifest.bucket.clone(),
+            search_type,
         }
     }
 }
@@ -104,65 +134,106 @@ impl super::Command for Args {
         let pb = ProgressBar::new(manifests.len() as u64)
             .with_style(style(Some(ProgressOptions::PosLen), None));
 
-        let matches = manifests.into_iter().map(|manifest| {
-            let client = client.clone();
-            let pb = pb.clone();
-            async move {
-                let install_config = manifest.install_config(self.arch);
-
-                let result = if let Some(hash) = install_config.hash {
-                    // TODO: Handle certain recoverable errors
-                    let result =
-                        tokio::task::spawn_blocking(move || client.file_info(&hash.to_string()))
-                            .await??;
-
-                    anyhow::Ok(Some((manifest, result)))
+        let matches = manifests
+            .into_iter()
+            .filter_map(|manifest| {
+                let result = if let Some(hash) = manifest.install_config(self.arch).hash {
+                    Some(hash.map(SearchType::FileHash).to_vec())
                 } else {
-                    anyhow::Ok(None)
+                    manifest
+                        .install_config(self.arch)
+                        .url
+                        .map(|url| url.map(SearchType::URL).to_vec())
                 };
 
-                pb.inc(1);
-                result
-            }
-        });
+                result.map(|result| {
+                    result
+                        .into_iter()
+                        .map(|r| (StrippedManifest::new(&manifest, r.clone()), r))
+                        .collect::<Vec<_>>()
+                })
+            })
+            .flatten()
+            .map(|(manifest, search_type)| {
+                let client = client.clone();
+                let pb = pb.clone();
+                async move {
+                    let result = match search_type {
+                        SearchType::FileHash(hash) => {
+                            let result = tokio::task::spawn_blocking(move || {
+                                client.file_info(&hash.to_string())
+                            })
+                            .await??;
+
+                            let stats = result
+                                .data
+                                .and_then(|data| data.attributes)
+                                .and_then(|attributes| attributes.last_analysis_stats)
+                                .context("no data")?;
+                            let detected = stats
+                                .malicious
+                                .map(|m| m + stats.suspicious.unwrap_or_default())
+                                .unwrap_or_default();
+                            let total = detected + stats.undetected.unwrap_or_default();
+
+                            anyhow::Ok(Some((
+                                manifest,
+                                Status::from_stats(detected, total),
+                                detected,
+                                total,
+                            )))
+                        }
+                        SearchType::URL(url) => {
+                            let result = tokio::task::spawn_blocking(move || client.url_info(&url))
+                                .await??;
+
+                            let stats = result
+                                .data
+                                .and_then(|data| data.attributes)
+                                .and_then(|attributes| attributes.last_analysis_stats)
+                                .context("no data")?;
+                            let detected = stats
+                                .malicious
+                                .map(|m| m + stats.suspicious.unwrap_or_default())
+                                .unwrap_or_default();
+                            let total = detected + stats.undetected.unwrap_or_default();
+
+                            anyhow::Ok(Some((
+                                manifest,
+                                Status::from_stats(detected, total),
+                                detected,
+                                total,
+                            )))
+                        }
+                    };
+
+                    pb.inc(1);
+                    result
+                }
+            });
+
         let matches = futures::future::try_join_all(matches)
             .await?
             .into_iter()
             .flatten();
 
-        for (manifest, file_info) in matches {
-            let Some(stats) = file_info
-                .data
-                .and_then(|data| data.attributes)
-                .and_then(|attributes| attributes.last_analysis_stats)
-            else {
-                eprintln_red!("No data found for {}", manifest.name);
-                continue;
-            };
-
-            let detected = stats
-                .malicious
-                .map(|m| m + stats.suspicious.unwrap_or_default())
-                .unwrap_or_default();
-            let total = detected + stats.undetected.unwrap_or_default();
-
-            let file_status = Status::from_stats(detected, total);
-
+        for (manifest, file_status, detected, total) in matches {
             if let Some(filter) = self.filter {
                 if file_status <= filter {
                     continue;
                 }
             }
 
-            let file_url = format!(
-                "https://www.virustotal.com/gui/url/{hash}",
-                hash = manifest.install_config(self.arch).hash.unwrap()
-            );
+            let mut info = format!("{}/{}: {detected}/{total}", manifest.bucket, manifest.name,);
 
-            let info = format!(
-                "{}/{}: {detected}/{total}. See more at {file_url}",
-                manifest.bucket, manifest.name,
-            );
+            if let SearchType::FileHash(hash) = manifest.search_type {
+                use std::fmt::Write;
+
+                write!(
+                    info,
+                    ". See more at https://www.virustotal.com/gui/url/{hash}"
+                )?;
+            }
 
             match file_status {
                 Status::Malicious => eprintln_red!("{info}"),
