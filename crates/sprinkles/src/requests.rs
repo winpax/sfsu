@@ -8,7 +8,10 @@
 use derive_more::Deref;
 use reqwest::header::HeaderMap;
 
-use crate::Scoop;
+use crate::{
+    contexts::{ScoopContext, User},
+    Scoop,
+};
 
 #[must_use]
 /// Get user agent for sfsu
@@ -94,7 +97,7 @@ impl Default for BlockingClient {
     fn default() -> Self {
         let client = reqwest::blocking::Client::builder().default_headers(default_headers());
 
-        let client = if let Some(proxy) = Scoop::config().expect("scoop config").proxy {
+        let client = if let Some(proxy) = User::config().expect("scoop config").proxy {
             client.proxy(proxy.try_into().expect("valid reqwest proxy"))
         } else {
             client
@@ -118,7 +121,7 @@ impl Default for AsyncClient {
     fn default() -> Self {
         let client = reqwest::Client::builder().default_headers(default_headers());
 
-        let client = if let Some(proxy) = Scoop::config().expect("scoop config").proxy {
+        let client = if let Some(proxy) = User::config().expect("scoop config").proxy {
             client.proxy(proxy.try_into().expect("valid reqwest proxy"))
         } else {
             client

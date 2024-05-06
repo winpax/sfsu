@@ -4,9 +4,10 @@ use criterion::{black_box, criterion_group, criterion_main, BatchSize, Criterion
 
 use sprinkles::{
     cache::{Downloader, Handle},
+    contexts::{ScoopContext, User},
     packages::reference::Package,
     requests::{AsyncClient, Client},
-    Architecture, Scoop,
+    Architecture,
 };
 
 fn criterion_benchmark(c: &mut Criterion) {
@@ -45,7 +46,7 @@ fn criterion_benchmark(c: &mut Criterion) {
                     .unwrap()
             },
             |manifest| async {
-                Handle::open_manifest(Scoop::cache_path(), &manifest.await, Architecture::ARCH)
+                Handle::open_manifest(User::cache_path(), &manifest.await, Architecture::ARCH)
                     .unwrap()
             },
             BatchSize::SmallInput,
@@ -71,7 +72,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         b.to_async(&runtime).iter_batched(
             || async {
                 Handle::open_manifest(
-                    Scoop::cache_path(),
+                    User::cache_path(),
                     &Package::from_str("extras/sfsu")
                         .unwrap()
                         .manifest()

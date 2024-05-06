@@ -2,6 +2,7 @@ use std::{fs::File, io::Write};
 
 use log::{Level, LevelFilter};
 use rayon::iter::{ParallelBridge, ParallelIterator};
+use sprinkles::contexts::ScoopContext;
 
 use crate::output::colours::{eprintln_red, eprintln_yellow};
 
@@ -17,11 +18,17 @@ impl Logger {
     const LEVEL_FILTER: LevelFilter = LevelFilter::Trace;
 
     pub async fn new(verbose: bool) -> Self {
-        Self::from_file(sprinkles::Scoop::new_log().await.expect("new log"), verbose)
+        Self::from_file(
+            sprinkles::contexts::User::new_log().await.expect("new log"),
+            verbose,
+        )
     }
 
     pub fn new_sync(verbose: bool) -> Self {
-        Self::from_file(sprinkles::Scoop::new_log_sync().expect("new log"), verbose)
+        Self::from_file(
+            sprinkles::contexts::User::new_log_sync().expect("new log"),
+            verbose,
+        )
     }
 
     pub fn from_file(file: File, verbose: bool) -> Self {
@@ -47,7 +54,7 @@ impl Logger {
     }
 
     pub fn cleanup_logs() -> anyhow::Result<()> {
-        let logging_dir = sprinkles::Scoop::logging_dir()?;
+        let logging_dir = sprinkles::contexts::User::logging_dir()?;
 
         let logs = std::fs::read_dir(logging_dir)?.collect::<Result<Vec<_>, _>>()?;
 

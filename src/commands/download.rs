@@ -4,9 +4,10 @@ use indicatif::MultiProgress;
 use sprinkles::{
     abandon,
     cache::{Downloader, Handle},
+    contexts::{ScoopContext, User},
     packages::reference::Package,
     requests::AsyncClient,
-    Architecture, Scoop,
+    Architecture,
 };
 
 #[derive(Debug, Clone, Parser)]
@@ -40,7 +41,7 @@ impl super::Command for Args {
                     };
 
                     let dl =
-                        Handle::open_manifest(Scoop::cache_path(), &manifest, Architecture::ARCH)?;
+                        Handle::open_manifest(User::cache_path(), &manifest, Architecture::ARCH)?;
 
                     let downloaders = dl.into_iter().map(|dl| {
                         let mp = mp.clone();

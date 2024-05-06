@@ -6,11 +6,12 @@ use indicatif::ProgressBar;
 use rayon::prelude::*;
 use sprinkles::{
     calm_panic::CalmUnwrap,
+    contexts::{ScoopContext, User},
     hash::Hash,
     packages::{reference::Package, CreateManifest, Manifest},
     progress::{style, ProgressOptions},
     requests::user_agent,
-    Architecture, Scoop,
+    Architecture,
 };
 
 use crate::{
@@ -129,7 +130,7 @@ impl super::Command for Args {
     const BETA: bool = true;
 
     async fn runner(self) -> Result<(), anyhow::Error> {
-        let config = Scoop::config()?;
+        let config = User::config()?;
         let api_key = config.virustotal_api_key.calm_expect(
             "No virustotal api key found.\n  Get one at https://www.virustotal.com/gui/my-apikey and set with\n  scoop config virustotal_api_key <API key>",
         );
@@ -138,7 +139,7 @@ impl super::Command for Args {
 
         #[allow(clippy::redundant_closure)]
         let manifests = if self.all {
-            Scoop::installed_apps()?
+            User::installed_apps()?
                 .into_par_iter()
                 .map(|path| path.join("current").join("manifest.json"))
                 .filter(|path| path.exists())
