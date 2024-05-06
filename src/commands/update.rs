@@ -4,7 +4,13 @@ use itertools::Itertools;
 use rayon::prelude::*;
 
 use sprinkles::{
-    buckets::{self, Bucket}, config::Scoop as ScoopConfig, contexts::ScoopContext, git::__stats_callback, output::sectioned::{Children, Section}, progress::{style, Message, ProgressOptions}, Scoop
+    buckets::{self, Bucket},
+    config::Scoop as ScoopConfig,
+    contexts::ScoopContext,
+    git::__stats_callback,
+    output::sectioned::{Children, Section},
+    progress::{style, Message, ProgressOptions},
+    Scoop,
 };
 
 #[derive(Debug, Clone, Parser)]

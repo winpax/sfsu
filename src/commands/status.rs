@@ -7,10 +7,15 @@ use rayon::prelude::*;
 use serde_json::Value;
 
 use sprinkles::{
-    buckets::Bucket, contexts::ScoopContext, output::{
+    buckets::Bucket,
+    contexts::ScoopContext,
+    output::{
         sectioned::{Children, Section},
         structured::Structured,
-    }, packages::models::{install, status::Info}, progress::style, Scoop
+    },
+    packages::models::{install, status::Info},
+    progress::style,
+    Scoop,
 };
 
 #[derive(Debug, Copy, Clone, ValueEnum, ListVariants)]
