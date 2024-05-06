@@ -25,6 +25,19 @@ pub enum Error {
     Git(#[from] git::Error),
 }
 
+/// An adapter for scoop contexts
+///
+/// This is used to provide a common interface for scoop contexts, and to allow for mocking in tests
+///
+/// Generally, you should not call this type directly, but instead use the [`User`] or [`Global`] types,
+/// or another type that implements [`ScoopContext`].
+///
+/// # Example
+/// ```
+/// use sprinkles::contexts::{ScoopContext, User};
+///
+/// let scoop_path = User::path();
+/// ```
 pub trait ScoopContext<C> {
     /// Load the Scoop configuration
     ///
