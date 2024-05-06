@@ -26,7 +26,7 @@ impl RateLimiter {
     pub fn new(rate: u64, reset: Duration) -> Self {
         Self {
             rate,
-            completed: Arc::default(),
+            completed: Arc::new(Mutex::new(rate)),
             reset,
             remaining: Arc::new(Mutex::new(reset)),
             now: Arc::new(Mutex::new(Instant::now())),
@@ -34,12 +34,13 @@ impl RateLimiter {
     }
 
     pub fn try_wait(&self) -> WaitResult {
-        if let Some(completed) = self.completed.lock().checked_sub(1) {
-            *self.completed.lock() = completed;
+        let mut completed = self.completed.lock();
+        if let Some(new_completed) = completed.checked_sub(1) {
+            *completed = new_completed;
             return WaitResult::Ready;
         }
 
-        *self.completed.lock() = self.rate;
+        *completed = self.rate;
 
         let delta = self.now.lock().elapsed();
         *self.now.lock() = Instant::now();
