@@ -2,7 +2,6 @@ use std::time::Duration;
 
 use anyhow::Context;
 use clap::{Parser, ValueEnum};
-use futures::FutureExt;
 use indicatif::ProgressBar;
 use rayon::prelude::*;
 use sprinkles::{
