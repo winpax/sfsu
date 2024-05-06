@@ -245,7 +245,16 @@ impl Scoop {
     #[must_use]
     /// Gets the user's scoop cache path
     pub fn cache_path() -> PathBuf {
-        Self::scoop_sub_path("cache")
+        if let Some(cache_path) = std::env::var_os("SCOOP_CACHE") {
+            PathBuf::from(cache_path)
+        } else if let Some(cache_path) = config::Scoop::load()
+            .ok()
+            .and_then(|config| config.cache_path)
+        {
+            cache_path
+        } else {
+            Self::scoop_sub_path("cache")
+        }
     }
 
     #[must_use]
