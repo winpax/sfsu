@@ -61,6 +61,16 @@ impl StrippedManifest {
     }
 }
 
+/// Value should be a `Root` object
+fn extract_info(value: &serde_json::Value) -> anyhow::Result<(u64, u64)> {
+    let stats = &value["data"]["attributes"]["last_analysis_stats"];
+    let detected = stats["malicious"].as_u64().context("no malicious")?
+        + stats["suspicious"].as_u64().context("no suspicious")?;
+    let total = detected + stats["undetected"].as_u64().context("no undetected")?;
+
+    Ok((detected, total))
+}
+
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
     // TODO: Use manifest reference and -a flag for scanning installed apps
@@ -96,16 +106,6 @@ pub struct Args {
 
     #[clap(from_global)]
     json: bool,
-}
-
-/// Value should be a `Root` object
-fn extract_info(value: &serde_json::Value) -> anyhow::Result<(u64, u64)> {
-    let stats = &value["data"]["attributes"]["last_analysis_stats"];
-    let detected = stats["malicious"].as_u64().context("no malicious")?
-        + stats["suspicious"].as_u64().context("no suspicious")?;
-    let total = detected + stats["undetected"].as_u64().context("no undetected")?;
-
-    Ok((detected, total))
 }
 
 impl super::Command for Args {
