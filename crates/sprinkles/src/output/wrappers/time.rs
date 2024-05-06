@@ -29,7 +29,8 @@ fn system_time_to_date_time(time: SystemTime) -> LocalResult<DateTime<Local>> {
 }
 
 #[derive(Debug, Copy, Clone, AsRef, AsMut, Deref, DerefMut)]
-#[deprecated(since = "1.10.0", note = "Use `NicerNaiveTime` instead")]
+#[deprecated(note = "Use `NicerNaiveTime` instead")]
+#[cfg(not(feature = "v2"))]
 /// A nicer way to display times
 pub struct NicerLocalTime(DateTime<Local>);
 

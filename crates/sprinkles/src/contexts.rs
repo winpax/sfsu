@@ -103,6 +103,7 @@ pub trait ScoopContext<C> {
     #[deprecated(
         note = "You should implement this yourself, as this function is inherently opinionated"
     )]
+    #[cfg(not(feature = "v2"))]
     #[allow(async_fn_in_trait)]
     /// Create a new log file
     async fn new_log() -> Result<File, Error>;
@@ -110,6 +111,7 @@ pub trait ScoopContext<C> {
     #[deprecated(
         note = "You should implement this yourself, as this function is inherently opinionated"
     )]
+    #[cfg(not(feature = "v2"))]
     /// Create a new log file
     ///
     /// This function is synchronous and does not allow for timeouts.

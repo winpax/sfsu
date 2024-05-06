@@ -10,7 +10,7 @@ use sprinkles::{
     hash::Hash,
     packages::{reference::Package, CreateManifest, Manifest},
     progress::{style, ProgressOptions},
-    requests::user_agent,
+    requests::USER_AGENT,
     Architecture,
 };
 
@@ -135,7 +135,7 @@ impl super::Command for Args {
             "No virustotal api key found.\n  Get one at https://www.virustotal.com/gui/my-apikey and set with\n  scoop config virustotal_api_key <API key>",
         );
 
-        let client = vt3::VtClient::new(&api_key).user_agent(user_agent());
+        let client = vt3::VtClient::new(&api_key).user_agent(USER_AGENT);
 
         #[allow(clippy::redundant_closure)]
         let manifests = if self.all {
