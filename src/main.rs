@@ -10,6 +10,7 @@
 mod commands;
 mod limits;
 mod logging;
+mod virustotal;
 
 use std::{
     io::IsTerminal,
