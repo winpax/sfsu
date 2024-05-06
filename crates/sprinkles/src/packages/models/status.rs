@@ -5,7 +5,7 @@ use quork::traits::truthy::ContainsTruth;
 use serde::Serialize;
 
 use crate::contexts::{ScoopContext, User};
-use crate::{buckets::Bucket, packages::reference::ManifestRef, Scoop};
+use crate::{buckets::Bucket, packages::reference::ManifestRef};
 
 use crate::packages::{reference, Manifest, Result};
 

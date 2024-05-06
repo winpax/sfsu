@@ -10,7 +10,6 @@ use reqwest::header::HeaderMap;
 
 use crate::{
     contexts::{ScoopContext, User},
-    Scoop,
 };
 
 #[must_use]
