@@ -129,7 +129,7 @@ impl super::Command for Args {
         } else {
             let manifests = self
                 .apps
-                .into_iter()
+                .iter()
                 .map(|reference| async move { reference.list_manifests().await });
 
             futures::future::try_join_all(manifests)
@@ -202,29 +202,43 @@ impl super::Command for Args {
             .flatten();
 
         for (manifest, file_status, detected, total) in matches {
-            if let Some(filter) = self.filter {
-                if file_status <= filter {
-                    continue;
-                }
-            }
-
-            let mut info = format!("{}/{}: {detected}/{total}", manifest.bucket, manifest.name,);
-
-            if let SearchType::FileHash(hash) = manifest.search_type {
-                use std::fmt::Write;
-
-                write!(
-                    info,
-                    ". See more at https://www.virustotal.com/gui/url/{hash}"
-                )?;
-            }
-
-            match file_status {
-                Status::Malicious => eprintln_red!("{info}"),
-                Status::Suspicious => eprintln_yellow!("{info}"),
-                Status::Undetected => eprintln_green!("{info}"),
-            };
+            self.handle_output(manifest, file_status, detected, total)?;
         }
+
+        Ok(())
+    }
+}
+
+impl Args {
+    fn handle_output(
+        &self,
+        manifest: StrippedManifest,
+        file_status: Status,
+        detected: u64,
+        total: u64,
+    ) -> std::fmt::Result {
+        if let Some(filter) = self.filter {
+            if file_status <= filter {
+                return Ok(());
+            }
+        }
+
+        let mut info = format!("{}/{}: {detected}/{total}", manifest.bucket, manifest.name,);
+
+        if let SearchType::FileHash(hash) = manifest.search_type {
+            use std::fmt::Write;
+
+            write!(
+                info,
+                ". See more at https://www.virustotal.com/gui/url/{hash}"
+            )?;
+        }
+
+        match file_status {
+            Status::Malicious => eprintln_red!("{info}"),
+            Status::Suspicious => eprintln_yellow!("{info}"),
+            Status::Undetected => eprintln_green!("{info}"),
+        };
 
         Ok(())
     }
