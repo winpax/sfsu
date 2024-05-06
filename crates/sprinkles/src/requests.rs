@@ -8,6 +8,8 @@
 use derive_more::Deref;
 use reqwest::header::HeaderMap;
 
+use crate::Scoop;
+
 #[must_use]
 /// Get user agent for sfsu
 pub const fn user_agent<'a>() -> &'a str {
@@ -90,12 +92,15 @@ impl ClientLike<reqwest::blocking::Client> for BlockingClient {
 
 impl Default for BlockingClient {
     fn default() -> Self {
-        Self(
-            reqwest::blocking::Client::builder()
-                .default_headers(default_headers())
-                .build()
-                .unwrap(),
-        )
+        let client = reqwest::blocking::Client::builder().default_headers(default_headers());
+
+        let client = if let Some(proxy) = Scoop::config().expect("scoop config").proxy {
+            client.proxy(proxy.try_into().expect("valid reqwest proxy"))
+        } else {
+            client
+        };
+
+        Self(client.build().unwrap())
     }
 }
 
@@ -111,12 +116,15 @@ impl ClientLike<reqwest::Client> for AsyncClient {
 
 impl Default for AsyncClient {
     fn default() -> Self {
-        Self(
-            reqwest::Client::builder()
-                .default_headers(default_headers())
-                .build()
-                .unwrap(),
-        )
+        let client = reqwest::Client::builder().default_headers(default_headers());
+
+        let client = if let Some(proxy) = Scoop::config().expect("scoop config").proxy {
+            client.proxy(proxy.try_into().expect("valid reqwest proxy"))
+        } else {
+            client
+        };
+
+        Self(client.build().unwrap())
     }
 }
 

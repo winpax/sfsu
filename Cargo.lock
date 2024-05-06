@@ -2682,6 +2682,7 @@ dependencies = [
  "strum",
  "sxd-document",
  "sxd-xpath",
+ "system-proxy",
  "thiserror",
  "tokio",
  "tokio-util",
@@ -2850,6 +2851,16 @@ checksum = "a75fb188eb626b924683e3b95e3a48e63551fcfb51949de2f06a9d91dbee93c9"
 dependencies = [
  "core-foundation-sys",
  "libc",
+]
+
+[[package]]
+name = "system-proxy"
+version = "0.1.0"
+source = "git+https://github.com/winpax/system-proxy.git#b8f0c62446503b4e0ea5717d39b00ce988486376"
+dependencies = [
+ "thiserror",
+ "windows",
+ "winreg",
 ]
 
 [[package]]
