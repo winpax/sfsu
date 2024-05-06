@@ -129,6 +129,8 @@ pub struct Args {
 }
 
 impl super::Command for Args {
+    const BETA: bool = true;
+
     async fn runner(self) -> Result<(), anyhow::Error> {
         let config = Scoop::config()?;
         let api_key = config.virustotal_api_key.calm_expect(
