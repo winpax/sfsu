@@ -204,7 +204,7 @@ pub struct AutoupdateConfig {
     pub env_set: Option<HashMap<String, Option<serde_json::Value>>>,
     pub extract_dir: Option<StringArray>,
     pub hash: Option<HashExtractionOrArrayOfHashExtractions>,
-    pub installer: Option<PurpleInstaller>,
+    pub installer: Option<Installer>,
     pub shortcuts: Option<Vec<Vec<String>>>,
     pub url: Option<StringArray>,
 }
