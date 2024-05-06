@@ -2676,7 +2676,6 @@ dependencies = [
  "serde_json",
  "serde_json_path",
  "serde_with",
- "sfsu-derive",
  "sha1",
  "sha2",
  "strum",

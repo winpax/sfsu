@@ -11,6 +11,7 @@ mod commands;
 mod errors;
 mod limits;
 mod logging;
+mod output;
 
 use std::{
     io::IsTerminal,

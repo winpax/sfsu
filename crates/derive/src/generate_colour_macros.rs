@@ -59,11 +59,11 @@ pub fn generate_colour_macros(colour: syn::Ident) -> TokenStream {
             }};
         }
 
-        pub use #ident;
-        pub use #ident_bright;
-        pub use #println;
-        pub use #println_bright;
-        pub use #eprintln;
-        pub use #eprintln_bright;
+        // pub use #ident;
+        // pub use #ident_bright;
+        // pub use #println;
+        // pub use #println_bright;
+        // pub use #eprintln;
+        // pub use #eprintln_bright;
     }
 }

@@ -1,8 +1,8 @@
 use clap::Parser;
-use sprinkles::{eprintln_bright_yellow, output::wrappers::sizes::Size};
+use sprinkles::output::wrappers::sizes::Size;
 use tokio::task::JoinSet;
 
-use crate::commands::Command;
+use crate::{commands::Command, output::colours::eprintln_bright_yellow};
 
 use super::CacheEntry;
 

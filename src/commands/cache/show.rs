@@ -1,10 +1,7 @@
 use clap::Parser;
-use sprinkles::{
-    eprintln_bright_yellow,
-    output::{structured::Structured, wrappers::sizes::Size},
-};
+use sprinkles::output::{structured::Structured, wrappers::sizes::Size};
 
-use crate::commands::Command;
+use crate::{commands::Command, output::colours::eprintln_bright_yellow};
 
 use super::CacheEntry;
 
