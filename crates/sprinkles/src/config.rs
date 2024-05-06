@@ -5,6 +5,8 @@ use std::{env, path::PathBuf};
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 
+use crate::proxy::Proxy;
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 /// Scoop configuration
 pub struct Scoop {
@@ -29,7 +31,7 @@ pub struct Scoop {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     /// The proxy to use
-    pub proxy: Option<String>,
+    pub proxy: Option<Proxy>,
 
     #[serde(flatten)]
     /// Any other values in the config
