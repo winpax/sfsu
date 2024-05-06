@@ -1,15 +1,3 @@
-// The imports aren't actually unused, but they are unused in the macros themselves
 #![allow(unused_imports)]
 
-//! Coloured output print macros.
-
-use sfsu_derive::generate_colour_macros;
-
-generate_colour_macros!(black);
-generate_colour_macros!(red);
-generate_colour_macros!(green);
-generate_colour_macros!(yellow);
-generate_colour_macros!(blue);
-generate_colour_macros!(magenta);
-generate_colour_macros!(cyan);
-generate_colour_macros!(white);
+include!(concat!(env!("OUT_DIR"), "/colours.rs"));

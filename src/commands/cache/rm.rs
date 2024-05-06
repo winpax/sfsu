@@ -2,7 +2,7 @@ use clap::Parser;
 use sprinkles::output::wrappers::sizes::Size;
 use tokio::task::JoinSet;
 
-use crate::{commands::Command, output::colours::eprintln_bright_yellow};
+use crate::{commands::Command, output::colours::eprintln_yellow_bright};
 
 use super::CacheEntry;
 
@@ -37,7 +37,7 @@ impl Command for Args {
             eprintln!("Removed: {}", entry.url);
         }
 
-        eprintln_bright_yellow!("Deleted {total_entires} files, {total_size}");
+        eprintln_yellow_bright!("Deleted {total_entires} files, {total_size}");
 
         Ok(())
     }
