@@ -101,8 +101,8 @@ impl std::fmt::Display for Proxy {
             write!(f, "{username}:")?;
         }
 
-        if let Some(password) = &self.password {
-            write!(f, "{password}@")?;
+        if let Some(prox_pass) = &self.password {
+            write!(f, "{prox_pass}@")?;
         }
 
         write!(f, "{}", self.host)?;
