@@ -2,6 +2,7 @@ use std::time::Duration;
 
 use anyhow::Context;
 use clap::{Parser, ValueEnum};
+use futures::FutureExt;
 use indicatif::ProgressBar;
 use rayon::prelude::*;
 use sprinkles::{
@@ -192,19 +193,16 @@ impl super::Command for Args {
 
                     pb.inc(1);
 
-                    anyhow::Ok(Some((
+                    anyhow::Ok((
                         manifest,
                         Status::from_stats(detected, total),
                         detected,
                         total,
-                    )))
+                    ))
                 }
             });
 
-        let matches = futures::future::try_join_all(matches)
-            .await?
-            .into_iter()
-            .flatten();
+        let matches = futures::future::try_join_all(matches).await?.into_iter();
 
         for (manifest, file_status, detected, total) in matches {
             self.handle_output(manifest, file_status, detected, total)?;
