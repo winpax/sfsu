@@ -18,7 +18,7 @@ pub struct User {
 
 impl User {
     #[must_use]
-    /// Construct a new user context
+    /// Construct a new user context adapter
     pub fn new() -> Self {
         use std::env::var_os;
 

@@ -7,7 +7,7 @@ use serde::Serialize;
 use sfsu_derive::Runnable;
 use sprinkles::{
     abandon, config,
-    contexts::{ScoopContext, User},
+    contexts::{ScoopContext},
     output::wrappers::sizes::Size,
 };
 use tokio::task::JoinSet;

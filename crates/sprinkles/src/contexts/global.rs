@@ -3,7 +3,6 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use futures::Future;
 use windows::Win32::Foundation::HWND;
 
 use crate::{config, git};
@@ -17,7 +16,15 @@ pub struct Global {
     user_context: User,
 }
 
+impl Default for Global {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Global {
+    #[must_use]
+    /// Construct a new global context adapter
     pub fn new() -> Self {
         use std::env::var_os;
 
@@ -36,20 +43,26 @@ impl Global {
                 };
 
                 let mut buf = [0u16; MAX_PATH as usize];
-                unsafe {
+                let success = unsafe {
+                    #[allow(clippy::cast_possible_wrap)]
                     SHGetSpecialFolderPathW(
                         HWND::default(),
                         &mut buf,
                         CSIDL_COMMON_APPDATA as i32,
                         true,
-                    );
-                }
+                    )
+                    .as_bool()
+                };
 
-                let string = OsString::from_wide(&buf);
-                let path = PathBuf::from(string).join("scoop");
+                let path = if success {
+                    let string = OsString::from_wide(&buf);
+                    PathBuf::from(string)
+                } else {
+                    "C:\\ProgramData".into()
+                }
+                .join("scoop");
 
                 if !path.exists() {
-                    // Only create dir is needed here as the parent dir is created by SHGetSpecialFolderPathW
                     std::fs::create_dir(&path).expect("could not create scoop global path");
                 }
 

@@ -15,7 +15,6 @@ mod output;
 
 use std::{
     io::IsTerminal,
-    ops::Deref,
     sync::atomic::{AtomicBool, Ordering},
 };
 
@@ -24,8 +23,7 @@ use clap::Parser;
 use commands::Commands;
 use logging::Logger;
 use sprinkles::{
-    config,
-    contexts::{AnyContext, Global, ScoopContext, User},
+    contexts::{AnyContext, Global, User},
 };
 
 mod versions {

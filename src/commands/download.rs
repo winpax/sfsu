@@ -5,7 +5,7 @@ use sprinkles::{
     abandon,
     cache::{Downloader, Handle},
     config,
-    contexts::{ScoopContext, User},
+    contexts::ScoopContext,
     packages::reference::Package,
     requests::AsyncClient,
     Architecture,
