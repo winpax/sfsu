@@ -16,6 +16,8 @@ pub struct User {
 }
 
 impl User {
+    #[must_use]
+    /// Construct a new user context
     pub fn new() -> Self {
         use std::env::var_os;
 
@@ -44,6 +46,12 @@ impl User {
         let config = config::Scoop::load().expect("scoop config loaded correctly");
 
         Self { config, path }
+    }
+}
+
+impl Default for User {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

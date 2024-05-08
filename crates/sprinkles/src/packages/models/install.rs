@@ -3,7 +3,8 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    contexts::{ScoopContext, User},
+    config,
+    contexts::ScoopContext,
     packages::{CreateManifest, Result},
     Architecture,
 };
@@ -43,8 +44,12 @@ impl Manifest {
     ///
     /// # Errors
     /// - Missing or invalid manifest
-    pub fn get_manifest(&self) -> Result<super::manifest::Manifest> {
-        let manifest_path = User::apps_path()
+    pub fn get_manifest(
+        &self,
+        ctx: &impl ScoopContext<config::Scoop>,
+    ) -> Result<super::manifest::Manifest> {
+        let manifest_path = ctx
+            .apps_path()
             .join(&self.name)
             .join("current")
             .join("manifest.json");

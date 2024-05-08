@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     buckets::{Bucket as SfsuBucket, Error as BucketError},
     config,
+    contexts::ScoopContext,
     packages::{Error as PackageError, MinInfo},
 };
 
@@ -76,13 +77,13 @@ impl Export {
     /// - The buckets could not be listed
     /// - The installed apps could not be listed
     /// - The buckets could not be converted
-    pub fn load() -> Result<Self, Error> {
+    pub fn load(ctx: &impl ScoopContext<config::Scoop>) -> Result<Self, Error> {
         let config = config::Scoop::load()?;
-        let buckets = SfsuBucket::list_all()?
+        let buckets = SfsuBucket::list_all(ctx)?
             .into_iter()
             .map(Bucket::try_from)
             .collect::<Result<Vec<_>, _>>()?;
-        let mut apps = MinInfo::list_installed(None)?;
+        let mut apps = MinInfo::list_installed(ctx, None)?;
         apps.par_sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
 
         Ok(Self {

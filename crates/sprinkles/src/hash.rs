@@ -742,9 +742,10 @@ mod tests {
         }
 
         pub async fn test(self) -> anyhow::Result<()> {
-            let manifest = self.package.manifest().await?;
+            let ctx = User::new();
+            let manifest = self.package.manifest(&ctx).await?;
 
-            let hash = Hash::get_for_app(&User::new(), &manifest, Architecture::ARCH).await?;
+            let hash = Hash::get_for_app(&ctx, &manifest, Architecture::ARCH).await?;
 
             let actual_hash = manifest
                 .architecture
@@ -861,7 +862,7 @@ mod tests {
     async fn test_sfsu_autoupdate() -> anyhow::Result<()> {
         let mut package = reference::Package::from_str("extras/sfsu")?;
         package.set_version("1.10.2".to_string());
-        let manifest = package.manifest().await?;
+        let manifest = package.manifest(&User::new()).await?;
 
         assert_eq!(
             manifest
@@ -882,11 +883,13 @@ mod tests {
 
     #[tokio::test]
     async fn test_computed_hash() -> anyhow::Result<()> {
+        let ctx = User::new();
+
         let package = reference::Package::from_str("extras/sfsu")?;
-        let mut manifest = package.manifest().await?;
+        let mut manifest = package.manifest(&ctx).await?;
         manifest.autoupdate.as_mut().unwrap().default_config.hash = None;
 
-        manifest.set_version("1.10.2".to_string()).await?;
+        manifest.set_version(&ctx, "1.10.2".to_string()).await?;
 
         assert_eq!(
             manifest

@@ -10,6 +10,7 @@ use rayon::prelude::*;
 use regex::Regex;
 
 use crate::{
+    config,
     contexts::ScoopContext,
     git::{self, Repo},
     packages::{self, CreateManifest, InstallManifest, Manifest, SearchMode},
@@ -49,8 +50,8 @@ impl Bucket {
     ///
     /// # Errors
     /// - Bucket does not exist
-    pub fn from_name<C>(context: &impl ScoopContext<C>, name: impl AsRef<Path>) -> Result<Self> {
-        Self::from_path(context.buckets_path().join(name))
+    pub fn from_name<C>(ctx: &impl ScoopContext<C>, name: impl AsRef<Path>) -> Result<Self> {
+        Self::from_path(ctx.buckets_path().join(name))
     }
 
     /// Open given path as a bucket
@@ -73,13 +74,13 @@ impl Bucket {
     /// - Any listed or provided bucket is invalid
     /// - Unable to read the bucket directory
     pub fn one_or_all<C>(
-        context: &impl ScoopContext<C>,
+        ctx: &impl ScoopContext<C>,
         name: Option<impl AsRef<Path>>,
     ) -> Result<Vec<Self>> {
         if let Some(name) = name {
-            Ok(vec![Bucket::from_name(context, name)?])
+            Ok(vec![Bucket::from_name(ctx, name)?])
         } else {
-            Bucket::list_all(context)
+            Bucket::list_all(ctx)
         }
     }
 
@@ -115,8 +116,8 @@ impl Bucket {
     /// # Errors
     /// - Was unable to read the bucket directory
     /// - Any listed bucket is invalid
-    pub fn list_all<C>(context: &impl ScoopContext<C>) -> Result<Vec<Bucket>> {
-        let bucket_dir = std::fs::read_dir(context.buckets_path())?;
+    pub fn list_all<C>(ctx: &impl ScoopContext<C>) -> Result<Vec<Bucket>> {
+        let bucket_dir = std::fs::read_dir(ctx.buckets_path())?;
 
         bucket_dir
             .filter(|entry| entry.as_ref().is_ok_and(|entry| entry.path().is_dir()))
@@ -202,12 +203,16 @@ impl Bucket {
     ///
     /// # Errors
     /// - Could not load the manifest from the path
-    pub fn matches(
+    pub fn matches<'a, C: ScoopContext<config::Scoop>>(
         &self,
+        ctx: &'a C,
         installed_only: bool,
         search_regex: &Regex,
         search_mode: SearchMode,
-    ) -> packages::Result<Vec<Manifest>> {
+    ) -> packages::Result<Vec<Manifest>>
+    where
+        &'a C: Send + Sync,
+    {
         // Ignore loose files in the buckets dir
         if !self.path().is_dir() {
             return Ok(vec![]);
@@ -222,7 +227,7 @@ impl Bucket {
                 if search_mode.eager_name_matches(manifest_name, search_regex) {
                     let manifest = self.get_manifest(manifest_name).ok()?;
 
-                    if !installed_only || manifest.is_installed(Some(&self.name())) {
+                    if !installed_only || manifest.is_installed(ctx, Some(&self.name())) {
                         Some(manifest)
                     } else {
                         None
@@ -241,8 +246,8 @@ impl Bucket {
     /// # Errors
     /// Invalid install manifest
     /// Reading directories fails
-    pub fn used() -> packages::Result<HashSet<String>> {
-        Ok(InstallManifest::list_all()?
+    pub fn used(ctx: &impl ScoopContext<config::Scoop>) -> packages::Result<HashSet<String>> {
+        Ok(InstallManifest::list_all(ctx)?
             .par_iter()
             .filter_map(|entry| entry.bucket.clone())
             .collect())
@@ -254,8 +259,8 @@ impl Bucket {
     /// # Errors
     /// Invalid install manifest
     /// Reading directories fails
-    pub fn is_used(&self) -> packages::Result<bool> {
-        Ok(Self::used()?.contains(&self.name().to_string()))
+    pub fn is_used(&self, ctx: &impl ScoopContext<config::Scoop>) -> packages::Result<bool> {
+        Ok(Self::used(ctx)?.contains(&self.name().to_string()))
     }
 
     /// Checks if the given bucket is outdated
