@@ -90,66 +90,56 @@ impl ScoopContext<config::Scoop> for Global {
     }
 
     fn git_path() -> Result<PathBuf, which::Error> {
-        todo!()
-    }
-
-    fn scoop_sub_path(&self, segment: impl AsRef<Path>) -> PathBuf {
-        todo!()
+        User::git_path()
     }
 
     fn apps_path(&self) -> PathBuf {
-        todo!()
+        self.sub_path("apps")
     }
 
     fn buckets_path(&self) -> PathBuf {
-        todo!()
+        self.user_context.buckets_path()
     }
 
     fn cache_path(&self) -> PathBuf {
-        todo!()
+        self.user_context.cache_path()
     }
 
     fn persist_path(&self) -> PathBuf {
-        todo!()
+        self.user_context.persist_path()
     }
 
     fn shims_path(&self) -> PathBuf {
-        todo!()
+        self.sub_path("shims")
     }
 
     fn workspace_path(&self) -> PathBuf {
-        todo!()
-    }
-
-    fn installed_apps(&self) -> std::io::Result<Vec<PathBuf>> {
-        todo!()
+        self.user_context.workspace_path()
     }
 
     fn logging_dir(&self) -> std::io::Result<PathBuf> {
-        todo!()
+        self.user_context.logging_dir()
     }
 
+    #[allow(deprecated)]
     async fn new_log(&self) -> Result<File, super::Error> {
-        todo!()
+        self.user_context.new_log().await
     }
 
+    #[allow(deprecated)]
     fn new_log_sync(&self) -> Result<File, super::Error> {
-        todo!()
-    }
-
-    fn app_installed(&self, name: impl AsRef<str>) -> std::io::Result<bool> {
-        todo!()
+        self.user_context.new_log_sync()
     }
 
     fn open_repo(&self) -> Option<git::Result<git::Repo>> {
-        todo!()
+        self.user_context.open_repo()
     }
 
     fn context_app_path(&self) -> PathBuf {
-        todo!()
+        self.user_context.context_app_path()
     }
 
     async fn outdated(&self) -> Result<bool, super::Error> {
-        todo!()
+        self.user_context.outdated().await
     }
 }

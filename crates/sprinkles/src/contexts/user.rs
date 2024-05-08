@@ -1,13 +1,11 @@
 use std::{
-    ffi::OsStr,
     fs::File,
     path::{Path, PathBuf},
 };
 
 use chrono::Local;
-use rayon::prelude::*;
 
-use crate::{abandon, config, contexts::Error, git};
+use crate::{config, contexts::Error, git};
 
 #[derive(Debug, Clone)]
 /// User's Scoop install adapter
@@ -85,26 +83,16 @@ impl super::ScoopContext<config::Scoop> for User {
         which::which("git")
     }
 
-    fn scoop_sub_path(&self, segment: impl AsRef<Path>) -> PathBuf {
-        let path = self.path().join(segment.as_ref());
-
-        if !path.exists() && std::fs::create_dir_all(&path).is_err() {
-            abandon!("Could not create {} directory", segment.as_ref().display());
-        }
-
-        path
-    }
-
     #[must_use]
     /// Gets the user's scoop apps path
     fn apps_path(&self) -> PathBuf {
-        self.scoop_sub_path("apps")
+        self.sub_path("apps")
     }
 
     #[must_use]
     /// Gets the user's scoop buckets path
     fn buckets_path(&self) -> PathBuf {
-        self.scoop_sub_path("buckets")
+        self.sub_path("buckets")
     }
 
     #[must_use]
@@ -118,53 +106,26 @@ impl super::ScoopContext<config::Scoop> for User {
         {
             cache_path
         } else {
-            self.scoop_sub_path("cache")
+            self.sub_path("cache")
         }
     }
 
     #[must_use]
     /// Gets the user's scoop persist path
     fn persist_path(&self) -> PathBuf {
-        self.scoop_sub_path("persist")
+        self.sub_path("persist")
     }
 
     #[must_use]
     /// Gets the user's scoop shims path
     fn shims_path(&self) -> PathBuf {
-        self.scoop_sub_path("shims")
+        self.sub_path("shims")
     }
 
     #[must_use]
     /// Gets the user's scoop workspace path
     fn workspace_path(&self) -> PathBuf {
-        self.scoop_sub_path("workspace")
-    }
-
-    /// List all scoop apps and return their paths
-    ///
-    /// # Errors
-    /// - Reading dir fails
-    ///
-    /// # Panics
-    /// - Reading dir fails
-    fn installed_apps(&self) -> std::io::Result<Vec<PathBuf>> {
-        let apps_path = self.apps_path();
-
-        let read = apps_path.read_dir()?;
-
-        Ok(read
-            .par_bridge()
-            .filter_map(|package| {
-                let path = package.expect("valid path").path();
-
-                // We cannot search the scoop app as it is built in and hence doesn't contain any manifest
-                if path.file_name() == Some(OsStr::new("scoop")) {
-                    None
-                } else {
-                    Some(path)
-                }
-            })
-            .collect())
+        self.sub_path("workspace")
     }
 
     /// Get the path to the log directory
@@ -252,17 +213,6 @@ impl super::ScoopContext<config::Scoop> for User {
         };
 
         Ok(file)
-    }
-
-    /// Checks if the app is installed by its name
-    ///
-    /// # Errors
-    /// - Reading app dir fails
-    fn app_installed(&self, name: impl AsRef<str>) -> std::io::Result<bool> {
-        Ok(self
-            .installed_apps()?
-            .iter()
-            .any(|path| path.file_name() == Some(OsStr::new(name.as_ref()))))
     }
 
     /// Open Scoop app repository

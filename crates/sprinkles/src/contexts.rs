@@ -4,11 +4,12 @@
 //! Scoop context adapters
 
 use std::{
+    ffi::OsStr,
     fs::File,
     path::{Path, PathBuf},
 };
 
-use crate::{config, git};
+use crate::{abandon, config, git};
 
 mod global;
 mod user;
@@ -68,7 +69,15 @@ pub trait ScoopContext<C>: Clone + Send + Sync + 'static {
     fn git_path() -> Result<PathBuf, which::Error>;
 
     /// Get a sub path within the context's path
-    fn scoop_sub_path(&self, segment: impl AsRef<Path>) -> PathBuf;
+    fn sub_path(&self, segment: impl AsRef<Path>) -> PathBuf {
+        let path = self.path().join(segment.as_ref());
+
+        if !path.exists() && std::fs::create_dir_all(&path).is_err() {
+            abandon!("Could not create {} directory", segment.as_ref().display());
+        }
+
+        path
+    }
 
     #[must_use]
     /// Gets the contexts's apps path
@@ -95,7 +104,27 @@ pub trait ScoopContext<C>: Clone + Send + Sync + 'static {
     fn workspace_path(&self) -> PathBuf;
 
     /// List all scoop apps and return their paths
-    fn installed_apps(&self) -> std::io::Result<Vec<PathBuf>>;
+    fn installed_apps(&self) -> std::io::Result<Vec<PathBuf>> {
+        use rayon::prelude::*;
+
+        let apps_path = self.apps_path();
+
+        let read = apps_path.read_dir()?;
+
+        Ok(read
+            .par_bridge()
+            .filter_map(|package| {
+                let path = package.expect("valid path").path();
+
+                // We cannot search the scoop app as it is built in and hence doesn't contain any manifest
+                if path.file_name() == Some(OsStr::new("scoop")) {
+                    None
+                } else {
+                    Some(path)
+                }
+            })
+            .collect())
+    }
 
     /// Get the path to the log directory
     fn logging_dir(&self) -> std::io::Result<PathBuf>;
@@ -119,7 +148,12 @@ pub trait ScoopContext<C>: Clone + Send + Sync + 'static {
     fn new_log_sync(&self) -> Result<File, Error>;
 
     /// Checks if the app is installed by its name
-    fn app_installed(&self, name: impl AsRef<str>) -> std::io::Result<bool>;
+    fn app_installed(&self, name: impl AsRef<str>) -> std::io::Result<bool> {
+        Ok(self
+            .installed_apps()?
+            .iter()
+            .any(|path| path.file_name() == Some(OsStr::new(name.as_ref()))))
+    }
 
     /// Open the context's app repository, if any
     fn open_repo(&self) -> Option<git::Result<git::Repo>>;
@@ -173,10 +207,10 @@ impl ScoopContext<config::Scoop> for AnyContext {
         }
     }
 
-    fn scoop_sub_path(&self, segment: impl AsRef<Path>) -> PathBuf {
+    fn sub_path(&self, segment: impl AsRef<Path>) -> PathBuf {
         match self {
-            AnyContext::User(user) => user.scoop_sub_path(segment),
-            AnyContext::Global(global) => global.scoop_sub_path(segment),
+            AnyContext::User(user) => user.sub_path(segment),
+            AnyContext::Global(global) => global.sub_path(segment),
         }
     }
 
