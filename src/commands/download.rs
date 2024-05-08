@@ -4,6 +4,7 @@ use indicatif::MultiProgress;
 use sprinkles::{
     abandon,
     cache::{Downloader, Handle},
+    config,
     contexts::{ScoopContext, User},
     packages::reference::Package,
     requests::AsyncClient,
@@ -23,7 +24,7 @@ pub struct Args {
 impl super::Command for Args {
     const BETA: bool = true;
 
-    async fn runner(self) -> Result<(), anyhow::Error> {
+    async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
         if self.packages.is_empty() {
             abandon!("No packages provided")
         }
@@ -35,13 +36,13 @@ impl super::Command for Args {
             futures::future::try_join_all(self.packages.into_iter().map(|package| {
                 let mp = mp.clone();
                 async move {
-                    let manifest = match package.manifest().await {
+                    let manifest = match package.manifest(ctx).await {
                         Ok(manifest) => manifest,
                         Err(e) => abandon!("\rFailed to generate manifest: {e}"),
                     };
 
                     let dl =
-                        Handle::open_manifest(User::cache_path(), &manifest, Architecture::ARCH)?;
+                        Handle::open_manifest(ctx.cache_path(), &manifest, Architecture::ARCH)?;
 
                     let downloaders = dl.into_iter().map(|dl| {
                         let mp = mp.clone();

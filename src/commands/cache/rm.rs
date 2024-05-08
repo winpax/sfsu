@@ -1,5 +1,5 @@
 use clap::Parser;
-use sprinkles::output::wrappers::sizes::Size;
+use sprinkles::{config, contexts::ScoopContext, output::wrappers::sizes::Size};
 use tokio::task::JoinSet;
 
 use crate::{commands::Command, output::colours::eprintln_yellow_bright};
@@ -13,8 +13,8 @@ pub struct Args {
 }
 
 impl Command for Args {
-    async fn runner(self) -> Result<(), anyhow::Error> {
-        let cache_entries = CacheEntry::match_paths(&self.apps).await?;
+    async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
+        let cache_entries = CacheEntry::match_paths(ctx, &self.apps).await?;
 
         let total_entires = cache_entries.len();
         let total_size = cache_entries

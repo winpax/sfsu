@@ -8,7 +8,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::git;
+use crate::{config, git};
 
 mod global;
 mod user;
@@ -56,7 +56,7 @@ impl Error {
 ///
 /// let scoop_path = User::path();
 /// ```
-pub trait ScoopContext<C> {
+pub trait ScoopContext<C>: Clone + Send + Sync + 'static {
     /// Load the context's configuration
     fn config(&self) -> &C;
 
@@ -142,4 +142,143 @@ pub trait ScoopContext<C> {
     /// For implementors, this should return `true` if your provider is outdated. For example,
     /// the binary which hooks into this trait will return `true` if there is a newer version available.
     fn outdated(&self) -> impl Future<Output = Result<bool, Error>>;
+}
+
+#[derive(Debug, Clone)]
+/// A little helper enum for when you want statically typed contexts, but don't know which one you want at compile time
+pub enum AnyContext {
+    /// The user context
+    User(User),
+    /// The global context
+    Global(Global),
+}
+
+impl ScoopContext<config::Scoop> for AnyContext {
+    fn config(&self) -> &config::Scoop {
+        match self {
+            AnyContext::User(user) => user.config(),
+            AnyContext::Global(global) => global.config(),
+        }
+    }
+
+    fn git_path() -> Result<PathBuf, which::Error> {
+        User::git_path()
+    }
+
+    #[must_use]
+    fn path(&self) -> &Path {
+        match self {
+            AnyContext::User(user) => user.path(),
+            AnyContext::Global(global) => global.path(),
+        }
+    }
+
+    fn scoop_sub_path(&self, segment: impl AsRef<Path>) -> PathBuf {
+        match self {
+            AnyContext::User(user) => user.scoop_sub_path(segment),
+            AnyContext::Global(global) => global.scoop_sub_path(segment),
+        }
+    }
+
+    fn apps_path(&self) -> PathBuf {
+        match self {
+            AnyContext::User(user) => user.apps_path(),
+            AnyContext::Global(global) => global.apps_path(),
+        }
+    }
+
+    fn buckets_path(&self) -> PathBuf {
+        match self {
+            AnyContext::User(user) => user.buckets_path(),
+            AnyContext::Global(global) => global.buckets_path(),
+        }
+    }
+
+    fn cache_path(&self) -> PathBuf {
+        match self {
+            AnyContext::User(user) => user.cache_path(),
+            AnyContext::Global(global) => global.cache_path(),
+        }
+    }
+
+    fn persist_path(&self) -> PathBuf {
+        match self {
+            AnyContext::User(user) => user.persist_path(),
+            AnyContext::Global(global) => global.persist_path(),
+        }
+    }
+
+    fn shims_path(&self) -> PathBuf {
+        match self {
+            AnyContext::User(user) => user.shims_path(),
+            AnyContext::Global(global) => global.shims_path(),
+        }
+    }
+
+    fn workspace_path(&self) -> PathBuf {
+        match self {
+            AnyContext::User(user) => user.workspace_path(),
+            AnyContext::Global(global) => global.workspace_path(),
+        }
+    }
+
+    fn installed_apps(&self) -> std::io::Result<Vec<PathBuf>> {
+        match self {
+            AnyContext::User(user) => user.installed_apps(),
+            AnyContext::Global(global) => global.installed_apps(),
+        }
+    }
+
+    fn logging_dir(&self) -> std::io::Result<PathBuf> {
+        match self {
+            AnyContext::User(user) => user.logging_dir(),
+            AnyContext::Global(global) => global.logging_dir(),
+        }
+    }
+
+    #[cfg(not(feature = "v2"))]
+    #[allow(deprecated)]
+    async fn new_log(&self) -> Result<File, Error> {
+        match self {
+            AnyContext::User(user) => user.new_log().await,
+            AnyContext::Global(global) => global.new_log().await,
+        }
+    }
+
+    #[allow(deprecated)]
+    #[cfg(not(feature = "v2"))]
+    fn new_log_sync(&self) -> Result<File, Error> {
+        match self {
+            AnyContext::User(user) => user.new_log_sync(),
+            AnyContext::Global(global) => global.new_log_sync(),
+        }
+    }
+
+    fn app_installed(&self, name: impl AsRef<str>) -> std::io::Result<bool> {
+        match self {
+            AnyContext::User(user) => user.app_installed(name),
+            AnyContext::Global(global) => global.app_installed(name),
+        }
+    }
+
+    fn open_repo(&self) -> Option<git::Result<git::Repo>> {
+        match self {
+            AnyContext::User(user) => user.open_repo(),
+            AnyContext::Global(global) => global.open_repo(),
+        }
+    }
+
+    fn context_app_path(&self) -> PathBuf {
+        match self {
+            AnyContext::User(user) => user.context_app_path(),
+            AnyContext::Global(global) => global.context_app_path(),
+        }
+    }
+
+    async fn outdated(&self) -> Result<bool, Error> {
+        match self {
+            AnyContext::User(user) => user.outdated().await,
+            AnyContext::Global(global) => global.outdated().await,
+        }
+    }
 }

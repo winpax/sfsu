@@ -20,6 +20,7 @@ use ratatui::{
     widgets::{Block, Borders, List},
     Frame, Terminal,
 };
+use sprinkles::{config, contexts::ScoopContext};
 
 mod contributors {
     include!(concat!(env!("OUT_DIR"), "/contributors.rs"));
@@ -100,7 +101,7 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    async fn runner(self) -> anyhow::Result<()> {
+    async fn runner(self, _: &impl ScoopContext<config::Scoop>) -> anyhow::Result<()> {
         if console::colors_enabled() {
             self.terminal_ui()?;
         } else {

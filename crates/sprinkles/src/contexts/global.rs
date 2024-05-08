@@ -10,6 +10,7 @@ use crate::{config, git};
 
 use super::{ScoopContext, User};
 
+#[derive(Debug, Clone)]
 /// Global context adapter
 pub struct Global {
     path: PathBuf,

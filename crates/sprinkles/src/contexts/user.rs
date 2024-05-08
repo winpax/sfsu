@@ -9,6 +9,7 @@ use rayon::prelude::*;
 
 use crate::{abandon, config, contexts::Error, git};
 
+#[derive(Debug, Clone)]
 /// User's Scoop install adapter
 pub struct User {
     config: config::Scoop,

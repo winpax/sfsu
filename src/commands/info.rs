@@ -3,6 +3,7 @@ use itertools::Itertools;
 
 use sprinkles::{
     calm_panic::abandon,
+    config,
     contexts::{ScoopContext, User},
     output::{
         structured::vertical::VTable,
@@ -50,7 +51,7 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    async fn runner(mut self) -> anyhow::Result<()> {
+    async fn runner(mut self, ctx: &impl ScoopContext<config::Scoop>) -> anyhow::Result<()> {
         #[cfg(not(feature = "v2"))]
         if self.package.bucket().is_none() {
             if let Some(bucket) = &self.bucket {
@@ -58,7 +59,7 @@ impl super::Command for Args {
             }
         }
 
-        let manifests = self.package.list_manifests().await?;
+        let manifests = self.package.list_manifests(ctx).await?;
 
         if manifests.is_empty() {
             abandon!("No package found with the name \"{}\"", self.package);
@@ -72,7 +73,7 @@ impl super::Command for Args {
             );
         }
 
-        let installed_apps = User::installed_apps()?;
+        let installed_apps = ctx.installed_apps()?;
 
         if self.single {
             let latest = manifests
@@ -85,10 +86,10 @@ impl super::Command for Args {
                         .unwrap_or(std::cmp::Ordering::Equal)
                 }).expect("something went terribly wrong (no manifests found even though we just checked for manifests)");
 
-            self.print_manifest(latest, &installed_apps, Architecture::ARCH)?;
+            self.print_manifest(ctx, latest, &installed_apps, Architecture::ARCH)?;
         } else {
             for manifest in manifests {
-                self.print_manifest(manifest, &installed_apps, Architecture::ARCH)?;
+                self.print_manifest(ctx, manifest, &installed_apps, Architecture::ARCH)?;
             }
         }
 
@@ -99,6 +100,7 @@ impl super::Command for Args {
 impl Args {
     fn print_manifest(
         &self,
+        ctx: &impl ScoopContext<config::Scoop>,
         manifest: Manifest,
         installed_apps: &[std::path::PathBuf],
         arch: Architecture,
@@ -116,7 +118,7 @@ impl Args {
         let (updated_at, updated_by) = if self.disable_updated {
             (None, None)
         } else {
-            match manifest.last_updated_info(self.hide_emails, self.disable_git) {
+            match manifest.last_updated_info(ctx, self.hide_emails, self.disable_git) {
                 Ok(v) => v,
                 Err(_) => match install_path {
                     Some(ref install_path) => {

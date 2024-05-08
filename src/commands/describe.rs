@@ -2,6 +2,8 @@ use clap::Parser;
 
 use sprinkles::{
     buckets::Bucket,
+    config,
+    contexts::ScoopContext,
     output::sectioned::{Children, Section, Sections, Text},
     packages::Manifest,
 };
@@ -25,8 +27,8 @@ impl super::Command for Args {
         })
     }
 
-    async fn runner(self) -> Result<(), anyhow::Error> {
-        let buckets = Bucket::one_or_all(self.bucket)?;
+    async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
+        let buckets = Bucket::one_or_all(ctx, self.bucket)?;
 
         let manifests: Vec<(String, String, Manifest)> = buckets
             .iter()
