@@ -56,7 +56,7 @@ pub enum Error {
 }
 
 /// Repo result type
-pub type Result<T> = std::result::Result<T, Error>;
+pub type Result<T, E = Error> = std::result::Result<T, E>;
 
 #[derive(Deref)]
 /// A git repository
@@ -77,8 +77,8 @@ impl Repo {
     ///
     /// # Errors
     /// - The Scoop app could not be opened as a repository
-    pub fn scoop_app() -> Result<Self> {
-        let scoop_path = User::apps_path().join("scoop").join("current");
+    pub fn scoop_app<C>(context: &impl ScoopContext<C>) -> Result<Self> {
+        let scoop_path = context.apps_path().join("scoop").join("current");
         let repo = Repository::open(scoop_path)?;
 
         Ok(Self(repo))

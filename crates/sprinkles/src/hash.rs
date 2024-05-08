@@ -13,7 +13,8 @@ use url::Url;
 
 use crate::{
     cache::{self, Downloader, Handle},
-    contexts::{ScoopContext, User},
+    config,
+    contexts::ScoopContext,
     hash::url_ext::UrlExt,
     packages::{
         models::manifest::{
@@ -357,7 +358,11 @@ impl Hash {
     /// - If the hash is not found in the XML
     /// - If the hash is not found in the text
     /// - If the hash is not found in the JSON
-    pub async fn get_for_app(manifest: &Manifest, arch: Architecture) -> Result<Vec<Hash>, Error> {
+    pub async fn get_for_app(
+        ctx: &impl ScoopContext<config::Scoop>,
+        manifest: &Manifest,
+        arch: Architecture,
+    ) -> Result<Vec<Hash>, Error> {
         let autoupdate_config = manifest
             .autoupdate_config(arch)
             .ok_or(Error::MissingAutoupdateConfig)?;
@@ -365,7 +370,7 @@ impl Hash {
         let hash_mode = HashMode::from_manifest(manifest, arch).unwrap_or_default();
 
         if hash_mode == HashMode::Download {
-            let cache_handles = Handle::open_manifest(User::cache_path(), manifest, arch)?;
+            let cache_handles = Handle::open_manifest(ctx.cache_path(), manifest, arch)?;
 
             let downloaders = cache_handles
                 .into_iter()
@@ -631,6 +636,7 @@ mod tests {
 
     use crate::{
         buckets::Bucket,
+        contexts::User,
         packages::{
             models::manifest::{HashExtractionOrArrayOfHashExtractions, TOrArrayOfTs},
             reference,
@@ -666,7 +672,7 @@ mod tests {
     #[test]
     #[ignore = "Broken (not my fault, the chrome xml file does not include the hash for the current version)"]
     fn test_google_chrome_hashes() {
-        let manifest = Bucket::from_name("extras")
+        let manifest = Bucket::from_name(&User::new(), "extras")
             .unwrap()
             .get_manifest("googlechrome")
             .unwrap();
@@ -710,12 +716,12 @@ mod tests {
     #[ignore = "replaced"]
     #[tokio::test]
     async fn test_get_hash_for_googlechrome() {
-        let manifest = Bucket::from_name("extras")
+        let manifest = Bucket::from_name(&User::new(), "extras")
             .unwrap()
             .get_manifest("googlechrome")
             .unwrap();
 
-        let hash = Hash::get_for_app(&manifest, Architecture::ARCH)
+        let hash = Hash::get_for_app(&User::new(), &manifest, Architecture::ARCH)
             .await
             .unwrap();
 
@@ -738,7 +744,7 @@ mod tests {
         pub async fn test(self) -> anyhow::Result<()> {
             let manifest = self.package.manifest().await?;
 
-            let hash = Hash::get_for_app(&manifest, Architecture::ARCH).await?;
+            let hash = Hash::get_for_app(&User::new(), &manifest, Architecture::ARCH).await?;
 
             let actual_hash = manifest
                 .architecture

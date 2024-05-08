@@ -10,7 +10,7 @@ use rayon::prelude::*;
 use regex::Regex;
 
 use crate::{
-    contexts::{ScoopContext, User},
+    contexts::ScoopContext,
     git::{self, Repo},
     packages::{self, CreateManifest, InstallManifest, Manifest, SearchMode},
 };
@@ -49,8 +49,8 @@ impl Bucket {
     ///
     /// # Errors
     /// - Bucket does not exist
-    pub fn from_name(name: impl AsRef<Path>) -> Result<Self> {
-        Self::from_path(User::buckets_path().join(name))
+    pub fn from_name<C>(context: &impl ScoopContext<C>, name: impl AsRef<Path>) -> Result<Self> {
+        Self::from_path(context.buckets_path().join(name))
     }
 
     /// Open given path as a bucket
@@ -72,11 +72,14 @@ impl Bucket {
     /// # Errors
     /// - Any listed or provided bucket is invalid
     /// - Unable to read the bucket directory
-    pub fn one_or_all(name: Option<impl AsRef<Path>>) -> Result<Vec<Self>> {
+    pub fn one_or_all<C>(
+        context: &impl ScoopContext<C>,
+        name: Option<impl AsRef<Path>>,
+    ) -> Result<Vec<Self>> {
         if let Some(name) = name {
-            Ok(vec![Bucket::from_name(name)?])
+            Ok(vec![Bucket::from_name(context, name)?])
         } else {
-            Bucket::list_all()
+            Bucket::list_all(context)
         }
     }
 
@@ -112,8 +115,8 @@ impl Bucket {
     /// # Errors
     /// - Was unable to read the bucket directory
     /// - Any listed bucket is invalid
-    pub fn list_all() -> Result<Vec<Bucket>> {
-        let bucket_dir = std::fs::read_dir(User::buckets_path())?;
+    pub fn list_all<C>(context: &impl ScoopContext<C>) -> Result<Vec<Bucket>> {
+        let bucket_dir = std::fs::read_dir(context.buckets_path())?;
 
         bucket_dir
             .filter(|entry| entry.as_ref().is_ok_and(|entry| entry.path().is_dir()))

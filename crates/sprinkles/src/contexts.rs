@@ -58,47 +58,47 @@ impl Error {
 /// ```
 pub trait ScoopContext<C> {
     /// Load the context's configuration
-    fn config() -> std::io::Result<C>;
+    fn config(&self) -> &C;
+
+    #[must_use]
+    /// Gets the context's path
+    fn path(&self) -> &Path;
 
     /// Get the git executable path
     fn git_path() -> Result<PathBuf, which::Error>;
 
-    #[must_use]
-    /// Gets the context's path
-    fn path() -> PathBuf;
-
     /// Get a sub path within the context's path
-    fn scoop_sub_path(segment: impl AsRef<Path>) -> PathBuf;
+    fn scoop_sub_path(&self, segment: impl AsRef<Path>) -> PathBuf;
 
     #[must_use]
     /// Gets the contexts's apps path
-    fn apps_path() -> PathBuf;
+    fn apps_path(&self) -> PathBuf;
 
     #[must_use]
     /// Gets the contexts's buckets path
-    fn buckets_path() -> PathBuf;
+    fn buckets_path(&self) -> PathBuf;
 
     #[must_use]
     /// Gets the contexts's cache path
-    fn cache_path() -> PathBuf;
+    fn cache_path(&self) -> PathBuf;
 
     #[must_use]
     /// Gets the contexts's persist path
-    fn persist_path() -> PathBuf;
+    fn persist_path(&self) -> PathBuf;
 
     #[must_use]
     /// Gets the contexts's shims path
-    fn shims_path() -> PathBuf;
+    fn shims_path(&self) -> PathBuf;
 
     #[must_use]
     /// Gets the contexts's workspace path
-    fn workspace_path() -> PathBuf;
+    fn workspace_path(&self) -> PathBuf;
 
     /// List all scoop apps and return their paths
-    fn installed_apps() -> std::io::Result<Vec<PathBuf>>;
+    fn installed_apps(&self) -> std::io::Result<Vec<PathBuf>>;
 
     /// Get the path to the log directory
-    fn logging_dir() -> std::io::Result<PathBuf>;
+    fn logging_dir(&self) -> std::io::Result<PathBuf>;
 
     #[deprecated(
         note = "You should implement this yourself, as this function is inherently opinionated"
@@ -106,7 +106,7 @@ pub trait ScoopContext<C> {
     #[cfg(not(feature = "v2"))]
     #[allow(async_fn_in_trait)]
     /// Create a new log file
-    async fn new_log() -> Result<File, Error>;
+    async fn new_log(&self) -> Result<File, Error>;
 
     #[deprecated(
         note = "You should implement this yourself, as this function is inherently opinionated"
@@ -116,14 +116,22 @@ pub trait ScoopContext<C> {
     ///
     /// This function is synchronous and does not allow for timeouts.
     /// If for some reason there are no available log files, this function will block indefinitely.
-    fn new_log_sync() -> Result<File, Error>;
+    fn new_log_sync(&self) -> Result<File, Error>;
 
     /// Checks if the app is installed by its name
-    fn app_installed(name: impl AsRef<str>) -> std::io::Result<bool>;
+    fn app_installed(&self, name: impl AsRef<str>) -> std::io::Result<bool>;
 
     /// Open the context's app repository, if any
-    fn open_repo() -> Option<git::Result<git::Repo>>;
+    fn open_repo(&self) -> Option<git::Result<git::Repo>>;
 
+    /// Get the path to the context's app
+    ///
+    /// This should return the path to the app's directory, not the repository.
+    ///
+    /// For example, if the context is the user context, this should return the path to the scoop app
+    fn context_app_path(&self) -> PathBuf;
+
+    #[must_use]
     /// Check if the context is outdated
     ///
     /// This may manifest in different ways, depending on the context
@@ -133,15 +141,5 @@ pub trait ScoopContext<C> {
     ///
     /// For implementors, this should return `true` if your provider is outdated. For example,
     /// the binary which hooks into this trait will return `true` if there is a newer version available.
-    fn outdated() -> Result<bool, Error>;
-
-    #[must_use]
-    /// Check if the context is outdated, asynchronously
-    ///
-    /// See [`ScoopContext::outdated`] for more information
-    ///
-    /// By default, this will call [`ScoopContext::outdated`] in a blocking context and return the result.
-    fn outdated_async() -> impl Future<Output = Result<bool, Error>> {
-        async { tokio::task::spawn_blocking(|| Self::outdated()).await? }
-    }
+    fn outdated(&self) -> impl Future<Output = Result<bool, Error>>;
 }

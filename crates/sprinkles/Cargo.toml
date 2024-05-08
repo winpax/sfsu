@@ -78,7 +78,10 @@ url = { version = "2.5", features = ["serde"], optional = true }
 urlencoding = { version = "2.1", optional = true }
 vt3 = "0.7.3"
 which = "6.0"
-windows = { version = "0.56", features = ["Win32_Storage_FileSystem"] }
+windows = { version = "0.56", features = [
+    "Win32_Storage_FileSystem",
+    "Win32_UI_Shell",
+] }
 windows-version = "0.1"
 winreg = "0.52"
 

@@ -18,6 +18,7 @@ use strum::Display;
 
 use crate::{
     buckets::{self, Bucket},
+    config,
     contexts::{ScoopContext, User},
     git::{self, Repo},
     let_chain,
@@ -176,8 +177,11 @@ impl MinInfo {
     /// - Invalid file names
     /// - File metadata errors
     /// - Invalid time
-    pub fn list_installed(bucket: Option<&String>) -> Result<Vec<Self>> {
-        let apps = User::installed_apps()?;
+    pub fn list_installed(
+        ctx: &impl ScoopContext<config::Scoop>,
+        bucket: Option<&String>,
+    ) -> Result<Vec<Self>> {
+        let apps = ctx.installed_apps()?;
 
         apps.par_iter()
             .map(Self::from_path)
@@ -495,8 +499,8 @@ impl InstallManifest {
     /// # Errors
     /// - Invalid install manifest
     /// - Reading directories fails
-    pub fn list_all() -> Result<Vec<Self>> {
-        User::installed_apps()?
+    pub fn list_all(ctx: &impl ScoopContext<config::Scoop>) -> Result<Vec<Self>> {
+        ctx.installed_apps()?
             .par_iter()
             .map(|path| Self::from_path(path.join("current/install.json")))
             .collect::<Result<Vec<_>>>()
@@ -506,8 +510,9 @@ impl InstallManifest {
     ///
     /// # Errors
     /// - Reading directories fails
-    pub fn list_all_unchecked() -> Result<Vec<Self>> {
-        Ok(User::installed_apps()?
+    pub fn list_all_unchecked(ctx: &impl ScoopContext<config::Scoop>) -> Result<Vec<Self>> {
+        Ok(ctx
+            .installed_apps()?
             .par_iter()
             .filter_map(
                 |path| match Self::from_path(path.join("current/install.json")) {
@@ -577,8 +582,11 @@ impl Manifest {
     ///
     /// # Errors
     /// - If the manifest doesn't exist or bucket is invalid
-    pub fn from_reference((bucket, name): (String, String)) -> Result<Self> {
-        Bucket::from_name(bucket)?.get_manifest(name)
+    pub fn from_reference(
+        ctx: &impl ScoopContext<config::Scoop>,
+        (bucket, name): (String, String),
+    ) -> Result<Self> {
+        Bucket::from_name(ctx, bucket)?.get_manifest(name)
     }
 
     #[must_use]
@@ -622,8 +630,9 @@ impl Manifest {
     ///
     /// # Panics
     /// - If the file name is invalid
-    pub fn list_installed() -> Result<Vec<Result<Self>>> {
-        Ok(User::installed_apps()?
+    pub fn list_installed(ctx: &impl ScoopContext<config::Scoop>) -> Result<Vec<Result<Self>>> {
+        Ok(ctx
+            .installed_apps()?
             .par_iter()
             .map(|path| {
                 Self::from_path(path.join("current/manifest.json")).and_then(|mut manifest| {

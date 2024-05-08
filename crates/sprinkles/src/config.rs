@@ -38,6 +38,10 @@ pub struct Scoop {
     /// The cache path
     pub cache_path: Option<PathBuf>,
 
+    #[serde(skip_serializing_if = "Option::is_none")]
+    /// The global path
+    pub global_path: Option<PathBuf>,
+
     #[serde(flatten)]
     /// Any other values in the config
     other: Map<String, Value>,
