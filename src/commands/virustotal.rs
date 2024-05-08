@@ -7,7 +7,7 @@ use rayon::prelude::*;
 use sprinkles::{
     calm_panic::CalmUnwrap,
     config,
-    contexts::{ScoopContext},
+    contexts::ScoopContext,
     hash::Hash,
     packages::{reference::Package, CreateManifest, Manifest},
     progress::{style, ProgressOptions},

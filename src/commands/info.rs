@@ -4,7 +4,7 @@ use itertools::Itertools;
 use sprinkles::{
     calm_panic::abandon,
     config,
-    contexts::{ScoopContext},
+    contexts::ScoopContext,
     output::{
         structured::vertical::VTable,
         wrappers::{alias_vec::AliasVec, bool::NicerBool, time::NicerTime},

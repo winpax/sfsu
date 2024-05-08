@@ -41,11 +41,11 @@ impl Command for Args {
                 let mut map = Map::new();
 
                 let apps = apps::Args { json: self.json }
-                    .run_direct(ctx,false)?
+                    .run_direct(ctx, false)?
                     .unwrap_or_default();
 
                 let buckets = buckets::Args { json: self.json }
-                    .run_direct(ctx,false)?
+                    .run_direct(ctx, false)?
                     .unwrap_or_default();
 
                 map.insert("outdated_apps".into(), apps.into());
