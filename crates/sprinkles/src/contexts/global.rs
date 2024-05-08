@@ -56,7 +56,10 @@ impl Global {
 
                 let path = if success {
                     let string = OsString::from_wide(&buf);
-                    PathBuf::from(string)
+                    let utf8_string = string.to_string_lossy();
+                    let trimmed = utf8_string.trim_end_matches('\0');
+
+                    PathBuf::from(trimmed)
                 } else {
                     "C:\\ProgramData".into()
                 }

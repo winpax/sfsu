@@ -92,7 +92,7 @@ struct Args {
     )]
     disable_git: bool,
 
-    #[clap(long, global = true, help = "Use the global Scoop context")]
+    #[clap(short, long, global = true, help = "Use the global Scoop context")]
     global: bool,
 }
 
