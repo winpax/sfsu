@@ -3,6 +3,7 @@ pub mod cache;
 pub mod cat;
 pub mod checkup;
 pub mod credits;
+pub mod debug;
 pub mod depends;
 pub mod describe;
 #[cfg(feature = "download")]
@@ -137,4 +138,8 @@ pub enum Commands {
     #[no_hook]
     /// Show credits
     Credits(credits::Args),
+    #[no_hook]
+    #[cfg(debug_assertions)]
+    /// Debugging commands
+    Debug(debug::Args),
 }
