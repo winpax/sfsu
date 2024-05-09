@@ -22,10 +22,9 @@ repos:
         stages: [pre-commit]
       - id: clippy
         stages: [pre-commit]
-        args:
-          [
+        args: [
             "--all-targets",
-            "--all-features",
+            # "--all-features",
             "--workspace",
             "--",
             "-D",

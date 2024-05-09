@@ -97,7 +97,7 @@ serde.workspace = true
 serde_json = { version = "1.0", features = ["preserve_order"] }
 sfsu-derive = { path = "./crates/derive" }
 shadow-rs = "0.27"
-sprinkles = { path = "crates/sprinkles" }
+sprinkles = { path = "crates/sprinkles", features = ["clap"] }
 tokio = { version = "1.37", features = ["full"] }
 vt3 = { git = "https://github.com/winpax/vt3.git", version = "0.8", package = "async_vt3" }
 
