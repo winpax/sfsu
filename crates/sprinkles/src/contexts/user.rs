@@ -45,8 +45,8 @@ impl super::ScoopContext<config::Scoop> for User {
         let scoop_path = {
             if let Some(path) = var_os("SCOOP") {
                 path.into()
-            } else if let Some(path) = config::Scoop::load().map(|config| config.root_path).ok() {
-                path.into()
+            } else if let Ok(path) = config::Scoop::load().map(|config| config.root_path) {
+                path
             } else {
                 directories::BaseDirs::new()
                     .expect("user directories")
