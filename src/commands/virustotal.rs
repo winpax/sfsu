@@ -194,10 +194,7 @@ impl super::Command for Args {
 
                     let result = match search_type {
                         SearchType::FileHash(hash) => {
-                            let result = client
-                                .file_info_async(&hash.to_string())
-                                .await
-                                .recoverable();
+                            let result = client.file_info(&hash.to_string()).await.recoverable();
 
                             if let Some(result) = result {
                                 serde_json::to_value(result?)?
@@ -206,7 +203,7 @@ impl super::Command for Args {
                             }
                         }
                         SearchType::Url(url) => {
-                            let result = client.url_info_async(&url).await.recoverable();
+                            let result = client.url_info(&url).await.recoverable();
 
                             if let Some(result) = result {
                                 serde_json::to_value(result?)?

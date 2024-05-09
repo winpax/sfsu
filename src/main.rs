@@ -126,24 +126,13 @@ async fn main() -> anyhow::Result<()> {
         }
     };
 
-    cfg_if::cfg_if! {
-        if #[cfg(feature = "contexts")] {
-            // Spawn a task to cleanup logs in the background
-            tokio::task::spawn_blocking({
-                let ctx = ctx.clone();
-                move || Logger::cleanup_logs(&ctx)
-            });
-        } else {
-            tokio::task::spawn_blocking(|| Logger::cleanup_logs());
-        }
-    }
+    // Spawn a task to cleanup logs in the background
+    tokio::task::spawn_blocking({
+        let ctx = ctx.clone();
+        move || Logger::cleanup_logs(&ctx)
+    });
 
-    Logger::init(
-        #[cfg(feature = "contexts")]
-        &ctx,
-        cfg!(debug_assertions) || args.verbose,
-    )
-    .await?;
+    Logger::init(&ctx, cfg!(debug_assertions) || args.verbose).await?;
 
     if args.no_color || !std::io::stdout().is_terminal() {
         debug!("Colour disabled globally");
