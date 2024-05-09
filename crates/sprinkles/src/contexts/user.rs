@@ -45,10 +45,7 @@ impl super::ScoopContext<config::Scoop> for User {
         let scoop_path = {
             if let Some(path) = var_os("SCOOP") {
                 path.into()
-            } else if let Some(path) = config::Scoop::load()
-                .expect("scoop config loaded correctly")
-                .root_path
-            {
+            } else if let Some(path) = config::Scoop::load().map(|config| config.root_path).ok() {
                 path.into()
             } else {
                 directories::BaseDirs::new()
@@ -92,9 +89,7 @@ impl super::ScoopContext<config::Scoop> for User {
     fn cache_path() -> PathBuf {
         if let Some(cache_path) = std::env::var_os("SCOOP_CACHE") {
             PathBuf::from(cache_path)
-        } else if let Some(cache_path) = config::Scoop::load()
-            .ok()
-            .and_then(|config| config.cache_path)
+        } else if let Some(cache_path) = config::Scoop::load().ok().map(|config| config.cache_path)
         {
             cache_path
         } else {
@@ -262,10 +257,10 @@ impl super::ScoopContext<config::Scoop> for User {
         let scoop_repo = git::Repo::scoop_app()?;
 
         let current_branch = scoop_repo.current_branch()?;
-        let scoop_config_branch = config.scoop_branch.unwrap_or("master".into());
+        let scoop_config_branch = config.scoop_branch.name();
 
         if current_branch != scoop_config_branch {
-            scoop_repo.checkout(&scoop_config_branch)?;
+            scoop_repo.checkout(scoop_config_branch)?;
             debug!("Switched to branch {}", scoop_config_branch);
             return Ok(true);
         }
