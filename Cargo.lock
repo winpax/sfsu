@@ -151,11 +151,28 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4e9eabd7a98fe442131a17c316bd9349c43695e49e730c3c8e12cfb5f4da2693"
 dependencies = [
  "brotli",
+ "bzip2",
  "flate2",
  "futures-core",
  "memchr",
  "pin-project-lite",
  "tokio",
+]
+
+[[package]]
+name = "async_vt3"
+version = "0.8.0"
+source = "git+https://github.com/winpax/vt3.git#1124918b0c391a22430b6dc4476c45c78152466e"
+dependencies = [
+ "async-compression",
+ "base64 0.22.1",
+ "futures",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "tokio-util",
 ]
 
 [[package]]
@@ -324,6 +341,27 @@ name = "bytesize"
 version = "1.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a3e368af43e418a04d52505cf3dbc23dda4e3407ae2fa99fd0e4f308ce546acc"
+
+[[package]]
+name = "bzip2"
+version = "0.4.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bdb116a6ef3f6c3698828873ad02c3014b3c85cadb88496095628e3ef1e347f8"
+dependencies = [
+ "bzip2-sys",
+ "libc",
+]
+
+[[package]]
+name = "bzip2-sys"
+version = "0.1.11+1.0.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "736a955f3fa7875102d57c82b8cac37ec45224a07fd32d58f9f7a186b6cd4cdc"
+dependencies = [
+ "cc",
+ "libc",
+ "pkg-config",
+]
 
 [[package]]
 name = "cargo-husky"
@@ -2492,6 +2530,7 @@ name = "sfsu"
 version = "1.12.0"
 dependencies = [
  "anyhow",
+ "async_vt3",
  "bat",
  "cargo-husky",
  "chrono",
@@ -2520,7 +2559,6 @@ dependencies = [
  "sprinkles",
  "tokio",
  "toml_edit 0.22.12",
- "vt3 0.7.3 (git+https://github.com/winpax/vt3.git)",
  "winres",
 ]
 
@@ -2687,7 +2725,7 @@ dependencies = [
  "tokio-util",
  "url",
  "urlencoding",
- "vt3 0.7.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vt3",
  "which",
  "windows",
  "windows-version",
@@ -3288,18 +3326,6 @@ name = "vt3"
 version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a5798cdbd57cb56b40cf519b1ae197f5382263663c0d15798e9ef2e0bc8a6785"
-dependencies = [
- "base64 0.22.1",
- "reqwest",
- "serde",
- "serde_json",
- "thiserror",
-]
-
-[[package]]
-name = "vt3"
-version = "0.7.3"
-source = "git+https://github.com/winpax/vt3.git#6ba8afa17fc9bc71593d712127d0b9099720431b"
 dependencies = [
  "base64 0.22.1",
  "reqwest",
