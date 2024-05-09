@@ -22,6 +22,7 @@ use clap::Parser;
 
 use commands::Commands;
 use logging::Logger;
+use sprinkles::contexts::{AnyContext, User};
 
 mod versions {
     #![allow(clippy::needless_raw_string_hashes)]
@@ -90,25 +91,48 @@ struct Args {
         env = "DISABLE_GIT"
     )]
     disable_git: bool,
+
+    #[cfg(feature = "contexts")]
+    #[clap(short, long, global = true, help = "Use the global Scoop context")]
+    global: bool,
 }
 
 pub(crate) static COLOR_ENABLED: AtomicBool = AtomicBool::new(true);
 
+#[cfg(feature = "contexts")]
+impl From<&Args> for AnyContext {
+    fn from(args: &Args) -> Self {
+        if args.global {
+            AnyContext::Global(sprinkles::contexts::Global::new())
+        } else {
+            AnyContext::User(User::new())
+        }
+    }
+}
+
 #[tokio::main(flavor = "multi_thread")]
 async fn main() -> anyhow::Result<()> {
-    // Spawn a task to cleanup logs in the background
-    tokio::task::spawn_blocking(Logger::cleanup_logs);
-
     logging::panics::handle();
 
     let args = Args::parse();
 
-    Logger::init(if cfg!(debug_assertions) {
-        true
-    } else {
-        args.verbose
-    })
-    .await?;
+    let ctx: AnyContext = {
+        cfg_if::cfg_if! {
+            if #[cfg(feature = "contexts")] {
+                (&args).into()
+            } else {
+                AnyContext::User(User::new())
+            }
+        }
+    };
+
+    // Spawn a task to cleanup logs in the background
+    tokio::task::spawn_blocking({
+        let ctx = ctx.clone();
+        move || Logger::cleanup_logs(&ctx)
+    });
+
+    Logger::init(&ctx, cfg!(debug_assertions) || args.verbose).await?;
 
     if args.no_color || !std::io::stdout().is_terminal() {
         debug!("Colour disabled globally");
@@ -119,7 +143,7 @@ async fn main() -> anyhow::Result<()> {
 
     debug!("Running command: {:?}", args.command);
 
-    args.command.run().await?;
+    args.command.run(&ctx).await?;
 
     Ok(())
 }

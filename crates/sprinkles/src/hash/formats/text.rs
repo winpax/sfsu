@@ -170,20 +170,21 @@ pub fn parse_text(
 
 #[cfg(test)]
 mod tests {
-
     use url::Url;
 
     use super::*;
 
     use crate::{
-        buckets::Bucket, packages::models::manifest::HashExtractionOrArrayOfHashExtractions,
-        requests::Client,
+        buckets::Bucket, contexts::User,
+        packages::models::manifest::HashExtractionOrArrayOfHashExtractions, requests::Client,
     };
 
     #[test]
     #[ignore = "replaced by testhandler tests"]
     fn test_finding_vcredistaio_hashes() {
-        let manifest = Bucket::from_name("extras")
+        let ctx = User::new();
+
+        let manifest = Bucket::from_name(&ctx, "extras")
             .unwrap()
             .get_manifest("vcredist-aio")
             .unwrap();
@@ -230,6 +231,8 @@ mod tests {
     #[test]
     fn test_finding_mysql_hashes() {
         const FIND_REGEX: &str = "md5\">$md5";
+
+        let ctx = User::new();
         let mut text_url: String = "https://dev.mysql.com/downloads/mysql/".to_string();
 
         let url = Url::parse(&text_url).unwrap();
@@ -258,7 +261,7 @@ mod tests {
                 .expect("found hash");
 
         let actual_hash = {
-            Bucket::from_name("main")
+            Bucket::from_name(&ctx, "main")
                 .unwrap()
                 .get_manifest("mysql")
                 .unwrap()

@@ -6,7 +6,8 @@ use indicatif::ProgressBar;
 use rayon::prelude::*;
 use sprinkles::{
     calm_panic::CalmUnwrap,
-    contexts::{ScoopContext, User},
+    config,
+    contexts::ScoopContext,
     hash::Hash,
     packages::{reference::Package, CreateManifest, Manifest},
     progress::{style, ProgressOptions},
@@ -129,9 +130,9 @@ pub struct Args {
 impl super::Command for Args {
     const BETA: bool = true;
 
-    async fn runner(self) -> Result<(), anyhow::Error> {
-        let config = User::config()?;
-        let api_key = config.virustotal_api_key.calm_expect(
+    async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
+        let config = ctx.config();
+        let api_key = config.virustotal_api_key.clone().calm_expect(
             "No virustotal api key found.\n  Get one at https://www.virustotal.com/gui/my-apikey and set with\n  scoop config virustotal_api_key <API key>",
         );
 
@@ -139,7 +140,7 @@ impl super::Command for Args {
 
         #[allow(clippy::redundant_closure)]
         let manifests = if self.all {
-            User::installed_apps()?
+            ctx.installed_apps()?
                 .into_par_iter()
                 .map(|path| path.join("current").join("manifest.json"))
                 .filter(|path| path.exists())
@@ -150,7 +151,7 @@ impl super::Command for Args {
             let manifests = self
                 .apps
                 .iter()
-                .map(|reference| async move { reference.list_manifests().await });
+                .map(|reference| async move { reference.list_manifests(ctx).await });
 
             futures::future::try_join_all(manifests)
                 .await?

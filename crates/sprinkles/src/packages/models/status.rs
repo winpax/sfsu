@@ -4,7 +4,8 @@ use itertools::Itertools as _;
 use quork::traits::truthy::ContainsTruth;
 use serde::Serialize;
 
-use crate::contexts::{ScoopContext, User};
+use crate::config;
+use crate::contexts::ScoopContext;
 use crate::{buckets::Bucket, packages::reference::ManifestRef};
 
 use crate::packages::{reference, Manifest, Result};
@@ -33,11 +34,15 @@ impl Info {
     ///
     /// # Panics
     /// - Invalid package reference name
-    pub fn from_manifests(local_manifest: &Manifest, bucket: &Bucket) -> Result<Self> {
+    pub fn from_manifests(
+        ctx: &impl ScoopContext<config::Scoop>,
+        local_manifest: &Manifest,
+        bucket: &Bucket,
+    ) -> Result<Self> {
         let failed = {
-            let installed = User::app_installed(&local_manifest.name)?;
+            let installed = ctx.app_installed(&local_manifest.name)?;
 
-            let app_path = User::apps_path().join(&local_manifest.name).join("current");
+            let app_path = ctx.apps_path().join(&local_manifest.name).join("current");
 
             !app_path.exists() && installed
         };
@@ -45,7 +50,7 @@ impl Info {
         debug!("Local manifest name: {}", local_manifest.name);
         let remote_manifest = bucket.get_manifest(&local_manifest.name)?;
 
-        let install_manifest = local_manifest.install_manifest()?;
+        let install_manifest = local_manifest.install_manifest(ctx)?;
 
         let held = install_manifest.hold.unwrap_or_default();
 
@@ -58,7 +63,7 @@ impl Info {
                     "Checking if {} is installed.",
                     reference.name().expect("valid name")
                 );
-                !reference.installed().contains_truth()
+                !reference.installed(ctx).contains_truth()
             })
             .collect_vec();
 

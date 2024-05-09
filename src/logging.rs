@@ -3,7 +3,7 @@ use std::{fs::File, io::Write};
 use chrono::Local;
 use log::{Level, LevelFilter};
 use rayon::iter::{ParallelBridge, ParallelIterator};
-use sprinkles::contexts::{ScoopContext, User};
+use sprinkles::contexts::ScoopContext;
 
 use crate::output::colours::{eprintln_red, eprintln_yellow};
 
@@ -18,9 +18,9 @@ pub struct Logger {
 impl Logger {
     const LEVEL_FILTER: LevelFilter = LevelFilter::Trace;
 
-    pub async fn new(verbose: bool) -> Self {
+    pub async fn new<C>(ctx: &impl ScoopContext<C>, verbose: bool) -> Self {
         let file = async move {
-            let logs_dir = User::logging_dir()?;
+            let logs_dir = ctx.logging_dir()?;
             let date = Local::now();
             let log_file = async {
                 let mut i = 0;
@@ -58,8 +58,11 @@ impl Logger {
         Self { file, verbose }
     }
 
-    pub async fn init(verbose: bool) -> Result<(), log::SetLoggerError> {
-        log::set_boxed_logger(Box::new(Logger::new(verbose).await))?;
+    pub async fn init<C>(
+        ctx: &impl ScoopContext<C>,
+        verbose: bool,
+    ) -> Result<(), log::SetLoggerError> {
+        log::set_boxed_logger(Box::new(Logger::new(ctx, verbose).await))?;
         log::set_max_level(Self::LEVEL_FILTER);
 
         debug!("Initialized logger");
@@ -67,8 +70,8 @@ impl Logger {
         Ok(())
     }
 
-    pub fn cleanup_logs() -> anyhow::Result<()> {
-        let logging_dir = sprinkles::contexts::User::logging_dir()?;
+    pub fn cleanup_logs<C>(ctx: &impl ScoopContext<C>) -> anyhow::Result<()> {
+        let logging_dir = ctx.logging_dir()?;
 
         let logs = std::fs::read_dir(logging_dir)?.collect::<Result<Vec<_>, _>>()?;
 

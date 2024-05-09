@@ -1,6 +1,8 @@
 use clap::Parser;
 use sprinkles::{
     calm_panic::abandon,
+    config,
+    contexts::ScoopContext,
     output::sectioned::{Children, Section, Sections},
     packages::reference::{self, Package},
 };
@@ -20,12 +22,12 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    async fn runner(mut self) -> Result<(), anyhow::Error> {
+    async fn runner(mut self, ctx: &impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
         if let Some(bucket) = self.bucket {
             self.package.set_bucket(bucket)?;
         }
 
-        let manifests = self.package.list_manifests().await?;
+        let manifests = self.package.list_manifests(ctx).await?;
 
         if manifests.is_empty() {
             abandon!("Could not find any packages matching: {}", self.package);

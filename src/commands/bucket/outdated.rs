@@ -2,6 +2,8 @@ use clap::Parser;
 use itertools::Itertools;
 use sprinkles::{
     buckets::Bucket,
+    config,
+    contexts::ScoopContext,
     output::sectioned::{Children, Section},
 };
 
@@ -21,8 +23,8 @@ impl commands::Command for Args {
         })
     }
 
-    async fn runner(self) -> anyhow::Result<()> {
-        let buckets = Bucket::list_all()?;
+    async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> anyhow::Result<()> {
+        let buckets = Bucket::list_all(ctx)?;
 
         let outdated_buckets = buckets
             .into_iter()

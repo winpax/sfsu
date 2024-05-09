@@ -22,7 +22,7 @@ pub mod virustotal;
 use clap::Subcommand;
 
 use sfsu_derive::{Hooks, Runnable};
-use sprinkles::calm_panic::abandon;
+use sprinkles::{calm_panic::abandon, config, contexts::ScoopContext};
 
 use crate::output::colours::eprintln_yellow;
 
@@ -51,9 +51,9 @@ pub trait Command {
         None
     }
 
-    async fn runner(self) -> Result<(), anyhow::Error>;
+    async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error>;
 
-    async fn run(self) -> Result<(), anyhow::Error>
+    async fn run(self, ctx: &impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error>
     where
         Self: Sized,
     {
@@ -84,7 +84,7 @@ pub trait Command {
             );
         }
 
-        self.runner().await
+        self.runner(ctx).await
     }
 }
 
