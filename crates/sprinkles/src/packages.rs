@@ -1140,12 +1140,15 @@ mod tests {
 
     #[test]
     fn test_parse_all_manifests() -> Result<(), Box<dyn Error>> {
+        const UNSUPPORTED_PACKAGES: &[&str] = &["unityhub"];
+
         let buckets = Bucket::list_all(&User::new())?;
 
         let manifests = buckets
             .into_par_iter()
             .flat_map(|bucket| bucket.list_packages())
             .flatten()
+            .filter(|manifest| !UNSUPPORTED_PACKAGES.contains(&manifest.name.as_str()))
             .filter(|manifest| manifest.autoupdate_config(Architecture::ARCH).is_some())
             .collect::<Vec<_>>();
 
