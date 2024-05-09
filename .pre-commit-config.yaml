@@ -10,8 +10,6 @@ repos:
     rev: v3.25.0
     hooks:
       - id: commitizen
-        language_version: python3
-        stages: [commit-msg]
 
   - repo: https://github.com/doublify/pre-commit-rust
     rev: v1.0
