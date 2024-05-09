@@ -14,6 +14,12 @@ pub fn default_scoop_root_path() -> PathBuf {
     path
 }
 
+/// Gets the default scoop path
+///
+/// Note, we do not create the directory here,
+/// as it causes too many issues when not running as admin
+///
+/// This should be handled manually by implementations, when running as admin
 pub fn default_scoop_global_path() -> PathBuf {
     use std::{ffi::OsString, os::windows::ffi::OsStringExt};
 
@@ -39,10 +45,6 @@ pub fn default_scoop_global_path() -> PathBuf {
         "C:\\ProgramData".into()
     }
     .join("scoop");
-
-    if !path.exists() {
-        std::fs::create_dir(&path).expect("could not create scoop global path");
-    }
 
     path
 }
