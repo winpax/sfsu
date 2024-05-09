@@ -12,3 +12,18 @@ repos:
       - id: commitizen
         language_version: python3
         stages: [commit-msg]
+
+  - repo: https://github.com/doublify/pre-commit-rust
+    rev: v1.0
+    hooks:
+      - id: fmt
+      - id: clippy
+        args:
+          [
+            "--all-targets",
+            "--all-features",
+            "--workspace",
+            "--",
+            "-D",
+            "warnings",
+          ]
