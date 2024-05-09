@@ -154,12 +154,7 @@ async fn main() -> anyhow::Result<()> {
 
     debug!("Running command: {:?}", args.command);
 
-    args.command
-        .run(
-            #[cfg(feature = "contexts")]
-            &ctx,
-        )
-        .await?;
+    args.command.run(&ctx).await?;
 
     Ok(())
 }
