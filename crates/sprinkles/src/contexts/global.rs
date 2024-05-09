@@ -84,6 +84,8 @@ impl Global {
 }
 
 impl ScoopContext<config::Scoop> for Global {
+    const CONTEXT_NAME: &'static str = User::CONTEXT_NAME;
+
     fn config(&self) -> &config::Scoop {
         self.user_context.config()
     }
@@ -93,7 +95,7 @@ impl ScoopContext<config::Scoop> for Global {
     }
 
     fn git_path() -> Result<PathBuf, which::Error> {
-        User::git_path()
+        which::which("git")
     }
 
     fn apps_path(&self) -> PathBuf {

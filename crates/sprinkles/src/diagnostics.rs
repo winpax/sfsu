@@ -8,7 +8,7 @@ use serde::Serialize;
 use crate::{
     buckets::{self, Bucket},
     config,
-    contexts::{ScoopContext, User},
+    contexts::ScoopContext,
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -250,8 +250,8 @@ impl Diagnostics {
     }
 
     #[must_use]
-    /// Check if the user has git installed
+    /// Check if the user has git installed, and in their path
     pub fn git_installed() -> bool {
-        User::git_path().is_ok()
+        which::which("git").is_ok()
     }
 }

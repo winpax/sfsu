@@ -130,7 +130,7 @@ impl Bucket {
     /// # Errors
     /// - The bucket is invalid
     /// - Any package has an invalid path or invalid contents
-    /// - See more at [`packages::PackageError`]
+    /// - See more at [`packages::Error`]
     pub fn list_packages(&self) -> packages::Result<Vec<Manifest>> {
         let dir = std::fs::read_dir(self.path().join("bucket"))?;
 
@@ -142,7 +142,7 @@ impl Bucket {
     ///
     /// # Errors
     /// - The bucket is invalid
-    /// - See more at [`packages::PackageError`]
+    /// - See more at [`packages::Error`]
     pub fn list_packages_unchecked(&self) -> packages::Result<Vec<Manifest>> {
         let dir = std::fs::read_dir(self.path().join("bucket"))?;
 
@@ -159,7 +159,7 @@ impl Bucket {
     ///
     /// # Errors
     /// - The bucket is invalid
-    /// - See more at [`packages::PackageError`]
+    /// - See more at [`packages::Error`]
     pub fn list_package_names(&self) -> packages::Result<Vec<String>> {
         let dir = std::fs::read_dir(self.path().join("bucket"))?;
 

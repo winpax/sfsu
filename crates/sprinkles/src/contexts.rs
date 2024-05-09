@@ -9,7 +9,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::{abandon, config, git};
+use crate::{config, git};
 
 mod global;
 mod user;
@@ -17,6 +17,7 @@ mod user;
 use futures::Future;
 pub use global::Global;
 pub use user::User;
+use which::which;
 
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
@@ -53,55 +54,74 @@ impl Error {
 ///
 /// # Example
 /// ```
-/// use sprinkles::contexts::{ScoopContext, User};
-///
-/// let scoop_path = User::path();
+/// # use sprinkles::contexts::{ScoopContext, User};
+/// let context = User::new();
+/// let scoop_path = context.path();
 /// ```
 pub trait ScoopContext<C>: Clone + Send + Sync + 'static {
+    /// The name of the context
+    ///
+    /// This is used internally to ignore this app when searching for installed apps,
+    /// and to display the context name in the output.
+    ///
+    /// This string should match what the app's name is in Scoop, if applicable.
+    const CONTEXT_NAME: &'static str;
+
     /// Load the context's configuration
+    ///
+    /// Generally the actual loading should be implemented in the context's construction (i.e the `new` function),
+    /// and this function should just return a reference to the configuration.
     fn config(&self) -> &C;
 
     #[must_use]
     /// Gets the context's path
     fn path(&self) -> &Path;
 
+    #[deprecated = "Use which::which directly instead"]
     /// Get the git executable path
     fn git_path() -> Result<PathBuf, which::Error>;
 
+    #[must_use]
     /// Get a sub path within the context's path
+    ///
+    /// This function will attempt to create the path if it does not exist
+    /// but will **not** panic or return an error if it fails
     fn sub_path(&self, segment: impl AsRef<Path>) -> PathBuf {
         let path = self.path().join(segment.as_ref());
 
-        if !path.exists() && std::fs::create_dir_all(&path).is_err() {
-            abandon!("Could not create {} directory", segment.as_ref().display());
+        if !path.exists() {
+            _ = std::fs::create_dir_all(&path);
         }
 
         path
     }
 
     #[must_use]
-    /// Gets the contexts's apps path
+    /// Get the contexts's apps path
     fn apps_path(&self) -> PathBuf;
 
     #[must_use]
-    /// Gets the contexts's buckets path
+    /// Get the contexts's buckets path
     fn buckets_path(&self) -> PathBuf;
 
     #[must_use]
-    /// Gets the contexts's cache path
+    /// Get the contexts's cache path
     fn cache_path(&self) -> PathBuf;
 
     #[must_use]
-    /// Gets the contexts's persist path
+    /// Get the contexts's persist path
     fn persist_path(&self) -> PathBuf;
 
     #[must_use]
-    /// Gets the contexts's shims path
+    /// Get the contexts's shims path
     fn shims_path(&self) -> PathBuf;
 
     #[must_use]
-    /// Gets the contexts's workspace path
+    /// Get the contexts's workspace path
     fn workspace_path(&self) -> PathBuf;
+
+    /// Get the path to the log directory
+    fn logging_dir(&self) -> std::io::Result<PathBuf>;
 
     /// List all scoop apps and return their paths
     fn installed_apps(&self) -> std::io::Result<Vec<PathBuf>> {
@@ -117,7 +137,7 @@ pub trait ScoopContext<C>: Clone + Send + Sync + 'static {
                 let path = package.expect("valid path").path();
 
                 // We cannot search the scoop app as it is built in and hence doesn't contain any manifest
-                if path.file_name() == Some(OsStr::new("scoop")) {
+                if path.file_name() == Some(OsStr::new(Self::CONTEXT_NAME)) {
                     None
                 } else {
                     Some(path)
@@ -126,8 +146,13 @@ pub trait ScoopContext<C>: Clone + Send + Sync + 'static {
             .collect())
     }
 
-    /// Get the path to the log directory
-    fn logging_dir(&self) -> std::io::Result<PathBuf>;
+    /// Checks if the app is installed by its name
+    fn app_installed(&self, name: impl AsRef<str>) -> std::io::Result<bool> {
+        Ok(self
+            .installed_apps()?
+            .iter()
+            .any(|path| path.file_name() == Some(OsStr::new(name.as_ref()))))
+    }
 
     #[deprecated(
         note = "You should implement this yourself, as this function is inherently opinionated"
@@ -146,14 +171,6 @@ pub trait ScoopContext<C>: Clone + Send + Sync + 'static {
     /// This function is synchronous and does not allow for timeouts.
     /// If for some reason there are no available log files, this function will block indefinitely.
     fn new_log_sync(&self) -> Result<File, Error>;
-
-    /// Checks if the app is installed by its name
-    fn app_installed(&self, name: impl AsRef<str>) -> std::io::Result<bool> {
-        Ok(self
-            .installed_apps()?
-            .iter()
-            .any(|path| path.file_name() == Some(OsStr::new(name.as_ref()))))
-    }
 
     /// Open the context's app repository, if any
     fn open_repo(&self) -> Option<git::Result<git::Repo>>;
@@ -188,6 +205,8 @@ pub enum AnyContext {
 }
 
 impl ScoopContext<config::Scoop> for AnyContext {
+    const CONTEXT_NAME: &'static str = User::CONTEXT_NAME;
+
     fn config(&self) -> &config::Scoop {
         match self {
             AnyContext::User(user) => user.config(),
@@ -196,7 +215,7 @@ impl ScoopContext<config::Scoop> for AnyContext {
     }
 
     fn git_path() -> Result<PathBuf, which::Error> {
-        User::git_path()
+        which("git")
     }
 
     #[must_use]

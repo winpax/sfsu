@@ -1,19 +1,28 @@
 //! Scoop git helpers
 
-use std::{ffi::OsStr, fmt::Display, process::Command};
+use std::{ffi::OsStr, fmt::Display, path::PathBuf, process::Command};
 
 use derive_more::Deref;
 use git2::{Commit, DiffOptions, Direction, FetchOptions, Oid, Progress, Remote, Repository, Sort};
 use indicatif::ProgressBar;
 
-use crate::{
-    buckets::Bucket,
-    contexts::{ScoopContext, User},
-};
+use crate::{buckets::Bucket, contexts::ScoopContext};
 
 use self::pull::ProgressCallback;
 
 mod pull;
+
+/// Get the path to the git executable
+///
+/// This is just an alias for [`which::which`]
+///
+/// # Errors
+/// - Git path could not be found
+/// - The current dir and path list were empty
+/// - The found path could not be canonicalized
+pub fn which() -> which::Result<PathBuf> {
+    which::which("git")
+}
 
 #[doc(hidden)]
 /// Progress callback
@@ -305,7 +314,7 @@ impl Repo {
         n: usize,
         format: impl Display,
     ) -> which::Result<Command> {
-        let git_path = User::git_path()?;
+        let git_path = which::which("git")?;
 
         let mut command = Command::new(git_path);
 
