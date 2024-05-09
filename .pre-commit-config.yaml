@@ -5,3 +5,29 @@ repos:
       - id: ggshield
         language_version: python3
         stages: [commit]
+
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v3.25.0
+    hooks:
+      - id: commitizen
+      - id: commitizen-branch
+        stages:
+          - post-commit
+          - push
+
+  - repo: https://github.com/doublify/pre-commit-rust
+    rev: v1.0
+    hooks:
+      - id: fmt
+        stages: [pre-commit]
+      - id: clippy
+        stages: [pre-commit]
+        args:
+          [
+            "--all-targets",
+            "--all-features",
+            "--workspace",
+            "--",
+            "-D",
+            "warnings",
+          ]
