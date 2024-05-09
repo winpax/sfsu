@@ -15,7 +15,7 @@ repos:
     rev: v1.0
     hooks:
       - id: fmt
-        stages: [pre-commit, pre-push]
+        stages: [pre-push]
       - id: clippy
         stages: [pre-push]
         args: [
