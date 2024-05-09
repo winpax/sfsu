@@ -92,12 +92,14 @@ struct Args {
     )]
     disable_git: bool,
 
+    #[cfg(feature = "contexts")]
     #[clap(short, long, global = true, help = "Use the global Scoop context")]
     global: bool,
 }
 
 pub(crate) static COLOR_ENABLED: AtomicBool = AtomicBool::new(true);
 
+#[cfg(feature = "contexts")]
 impl From<&Args> for AnyContext {
     fn from(args: &Args) -> Self {
         if args.global {
@@ -114,21 +116,32 @@ async fn main() -> anyhow::Result<()> {
 
     let args = Args::parse();
 
-    let ctx: AnyContext = (&args).into();
+    let ctx: AnyContext = {
+        cfg_if::cfg_if! {
+            if #[cfg(feature = "contexts")] {
+                (&args).into()
+            } else {
+                AnyContext::User(User::new())
+            }
+        }
+    };
 
-    // Spawn a task to cleanup logs in the background
-    tokio::task::spawn_blocking({
-        let ctx = ctx.clone();
-        move || Logger::cleanup_logs(&ctx)
-    });
+    cfg_if::cfg_if! {
+        if #[cfg(feature = "contexts")] {
+            // Spawn a task to cleanup logs in the background
+            tokio::task::spawn_blocking({
+                let ctx = ctx.clone();
+                move || Logger::cleanup_logs(&ctx)
+            });
+        } else {
+            tokio::task::spawn_blocking(|| Logger::cleanup_logs());
+        }
+    }
 
     Logger::init(
+        #[cfg(feature = "contexts")]
         &ctx,
-        if cfg!(debug_assertions) {
-            true
-        } else {
-            args.verbose
-        },
+        cfg!(debug_assertions) || args.verbose,
     )
     .await?;
 
@@ -141,7 +154,12 @@ async fn main() -> anyhow::Result<()> {
 
     debug!("Running command: {:?}", args.command);
 
-    args.command.run(&ctx).await?;
+    args.command
+        .run(
+            #[cfg(feature = "contexts")]
+            &ctx,
+        )
+        .await?;
 
     Ok(())
 }

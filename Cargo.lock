@@ -2494,6 +2494,7 @@ dependencies = [
  "anyhow",
  "bat",
  "cargo-husky",
+ "cfg-if",
  "chrono",
  "clap",
  "console",
