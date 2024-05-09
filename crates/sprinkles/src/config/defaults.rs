@@ -1,13 +1,15 @@
-use std::{env, path::PathBuf};
-
-use crate::contexts::{ScoopContext, User};
+use std::path::PathBuf;
 
 // pub fn default_scoop_repo() -> String {
 //     "https://github.com/ScoopInstaller/Scoop".into()
 // }
 
 pub fn default_scoop_root_path() -> PathBuf {
-    let mut path = PathBuf::from(env::var("USERPROFILE").unwrap());
+    let mut path = PathBuf::from(
+        directories::BaseDirs::new()
+            .expect("user directories")
+            .home_dir(),
+    );
     path.push("scoop");
     path
 }
@@ -43,8 +45,4 @@ pub fn default_scoop_global_path() -> PathBuf {
     }
 
     path
-}
-
-pub fn default_cache_path() -> PathBuf {
-    User::new().sub_path("cache")
 }

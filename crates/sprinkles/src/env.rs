@@ -28,9 +28,7 @@ pub mod paths {
         env::var_os("XFG_CONFIG_HOME")
             .map(PathBuf::from)
             .or_else(|| {
-                env::var_os("USERPROFILE")
-                    .map(PathBuf::from)
-                    .map(|path| path.join(".config"))
+                directories::BaseDirs::new().map(|base_dirs| base_dirs.home_dir().join(".config"))
             })
     }
 }

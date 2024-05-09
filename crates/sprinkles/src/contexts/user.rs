@@ -21,7 +21,11 @@ impl User {
         let path = {
             if let Some(path) = crate::env::paths::scoop_path() {
                 path
-            } else if let Ok(path) = config::Scoop::load().map(|config| config.root_path) {
+            } else if let Ok(path) = Ok::<_, ()>(
+                config::Scoop::load()
+                    .map(|config| config.root_path)
+                    .unwrap(),
+            ) {
                 path
             } else {
                 directories::BaseDirs::new()
@@ -97,7 +101,9 @@ impl super::ScoopContext<config::Scoop> for User {
     fn cache_path(&self) -> PathBuf {
         if let Some(cache_path) = crate::env::paths::scoop_cache() {
             cache_path
-        } else if let Some(cache_path) = config::Scoop::load().ok().map(|config| config.cache_path)
+        } else if let Some(cache_path) = config::Scoop::load()
+            .ok()
+            .and_then(|config| config.cache_path)
         {
             cache_path
         } else {

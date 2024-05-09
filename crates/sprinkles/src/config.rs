@@ -10,7 +10,7 @@ use crate::{proxy::Proxy, Architecture};
 
 pub mod branch;
 
-#[derive(Debug, Default, Copy, Clone, Serialize, Deserialize)]
+#[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 /// Scoop shim builds
 pub enum ScoopShim {
@@ -74,7 +74,7 @@ pub struct Scoop {
     /// This configuration is useful for custom forks of scoop, or a scoop replacement
     pub scoop_repo: ScoopRepo,
 
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "skips::skip")]
     /// Allow to use different branch than master
     ///
     /// Could be used for testing specific functionalities before released into all users
@@ -90,35 +90,35 @@ pub struct Scoop {
     ///   * To bypass the system proxy and connect directly, use 'none' (with no username or password)
     pub proxy: Option<Proxy>,
 
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "skips::skip")]
     /// When a conflict is detected during updating, Scoop will auto-stash the uncommitted changes.
     /// (Default is `false`, which will abort the update)
     pub autostash_on_conflict: bool,
 
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "skips::skip")]
     /// Allow to configure preferred architecture for application installation
     ///
     /// If not specified, architecture is determined by system
     pub default_architecture: Architecture,
 
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "skips::skip")]
     /// Additional and detailed output will be shown
     pub debug: bool,
 
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "skips::skip")]
     /// Force apps updating to bucket's version
     pub force_update: bool,
 
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "skips::skip")]
     /// Show update log
     pub show_update_log: bool,
 
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "skips::skip")]
     /// Displays the manifest of every app that's about to
     /// be installed, then asks user if they wish to proceed
     pub show_manifest: bool,
 
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "skips::skip")]
     /// Choose scoop shim build
     pub shim: ScoopShim,
 
@@ -130,9 +130,8 @@ pub struct Scoop {
     /// Path to Scoop root directory for global apps
     pub global_path: PathBuf,
 
-    #[serde(default = "defaults::default_cache_path")]
     /// For downloads, defaults to 'cache' folder under Scoop root directory
-    pub cache_path: PathBuf,
+    pub cache_path: Option<PathBuf>,
 
     /// GitHub API token used to make authenticated requests
     ///
@@ -145,6 +144,7 @@ pub struct Scoop {
     /// See: 'https://support.virustotal.com/hc/en-us/articles/115002088769-Please-give-me-an-API-key'
     pub virustotal_api_key: Option<String>,
 
+    #[serde(default, skip_serializing_if = "skips::skip")]
     /// When set to `false` (default), Scoop would stop its procedure immediately if it detects
     /// any target app process is running. Procedure here refers to reset/uninstall/update.
     ///
