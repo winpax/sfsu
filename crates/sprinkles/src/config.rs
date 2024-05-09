@@ -1,40 +1,14 @@
 //! Scoop config helpers
 
-use std::{env, fmt::Display, path::PathBuf};
+use std::{fmt::Display, path::PathBuf};
 
-use serde::{de::Visitor, Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 use serde_with::skip_serializing_none;
 
 use crate::{proxy::Proxy, Architecture};
 
-#[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "lowercase")]
-/// Which Scoop branch to use
-pub enum ScoopBranch {
-    #[default]
-    /// The default branch
-    Master,
-    /// The develop branch
-    Develop,
-}
-
-impl ScoopBranch {
-    #[must_use]
-    /// Get the branch name
-    pub fn name(self) -> &'static str {
-        match self {
-            ScoopBranch::Master => "master",
-            ScoopBranch::Develop => "develop",
-        }
-    }
-}
-
-impl Display for ScoopBranch {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.name())
-    }
-}
+pub mod branch;
 
 #[derive(Debug, Default, Copy, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -50,7 +24,7 @@ pub enum ScoopShim {
     SeventyOne,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(transparent)]
 /// The git repository containing the scoop adaptor's source code
 pub struct ScoopRepo(String);
@@ -75,113 +49,26 @@ impl Display for ScoopRepo {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(transparent)]
-/// The path to Scoop root directory
-pub struct ScoopRootPath(PathBuf);
-
-impl Default for ScoopRootPath {
-    fn default() -> Self {
-        Self({
-            let mut path = PathBuf::from(env::var("USERPROFILE").unwrap());
-            path.push("scoop");
-            path
-        })
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(transparent)]
-/// The path to Scoop root directory for global apps
-pub struct ScoopGlobalPath(PathBuf);
-
-impl Default for ScoopGlobalPath {
-    fn default() -> Self {
-        Self({
-            let mut path = PathBuf::from(env::var("ProgramData").unwrap());
-            path.push("scoop");
-            path
-        })
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-/// The path to use for Scoop instead of the system path
-pub struct IsolatedPath(PathBuf);
-
-impl Serialize for IsolatedPath {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        let path = self.0.as_path();
-        if let Ok(scoop_path_env) = env::var("SCOOP_PATH") {
-            if path == PathBuf::from(scoop_path_env) {
-                return serializer.serialize_bool(true);
-            }
-        }
-
-        serializer.serialize_str(&path.display().to_string())
-    }
-}
-
-struct IsolatedPathVisitor;
-impl<'de> Visitor<'de> for IsolatedPathVisitor {
-    type Value = IsolatedPath;
-
-    fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        formatter.write_str("true or a custom variable name")
-    }
-
-    fn visit_bool<E>(self, v: bool) -> Result<Self::Value, E>
-    where
-        E: serde::de::Error,
-    {
-        if v {
-            Ok(IsolatedPath(PathBuf::from(env::var("SCOOP_PATH").unwrap())))
-        } else {
-            Err(serde::de::Error::custom("expected true"))
-        }
-    }
-
-    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
-    where
-        E: serde::de::Error,
-    {
-        match v {
-            "true" => self.visit_bool(true),
-            "false" => self.visit_bool(false),
-            _ => Ok(IsolatedPath(PathBuf::from(v))),
-        }
-    }
-}
-
-impl<'de> Deserialize<'de> for IsolatedPath {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        deserializer.deserialize_str(IsolatedPathVisitor)
-    }
-}
+pub mod isolated;
 
 #[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[allow(clippy::struct_excessive_bools)]
 /// Scoop configuration
 pub struct Scoop {
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "skips::skip")]
     /// External 7zip (from path) will be used for archives extraction
     pub use_external_7zip: bool,
 
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "skips::skip")]
     /// Prefer lessmsi utility over native msiexec
     pub use_lessmsi: bool,
 
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "skips::skip")]
     /// The 'current' version alias will not be used. Shims and shortcuts will point to specific version instead
     pub no_junction: bool,
 
+    #[serde(default, skip_serializing_if = "skips::skip")]
     /// Git repository containing the scoop adaptor's source code
     ///
     /// This configuration is useful for custom forks of scoop, or a scoop replacement
@@ -193,7 +80,7 @@ pub struct Scoop {
     /// Could be used for testing specific functionalities before released into all users
     ///
     /// If you want to receive updates earlier to test new functionalities use develop (see: 'https://github.com/ScoopInstaller/Scoop/issues/2939')
-    pub scoop_branch: ScoopBranch,
+    pub scoop_branch: branch::ScoopBranch,
 
     /// By default, we will use the proxy settings from Internet Options, but with anonymous authentication.
     ///
@@ -276,7 +163,7 @@ pub struct Scoop {
     ///
     /// When set to arbitrary non-empty string, Scoop will use that string as the environment variable name instead.
     /// This is useful when you want to isolate Scoop from the system `PATH`.
-    pub use_isolated_path: Option<IsolatedPath>,
+    pub use_isolated_path: Option<isolated::IsolatedPath>,
 
     /// The timestamp of the last scoop update
     pub(crate) last_update: Option<String>,
@@ -343,70 +230,24 @@ impl Scoop {
     }
 }
 
-mod defaults {
-    use std::{env, path::PathBuf};
-
-    use crate::contexts::{ScoopContext, User};
-
-    pub(super) fn default_scoop_root_path() -> PathBuf {
-        let mut path = PathBuf::from(env::var("USERPROFILE").unwrap());
-        path.push("scoop");
-        path
-    }
-
-    pub(super) fn default_scoop_global_path() -> PathBuf {
-        use std::{ffi::OsString, os::windows::ffi::OsStringExt};
-
-        use windows::Win32::{
-            Foundation::{HWND, MAX_PATH},
-            UI::Shell::{SHGetSpecialFolderPathW, CSIDL_COMMON_APPDATA},
-        };
-
-        let mut buf = [0u16; MAX_PATH as usize];
-        let success = unsafe {
-            #[allow(clippy::cast_possible_wrap)]
-            SHGetSpecialFolderPathW(HWND::default(), &mut buf, CSIDL_COMMON_APPDATA as i32, true)
-                .as_bool()
-        };
-
-        let path = if success {
-            let string = OsString::from_wide(&buf);
-            let utf8_string = string.to_string_lossy();
-            let trimmed = utf8_string.trim_end_matches('\0');
-
-            PathBuf::from(trimmed)
-        } else {
-            "C:\\ProgramData".into()
-        }
-        .join("scoop");
-
-        if !path.exists() {
-            std::fs::create_dir(&path).expect("could not create scoop global path");
-        }
-
-        path
-    }
-
-    pub(super) fn default_cache_path() -> PathBuf {
-        User::new().sub_path("cache")
-    }
-}
+mod defaults;
+mod skips;
 
 #[cfg(test)]
 mod tests {
     use std::{env, path::PathBuf};
 
-    use super::IsolatedPath;
+    use super::isolated::IsolatedPath;
 
     #[test]
     fn test_isolated_path_serde() {
-        let true_path = IsolatedPath(
+        let true_path = IsolatedPath::from(
             env::var("SCOOP_PATH")
                 .map(PathBuf::from)
                 .unwrap_or_default(),
         );
 
-        let custom_path = IsolatedPath(PathBuf::from("custom"));
+        let custom_path = IsolatedPath::from(PathBuf::from("custom"));
 
         let true_path_ser = serde_json::to_string(&true_path).unwrap();
         let custom_path_ser = serde_json::to_string(&custom_path).unwrap();
