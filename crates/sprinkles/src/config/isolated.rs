@@ -1,3 +1,5 @@
+//! The path to use for Scoop instead of the system path
+
 use serde::{de::Visitor, Deserialize, Serialize};
 
 use std::path::{Path, PathBuf};
@@ -14,7 +16,7 @@ impl From<PathBuf> for IsolatedPath {
 
 impl From<&PathBuf> for IsolatedPath {
     fn from(path: &PathBuf) -> Self {
-        Self(path.to_path_buf())
+        Self(path.clone())
     }
 }
 

@@ -1,3 +1,5 @@
+//! Scoop branch configuration
+
 use std::fmt::Display;
 
 use serde::{Deserialize, Serialize};

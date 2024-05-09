@@ -6,18 +6,15 @@ pub trait Skip {
 }
 
 impl<T: Default + Eq> Skip for T {
+    #[inline]
     fn skip(&self) -> bool {
         self == &T::default()
     }
 }
 
+#[inline]
 pub fn skip(value: &impl Skip) -> bool {
     value.skip()
-}
-
-#[inline]
-pub fn skip_bool(value: &bool) -> bool {
-    *value
 }
 
 #[cfg(test)]
@@ -29,19 +26,5 @@ mod tests {
         let value = true;
 
         assert!(!skip(&value));
-    }
-
-    #[test]
-    fn test_skip_bool() {
-        let value = true;
-
-        assert!(!skip_bool(&value));
-    }
-
-    #[test]
-    fn test_skip_if_default_parity() {
-        let value = true;
-
-        assert_eq!(skip_bool(&value), skip(&value));
     }
 }

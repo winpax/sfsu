@@ -2,9 +2,9 @@ use std::{env, path::PathBuf};
 
 use crate::contexts::{ScoopContext, User};
 
-pub fn default_scoop_repo() -> String {
-    "https://github.com/ScoopInstaller/Scoop".into()
-}
+// pub fn default_scoop_repo() -> String {
+//     "https://github.com/ScoopInstaller/Scoop".into()
+// }
 
 pub fn default_scoop_root_path() -> PathBuf {
     let mut path = PathBuf::from(env::var("USERPROFILE").unwrap());
