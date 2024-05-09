@@ -2520,7 +2520,7 @@ dependencies = [
  "sprinkles",
  "tokio",
  "toml_edit 0.22.12",
- "vt3 0.7.3 (git+https://github.com/winpax/vt3.git)",
+ "vt3",
  "winres",
 ]
 
@@ -2688,7 +2688,6 @@ dependencies = [
  "tokio-util",
  "url",
  "urlencoding",
- "vt3 0.7.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "which",
  "windows",
  "windows-version",
@@ -3283,19 +3282,6 @@ name = "version_check"
 version = "0.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
-
-[[package]]
-name = "vt3"
-version = "0.7.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a5798cdbd57cb56b40cf519b1ae197f5382263663c0d15798e9ef2e0bc8a6785"
-dependencies = [
- "base64 0.22.1",
- "reqwest",
- "serde",
- "serde_json",
- "thiserror",
-]
 
 [[package]]
 name = "vt3"
