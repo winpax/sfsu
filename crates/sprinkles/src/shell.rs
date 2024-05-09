@@ -1,9 +1,8 @@
 //! Shell related utilities
 
-use clap::ValueEnum;
 use strum::Display;
 
-#[derive(Debug, Default, ValueEnum, Copy, Clone, Display, PartialEq, Eq)]
+#[derive(Debug, Default, Copy, Clone, Display, PartialEq, Eq)]
 #[strum(serialize_all = "snake_case")]
 #[allow(missing_docs)]
 /// A supported shell
@@ -13,6 +12,21 @@ pub enum Shell {
     Bash,
     Zsh,
     Nu,
+}
+
+#[cfg(feature = "clap")]
+impl clap::ValueEnum for Shell {
+    fn value_variants<'a>() -> &'a [Self] {
+        &[Self::Powershell, Self::Bash, Self::Zsh, Self::Nu]
+    }
+    fn to_possible_value<'a>(&self) -> Option<clap::builder::PossibleValue> {
+        match self {
+            Self::Powershell => Some(clap::builder::PossibleValue::new("powershell")),
+            Self::Bash => Some(clap::builder::PossibleValue::new("bash")),
+            Self::Zsh => Some(clap::builder::PossibleValue::new("zsh")),
+            Self::Nu => Some(clap::builder::PossibleValue::new("nu")),
+        }
+    }
 }
 
 impl Shell {

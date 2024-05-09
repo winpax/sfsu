@@ -7,7 +7,6 @@ use std::{
 };
 
 use chrono::{DateTime, FixedOffset, Local};
-use clap::{Parser, ValueEnum};
 use git2::Commit;
 use itertools::Itertools;
 use quork::traits::truthy::ContainsTruth as _;
@@ -294,7 +293,7 @@ pub enum Error {
 /// The result type for package operations
 pub type Result<T, E = Error> = std::result::Result<T, E>;
 
-#[derive(Debug, Default, Copy, Clone, ValueEnum, Display, Parser, PartialEq, Eq)]
+#[derive(Debug, Default, Copy, Clone, Display, PartialEq, Eq)]
 #[strum(serialize_all = "snake_case")]
 /// The search mode
 pub enum SearchMode {
@@ -305,6 +304,26 @@ pub enum SearchMode {
     Binary,
     /// Search both the name and binaries
     Both,
+}
+
+#[cfg(feature = "clap")]
+impl clap::ValueEnum for SearchMode {
+    fn value_variants<'a>() -> &'a [Self] {
+        &[Self::Name, Self::Binary, Self::Both]
+    }
+    fn to_possible_value<'a>(&self) -> Option<clap::builder::PossibleValue> {
+        match self {
+            Self::Name => {
+                Some(clap::builder::PossibleValue::new("name").help("Only search the name"))
+            }
+            Self::Binary => Some({
+                clap::builder::PossibleValue::new("binary").help("Only search the binaries")
+            }),
+            Self::Both => Some({
+                clap::builder::PossibleValue::new("both").help("Search both the name and binaries")
+            }),
+        }
+    }
 }
 
 impl SearchMode {
