@@ -1,48 +1,26 @@
 use std::{
-    ffi::OsStr,
     fs::File,
     path::{Path, PathBuf},
 };
 
 use chrono::Local;
-use rayon::prelude::*;
 
-use crate::{abandon, config, contexts::Error, git};
+use crate::{config, contexts::Error, git};
 
+#[derive(Debug, Clone)]
 /// User's Scoop install adapter
-pub struct User;
+pub struct User {
+    config: config::Scoop,
+    path: PathBuf,
+}
 
-impl super::ScoopContext<config::Scoop> for User {
-    /// Load the Scoop configuration
-    ///
-    /// # Errors
-    /// - Could not load the configuration
-    fn config() -> std::io::Result<config::Scoop> {
-        config::Scoop::load()
-    }
-
-    /// Get the git executable path
-    ///
-    /// # Errors
-    /// - Could not find `git` in path
-    fn git_path() -> Result<PathBuf, which::Error> {
-        which::which("git")
-    }
-
+impl User {
     #[must_use]
-    /// Gets the user's scoop path, via either the default path or as provided by the SCOOP env variable
-    ///
-    /// Will ignore the global scoop path
-    ///
-    /// # Panics
-    /// - There is no home folder
-    /// - The discovered scoop path does not exist
-    fn path() -> PathBuf {
+    /// Construct a new user context adapter
+    pub fn new() -> Self {
         use std::env::var_os;
 
-        // TODO: Add support for both global and non-global scoop installs
-
-        let scoop_path = {
+        let path = {
             if let Some(path) = var_os("SCOOP") {
                 path.into()
             } else if let Some(path) = config::Scoop::load()
@@ -58,38 +36,70 @@ impl super::ScoopContext<config::Scoop> for User {
             }
         };
 
-        if scoop_path.exists() {
-            dunce::canonicalize(scoop_path).expect("failed to find real path to scoop")
+        let path = if path.exists() {
+            dunce::canonicalize(path).expect("failed to find real path to scoop")
         } else {
             panic!("Scoop path does not exist");
-        }
+        };
+
+        let config = config::Scoop::load().expect("scoop config loaded correctly");
+
+        Self { config, path }
+    }
+}
+
+impl Default for User {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl super::ScoopContext<config::Scoop> for User {
+    const CONTEXT_NAME: &'static str = "scoop";
+
+    /// Load the Scoop configuration
+    ///
+    /// # Errors
+    /// - Could not load the configuration
+    fn config(&self) -> &config::Scoop {
+        &self.config
     }
 
-    fn scoop_sub_path(segment: impl AsRef<Path>) -> PathBuf {
-        let path = Self::path().join(segment.as_ref());
+    #[must_use]
+    /// Gets the user's scoop path, via either the default path or as provided by the SCOOP env variable
+    ///
+    /// Will ignore the global scoop path
+    ///
+    /// # Panics
+    /// - There is no home folder
+    /// - The discovered scoop path does not exist
+    fn path(&self) -> &Path {
+        &self.path
+    }
 
-        if !path.exists() && std::fs::create_dir_all(&path).is_err() {
-            abandon!("Could not create {} directory", segment.as_ref().display());
-        }
-
-        path
+    /// Get the git executable path
+    ///
+    /// # Errors
+    /// - Could not find `git` in path
+    fn git_path() -> Result<PathBuf, which::Error> {
+        which::which("git")
     }
 
     #[must_use]
     /// Gets the user's scoop apps path
-    fn apps_path() -> PathBuf {
-        Self::scoop_sub_path("apps")
+    fn apps_path(&self) -> PathBuf {
+        self.sub_path("apps")
     }
 
     #[must_use]
     /// Gets the user's scoop buckets path
-    fn buckets_path() -> PathBuf {
-        Self::scoop_sub_path("buckets")
+    fn buckets_path(&self) -> PathBuf {
+        self.sub_path("buckets")
     }
 
     #[must_use]
     /// Gets the user's scoop cache path
-    fn cache_path() -> PathBuf {
+    fn cache_path(&self) -> PathBuf {
         if let Some(cache_path) = std::env::var_os("SCOOP_CACHE") {
             PathBuf::from(cache_path)
         } else if let Some(cache_path) = config::Scoop::load()
@@ -98,62 +108,35 @@ impl super::ScoopContext<config::Scoop> for User {
         {
             cache_path
         } else {
-            Self::scoop_sub_path("cache")
+            self.sub_path("cache")
         }
     }
 
     #[must_use]
     /// Gets the user's scoop persist path
-    fn persist_path() -> PathBuf {
-        Self::scoop_sub_path("persist")
+    fn persist_path(&self) -> PathBuf {
+        self.sub_path("persist")
     }
 
     #[must_use]
     /// Gets the user's scoop shims path
-    fn shims_path() -> PathBuf {
-        Self::scoop_sub_path("shims")
+    fn shims_path(&self) -> PathBuf {
+        self.sub_path("shims")
     }
 
     #[must_use]
     /// Gets the user's scoop workspace path
-    fn workspace_path() -> PathBuf {
-        Self::scoop_sub_path("workspace")
-    }
-
-    /// List all scoop apps and return their paths
-    ///
-    /// # Errors
-    /// - Reading dir fails
-    ///
-    /// # Panics
-    /// - Reading dir fails
-    fn installed_apps() -> std::io::Result<Vec<PathBuf>> {
-        let apps_path = Self::apps_path();
-
-        let read = apps_path.read_dir()?;
-
-        Ok(read
-            .par_bridge()
-            .filter_map(|package| {
-                let path = package.expect("valid path").path();
-
-                // We cannot search the scoop app as it is built in and hence doesn't contain any manifest
-                if path.file_name() == Some(OsStr::new("scoop")) {
-                    None
-                } else {
-                    Some(path)
-                }
-            })
-            .collect())
+    fn workspace_path(&self) -> PathBuf {
+        self.sub_path("workspace")
     }
 
     /// Get the path to the log directory
     ///
     /// # Errors
     /// - Creating the directory fails
-    fn logging_dir() -> std::io::Result<PathBuf> {
+    fn logging_dir(&self) -> std::io::Result<PathBuf> {
         #[cfg(not(debug_assertions))]
-        let logs_path = User::apps_path().join("sfsu").join("current").join("logs");
+        let logs_path = self.apps_path().join("sfsu").join("current").join("logs");
 
         #[cfg(debug_assertions)]
         let logs_path = std::env::current_dir()?.join("logs");
@@ -172,8 +155,8 @@ impl super::ScoopContext<config::Scoop> for User {
     ///
     /// # Panics
     /// - Could not convert tokio file into std file
-    async fn new_log() -> Result<File, Error> {
-        let logs_dir = Self::logging_dir()?;
+    async fn new_log(&self) -> Result<File, Error> {
+        let logs_dir = self.logging_dir()?;
         let date = Local::now();
 
         let log_file = async {
@@ -215,8 +198,8 @@ impl super::ScoopContext<config::Scoop> for User {
     ///
     /// # Errors
     /// - Creating the file fails
-    fn new_log_sync() -> Result<File, Error> {
-        let logs_dir = Self::logging_dir()?;
+    fn new_log_sync(&self) -> Result<File, Error> {
+        let logs_dir = self.logging_dir()?;
         let date = Local::now();
 
         let mut i = 0;
@@ -234,22 +217,19 @@ impl super::ScoopContext<config::Scoop> for User {
         Ok(file)
     }
 
-    /// Checks if the app is installed by its name
-    ///
-    /// # Errors
-    /// - Reading app dir fails
-    fn app_installed(name: impl AsRef<str>) -> std::io::Result<bool> {
-        Ok(Self::installed_apps()?
-            .iter()
-            .any(|path| path.file_name() == Some(OsStr::new(name.as_ref()))))
-    }
-
     /// Open Scoop app repository
     ///
     /// # Errors
     /// - The Scoop app could not be opened as a repository
-    fn open_repo() -> Option<git::Result<git::Repo>> {
-        Some(git::Repo::scoop_app())
+    fn open_repo(&self) -> Option<git::Result<git::Repo>> {
+        Some(git::Repo::scoop_app(self))
+    }
+
+    /// Get the path to the context's app
+    ///
+    /// In the case of the user context, this is the path to the scoop app
+    fn context_app_path(&self) -> PathBuf {
+        self.apps_path().join("scoop").join("current")
     }
 
     /// Check if Scoop is outdated
@@ -257,12 +237,12 @@ impl super::ScoopContext<config::Scoop> for User {
     /// # Errors
     /// - The Scoop app could not be opened as a repository
     /// - The Scoop app could not be checked for updates
-    fn outdated() -> Result<bool, Error> {
-        let config = config::Scoop::load()?;
-        let scoop_repo = git::Repo::scoop_app()?;
+    async fn outdated(&self) -> Result<bool, Error> {
+        let config = self.config();
+        let scoop_repo = self.open_repo().expect("scoop repo")?;
 
         let current_branch = scoop_repo.current_branch()?;
-        let scoop_config_branch = config.scoop_branch.unwrap_or("master".into());
+        let scoop_config_branch = config.scoop_branch.clone().unwrap_or("master".into());
 
         if current_branch != scoop_config_branch {
             scoop_repo.checkout(&scoop_config_branch)?;

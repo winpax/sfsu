@@ -4,11 +4,12 @@
 //! Scoop context adapters
 
 use std::{
+    ffi::OsStr,
     fs::File,
     path::{Path, PathBuf},
 };
 
-use crate::git;
+use crate::{config, git};
 
 mod global;
 mod user;
@@ -16,6 +17,7 @@ mod user;
 use futures::Future;
 pub use global::Global;
 pub use user::User;
+use which::which;
 
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
@@ -52,53 +54,105 @@ impl Error {
 ///
 /// # Example
 /// ```
-/// use sprinkles::contexts::{ScoopContext, User};
-///
-/// let scoop_path = User::path();
+/// # use sprinkles::contexts::{ScoopContext, User};
+/// let context = User::new();
+/// let scoop_path = context.path();
 /// ```
-pub trait ScoopContext<C> {
-    /// Load the context's configuration
-    fn config() -> std::io::Result<C>;
+pub trait ScoopContext<C>: Clone + Send + Sync + 'static {
+    /// The name of the context
+    ///
+    /// This is used internally to ignore this app when searching for installed apps,
+    /// and to display the context name in the output.
+    ///
+    /// This string should match what the app's name is in Scoop, if applicable.
+    const CONTEXT_NAME: &'static str;
 
+    /// Load the context's configuration
+    ///
+    /// Generally the actual loading should be implemented in the context's construction (i.e the `new` function),
+    /// and this function should just return a reference to the configuration.
+    fn config(&self) -> &C;
+
+    #[must_use]
+    /// Gets the context's path
+    fn path(&self) -> &Path;
+
+    #[deprecated = "Use which::which directly instead"]
     /// Get the git executable path
     fn git_path() -> Result<PathBuf, which::Error>;
 
     #[must_use]
-    /// Gets the context's path
-    fn path() -> PathBuf;
-
     /// Get a sub path within the context's path
-    fn scoop_sub_path(segment: impl AsRef<Path>) -> PathBuf;
+    ///
+    /// This function will attempt to create the path if it does not exist
+    /// but will **not** panic or return an error if it fails
+    fn sub_path(&self, segment: impl AsRef<Path>) -> PathBuf {
+        let path = self.path().join(segment.as_ref());
+
+        if !path.exists() {
+            _ = std::fs::create_dir_all(&path);
+        }
+
+        path
+    }
 
     #[must_use]
-    /// Gets the contexts's apps path
-    fn apps_path() -> PathBuf;
+    /// Get the contexts's apps path
+    fn apps_path(&self) -> PathBuf;
 
     #[must_use]
-    /// Gets the contexts's buckets path
-    fn buckets_path() -> PathBuf;
+    /// Get the contexts's buckets path
+    fn buckets_path(&self) -> PathBuf;
 
     #[must_use]
-    /// Gets the contexts's cache path
-    fn cache_path() -> PathBuf;
+    /// Get the contexts's cache path
+    fn cache_path(&self) -> PathBuf;
 
     #[must_use]
-    /// Gets the contexts's persist path
-    fn persist_path() -> PathBuf;
+    /// Get the contexts's persist path
+    fn persist_path(&self) -> PathBuf;
 
     #[must_use]
-    /// Gets the contexts's shims path
-    fn shims_path() -> PathBuf;
+    /// Get the contexts's shims path
+    fn shims_path(&self) -> PathBuf;
 
     #[must_use]
-    /// Gets the contexts's workspace path
-    fn workspace_path() -> PathBuf;
-
-    /// List all scoop apps and return their paths
-    fn installed_apps() -> std::io::Result<Vec<PathBuf>>;
+    /// Get the contexts's workspace path
+    fn workspace_path(&self) -> PathBuf;
 
     /// Get the path to the log directory
-    fn logging_dir() -> std::io::Result<PathBuf>;
+    fn logging_dir(&self) -> std::io::Result<PathBuf>;
+
+    /// List all scoop apps and return their paths
+    fn installed_apps(&self) -> std::io::Result<Vec<PathBuf>> {
+        use rayon::prelude::*;
+
+        let apps_path = self.apps_path();
+
+        let read = apps_path.read_dir()?;
+
+        Ok(read
+            .par_bridge()
+            .filter_map(|package| {
+                let path = package.expect("valid path").path();
+
+                // We cannot search the scoop app as it is built in and hence doesn't contain any manifest
+                if path.file_name() == Some(OsStr::new(Self::CONTEXT_NAME)) {
+                    None
+                } else {
+                    Some(path)
+                }
+            })
+            .collect())
+    }
+
+    /// Checks if the app is installed by its name
+    fn app_installed(&self, name: impl AsRef<str>) -> std::io::Result<bool> {
+        Ok(self
+            .installed_apps()?
+            .iter()
+            .any(|path| path.file_name() == Some(OsStr::new(name.as_ref()))))
+    }
 
     #[deprecated(
         note = "You should implement this yourself, as this function is inherently opinionated"
@@ -106,7 +160,7 @@ pub trait ScoopContext<C> {
     #[cfg(not(feature = "v2"))]
     #[allow(async_fn_in_trait)]
     /// Create a new log file
-    async fn new_log() -> Result<File, Error>;
+    async fn new_log(&self) -> Result<File, Error>;
 
     #[deprecated(
         note = "You should implement this yourself, as this function is inherently opinionated"
@@ -116,14 +170,19 @@ pub trait ScoopContext<C> {
     ///
     /// This function is synchronous and does not allow for timeouts.
     /// If for some reason there are no available log files, this function will block indefinitely.
-    fn new_log_sync() -> Result<File, Error>;
-
-    /// Checks if the app is installed by its name
-    fn app_installed(name: impl AsRef<str>) -> std::io::Result<bool>;
+    fn new_log_sync(&self) -> Result<File, Error>;
 
     /// Open the context's app repository, if any
-    fn open_repo() -> Option<git::Result<git::Repo>>;
+    fn open_repo(&self) -> Option<git::Result<git::Repo>>;
 
+    /// Get the path to the context's app
+    ///
+    /// This should return the path to the app's directory, not the repository.
+    ///
+    /// For example, if the context is the user context, this should return the path to the scoop app
+    fn context_app_path(&self) -> PathBuf;
+
+    #[must_use]
     /// Check if the context is outdated
     ///
     /// This may manifest in different ways, depending on the context
@@ -133,15 +192,146 @@ pub trait ScoopContext<C> {
     ///
     /// For implementors, this should return `true` if your provider is outdated. For example,
     /// the binary which hooks into this trait will return `true` if there is a newer version available.
-    fn outdated() -> Result<bool, Error>;
+    fn outdated(&self) -> impl Future<Output = Result<bool, Error>>;
+}
+
+#[derive(Debug, Clone)]
+/// A little helper enum for when you want statically typed contexts, but don't know which one you want at compile time
+pub enum AnyContext {
+    /// The user context
+    User(User),
+    /// The global context
+    Global(Global),
+}
+
+impl ScoopContext<config::Scoop> for AnyContext {
+    const CONTEXT_NAME: &'static str = User::CONTEXT_NAME;
+
+    fn config(&self) -> &config::Scoop {
+        match self {
+            AnyContext::User(user) => user.config(),
+            AnyContext::Global(global) => global.config(),
+        }
+    }
+
+    fn git_path() -> Result<PathBuf, which::Error> {
+        which("git")
+    }
 
     #[must_use]
-    /// Check if the context is outdated, asynchronously
-    ///
-    /// See [`ScoopContext::outdated`] for more information
-    ///
-    /// By default, this will call [`ScoopContext::outdated`] in a blocking context and return the result.
-    fn outdated_async() -> impl Future<Output = Result<bool, Error>> {
-        async { tokio::task::spawn_blocking(|| Self::outdated()).await? }
+    fn path(&self) -> &Path {
+        match self {
+            AnyContext::User(user) => user.path(),
+            AnyContext::Global(global) => global.path(),
+        }
+    }
+
+    fn sub_path(&self, segment: impl AsRef<Path>) -> PathBuf {
+        match self {
+            AnyContext::User(user) => user.sub_path(segment),
+            AnyContext::Global(global) => global.sub_path(segment),
+        }
+    }
+
+    fn apps_path(&self) -> PathBuf {
+        match self {
+            AnyContext::User(user) => user.apps_path(),
+            AnyContext::Global(global) => global.apps_path(),
+        }
+    }
+
+    fn buckets_path(&self) -> PathBuf {
+        match self {
+            AnyContext::User(user) => user.buckets_path(),
+            AnyContext::Global(global) => global.buckets_path(),
+        }
+    }
+
+    fn cache_path(&self) -> PathBuf {
+        match self {
+            AnyContext::User(user) => user.cache_path(),
+            AnyContext::Global(global) => global.cache_path(),
+        }
+    }
+
+    fn persist_path(&self) -> PathBuf {
+        match self {
+            AnyContext::User(user) => user.persist_path(),
+            AnyContext::Global(global) => global.persist_path(),
+        }
+    }
+
+    fn shims_path(&self) -> PathBuf {
+        match self {
+            AnyContext::User(user) => user.shims_path(),
+            AnyContext::Global(global) => global.shims_path(),
+        }
+    }
+
+    fn workspace_path(&self) -> PathBuf {
+        match self {
+            AnyContext::User(user) => user.workspace_path(),
+            AnyContext::Global(global) => global.workspace_path(),
+        }
+    }
+
+    fn installed_apps(&self) -> std::io::Result<Vec<PathBuf>> {
+        match self {
+            AnyContext::User(user) => user.installed_apps(),
+            AnyContext::Global(global) => global.installed_apps(),
+        }
+    }
+
+    fn logging_dir(&self) -> std::io::Result<PathBuf> {
+        match self {
+            AnyContext::User(user) => user.logging_dir(),
+            AnyContext::Global(global) => global.logging_dir(),
+        }
+    }
+
+    #[cfg(not(feature = "v2"))]
+    #[allow(deprecated)]
+    async fn new_log(&self) -> Result<File, Error> {
+        match self {
+            AnyContext::User(user) => user.new_log().await,
+            AnyContext::Global(global) => global.new_log().await,
+        }
+    }
+
+    #[allow(deprecated)]
+    #[cfg(not(feature = "v2"))]
+    fn new_log_sync(&self) -> Result<File, Error> {
+        match self {
+            AnyContext::User(user) => user.new_log_sync(),
+            AnyContext::Global(global) => global.new_log_sync(),
+        }
+    }
+
+    fn app_installed(&self, name: impl AsRef<str>) -> std::io::Result<bool> {
+        match self {
+            AnyContext::User(user) => user.app_installed(name),
+            AnyContext::Global(global) => global.app_installed(name),
+        }
+    }
+
+    fn open_repo(&self) -> Option<git::Result<git::Repo>> {
+        match self {
+            AnyContext::User(user) => user.open_repo(),
+            AnyContext::Global(global) => global.open_repo(),
+        }
+    }
+
+    fn context_app_path(&self) -> PathBuf {
+        match self {
+            AnyContext::User(user) => user.context_app_path(),
+            AnyContext::Global(global) => global.context_app_path(),
+        }
+    }
+
+    async fn outdated(&self) -> Result<bool, Error> {
+        match self {
+            AnyContext::User(user) => user.outdated().await,
+            AnyContext::Global(global) => global.outdated().await,
+        }
     }
 }

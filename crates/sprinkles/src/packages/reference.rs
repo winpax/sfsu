@@ -9,7 +9,8 @@ use url::Url;
 use super::{CreateManifest, Manifest};
 use crate::{
     buckets::{self, Bucket},
-    contexts::{ScoopContext, User},
+    config,
+    contexts::ScoopContext,
     let_chain,
     requests::Client,
 };
@@ -149,9 +150,9 @@ impl Package {
     /// Parse the bucket and package to get the manifest path
     ///
     /// Returns [`None`] if the bucket is not valid or the manifest does not exist
-    pub fn manifest_path(&self) -> Option<PathBuf> {
+    pub fn manifest_path(&self, ctx: &impl ScoopContext<config::Scoop>) -> Option<PathBuf> {
         if let Some(bucket_name) = self.bucket() {
-            let bucket = Bucket::from_name(bucket_name).ok()?;
+            let bucket = Bucket::from_name(ctx, bucket_name).ok()?;
 
             Some(bucket.get_manifest_path(self.name()?))
         } else {
@@ -169,7 +170,10 @@ impl Package {
     /// - If the app dir cannot be read
     /// - If the bucket is not valid
     /// - If the bucket is not found
-    pub async fn manifest(&self) -> Result<Manifest, Error> {
+    pub async fn manifest(
+        &self,
+        ctx: &impl ScoopContext<config::Scoop>,
+    ) -> Result<Manifest, Error> {
         // TODO: Map output to fix version
 
         let mut manifest = if {
@@ -201,11 +205,11 @@ impl Package {
 
             Ok(manifest)
         } else if let Some(bucket_name) = self.bucket() {
-            let bucket = Bucket::from_name(bucket_name)?;
+            let bucket = Bucket::from_name(ctx, bucket_name)?;
 
             Ok(bucket.get_manifest(self.name().ok_or(Error::MissingAppName)?)?)
         } else {
-            Ok(Bucket::list_all()?
+            Ok(Bucket::list_all(ctx)?
                 .into_iter()
                 .find_map(|bucket| bucket.get_manifest(self.name()?).ok())
                 .ok_or(Error::NotFound)?)
@@ -213,7 +217,7 @@ impl Package {
 
         #[cfg(feature = "manifest-hashes")]
         let_chain!(let Ok(manifest) = manifest.as_mut(); let Some(version) = &self.version; {
-            manifest.set_version(version.clone()).await?;
+            manifest.set_version(ctx,version.clone()).await?;
         });
 
         manifest
@@ -223,8 +227,8 @@ impl Package {
     /// Find the first matching manifest in local buckets
     ///
     /// Returns [`None`] if no matching manifest is found
-    pub fn first(&self) -> Option<Manifest> {
-        let Ok(buckets) = Bucket::list_all() else {
+    pub fn first(&self, ctx: &impl ScoopContext<config::Scoop>) -> Option<Manifest> {
+        let Ok(buckets) = Bucket::list_all(ctx) else {
             return None;
         };
 
@@ -242,11 +246,11 @@ impl Package {
     /// Returns a [`Vec`] with a single manifest path if the reference is valid
     ///
     /// Otherwise returns a [`Vec`] containing each matching manifest path found in each local bucket
-    pub fn list_manifest_paths(&self) -> Vec<PathBuf> {
-        if let Some(manifest_path) = self.manifest_path() {
+    pub fn list_manifest_paths(&self, ctx: &impl ScoopContext<config::Scoop>) -> Vec<PathBuf> {
+        if let Some(manifest_path) = self.manifest_path(ctx) {
             vec![manifest_path]
         } else {
-            let Ok(buckets) = Bucket::list_all() else {
+            let Ok(buckets) = Bucket::list_all(ctx) else {
                 return vec![];
             };
 
@@ -277,16 +281,19 @@ impl Package {
     /// - If the app dir cannot be read
     /// - If any of the buckets are not valid
     /// - If any of the buckets are not found
-    pub async fn list_manifests(&self) -> Result<Vec<Manifest>, Error> {
+    pub async fn list_manifests(
+        &self,
+        ctx: &impl ScoopContext<config::Scoop>,
+    ) -> Result<Vec<Manifest>, Error> {
         futures::future::try_join_all(
-            self.list_manifest_paths()
+            self.list_manifest_paths(ctx)
                 .into_iter()
                 .map(Manifest::from_path)
                 .map(|manifest| async {
                     let mut manifest = manifest?;
                     #[cfg(feature = "manifest-hashes")]
                     if let Some(version) = &self.version {
-                        manifest.set_version(version.clone()).await?;
+                        manifest.set_version(ctx, version.clone()).await?;
                     }
 
                     Ok::<Manifest, Error>(manifest)
@@ -300,10 +307,10 @@ impl Package {
     /// # Errors
     /// - Reading app dir fails
     /// - Missing app name
-    pub fn installed(&self) -> Result<bool, Error> {
+    pub fn installed(&self, ctx: &impl ScoopContext<config::Scoop>) -> Result<bool, Error> {
         let name = self.name().ok_or(Error::MissingAppName)?;
 
-        Ok(User::app_installed(name)?)
+        Ok(ctx.app_installed(name)?)
     }
 }
 
