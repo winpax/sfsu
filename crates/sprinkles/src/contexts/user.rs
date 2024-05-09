@@ -38,13 +38,11 @@ impl super::ScoopContext<config::Scoop> for User {
     /// - There is no home folder
     /// - The discovered scoop path does not exist
     fn path() -> PathBuf {
-        use std::env::var_os;
-
         // TODO: Add support for both global and non-global scoop installs
 
         let scoop_path = {
-            if let Some(path) = var_os("SCOOP") {
-                path.into()
+            if let Some(path) = crate::env::paths::scoop_path() {
+                path
             } else if let Some(path) = config::Scoop::load()
                 .expect("scoop config loaded correctly")
                 .root_path
@@ -90,8 +88,8 @@ impl super::ScoopContext<config::Scoop> for User {
     #[must_use]
     /// Gets the user's scoop cache path
     fn cache_path() -> PathBuf {
-        if let Some(cache_path) = std::env::var_os("SCOOP_CACHE") {
-            PathBuf::from(cache_path)
+        if let Some(cache_path) = crate::env::paths::scoop_cache() {
+            cache_path
         } else if let Some(cache_path) = config::Scoop::load()
             .ok()
             .and_then(|config| config.cache_path)
