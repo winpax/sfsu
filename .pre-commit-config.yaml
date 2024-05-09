@@ -19,7 +19,9 @@ repos:
     rev: v1.0
     hooks:
       - id: fmt
+        stages: [pre-commit]
       - id: clippy
+        stages: [pre-commit]
         args:
           [
             "--all-targets",
