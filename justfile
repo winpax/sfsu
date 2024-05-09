@@ -48,3 +48,7 @@ beta-release-all: clean
 export-hash TARGET:
     python scripts/hash.py './release/dl-{{ TARGET }}.7z'
     python scripts/hash.py './release/sfsu-{{ TARGET }}.exe'
+
+pre-commit:
+    pre-commit install
+    pre-commit install --hook-type commit-msg
