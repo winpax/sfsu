@@ -228,6 +228,13 @@ impl Scoop {
 
         Ok(())
     }
+
+    /// Make the config strict
+    ///
+    /// This will remove all fields that are not in the config struct
+    pub fn make_strict(&mut self) {
+        self.other = Map::new();
+    }
 }
 
 mod defaults;
