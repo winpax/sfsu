@@ -38,6 +38,8 @@ pub mod shell;
 pub mod stream;
 pub mod version;
 
+mod env;
+
 #[doc(hidden)]
 pub mod __versions {
     //! Version information

@@ -104,7 +104,11 @@ fn print_headers(
                 let truncated = OptionalTruncate::new(Header::new(header))
                     .with_length(max_length)
                     .to_string();
-                write!(f, "{:header_size$}{WALL}", truncated.bright_green())?;
+                write!(
+                    f,
+                    "{:header_size$}{WALL}",
+                    console::style(truncated).green().bright()
+                )?;
 
                 Ok(truncated.len())
             })
@@ -117,7 +121,11 @@ fn print_headers(
 
             let underscores = "-".repeat(length);
 
-            write!(f, "{:header_size$}{WALL}", underscores.bright_green())?;
+            write!(
+                f,
+                "{:header_size$}{WALL}",
+                console::style(underscores).green().bright()
+            )?;
         }
     }
 
