@@ -302,22 +302,18 @@ impl Scoop {
         Ok(config)
     }
 
+    #[must_use]
     /// Gets the scoop config path
     ///
     /// # Panics
     /// - The config directory does not exist
     pub fn get_path() -> PathBuf {
-        let xdg_config = env::var("XFG_CONFIG_HOME").map(PathBuf::from);
-        let user_profile = env::var("USERPROFILE")
-            .map(PathBuf::from)
-            .map(|path| path.join(".config"));
+        let config_dir = crate::env::paths::config_dir();
 
-        let path = match (xdg_config, user_profile) {
-            (Ok(path), _) | (_, Ok(path)) => path,
-            _ => panic!("Could not find config directory"),
-        }
-        .join("scoop")
-        .join("config.json");
+        let path = config_dir
+            .expect("Could not find config directory")
+            .join("scoop")
+            .join("config.json");
 
         assert!(path.exists(), "Could not find config file");
 
