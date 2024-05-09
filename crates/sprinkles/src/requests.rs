@@ -8,7 +8,7 @@
 use derive_more::Deref;
 use reqwest::header::HeaderMap;
 
-use crate::contexts::{ScoopContext, User};
+use crate::config;
 
 #[must_use]
 #[deprecated(note = "Use `USER_AGENT` instead")]
@@ -92,7 +92,7 @@ impl Default for BlockingClient {
     fn default() -> Self {
         let client = reqwest::blocking::Client::builder().default_headers(default_headers());
 
-        let client = if let Some(proxy) = User::config().expect("scoop config").proxy {
+        let client = if let Some(proxy) = config::Scoop::load().expect("scoop config").proxy {
             client.proxy(proxy.try_into().expect("valid reqwest proxy"))
         } else {
             client
@@ -116,7 +116,7 @@ impl Default for AsyncClient {
     fn default() -> Self {
         let client = reqwest::Client::builder().default_headers(default_headers());
 
-        let client = if let Some(proxy) = User::config().expect("scoop config").proxy {
+        let client = if let Some(proxy) = config::Scoop::load().expect("scoop config").proxy {
             client.proxy(proxy.try_into().expect("valid reqwest proxy"))
         } else {
             client

@@ -1,19 +1,28 @@
 //! Scoop git helpers
 
-use std::{ffi::OsStr, fmt::Display, process::Command};
+use std::{ffi::OsStr, fmt::Display, path::PathBuf, process::Command};
 
 use derive_more::Deref;
 use git2::{Commit, DiffOptions, Direction, FetchOptions, Oid, Progress, Remote, Repository, Sort};
 use indicatif::ProgressBar;
 
-use crate::{
-    buckets::Bucket,
-    contexts::{ScoopContext, User},
-};
+use crate::{buckets::Bucket, contexts::ScoopContext};
 
 use self::pull::ProgressCallback;
 
 mod pull;
+
+/// Get the path to the git executable
+///
+/// This is just an alias for [`which::which`]
+///
+/// # Errors
+/// - Git path could not be found
+/// - The current dir and path list were empty
+/// - The found path could not be canonicalized
+pub fn which() -> which::Result<PathBuf> {
+    which::which("git")
+}
 
 #[doc(hidden)]
 /// Progress callback
@@ -56,7 +65,7 @@ pub enum Error {
 }
 
 /// Repo result type
-pub type Result<T> = std::result::Result<T, Error>;
+pub type Result<T, E = Error> = std::result::Result<T, E>;
 
 #[derive(Deref)]
 /// A git repository
@@ -77,8 +86,8 @@ impl Repo {
     ///
     /// # Errors
     /// - The Scoop app could not be opened as a repository
-    pub fn scoop_app() -> Result<Self> {
-        let scoop_path = User::apps_path().join("scoop").join("current");
+    pub fn scoop_app<C>(context: &impl ScoopContext<C>) -> Result<Self> {
+        let scoop_path = context.apps_path().join("scoop").join("current");
         let repo = Repository::open(scoop_path)?;
 
         Ok(Self(repo))
@@ -305,7 +314,7 @@ impl Repo {
         n: usize,
         format: impl Display,
     ) -> which::Result<Command> {
-        let git_path = User::git_path()?;
+        let git_path = which::which("git")?;
 
         let mut command = Command::new(git_path);
 

@@ -1,7 +1,7 @@
 use clap::Parser;
 use itertools::Itertools;
 use rayon::prelude::*;
-use sprinkles::buckets::Bucket;
+use sprinkles::{buckets::Bucket, config, contexts::ScoopContext};
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
@@ -10,8 +10,8 @@ pub struct Args {
 }
 
 impl super::super::Command for Args {
-    async fn runner(self) -> Result<(), anyhow::Error> {
-        self.run_direct(true)?;
+    async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
+        self.run_direct(ctx, true)?;
 
         Ok(())
     }
@@ -28,8 +28,12 @@ impl Args {
     // TODO: and those which cant
     // TODO: alongside seperate impls with a where bound where needed
 
-    pub fn run_direct(self, is_subcommand: bool) -> Result<Option<Vec<String>>, anyhow::Error> {
-        let outdated_buckets = Bucket::list_all()?
+    pub fn run_direct(
+        self,
+        ctx: &impl ScoopContext<config::Scoop>,
+        is_subcommand: bool,
+    ) -> Result<Option<Vec<String>>, anyhow::Error> {
+        let outdated_buckets = Bucket::list_all(ctx)?
             .into_par_iter()
             .filter(|bucket| match bucket.outdated() {
                 Ok(v) => v,

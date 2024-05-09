@@ -5,11 +5,7 @@ use clap::{Parser, Subcommand};
 use regex::Regex;
 use serde::Serialize;
 use sfsu_derive::Runnable;
-use sprinkles::{
-    abandon,
-    contexts::{ScoopContext, User},
-    output::wrappers::sizes::Size,
-};
+use sprinkles::{abandon, config, contexts::ScoopContext, output::wrappers::sizes::Size};
 use tokio::task::JoinSet;
 
 mod rm;
@@ -28,8 +24,11 @@ struct CacheEntry {
 }
 
 impl CacheEntry {
-    pub async fn match_paths(patterns: &[String]) -> anyhow::Result<Vec<Self>> {
-        let cache_path = User::cache_path();
+    pub async fn match_paths(
+        ctx: &impl ScoopContext<config::Scoop>,
+        patterns: &[String],
+    ) -> anyhow::Result<Vec<Self>> {
+        let cache_path = ctx.cache_path();
 
         let patterns = patterns
             .iter()
@@ -119,12 +118,12 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    async fn runner(self) -> Result<(), anyhow::Error> {
+    async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
         let command = self.command.unwrap_or(Commands::Show(show::Args {
             json: self.json,
             apps: self.apps,
         }));
 
-        command.run().await
+        command.run(ctx).await
     }
 }

@@ -359,13 +359,40 @@ mod defaults {
     }
 
     pub(super) fn default_scoop_global_path() -> PathBuf {
-        let mut path = PathBuf::from(env::var("ProgramData").unwrap());
-        path.push("scoop");
+        use std::{ffi::OsString, os::windows::ffi::OsStringExt};
+
+        use windows::Win32::{
+            Foundation::{HWND, MAX_PATH},
+            UI::Shell::{SHGetSpecialFolderPathW, CSIDL_COMMON_APPDATA},
+        };
+
+        let mut buf = [0u16; MAX_PATH as usize];
+        let success = unsafe {
+            #[allow(clippy::cast_possible_wrap)]
+            SHGetSpecialFolderPathW(HWND::default(), &mut buf, CSIDL_COMMON_APPDATA as i32, true)
+                .as_bool()
+        };
+
+        let path = if success {
+            let string = OsString::from_wide(&buf);
+            let utf8_string = string.to_string_lossy();
+            let trimmed = utf8_string.trim_end_matches('\0');
+
+            PathBuf::from(trimmed)
+        } else {
+            "C:\\ProgramData".into()
+        }
+        .join("scoop");
+
+        if !path.exists() {
+            std::fs::create_dir(&path).expect("could not create scoop global path");
+        }
+
         path
     }
 
     pub(super) fn default_cache_path() -> PathBuf {
-        User::scoop_sub_path("cache")
+        User::new().sub_path("cache")
     }
 }
 

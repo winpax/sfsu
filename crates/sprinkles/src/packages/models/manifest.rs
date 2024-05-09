@@ -369,7 +369,7 @@ impl<T> TOrArrayOfTs<T> {
         }
     }
 
-    /// Returns Some(Vec<T>) if it is an array, None otherwise
+    /// Returns [`Some`] if it is an array, [`None`] otherwise
     pub fn array(self) -> Option<Vec<T>> {
         match self {
             TOrArrayOfTs::Single(_) => None,

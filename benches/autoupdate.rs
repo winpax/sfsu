@@ -11,6 +11,8 @@ use sprinkles::{
 };
 
 fn criterion_benchmark(c: &mut Criterion) {
+    let ctx = User::new();
+
     let runtime = tokio::runtime::Builder::new_multi_thread()
         .enable_all()
         .build()
@@ -22,8 +24,8 @@ fn criterion_benchmark(c: &mut Criterion) {
 
     c.bench_function("get package manifest", |b| {
         b.to_async(&runtime).iter_batched(
-            || Package::from_str("extras/sfsu").unwrap(),
-            |package| async move { black_box(package.manifest().await.unwrap()) },
+            || (Package::from_str("extras/sfsu").unwrap(), ctx.clone()),
+            |(package, ctx)| async move { black_box(package.manifest(&ctx).await.unwrap()) },
             BatchSize::SmallInput,
         );
     });
@@ -41,12 +43,12 @@ fn criterion_benchmark(c: &mut Criterion) {
             || async {
                 Package::from_str("extras/sfsu")
                     .unwrap()
-                    .manifest()
+                    .manifest(&ctx)
                     .await
                     .unwrap()
             },
             |manifest| async {
-                Handle::open_manifest(User::cache_path(), &manifest.await, Architecture::ARCH)
+                Handle::open_manifest(ctx.cache_path(), &manifest.await, Architecture::ARCH)
                     .unwrap()
             },
             BatchSize::SmallInput,
@@ -59,10 +61,10 @@ fn criterion_benchmark(c: &mut Criterion) {
 
     slow.bench_function("set version", |b| {
         b.to_async(&runtime).iter_batched(
-            || Package::from_str("extras/sfsu").unwrap(),
-            |mut package| async move {
+            || (Package::from_str("extras/sfsu").unwrap(), ctx.clone()),
+            |(mut package, ctx)| async move {
                 black_box(&mut package).set_version("1.10.2".to_string());
-                black_box(package.manifest().await.unwrap());
+                black_box(package.manifest(&ctx).await.unwrap());
             },
             BatchSize::SmallInput,
         );
@@ -72,10 +74,10 @@ fn criterion_benchmark(c: &mut Criterion) {
         b.to_async(&runtime).iter_batched(
             || async {
                 Handle::open_manifest(
-                    User::cache_path(),
+                    ctx.cache_path(),
                     &Package::from_str("extras/sfsu")
                         .unwrap()
-                        .manifest()
+                        .manifest(&ctx)
                         .await
                         .unwrap(),
                     Architecture::ARCH,

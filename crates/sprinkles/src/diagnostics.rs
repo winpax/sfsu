@@ -7,7 +7,8 @@ use serde::Serialize;
 
 use crate::{
     buckets::{self, Bucket},
-    contexts::{ScoopContext, User},
+    config,
+    contexts::ScoopContext,
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -95,10 +96,10 @@ impl Diagnostics {
     /// - Unable to check main bucket
     /// - Unable to check windows developer status
     /// - Unable to check windows defender status
-    pub fn collect() -> Result<Self, Error> {
+    pub fn collect(ctx: &impl ScoopContext<config::Scoop>) -> Result<Self, Error> {
         let git_installed = Self::git_installed();
         debug!("Check git is installed");
-        let main_bucket = Self::check_main_bucket()?;
+        let main_bucket = Self::check_main_bucket(ctx)?;
         debug!("Checked main bucket");
         let long_paths = Self::check_long_paths()?;
         debug!("Checked long paths");
@@ -106,7 +107,7 @@ impl Diagnostics {
         debug!("Checked developer mode");
 
         let windows_defender = if quork::root::is_root()? {
-            Self::check_windows_defender()?
+            Self::check_windows_defender(ctx)?
         } else {
             false
         };
@@ -118,7 +119,7 @@ impl Diagnostics {
             .copied()
             .collect();
 
-        let scoop_ntfs = Self::is_ntfs()?;
+        let scoop_ntfs = Self::is_ntfs(ctx)?;
 
         Ok(Self {
             git_installed,
@@ -138,10 +139,12 @@ impl Diagnostics {
     /// - Unable to read the registry
     /// - Unable to open the registry key
     /// - Unable to check if the key exists
-    pub fn check_windows_defender() -> windows::core::Result<bool> {
+    pub fn check_windows_defender(
+        ctx: &impl ScoopContext<config::Scoop>,
+    ) -> windows::core::Result<bool> {
         use winreg::{enums::HKEY_LOCAL_MACHINE, RegKey};
 
-        let scoop_dir = User::path();
+        let scoop_dir = ctx.path();
         let key = RegKey::predef(HKEY_LOCAL_MACHINE)
             .open_subkey(r"SOFTWARE\Microsoft\Windows Defender\Exclusions\Paths")?;
 
@@ -152,8 +155,8 @@ impl Diagnostics {
     ///
     /// # Errors
     /// - Unable to list buckets
-    pub fn check_main_bucket() -> Result<bool, Error> {
-        let buckets = Bucket::list_all()?;
+    pub fn check_main_bucket(ctx: &impl ScoopContext<config::Scoop>) -> Result<bool, Error> {
+        let buckets = Bucket::list_all(ctx)?;
 
         Ok(buckets.into_iter().any(|bucket| bucket.name() == "main"))
     }
@@ -206,16 +209,16 @@ impl Diagnostics {
     /// - Unable to get the volume information
     /// - Unable to check the filesystem
     /// - Unable to get the root path
-    pub fn is_ntfs() -> windows::core::Result<bool> {
+    pub fn is_ntfs(ctx: &impl ScoopContext<config::Scoop>) -> windows::core::Result<bool> {
         use windows::{
             core::HSTRING,
             Win32::{Foundation::MAX_PATH, Storage::FileSystem::GetVolumeInformationW},
         };
 
-        let path = User::path();
+        let path = ctx.path();
 
         let root = {
-            let mut current = path.as_path();
+            let mut current = path;
 
             while let Some(parent) = current.parent() {
                 current = parent;
@@ -247,8 +250,8 @@ impl Diagnostics {
     }
 
     #[must_use]
-    /// Check if the user has git installed
+    /// Check if the user has git installed, and in their path
     pub fn git_installed() -> bool {
-        User::git_path().is_ok()
+        which::which("git").is_ok()
     }
 }

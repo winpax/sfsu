@@ -6,8 +6,8 @@ use rayon::prelude::*;
 
 use sprinkles::{
     buckets::{self, Bucket},
-    config::Scoop as ScoopConfig,
-    contexts::{ScoopContext, User},
+    config::{self, Scoop as ScoopConfig},
+    contexts::ScoopContext,
     git::__stats_callback,
     output::sectioned::{Children, Section},
     progress::{style, Message, ProgressOptions},
@@ -20,12 +20,12 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    async fn runner(self) -> Result<(), anyhow::Error> {
+    async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
         const FINISH_MESSAGE: &str = "✅";
 
         let progress_style = style(Some(ProgressOptions::Hide), Some(Message::Suffix(None)));
 
-        let buckets = Bucket::list_all()?;
+        let buckets = Bucket::list_all(ctx)?;
 
         let longest_bucket_name = buckets
             .iter()
@@ -33,7 +33,7 @@ impl super::Command for Args {
             .max()
             .unwrap_or(0);
 
-        let scoop_repo = User::open_repo().context("missing user repository")??;
+        let scoop_repo = ctx.open_repo().context("missing user repository")??;
 
         let pb = ProgressBar::new(1)
             .with_style(progress_style.clone())
@@ -41,7 +41,7 @@ impl super::Command for Args {
             .with_prefix(format!("🍨 {:<longest_bucket_name$}", "Scoop"))
             .with_finish(ProgressFinish::WithMessage(FINISH_MESSAGE.into()));
 
-        let scoop_changelog = if User::outdated()? {
+        let scoop_changelog = if ctx.outdated().await? {
             let mut changelog = if self.changelog {
                 scoop_repo.pull_with_changelog(Some(&|stats, thin| {
                     __stats_callback(&stats, thin, &pb);
