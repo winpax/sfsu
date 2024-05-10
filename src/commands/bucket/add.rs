@@ -1,10 +1,12 @@
+use std::time::Duration;
+
 use tokio::process::Command;
 
 use anyhow::Context;
 use clap::Parser;
 use sprinkles::{config, contexts::ScoopContext};
 
-use crate::{abandon, calm_panic::CalmUnwrap, output::colours::eprintln_bright_yellow};
+use crate::{abandon, calm_panic::CalmUnwrap};
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
@@ -46,13 +48,17 @@ impl super::Command for Args {
         }
 
         if self.disable_git {
-            eprintln_bright_yellow!("We do not currently support progress bars for git clones when using the `--disable-git` flag");
+            let spinner = indicatif::ProgressBar::new_spinner();
+            spinner.set_message("Cloning repository");
+            spinner.enable_steady_tick(Duration::from_millis(100));
 
             sprinkles::git::clone::clone(
                 &repo_url,
                 dest_path,
                 sprinkles::git::clone::progress::Discard,
             )?;
+
+            spinner.finish_with_message("✅ Repository cloned");
         } else {
             let git_path = sprinkles::git::which().calm_expect("git not found");
 
