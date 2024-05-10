@@ -8,6 +8,7 @@ use std::{
 
 use chrono::{DateTime, FixedOffset, Local};
 use git2::Commit;
+use gix::{object::tree::diff::Action, traverse::commit::simple::Sorting};
 use itertools::Itertools;
 use quork::traits::truthy::ContainsTruth as _;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
@@ -288,6 +289,8 @@ pub enum Error {
     MissingAutoUpdate,
     #[error("Manifest architecture section does not have `autoupdate` field")]
     MissingArchAutoUpdate,
+    #[error("Commit did not have a parent")]
+    MissingParent,
 }
 
 /// The result type for package operations
@@ -936,17 +939,22 @@ impl Manifest {
         let bucket = Bucket::from_name(ctx, &self.bucket)?;
 
         if disable_git {
-            let repo = Repo::from_bucket(&bucket)?;
+            let repo: gix::Repository = Repo::from_bucket(&bucket)?.to_gitoxide()?.into();
+            let latest_commit = repo.head_commit().map_err(git::Error::from)?;
 
-            let mut revwalk = repo.revwalk()?;
-            revwalk.push_head()?;
-            revwalk.set_sorting(git2::Sort::TOPOLOGICAL)?;
+            let revwalk = repo
+                .rev_walk([latest_commit.id])
+                .sorting(Sorting::ByCommitTimeNewestFirst);
 
             let updated_commit = revwalk
-                .find_map(|oid| {
+                .all()
+                .map_err(git::Error::from)?
+                // .skip(1)
+                .find_map(|info| {
                     let find_commit = || {
                         // TODO: Add tests using personal bucket to ensure that different methods return the same info
-                        let commit = repo.find_commit(oid?)?;
+                        let info = info.map_err(git::Error::from)?;
+                        let commit = info.object().map_err(git::Error::from)?;
 
                         #[cfg(not(feature = "info-difftrees"))]
                         if self.commit_message_matches(&commit) {
@@ -955,7 +963,31 @@ impl Manifest {
 
                         #[cfg(feature = "info-difftrees")]
                         {
-                            if let Ok(true) = self.commit_diff_matches(&repo, &commit) {
+                            let mut matches = false;
+
+                            let other = info.parent_ids().next().ok_or(Error::MissingParent)?;
+                            let other = other.object().map_err(git::Error::from)?;
+                            let other_tree = other.peel_to_tree().map_err(git::Error::from)?;
+                            commit
+                                .tree()
+                                .map_err(git::Error::from)?
+                                .changes()
+                                .map_err(git::Error::from)?
+                                .track_filename()
+                                .for_each_to_obtain_tree(&other_tree, |change| {
+                                    debug!("{change:?}");
+                                    debug!("Filename: {}", change.location.to_string());
+
+                                    if change.location.to_string().starts_with(&self.name) {
+                                        matches = true;
+                                        Ok::<_, Error>(Action::Cancel)
+                                    } else {
+                                        Ok(Action::Continue)
+                                    }
+                                })
+                                .map_err(git::Error::from)?;
+
+                            if matches {
                                 return Ok(commit);
                             }
                         }
@@ -974,9 +1006,9 @@ impl Manifest {
                 .ok_or(Error::NoUpdatedCommit)??;
 
             let date_time = {
-                let time = updated_commit.time();
-                let secs = time.seconds();
-                let offset = time.offset_minutes() * 60;
+                let time = updated_commit.time().map_err(git::Error::from)?;
+                let secs = time.seconds;
+                let offset = time.offset * 60;
 
                 let utc_time = DateTime::from_timestamp(secs, 0).ok_or(Error::InvalidTime)?;
 
@@ -985,8 +1017,8 @@ impl Manifest {
                 utc_time.with_timezone(&offset)
             };
 
-            let author_wrapped =
-                Author::from_signature(updated_commit.author()).with_show_emails(!hide_emails);
+            let author_wrapped = Author::from(updated_commit.author().map_err(git::Error::from)?)
+                .with_show_emails(!hide_emails);
 
             Ok((
                 Some(date_time.to_string()),

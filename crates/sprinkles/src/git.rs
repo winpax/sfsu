@@ -285,19 +285,19 @@ impl Repo {
         let mut repo: gix::Repository = self.to_gitoxide()?.into();
         repo.object_cache_size(1024 * 1024 * 1024);
 
-        let current_commit = repo.head_commit().map_err(errors::GitoxideError::from)?;
+        let current_commit = repo.head_commit()?;
 
         pull::pull(self, None, Some(self.current_branch()?.as_str()), stats_cb)?;
 
-        let post_pull_commit = repo.head_commit().map_err(errors::GitoxideError::from)?;
+        let post_pull_commit = repo.head_commit()?;
 
         let revwalk = repo
             .rev_walk([post_pull_commit.id])
             .sorting(Sorting::ByCommitTimeNewestFirst);
 
         let mut changelog = Vec::new();
-        for commit in revwalk.all().map_err(errors::GitoxideError::from)? {
-            let info = commit.map_err(errors::GitoxideError::from)?;
+        for commit in revwalk.all()? {
+            let info = commit?;
             let Ok(commit) = info.object() else {
                 continue;
             };
