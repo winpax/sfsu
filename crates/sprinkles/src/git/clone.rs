@@ -62,8 +62,8 @@ pub fn clone(url: &str, path: impl AsRef<Path>) -> Result<Repository> {
         OpenOptions::default(),
     )?;
 
-    // let pb = crate::progress::ProgressBar::new(0);
-    let (mut checkout, outcome) = fetch.fetch_then_checkout(gix::progress::Discard, &interrupt)?;
+    let pb = crate::progress::MultiProgressHandler::new();
+    let (mut checkout, outcome) = fetch.fetch_then_checkout(pb, &interrupt)?;
 
     match outcome.status {
         gix::remote::fetch::Status::NoPackReceived { dry_run, .. } => {

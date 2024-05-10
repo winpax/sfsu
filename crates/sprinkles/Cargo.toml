@@ -54,6 +54,7 @@ indicatif.workspace = true
 itertools.workspace = true
 log.workspace = true
 md-5 = "0.10"
+parking_lot = "0.12.2"
 quick-xml = { version = "0.31", optional = true, features = ["serialize"] }
 quork.workspace = true
 rayon.workspace = true
