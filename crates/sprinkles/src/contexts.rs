@@ -5,7 +5,6 @@
 
 use std::{
     ffi::OsStr,
-    fs::File,
     path::{Path, PathBuf},
 };
 
@@ -154,24 +153,6 @@ pub trait ScoopContext<C>: Clone + Send + Sync + 'static {
             .any(|path| path.file_name() == Some(OsStr::new(name.as_ref()))))
     }
 
-    #[deprecated(
-        note = "You should implement this yourself, as this function is inherently opinionated"
-    )]
-    #[cfg(not(feature = "v2"))]
-    #[allow(async_fn_in_trait)]
-    /// Create a new log file
-    async fn new_log(&self) -> Result<File, Error>;
-
-    #[deprecated(
-        note = "You should implement this yourself, as this function is inherently opinionated"
-    )]
-    #[cfg(not(feature = "v2"))]
-    /// Create a new log file
-    ///
-    /// This function is synchronous and does not allow for timeouts.
-    /// If for some reason there are no available log files, this function will block indefinitely.
-    fn new_log_sync(&self) -> Result<File, Error>;
-
     /// Open the context's app repository, if any
     fn open_repo(&self) -> Option<git::Result<git::Repo>>;
 
@@ -286,24 +267,6 @@ impl ScoopContext<config::Scoop> for AnyContext {
         match self {
             AnyContext::User(user) => user.logging_dir(),
             AnyContext::Global(global) => global.logging_dir(),
-        }
-    }
-
-    #[cfg(not(feature = "v2"))]
-    #[allow(deprecated)]
-    async fn new_log(&self) -> Result<File, Error> {
-        match self {
-            AnyContext::User(user) => user.new_log().await,
-            AnyContext::Global(global) => global.new_log().await,
-        }
-    }
-
-    #[allow(deprecated)]
-    #[cfg(not(feature = "v2"))]
-    fn new_log_sync(&self) -> Result<File, Error> {
-        match self {
-            AnyContext::User(user) => user.new_log_sync(),
-            AnyContext::Global(global) => global.new_log_sync(),
         }
     }
 

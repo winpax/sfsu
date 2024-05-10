@@ -93,8 +93,6 @@ fn print_headers(
 ) -> std::fmt::Result {
     #[cfg(feature = "v2")]
     {
-        use owo_colors::OwoColorize;
-
         let header_lengths = headers
             .iter()
             .enumerate()
@@ -107,7 +105,7 @@ fn print_headers(
                 write!(
                     f,
                     "{:header_size$}{WALL}",
-                    console::style(truncated).green().bright()
+                    console::style(&truncated).green().bright()
                 )?;
 
                 Ok(truncated.len())

@@ -6,7 +6,6 @@ use std::fmt::Display;
 #[derive(Debug, Clone)]
 #[must_use = "Lazy. Does nothing until consumed"]
 #[deprecated(note = "Use `Header` instead")]
-#[cfg(not(feature = "v2"))]
 /// A nicer way to display strings
 pub struct CapitalizedStr<T>(T);
 

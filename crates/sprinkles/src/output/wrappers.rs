@@ -6,8 +6,10 @@
 pub mod alias_vec;
 pub mod author;
 pub mod bool;
+#[cfg(not(feature = "v2"))]
 pub mod cap_str;
 pub mod header;
+#[cfg(not(feature = "v2"))]
 pub mod keys;
 pub mod sizes;
 pub mod time;

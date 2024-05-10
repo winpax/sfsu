@@ -1,7 +1,4 @@
-use std::{
-    fs::File,
-    path::{Path, PathBuf},
-};
+use std::path::{Path, PathBuf};
 
 use crate::{config, git};
 
@@ -87,16 +84,6 @@ impl ScoopContext<config::Scoop> for Global {
 
     fn logging_dir(&self) -> std::io::Result<PathBuf> {
         self.user_context.logging_dir()
-    }
-
-    #[allow(deprecated)]
-    async fn new_log(&self) -> Result<File, super::Error> {
-        self.user_context.new_log().await
-    }
-
-    #[allow(deprecated)]
-    fn new_log_sync(&self) -> Result<File, super::Error> {
-        self.user_context.new_log_sync()
     }
 
     fn open_repo(&self) -> Option<git::Result<git::Repo>> {
