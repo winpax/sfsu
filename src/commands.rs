@@ -23,9 +23,9 @@ pub mod virustotal;
 use clap::Subcommand;
 
 use sfsu_derive::{Hooks, Runnable};
-use sprinkles::{calm_panic::abandon, config, contexts::ScoopContext};
+use sprinkles::{config, contexts::ScoopContext};
 
-use crate::output::colours::eprintln_yellow;
+use crate::{abandon, output::colours::eprintln_yellow};
 
 pub struct DeprecationWarning {
     /// Deprecation message

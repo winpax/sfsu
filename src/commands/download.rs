@@ -2,7 +2,6 @@ use clap::Parser;
 use indicatif::MultiProgress;
 
 use sprinkles::{
-    abandon,
     cache::{Downloader, Handle},
     config,
     contexts::ScoopContext,
@@ -11,7 +10,7 @@ use sprinkles::{
     Architecture,
 };
 
-use crate::output::colours::eprintln_yellow;
+use crate::{abandon, output::colours::eprintln_yellow};
 
 #[derive(Debug, Clone, Parser)]
 // TODO: Pass architecture
