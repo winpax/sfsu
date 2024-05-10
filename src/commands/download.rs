@@ -55,8 +55,7 @@ impl super::Command for Args {
                         Err(e) => abandon!("\rFailed to generate manifest: {e}"),
                     };
 
-                    let dl =
-                        Handle::open_manifest(ctx.cache_path(), &manifest, Architecture::ARCH)?;
+                    let dl = Handle::open_manifest(ctx.cache_path(), &manifest, self.arch)?;
 
                     let downloaders = dl.into_iter().map(|dl| {
                         let mp = mp.clone();
