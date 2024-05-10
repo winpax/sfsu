@@ -171,7 +171,7 @@ impl Structured {
 
         Structured {
             objects,
-            max_length: Some(30),
+            max_length: None,
         }
     }
 
