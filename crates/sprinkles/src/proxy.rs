@@ -11,7 +11,7 @@ pub enum Error {
     #[error("Invalid port: {0}")]
     InvalidPort(#[from] ParseIntError),
     #[error("Loading system proxy: {0}")]
-    SystemProxy(#[from] system_proxy::Error),
+    SystemProxy(#[from] win_proxy::Error),
     #[error("Missing host")]
     MissingHost,
     #[error("Missing port")]
@@ -80,7 +80,7 @@ impl FromStr for Proxy {
         };
 
         let host = if host == "default" {
-            let sysproxy = system_proxy::SystemProxy::get_system_proxy()?;
+            let sysproxy = win_proxy::SystemProxy::get_system_proxy()?;
 
             format!("{}:{}", sysproxy.address, sysproxy.port)
         } else {

@@ -59,7 +59,6 @@ reqwest = { version = "0.12", features = [
     "gzip",
     "stream",
 ] }
-ryu = "1.0"
 semver = { version = "1.0", features = ["serde"] }
 serde.workspace = true
 serde_json = { version = "1.0", features = ["preserve_order"] }
@@ -70,13 +69,13 @@ sha2 = { version = "0.10", optional = true }
 strum = { version = "0.26", features = ["derive"] }
 sxd-document = { version = "0.3", optional = true }
 sxd-xpath = { version = "0.4", optional = true }
-system-proxy = { git = "https://github.com/winpax/system-proxy.git", version = "0.1.0" }
 thiserror = "1.0"
 tokio = { version = "1.37", features = ["fs", "macros", "parking_lot", "time"] }
 tokio-util = { version = "0.7", features = ["codec"], optional = true }
 url = { version = "2.5", features = ["serde"], optional = true }
 urlencoding = { version = "2.1", optional = true }
 which = "6.0"
+win-proxy = { git = "https://github.com/winpax/win-proxy.git", version = "0.1.0" }
 windows = { version = "0.56", features = [
     "Win32_Storage_FileSystem",
     "Win32_UI_Shell",
