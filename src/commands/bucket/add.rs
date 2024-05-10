@@ -1,4 +1,4 @@
-use std::process::Command;
+use tokio::process::Command;
 
 use anyhow::Context;
 use clap::Parser;
@@ -56,7 +56,8 @@ impl super::Command for Args {
                 .arg(repo_url)
                 .arg(self.name)
                 .spawn()?
-                .wait_with_output()?;
+                .wait_with_output()
+                .await?;
 
             match exit_status.status.code() {
                 Some(0) => {}
