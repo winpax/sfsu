@@ -3,8 +3,10 @@ use rayon::prelude::*;
 use serde_json::Value;
 use sprinkles::{
     buckets::Bucket,
+    config,
+    contexts::ScoopContext,
     output::structured::Structured,
-    packages::{install, outdated},
+    packages::models::{install, outdated},
 };
 
 #[derive(Debug, Clone, Parser)]
@@ -14,8 +16,8 @@ pub struct Args {
 }
 
 impl super::super::Command for Args {
-    fn runner(self) -> Result<(), anyhow::Error> {
-        self.run_direct(true)?;
+    async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
+        self.run_direct(ctx, true)?;
 
         Ok(())
     }
@@ -26,16 +28,20 @@ impl Args {
     ///
     /// Will be called with `is_subcommand` as true when called via clap subcommands,
     /// or with `is_subcommand` as false, when called directly, from the `sfsu outdated` command
-    pub fn run_direct(self, is_subcommand: bool) -> Result<Option<Vec<Value>>, anyhow::Error> {
-        let apps = install::Manifest::list_all_unchecked()?;
+    pub fn run_direct(
+        self,
+        ctx: &impl ScoopContext<config::Scoop>,
+        is_subcommand: bool,
+    ) -> Result<Option<Vec<Value>>, anyhow::Error> {
+        let apps = install::Manifest::list_all_unchecked(ctx)?;
 
         let mut outdated: Vec<outdated::Info> = apps
             .par_iter()
             .flat_map(|app| -> anyhow::Result<outdated::Info> {
                 if let Some(bucket) = &app.bucket {
-                    let local_manifest = app.get_manifest()?;
+                    let local_manifest = app.get_manifest(ctx)?;
                     // TODO: Add the option to check all buckets and find the highest version (will require semver to order versions)
-                    let bucket = Bucket::from_name(bucket)?;
+                    let bucket = Bucket::from_name(ctx, bucket)?;
 
                     let remote_manifest = bucket.get_manifest(&app.name)?;
 
@@ -74,7 +80,7 @@ impl Args {
             } else {
                 // TODO: Add a better way to add colours than this
                 // TODO: p.s this doesnt work atm
-                // use colored::Colorize;
+                // use owo_colors::OwoColorize;
                 // let values = values
                 //     .into_par_iter()
                 //     .map(|mut value| {

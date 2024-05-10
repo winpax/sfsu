@@ -1,27 +1,27 @@
 use clap::Parser;
-use colored::Colorize;
 use itertools::Itertools;
 
 use sprinkles::{
-    calm_panic::calm_panic,
+    calm_panic::abandon,
+    config,
+    contexts::ScoopContext,
     output::{
         structured::vertical::VTable,
-        wrappers::{
-            alias_vec::AliasVec,
-            bool::{wrap_bool, NicerBool},
-            time::NicerTime,
-        },
+        wrappers::{alias_vec::AliasVec, bool::NicerBool, time::NicerTime},
     },
     packages::{
-        info::PackageInfo,
-        manifest::{StringOrArrayOfStrings, StringOrArrayOfStringsOrAnArrayOfArrayOfStrings},
-        reference,
+        models::{
+            info::PackageInfo,
+            manifest::{AliasArray, StringArray},
+        },
+        reference, Manifest, MergeDefaults,
     },
-    Scoop,
+    semver, Architecture,
 };
 
 #[derive(Debug, Clone, Parser)]
 #[allow(clippy::struct_excessive_bools)]
+// TODO: Pass architecture
 pub struct Args {
     #[clap(help = "The package to get info from")]
     package: reference::Package,
@@ -30,9 +30,12 @@ pub struct Args {
     #[clap(
         short,
         long,
-        help = format!("The bucket to exclusively search in. {}", "DEPRECATED: Use <bucket>/<package> syntax instead".yellow())
+        help = format!("The bucket to exclusively search in. {}", console::style("DEPRECATED: Use <bucket>/<package> syntax instead").yellow())
     )]
     bucket: Option<String>,
+
+    #[clap(short = 's', long, help = "Show only the most recent package found")]
+    single: bool,
 
     #[clap(short = 'E', long, help = "Show `Updated by` user emails")]
     hide_emails: bool,
@@ -48,24 +51,21 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    fn runner(mut self) -> Result<(), anyhow::Error> {
+    async fn runner(mut self, ctx: &impl ScoopContext<config::Scoop>) -> anyhow::Result<()> {
         #[cfg(not(feature = "v2"))]
         if self.package.bucket().is_none() {
-            if let Some(bucket) = self.bucket {
-                self.package.set_bucket(bucket);
+            if let Some(bucket) = &self.bucket {
+                self.package.set_bucket(bucket.clone())?;
             }
         }
 
-        let manifests = self.package.list_manifests();
+        let manifests = self.package.list_manifests(ctx).await?;
 
         if manifests.is_empty() {
-            calm_panic(format!(
-                "No package found with the name \"{}\"",
-                self.package
-            ));
+            abandon!("No package found with the name \"{}\"", self.package);
         }
 
-        if manifests.len() > 1 {
+        if manifests.len() > 1 && !self.single {
             println!(
                 "Found {} packages, matching \"{}\":",
                 manifests.len(),
@@ -73,74 +73,103 @@ impl super::Command for Args {
             );
         }
 
-        let installed_apps = Scoop::installed_apps()?;
+        let installed_apps = ctx.installed_apps()?;
 
-        for manifest in manifests {
-            let install_path = {
-                let install_path = installed_apps.iter().find(|app| {
-                    app.with_extension("").file_name()
-                        == Some(&std::ffi::OsString::from(&manifest.name))
-                });
+        if self.single {
+            let latest = manifests
+                .into_iter()
+                .max_by(|a_manifest, b_manifest| {
+                    semver::Version::try_from(&a_manifest.version)
+                        .and_then(|a_version| {
+                            Ok(a_version.cmp(&semver::Version::try_from(&b_manifest.version)?))
+                        })
+                        .unwrap_or(std::cmp::Ordering::Equal)
+                }).expect("something went terribly wrong (no manifests found even though we just checked for manifests)");
 
-                install_path.cloned()
-            };
+            self.print_manifest(ctx, latest, &installed_apps, Architecture::ARCH)?;
+        } else {
+            for manifest in manifests {
+                self.print_manifest(ctx, manifest, &installed_apps, Architecture::ARCH)?;
+            }
+        }
 
-            let (updated_at, updated_by) = if self.disable_updated {
-                (None, None)
-            } else {
-                match manifest.last_updated_info(self.hide_emails, self.disable_git) {
-                    Ok(v) => v,
-                    Err(_) => match install_path {
-                        Some(ref install_path) => {
-                            let updated_at = install_path.metadata()?.modified()?;
+        Ok(())
+    }
+}
 
-                            (Some(NicerTime::from(updated_at).to_string()), None)
-                        }
-                        _ => (None, None),
-                    },
-                }
-            };
+impl Args {
+    fn print_manifest(
+        &self,
+        ctx: &impl ScoopContext<config::Scoop>,
+        manifest: Manifest,
+        installed_apps: &[std::path::PathBuf],
+        arch: Architecture,
+    ) -> anyhow::Result<()> {
+        // TODO: Remove this and just create the pathbuf from the package name
+        let install_path = {
+            let install_path = installed_apps.iter().find(|app| {
+                app.with_extension("").file_name()
+                    == Some(&std::ffi::OsString::from(&manifest.name))
+            });
 
-            let pkg_info = PackageInfo {
-                name: manifest.name,
-                bucket: manifest.bucket,
-                description: manifest.description,
-                version: manifest.version,
-                website: manifest.homepage,
-                license: manifest.license,
-                binaries: manifest.bin.map(|b| match b {
-                    StringOrArrayOfStringsOrAnArrayOfArrayOfStrings::String(bin) => bin.to_string(),
-                    StringOrArrayOfStringsOrAnArrayOfArrayOfStrings::StringArray(bins) => {
-                        bins.join(" | ")
+            install_path.cloned()
+        };
+
+        let (updated_at, updated_by) = if self.disable_updated {
+            (None, None)
+        } else {
+            match manifest.last_updated_info(ctx, self.hide_emails, self.disable_git) {
+                Ok(v) => v,
+                Err(_) => match install_path {
+                    Some(ref install_path) => {
+                        let updated_at = install_path.metadata()?.modified()?;
+
+                        (Some(NicerTime::from(updated_at).to_string()), None)
                     }
-                    StringOrArrayOfStringsOrAnArrayOfArrayOfStrings::UnionArray(bins) => bins
+                    _ => (None, None),
+                },
+            }
+        };
+
+        let pkg_info = PackageInfo {
+            name: manifest.name,
+            bucket: manifest.bucket,
+            description: manifest.description,
+            version: manifest.version.to_string(),
+            website: manifest.homepage,
+            license: manifest.license,
+            binaries: manifest
+                .architecture
+                .merge_default(manifest.install_config.clone(), arch)
+                .bin
+                .map(|b| match b {
+                    AliasArray::NestedArray(StringArray::Single(bin)) => bin.to_string(),
+                    AliasArray::NestedArray(StringArray::Array(bins)) => bins.join(" | "),
+                    AliasArray::AliasArray(bins) => bins
                         .into_iter()
                         .map(|bin_union| match bin_union {
-                            StringOrArrayOfStrings::String(bin) => bin,
-                            StringOrArrayOfStrings::StringArray(mut bin_alias) => {
-                                bin_alias.remove(0)
-                            }
+                            StringArray::Single(bin) => bin,
+                            StringArray::Array(mut bin_alias) => bin_alias.remove(0),
                         })
                         .join(" | "),
                 }),
-                notes: manifest
-                    .notes
-                    .map(|notes| notes.to_string())
-                    .unwrap_or_default(),
-                installed: wrap_bool!(install_path.is_some()),
-                shortcuts: manifest.install_config.shortcuts.map(AliasVec::from_vec),
-                updated_at,
-                updated_by,
-            };
+            notes: manifest
+                .notes
+                .map(|notes| notes.to_string())
+                .unwrap_or_default(),
+            installed: NicerBool::new(install_path.is_some()),
+            shortcuts: manifest.install_config.shortcuts.map(AliasVec::from_vec),
+            updated_at,
+            updated_by,
+        };
 
-            let value = serde_json::to_value(pkg_info)?;
-            if self.json {
-                let output = serde_json::to_string_pretty(&value)?;
-                println!("{output}");
-            } else {
-                let table = VTable::new(&value);
-                println!("{table}");
-            }
+        let value = serde_json::to_value(pkg_info)?;
+        if self.json {
+            let output = serde_json::to_string_pretty(&value)?;
+            println!("{output}");
+        } else {
+            let table = VTable::new(&value);
+            println!("{table}");
         }
 
         Ok(())

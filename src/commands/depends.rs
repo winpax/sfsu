@@ -1,6 +1,8 @@
 use clap::Parser;
 use sprinkles::{
-    calm_panic::calm_panic,
+    calm_panic::abandon,
+    config,
+    contexts::ScoopContext,
     output::sectioned::{Children, Section, Sections},
     packages::reference::{self, Package},
 };
@@ -20,18 +22,15 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    fn runner(mut self) -> Result<(), anyhow::Error> {
+    async fn runner(mut self, ctx: &impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
         if let Some(bucket) = self.bucket {
-            self.package.set_bucket(bucket);
+            self.package.set_bucket(bucket)?;
         }
 
-        let manifests = self.package.list_manifests();
+        let manifests = self.package.list_manifests(ctx).await?;
 
         if manifests.is_empty() {
-            calm_panic(format!(
-                "Could not find any packages matching: {}",
-                self.package
-            ));
+            abandon!("Could not find any packages matching: {}", self.package);
         };
 
         if self.json {
@@ -39,7 +38,7 @@ impl super::Command for Args {
             return Ok(());
         }
 
-        let output: Sections<reference::Package> = manifests
+        let output: Sections<reference::ManifestRef> = manifests
             .into_iter()
             .filter_map(|manifest| {
                 Children::from(manifest.depends())

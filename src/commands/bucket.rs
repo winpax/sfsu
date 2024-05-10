@@ -4,6 +4,7 @@ pub mod unused;
 use clap::{Parser, Subcommand};
 
 use sfsu_derive::{Hooks, Runnable};
+use sprinkles::{config, contexts::ScoopContext};
 
 use super::Command;
 
@@ -25,7 +26,7 @@ pub struct Args {
 
 impl super::Command for Args {
     #[inline]
-    fn runner(self) -> Result<(), anyhow::Error> {
-        self.command.run()
+    async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
+        self.command.run(ctx).await
     }
 }

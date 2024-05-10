@@ -1,3 +1,7 @@
+//! Pulls remote data into a local branch.
+//!
+//! This module is a modification of the libgit2 "pull" example, as mentioned in the license comment below.
+
 /*
  * libgit2 "pull" example - shows how to pull remote data into a local branch.
  *
@@ -14,9 +18,9 @@
  * Adapted by me (Juliette Cordor)
  */
 
-use git2::Repository;
-use log::trace;
 use std::str;
+
+use git2::Repository;
 
 pub type ProgressCallback<'a> = &'a dyn Fn(git2::Progress<'_>, bool) -> bool;
 
@@ -53,7 +57,7 @@ fn do_fetch<'a>(
 fn fast_forward(
     repo: &Repository,
     lb: &mut git2::Reference<'_>,
-    rc: &git2::AnnotatedCommit<'_>,
+    rc: &git2::Commit<'_>,
 ) -> Result<(), git2::Error> {
     let name = match lb.name() {
         Some(s) => s.to_string(),
@@ -112,10 +116,11 @@ fn normal_merge(
 fn do_merge<'a>(
     repo: &'a Repository,
     remote_branch: &str,
-    fetch_commit: &git2::AnnotatedCommit<'a>,
+    fetch_commit: &git2::Commit<'a>,
 ) -> Result<(), git2::Error> {
+    let annotated_fetch_commit = &repo.find_annotated_commit(fetch_commit.id())?;
     // 1. do a merge analysis
-    let analysis = repo.merge_analysis(&[fetch_commit])?;
+    let analysis = repo.merge_analysis(&[annotated_fetch_commit])?;
 
     // 2. Do the appropriate merge
     if analysis.0.is_fast_forward() {
@@ -129,9 +134,13 @@ fn do_merge<'a>(
             // into an empty repository.
             repo.reference(
                 &refname,
-                fetch_commit.id(),
+                annotated_fetch_commit.id(),
                 true,
-                &format!("Setting {} to {}", remote_branch, fetch_commit.id()),
+                &format!(
+                    "Setting {} to {}",
+                    remote_branch,
+                    annotated_fetch_commit.id()
+                ),
             )?;
             repo.set_head(&refname)?;
             repo.checkout_head(Some(
@@ -144,20 +153,25 @@ fn do_merge<'a>(
     } else if analysis.0.is_normal() {
         // do a normal merge
         let head_commit = repo.reference_to_annotated_commit(&repo.head()?)?;
-        normal_merge(repo, &head_commit, fetch_commit)?;
+        normal_merge(repo, &head_commit, annotated_fetch_commit)?;
     }
     Ok(())
 }
 
+/// Pulls the remote branch into the local branch.
+///
+/// # Errors
+/// - git2 errors
 pub fn pull(
     repo: &super::Repo,
     remote: Option<&str>,
     branch: Option<&str>,
     stats_cb: Option<ProgressCallback<'_>>,
-) -> Result<(), git2::Error> {
+) -> Result<(), crate::git::Error> {
     let remote_name = remote.unwrap_or("origin");
     let remote_branch = branch.unwrap_or("master");
     let mut remote = repo.find_remote(remote_name)?;
-    let fetch_commit = do_fetch(repo, &[remote_branch], &mut remote, stats_cb)?;
-    do_merge(repo, remote_branch, &fetch_commit)
+    do_fetch(repo, &[remote_branch], &mut remote, stats_cb)?;
+    let fetch_commit = repo.find_commit(repo.latest_remote_commit()?)?;
+    Ok(do_merge(repo, remote_branch, &fetch_commit)?)
 }

@@ -1,35 +1,17 @@
+use anyhow::Context;
 use clap::Parser;
-use git2::Progress;
 use indicatif::{MultiProgress, ProgressBar, ProgressFinish};
 use itertools::Itertools;
 use rayon::prelude::*;
 
 use sprinkles::{
     buckets::{self, Bucket},
-    config::Scoop as ScoopConfig,
+    config::{self, Scoop as ScoopConfig},
+    contexts::ScoopContext,
+    git::__stats_callback,
     output::sectioned::{Children, Section},
-    progress::{style, MessagePosition, ProgressOptions},
-    Scoop,
+    progress::{style, Message, ProgressOptions},
 };
-
-fn stats_callback(stats: &Progress<'_>, thin: bool, pb: &ProgressBar) {
-    if thin {
-        pb.set_position(stats.indexed_objects() as u64);
-        pb.set_length(stats.total_objects() as u64);
-
-        return;
-    }
-
-    if stats.received_objects() == stats.total_objects() {
-        pb.set_position(stats.indexed_deltas() as u64);
-        pb.set_length(stats.total_deltas() as u64);
-        pb.set_message("Resolving deltas");
-    } else if stats.total_objects() > 0 {
-        pb.set_position(stats.received_objects() as u64);
-        pb.set_length(stats.total_objects() as u64);
-        pb.set_message("Receiving objects");
-    }
-}
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
@@ -38,12 +20,12 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    fn runner(self) -> Result<(), anyhow::Error> {
+    async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
         const FINISH_MESSAGE: &str = "✅";
 
-        let progress_style = style(Some(ProgressOptions::Hide), Some(MessagePosition::Suffix));
+        let progress_style = style(Some(ProgressOptions::Hide), Some(Message::Suffix(None)));
 
-        let buckets = Bucket::list_all()?;
+        let buckets = Bucket::list_all(ctx)?;
 
         let longest_bucket_name = buckets
             .iter()
@@ -51,7 +33,7 @@ impl super::Command for Args {
             .max()
             .unwrap_or(0);
 
-        let scoop_repo = Scoop::open_repo()?;
+        let scoop_repo = ctx.open_repo().context("missing user repository")??;
 
         let pb = ProgressBar::new(1)
             .with_style(progress_style.clone())
@@ -59,15 +41,15 @@ impl super::Command for Args {
             .with_prefix(format!("🍨 {:<longest_bucket_name$}", "Scoop"))
             .with_finish(ProgressFinish::WithMessage(FINISH_MESSAGE.into()));
 
-        let scoop_changelog = if scoop_repo.outdated()? {
+        let scoop_changelog = if ctx.outdated().await? {
             let mut changelog = if self.changelog {
                 scoop_repo.pull_with_changelog(Some(&|stats, thin| {
-                    stats_callback(&stats, thin, &pb);
+                    __stats_callback(&stats, thin, &pb);
                     true
                 }))?
             } else {
                 scoop_repo.pull(Some(&|stats, thin| {
-                    stats_callback(&stats, thin, &pb);
+                    __stats_callback(&stats, thin, &pb);
                     true
                 }))?;
                 vec![]
@@ -117,12 +99,12 @@ impl super::Command for Args {
 
                 let changelog = if self.changelog {
                     repo.pull_with_changelog(Some(&|stats, thin| {
-                        stats_callback(&stats, thin, pb);
+                        __stats_callback(&stats, thin, pb);
                         true
                     }))?
                 } else {
                     repo.pull(Some(&|stats, thin| {
-                        stats_callback(&stats, thin, pb);
+                        __stats_callback(&stats, thin, pb);
                         true
                     }))?;
 

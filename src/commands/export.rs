@@ -1,6 +1,6 @@
 use clap::Parser;
 
-use sprinkles::packages::export::Export;
+use sprinkles::{config, contexts::ScoopContext, packages::models::export::Export};
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
@@ -9,9 +9,9 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    fn runner(self) -> anyhow::Result<()> {
+    async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> anyhow::Result<()> {
         let export = {
-            let mut export = Export::load()?;
+            let mut export = Export::load(ctx)?;
 
             if !self.config {
                 export.config = None;

@@ -1,28 +1,77 @@
-#![warn(clippy::all, clippy::pedantic, rust_2018_idioms)]
+#![warn(
+    clippy::all,
+    clippy::pedantic,
+    rust_2018_idioms,
+    rust_2024_compatibility
+)]
 
 // TODO: Replace regex with glob
 
 mod commands;
+mod errors;
+mod limits;
 mod logging;
+mod output;
+
+use std::{
+    io::IsTerminal,
+    sync::atomic::{AtomicBool, Ordering},
+};
 
 use clap::Parser;
 
 use commands::Commands;
+use logging::Logger;
+use sprinkles::contexts::{AnyContext, User};
 
-shadow_rs::shadow!(build);
+mod versions {
+    #![allow(clippy::needless_raw_string_hashes)]
+    include!(concat!(env!("OUT_DIR"), "/shadow.rs"));
+
+    pub const SFSU_LONG_VERSION: &str = {
+        use shadow_rs::formatcp;
+
+        const LIBGIT2_VERSION: &str = env!("LIBGIT2_VERSION");
+
+        formatcp!(
+            r#"{}
+sprinkles {}
+branch:{}
+tag:{}
+commit_hash:{}
+build_time:{}
+build_env:{},{}
+libgit2:{}"#,
+            PKG_VERSION,
+            sprinkles::__versions::VERSION,
+            BRANCH,
+            TAG,
+            SHORT_COMMIT,
+            BUILD_TIME,
+            RUST_VERSION,
+            RUST_CHANNEL,
+            LIBGIT2_VERSION
+        )
+    };
+}
 
 #[macro_use]
 extern crate log;
 
 /// Scoop utilities that can replace the slowest parts of Scoop, and run anywhere from 30-100 times faster
 #[derive(Debug, Parser)]
-#[clap(about, long_about, version, long_version = build::CLAP_LONG_VERSION, author)]
+#[clap(about, long_about, version, long_version = versions::SFSU_LONG_VERSION, author)]
 #[allow(clippy::struct_excessive_bools)]
 struct Args {
     #[command(subcommand)]
     command: Commands,
 
-    #[clap(long, global = true, help = "Disable terminal formatting")]
+    #[clap(
+        long,
+        global = true,
+        help = "Disable terminal formatting",
+        env = "NO_COLOR"
+    )]
     no_color: bool,
 
     #[clap(
@@ -38,30 +87,65 @@ struct Args {
     #[clap(
         long,
         global = true,
-        help = "Disable using git commands for certain parts of the program. Allows sfsu to work entirely if you don't have git installed, but can negatively affect performance."
+        help = "Disable using git commands for certain parts of the program. Allows sfsu to work entirely if you don't have git installed, but can negatively affect performance.",
+        env = "DISABLE_GIT"
     )]
     disable_git: bool,
+
+    #[cfg(feature = "contexts")]
+    #[clap(short, long, global = true, help = "Use the global Scoop context")]
+    global: bool,
 }
 
-fn main() -> anyhow::Result<()> {
+pub(crate) static COLOR_ENABLED: AtomicBool = AtomicBool::new(true);
+
+#[cfg(feature = "contexts")]
+impl From<&Args> for AnyContext {
+    fn from(args: &Args) -> Self {
+        if args.global {
+            AnyContext::Global(sprinkles::contexts::Global::new())
+        } else {
+            AnyContext::User(User::new())
+        }
+    }
+}
+
+#[tokio::main(flavor = "multi_thread")]
+async fn main() -> anyhow::Result<()> {
     logging::panics::handle();
 
     let args = Args::parse();
 
-    logging::Logger::init(if cfg!(debug_assertions) {
-        true
-    } else {
-        args.verbose
-    })?;
+    let ctx: AnyContext = {
+        cfg_if::cfg_if! {
+            if #[cfg(feature = "contexts")] {
+                (&args).into()
+            } else {
+                AnyContext::User(User::new())
+            }
+        }
+    };
 
-    if args.no_color {
+    // Spawn a task to cleanup logs in the background
+    tokio::task::spawn_blocking({
+        let ctx = ctx.clone();
+        move || Logger::cleanup_logs(&ctx)
+    });
+
+    Logger::init(&ctx, cfg!(debug_assertions) || args.verbose).await?;
+
+    if args.no_color || !std::io::stdout().is_terminal() {
         debug!("Colour disabled globally");
-        colored::control::set_override(false);
+        console::set_colors_enabled(false);
+        console::set_colors_enabled_stderr(false);
+        COLOR_ENABLED.store(false, Ordering::Relaxed);
     }
 
     debug!("Running command: {:?}", args.command);
 
-    args.command.run()
+    args.command.run(&ctx).await?;
+
+    Ok(())
 }
 
 // /// Get the owner of a file path

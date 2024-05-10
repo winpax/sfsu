@@ -1,8 +1,13 @@
 pub mod bucket;
+pub mod cache;
 pub mod cat;
 pub mod checkup;
+pub mod credits;
+pub mod debug;
 pub mod depends;
 pub mod describe;
+#[cfg(feature = "download")]
+pub mod download;
 pub mod export;
 pub mod home;
 pub mod hook;
@@ -13,11 +18,14 @@ pub mod outdated;
 pub mod search;
 pub mod status;
 pub mod update;
+pub mod virustotal;
 
 use clap::Subcommand;
 
 use sfsu_derive::{Hooks, Runnable};
-use sprinkles::calm_panic::calm_panic;
+use sprinkles::{calm_panic::abandon, config, contexts::ScoopContext};
+
+use crate::output::colours::eprintln_yellow;
 
 pub struct DeprecationWarning {
     /// Deprecation message
@@ -37,42 +45,47 @@ pub enum DeprecationMessage {
 
 // TODO: Run command could return `impl Display` and print that itself
 pub trait Command {
+    const BETA: bool = false;
     const NEEDS_ELEVATION: bool = false;
 
     fn deprecated() -> Option<DeprecationWarning> {
         None
     }
 
-    fn runner(self) -> Result<(), anyhow::Error>;
+    async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error>;
 
-    fn run(self) -> Result<(), anyhow::Error>
+    async fn run(self, ctx: &impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error>
     where
         Self: Sized,
     {
         if let Some(deprecation_warning) = Self::deprecated() {
-            use colored::Colorize as _;
-
             let mut output = String::from("DEPRECATED: ");
 
             match deprecation_warning.message {
                 DeprecationMessage::Replacement(replacement) => {
                     output += &format!("Use `{replacement}` instead. ");
                 }
-                DeprecationMessage::Warning(warning) => output += &warning,
+                DeprecationMessage::Warning(warning) => output += warning,
             }
 
             if let Some(version) = deprecation_warning.version {
                 output += &format!("Will be removed in v{version}. ");
             }
 
-            println!("{}\n", output.yellow());
+            eprintln_yellow!("{output}\n");
         }
 
-        if Self::NEEDS_ELEVATION && !sprinkles::is_elevated()? {
-            calm_panic("This command requires elevation. Please run as an administrator.");
+        if Self::NEEDS_ELEVATION && !quork::root::is_root()? {
+            abandon!("This command requires elevation. Please run as an administrator.");
         }
 
-        self.runner()
+        if Self::BETA {
+            eprintln_yellow!(
+                "This command is in beta and may not work as expected. Please report any and all bugs you find!\n",
+            );
+        }
+
+        self.runner(ctx).await
     }
 }
 
@@ -82,6 +95,7 @@ pub enum Commands {
     Search(search::Args),
     /// List all installed packages
     List(list::Args),
+    #[no_hook]
     /// Generate hooks for the given shell
     Hook(hook::Args),
     #[cfg(not(feature = "v2"))]
@@ -100,6 +114,9 @@ pub enum Commands {
     Outdated(outdated::Args),
     /// List the dependencies of a given package, in the order that they will be installed
     Depends(depends::Args),
+    #[cfg(feature = "download")]
+    /// Download the specified app.
+    Download(download::Args),
     /// Show status and check for new app versions
     Status(status::Args),
     #[cfg_attr(not(feature = "v2"), no_hook)]
@@ -113,4 +130,16 @@ pub enum Commands {
     Export(export::Args),
     /// Check for common issues
     Checkup(checkup::Args),
+    #[cfg(feature = "download")]
+    /// Show or clear the download cache
+    Cache(cache::Args),
+    /// Scan a file with `VirusTotal`
+    Virustotal(virustotal::Args),
+    #[no_hook]
+    /// Show credits
+    Credits(credits::Args),
+    #[no_hook]
+    #[cfg(debug_assertions)]
+    /// Debugging commands
+    Debug(debug::Args),
 }

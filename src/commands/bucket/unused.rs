@@ -3,6 +3,8 @@ use clap::Parser;
 use rayon::prelude::*;
 use sprinkles::{
     buckets::Bucket,
+    config,
+    contexts::ScoopContext,
     output::sectioned::{Children, Section},
     packages::InstallManifest,
 };
@@ -16,14 +18,14 @@ pub struct Args {
 }
 
 impl commands::Command for Args {
-    fn runner(self) -> Result<(), anyhow::Error> {
+    async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
         // TODO: Refactor
-        let used_buckets = InstallManifest::list_all_unchecked()?
+        let used_buckets = InstallManifest::list_all_unchecked(ctx)?
             .par_iter()
             .filter_map(|entry| entry.bucket.clone())
             .collect::<Vec<_>>();
 
-        let unused_buckets = Bucket::list_all()?
+        let unused_buckets = Bucket::list_all(ctx)?
             .par_iter()
             .filter_map(|bucket| {
                 if used_buckets.contains(&bucket.name().to_string()) {

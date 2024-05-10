@@ -17,42 +17,44 @@ permissions:
 
 env:
   CARGO_TERM_COLOR: always
+  CONTRIBUTORS_TOKEN: ${{ secrets.CONTRIBUTORS_TOKEN }}
+  IS_CI: true
+  IS_RELEASE: ${{ startsWith(github.ref, 'refs/tags/') }}
 
 jobs:
+  cargo-deny:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: EmbarkStudios/cargo-deny-action@v1
+
   clippy:
     name: Clippy
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: Swatinem/rust-cache@v2.7.3
 
-      - uses: actions-rs/toolchain@v1
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
         with:
-          profile: minimal
-          toolchain: stable
-          override: true
           components: clippy
 
       - name: Run Clippy
-        run: cargo clippy
+        run: cargo clippy --features beta
 
   format:
     name: Formatting
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: Swatinem/rust-cache@v2.7.3
 
-      - name: Install latest stable
-        uses: actions-rs/toolchain@v1
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
         with:
-          profile: minimal
-          toolchain: stable
-          override: true
           components: rustfmt
 
       - name: Check Formatting
-        run: cargo fmt --all -- --check
+        run: cargo fmt --all --check
 
   test:
     name: Test
@@ -60,16 +62,17 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: Swatinem/rust-cache@v2.7.3
 
-      - name: Install latest stable
-        uses: actions-rs/toolchain@v1
+      - name: Install and setup Scoop
+        uses: MinoruSekine/setup-scoop@v4
         with:
-          toolchain: stable
-          override: true
+          buckets: extras java
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
 
       - name: Build and Test
-        run: cargo test
+        run: cargo test --all --features beta
 
   build:
     name: Build
@@ -78,26 +81,30 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: Swatinem/rust-cache@v2.7.3
+        # Disable cache for release builds
+        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
       - uses: extractions/setup-just@v2
 
-      - name: Install latest stable
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
 
       - name: Build and Package
+        if: ${{ !github.event.release.prerelease }}
         run: just release-all
 
+      - name: Beta Build and Package
+        if: ${{ github.event.release.prerelease }}
+        run: just beta-release-all
+
       - name: Upload a Build Artifact
-        uses: actions/upload-artifact@v4.3.1
+        uses: actions/upload-artifact@v4.3.3
         with:
           name: package.zip
           path: release/*
 
       - name: Upload & Publish
         uses: softprops/action-gh-release@v2.0.4
-        if: startsWith(github.ref, 'refs/tags/')
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
         with:
           files: |
             release/*.exe
@@ -105,7 +112,7 @@ jobs:
 
       - name: VirusTotal Scan
         uses: crazy-max/ghaction-virustotal@v4
-        if: startsWith(github.ref, 'refs/tags/')
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
         with:
           update_release_body: true
           vt_api_key: ${{ secrets.VT_API_KEY }}

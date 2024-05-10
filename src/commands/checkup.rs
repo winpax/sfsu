@@ -1,7 +1,11 @@
 use clap::Parser;
 
 use itertools::Itertools;
-use sprinkles::diagnostics::{Diagnostics, LongPathsStatus};
+use sprinkles::{
+    config,
+    contexts::ScoopContext,
+    diagnostics::{Diagnostics, LongPathsStatus},
+};
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
@@ -10,8 +14,8 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    fn runner(self) -> Result<(), anyhow::Error> {
-        let diagnostics = Diagnostics::collect()?;
+    async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
+        let diagnostics = Diagnostics::collect(ctx)?;
 
         if self.json {
             println!("{}", serde_json::to_string_pretty(&diagnostics)?);
@@ -44,7 +48,7 @@ impl super::Command for Args {
         //     println!("\tWindows Defender may slow down or disrupt installs with realtime scanning");
         //     println!(
         //         "\tConsider running: `sudo Add-MpPreference -ExclusionPath '{}'`",
-        //         Scoop::path().display()
+        //         User::path().display()
         //     );
         // }
 

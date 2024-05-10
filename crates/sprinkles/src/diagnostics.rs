@@ -1,24 +1,30 @@
+//! Scoop diagnostics helpers
+
 use std::{ffi::OsString, os::windows::ffi::OsStringExt};
 
 use itertools::Itertools;
 use serde::Serialize;
 
 use crate::{
-    buckets::{Bucket, BucketError},
-    Scoop,
+    buckets::{self, Bucket},
+    config,
+    contexts::ScoopContext,
 };
 
 #[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
+/// Diagnostics errors
 pub enum Error {
     #[error("Internal Windows API Error: {0}")]
     Windows(#[from] windows::core::Error),
     #[error("Interacting with buckets: {0}")]
-    Bucket(#[from] BucketError),
+    Bucket(#[from] buckets::Error),
     #[error("Error checking root privelages: {0}")]
     Quork(#[from] quork::root::Error),
 }
 
 #[derive(Debug, Copy, Clone, Serialize)]
+/// The status of long paths
 pub enum LongPathsStatus {
     /// Long paths are enabled
     Enabled,
@@ -29,10 +35,15 @@ pub enum LongPathsStatus {
 }
 
 #[derive(Debug, Copy, Clone, Serialize)]
+/// A helper program
 pub struct Helper {
+    /// The executable name
     pub exe: &'static str,
+    /// The name of the program
     pub name: &'static str,
+    /// The reason the program is needed
     pub reason: &'static str,
+    /// The packages that provide the program
     pub packages: &'static [&'static str],
 }
 
@@ -41,7 +52,7 @@ const EXPECTED_HELPERS: &[Helper] = &[
         exe: "7z",
         name: "7-Zip",
         reason: "unpacking most programs",
-        packages: &["7zip", "7zip-std"],
+        packages: &["7zip"],
     },
     Helper {
         exe: "innounp",
@@ -59,13 +70,21 @@ const EXPECTED_HELPERS: &[Helper] = &[
 
 #[allow(clippy::struct_excessive_bools)]
 #[derive(Debug, Clone, Serialize)]
+/// Diagnostics information
 pub struct Diagnostics {
+    /// If git is installed
     pub git_installed: bool,
+    /// The status of long paths
     pub long_paths: LongPathsStatus,
+    /// If the main bucket exists
     pub main_bucket: bool,
+    /// If the user has developer mode enabled
     pub windows_developer: bool,
+    /// If Windows Defender is ignoring the Scoop directory
     pub windows_defender: bool,
+    /// The missing helper programs
     pub missing_helpers: Vec<Helper>,
+    /// If the Scoop directory is on an NTFS filesystem
     pub scoop_ntfs: bool,
 }
 
@@ -77,18 +96,18 @@ impl Diagnostics {
     /// - Unable to check main bucket
     /// - Unable to check windows developer status
     /// - Unable to check windows defender status
-    pub fn collect() -> Result<Self, Error> {
+    pub fn collect(ctx: &impl ScoopContext<config::Scoop>) -> Result<Self, Error> {
         let git_installed = Self::git_installed();
         debug!("Check git is installed");
-        let main_bucket = Self::check_main_bucket()?;
+        let main_bucket = Self::check_main_bucket(ctx)?;
         debug!("Checked main bucket");
         let long_paths = Self::check_long_paths()?;
         debug!("Checked long paths");
         let windows_developer = Self::get_windows_developer_status()?;
         debug!("Checked developer mode");
 
-        let windows_defender = if crate::is_elevated()? {
-            Self::check_windows_defender()?
+        let windows_defender = if quork::root::is_root()? {
+            Self::check_windows_defender(ctx)?
         } else {
             false
         };
@@ -100,7 +119,7 @@ impl Diagnostics {
             .copied()
             .collect();
 
-        let scoop_ntfs = Self::is_ntfs()?;
+        let scoop_ntfs = Self::is_ntfs(ctx)?;
 
         Ok(Self {
             git_installed,
@@ -120,10 +139,12 @@ impl Diagnostics {
     /// - Unable to read the registry
     /// - Unable to open the registry key
     /// - Unable to check if the key exists
-    pub fn check_windows_defender() -> windows::core::Result<bool> {
+    pub fn check_windows_defender(
+        ctx: &impl ScoopContext<config::Scoop>,
+    ) -> windows::core::Result<bool> {
         use winreg::{enums::HKEY_LOCAL_MACHINE, RegKey};
 
-        let scoop_dir = Scoop::path();
+        let scoop_dir = ctx.path();
         let key = RegKey::predef(HKEY_LOCAL_MACHINE)
             .open_subkey(r"SOFTWARE\Microsoft\Windows Defender\Exclusions\Paths")?;
 
@@ -134,8 +155,8 @@ impl Diagnostics {
     ///
     /// # Errors
     /// - Unable to list buckets
-    pub fn check_main_bucket() -> Result<bool, BucketError> {
-        let buckets = Bucket::list_all()?;
+    pub fn check_main_bucket(ctx: &impl ScoopContext<config::Scoop>) -> Result<bool, Error> {
+        let buckets = Bucket::list_all(ctx)?;
 
         Ok(buckets.into_iter().any(|bucket| bucket.name() == "main"))
     }
@@ -146,24 +167,12 @@ impl Diagnostics {
     /// - Unable to read the registry
     /// - Unable to read the OS version
     pub fn check_long_paths() -> windows::core::Result<LongPathsStatus> {
-        use windows::Win32::System::SystemInformation::{
-            GetVersionExW, OSVERSIONINFOEXW, OSVERSIONINFOW,
-        };
+        use windows_version::OsVersion;
         use winreg::{enums::HKEY_LOCAL_MACHINE, RegKey};
 
-        let version_info = unsafe {
-            let mut version_info = OSVERSIONINFOEXW {
-                #[allow(clippy::cast_possible_truncation)]
-                dwOSVersionInfoSize: std::mem::size_of::<OSVERSIONINFOEXW>() as u32,
-                ..std::mem::zeroed()
-            };
+        let version = OsVersion::current();
 
-            GetVersionExW(std::ptr::addr_of_mut!(version_info).cast::<OSVERSIONINFOW>())?;
-
-            version_info
-        };
-
-        let major_version = version_info.dwMajorVersion;
+        let major_version = version.major;
         debug!("Windows Major Version: {major_version}");
 
         if major_version < 10 {
@@ -200,16 +209,16 @@ impl Diagnostics {
     /// - Unable to get the volume information
     /// - Unable to check the filesystem
     /// - Unable to get the root path
-    pub fn is_ntfs() -> windows::core::Result<bool> {
+    pub fn is_ntfs(ctx: &impl ScoopContext<config::Scoop>) -> windows::core::Result<bool> {
         use windows::{
             core::HSTRING,
             Win32::{Foundation::MAX_PATH, Storage::FileSystem::GetVolumeInformationW},
         };
 
-        let path = Scoop::path();
+        let path = ctx.path();
 
         let root = {
-            let mut current = path.as_path();
+            let mut current = path;
 
             while let Some(parent) = current.parent() {
                 current = parent;
@@ -241,7 +250,7 @@ impl Diagnostics {
     }
 
     #[must_use]
-    /// Check if the user has git installed
+    /// Check if the user has git installed, and in their path
     pub fn git_installed() -> bool {
         which::which("git").is_ok()
     }

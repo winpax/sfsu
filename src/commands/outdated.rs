@@ -1,6 +1,7 @@
 use clap::{Parser, Subcommand};
 use serde_json::Map;
 use sfsu_derive::Runnable;
+use sprinkles::{config, contexts::ScoopContext};
 
 use super::{Command, DeprecationMessage, DeprecationWarning};
 
@@ -32,19 +33,19 @@ impl Command for Args {
         })
     }
 
-    fn runner(self) -> anyhow::Result<()> {
+    async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> anyhow::Result<()> {
         if let Some(command) = self.command {
-            command.run()
+            command.run(ctx).await
         } else {
             if self.json {
                 let mut map = Map::new();
 
                 let apps = apps::Args { json: self.json }
-                    .run_direct(false)?
+                    .run_direct(ctx, false)?
                     .unwrap_or_default();
 
                 let buckets = buckets::Args { json: self.json }
-                    .run_direct(false)?
+                    .run_direct(ctx, false)?
                     .unwrap_or_default();
 
                 map.insert("outdated_apps".into(), apps.into());
@@ -55,9 +56,13 @@ impl Command for Args {
                 println!("{output}");
             } else {
                 println!("Outdated Apps:");
-                Commands::Apps(apps::Args { json: self.json }).run()?;
+                Commands::Apps(apps::Args { json: self.json })
+                    .run(ctx)
+                    .await?;
                 println!("\nOutdated Buckets:");
-                Commands::Buckets(buckets::Args { json: self.json }).run()?;
+                Commands::Buckets(buckets::Args { json: self.json })
+                    .run(ctx)
+                    .await?;
             }
 
             Ok(())

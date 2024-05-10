@@ -1,3 +1,5 @@
+//! Scoop bucket helpers
+
 use std::{
     borrow::Cow,
     collections::HashSet,
@@ -8,16 +10,18 @@ use rayon::prelude::*;
 use regex::Regex;
 
 use crate::{
-    git::{Repo, RepoError},
-    output::sectioned::{Children, Section, Text},
+    config,
+    contexts::ScoopContext,
+    git::{self, Repo},
     packages::{self, CreateManifest, InstallManifest, Manifest, SearchMode},
-    Scoop,
 };
 
 #[derive(Debug, thiserror::Error)]
-pub enum BucketError {
+#[allow(missing_docs)]
+/// Bucket errors
+pub enum Error {
     #[error("Interacting with repo: {0}")]
-    RepoError(#[from] RepoError),
+    RepoError(#[from] git::Error),
     #[error("IO Error: {0}")]
     IOError(#[from] std::io::Error),
     #[error("The bucket \"{0}\" does not exist")]
@@ -32,9 +36,11 @@ pub enum BucketError {
     InvalidTimeZone,
 }
 
-pub type Result<T> = std::result::Result<T, BucketError>;
+/// Bucket result type
+pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Debug, Clone)]
+/// A bucket
 pub struct Bucket {
     bucket_path: PathBuf,
 }
@@ -44,8 +50,8 @@ impl Bucket {
     ///
     /// # Errors
     /// - Bucket does not exist
-    pub fn from_name(name: impl AsRef<Path>) -> Result<Self> {
-        Self::from_path(Scoop::buckets_path().join(name))
+    pub fn from_name<C>(ctx: &impl ScoopContext<C>, name: impl AsRef<Path>) -> Result<Self> {
+        Self::from_path(ctx.buckets_path().join(name))
     }
 
     /// Open given path as a bucket
@@ -58,7 +64,7 @@ impl Bucket {
         if bucket_path.exists() {
             Ok(Self { bucket_path })
         } else {
-            Err(BucketError::InvalidBucket(path.as_ref().to_path_buf()))
+            Err(Error::InvalidBucket(path.as_ref().to_path_buf()))
         }
     }
 
@@ -67,11 +73,14 @@ impl Bucket {
     /// # Errors
     /// - Any listed or provided bucket is invalid
     /// - Unable to read the bucket directory
-    pub fn one_or_all(name: Option<impl AsRef<Path>>) -> Result<Vec<Self>> {
+    pub fn one_or_all<C>(
+        ctx: &impl ScoopContext<C>,
+        name: Option<impl AsRef<Path>>,
+    ) -> Result<Vec<Self>> {
         if let Some(name) = name {
-            Ok(vec![Bucket::from_name(name)?])
+            Ok(vec![Bucket::from_name(ctx, name)?])
         } else {
-            Bucket::list_all()
+            Bucket::list_all(ctx)
         }
     }
 
@@ -97,6 +106,7 @@ impl Bucket {
     }
 
     #[must_use]
+    /// Gets the bucket's path
     pub fn path(&self) -> &Path {
         &self.bucket_path
     }
@@ -106,8 +116,8 @@ impl Bucket {
     /// # Errors
     /// - Was unable to read the bucket directory
     /// - Any listed bucket is invalid
-    pub fn list_all() -> Result<Vec<Bucket>> {
-        let bucket_dir = std::fs::read_dir(Scoop::buckets_path())?;
+    pub fn list_all<C>(ctx: &impl ScoopContext<C>) -> Result<Vec<Bucket>> {
+        let bucket_dir = std::fs::read_dir(ctx.buckets_path())?;
 
         bucket_dir
             .filter(|entry| entry.as_ref().is_ok_and(|entry| entry.path().is_dir()))
@@ -120,7 +130,7 @@ impl Bucket {
     /// # Errors
     /// - The bucket is invalid
     /// - Any package has an invalid path or invalid contents
-    /// - See more at [`packages::PackageError`]
+    /// - See more at [`packages::Error`]
     pub fn list_packages(&self) -> packages::Result<Vec<Manifest>> {
         let dir = std::fs::read_dir(self.path().join("bucket"))?;
 
@@ -132,7 +142,7 @@ impl Bucket {
     ///
     /// # Errors
     /// - The bucket is invalid
-    /// - See more at [`packages::PackageError`]
+    /// - See more at [`packages::Error`]
     pub fn list_packages_unchecked(&self) -> packages::Result<Vec<Manifest>> {
         let dir = std::fs::read_dir(self.path().join("bucket"))?;
 
@@ -149,7 +159,7 @@ impl Bucket {
     ///
     /// # Errors
     /// - The bucket is invalid
-    /// - See more at [`packages::PackageError`]
+    /// - See more at [`packages::Error`]
     pub fn list_package_names(&self) -> packages::Result<Vec<String>> {
         let dir = std::fs::read_dir(self.path().join("bucket"))?;
 
@@ -169,6 +179,7 @@ impl Bucket {
             .collect())
     }
 
+    /// Get the path to the manifest for the given package name
     pub fn get_manifest_path(&self, name: impl AsRef<str>) -> PathBuf {
         let buckets_path = self.path();
         let manifests_path = buckets_path.join("bucket");
@@ -192,15 +203,19 @@ impl Bucket {
     ///
     /// # Errors
     /// - Could not load the manifest from the path
-    pub fn matches(
+    pub fn matches<'a, C: ScoopContext<config::Scoop>>(
         &self,
+        ctx: &'a C,
         installed_only: bool,
         search_regex: &Regex,
         search_mode: SearchMode,
-    ) -> packages::Result<Option<Section<Section<Text<String>>>>> {
+    ) -> packages::Result<Vec<Manifest>>
+    where
+        &'a C: Send + Sync,
+    {
         // Ignore loose files in the buckets dir
         if !self.path().is_dir() {
-            return Ok(None);
+            return Ok(vec![]);
         }
 
         let bucket_contents = self.list_package_names()?;
@@ -210,14 +225,12 @@ impl Bucket {
             .filter_map(|manifest_name| {
                 // Ignore non-matching manifests
                 if search_mode.eager_name_matches(manifest_name, search_regex) {
-                    match self.get_manifest(manifest_name) {
-                        Ok(manifest) => manifest.parse_output(
-                            self.name(),
-                            installed_only,
-                            search_regex,
-                            search_mode,
-                        ),
-                        Err(_) => None,
+                    let manifest = self.get_manifest(manifest_name).ok()?;
+
+                    if !installed_only || manifest.is_installed(ctx, Some(&self.name())) {
+                        Some(manifest)
+                    } else {
+                        None
                     }
                 } else {
                     None
@@ -225,15 +238,7 @@ impl Bucket {
             })
             .collect::<Vec<_>>();
 
-        if matches.is_empty() {
-            Ok(None)
-        } else {
-            Ok(Some(
-                Section::new(Children::from(matches))
-                    // TODO: Remove quotes and bold bucket name
-                    .with_title(format!("'{}' bucket:", self.name())),
-            ))
-        }
+        Ok(matches)
     }
 
     /// List all used buckets
@@ -241,8 +246,8 @@ impl Bucket {
     /// # Errors
     /// Invalid install manifest
     /// Reading directories fails
-    pub fn used() -> packages::Result<HashSet<String>> {
-        Ok(InstallManifest::list_all()?
+    pub fn used(ctx: &impl ScoopContext<config::Scoop>) -> packages::Result<HashSet<String>> {
+        Ok(InstallManifest::list_all(ctx)?
             .par_iter()
             .filter_map(|entry| entry.bucket.clone())
             .collect())
@@ -254,8 +259,8 @@ impl Bucket {
     /// # Errors
     /// Invalid install manifest
     /// Reading directories fails
-    pub fn is_used(&self) -> packages::Result<bool> {
-        Ok(Self::used()?.contains(&self.name().to_string()))
+    pub fn is_used(&self, ctx: &impl ScoopContext<config::Scoop>) -> packages::Result<bool> {
+        Ok(Self::used(ctx)?.contains(&self.name().to_string()))
     }
 
     /// Checks if the given bucket is outdated
@@ -288,9 +293,9 @@ impl Bucket {
         Ok(self
             .open_repo()?
             .origin()
-            .ok_or(RepoError::MissingRemote("origin".to_string()))?
+            .ok_or(git::Error::MissingRemote("origin".to_string()))?
             .url()
             .map(std::string::ToString::to_string)
-            .ok_or(RepoError::NonUtf8)?)
+            .ok_or(git::Error::NonUtf8)?)
     }
 }

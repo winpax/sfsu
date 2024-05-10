@@ -7,3 +7,5 @@ proc-macro-out.rs
 logs/
 
 *-export.json
+
+.env

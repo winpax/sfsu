@@ -1,12 +1,39 @@
 [package]
 description = "Stupid Fast Scoop Utils"
 edition = "2021"
+license = { workspace = true }
 name = "sfsu"
-version = { workspace = true }
+publish.workspace = true
+rust-version.workspace = true
+version.workspace = true
 
 [workspace]
 members = ["crates/*"]
-package.version = "1.10.0"
+package.license = "Apache-2.0"
+package.publish = false
+package.rust-version = "1.75.0"
+package.version = "1.12.0"
+
+[workspace.dependencies]
+chrono = { version = ">=0.4.38", features = [
+    "clock",
+    "serde",
+    "std",
+], default-features = false }
+console = { version = "0.15", features = ["windows-console-colors"] }
+futures = "0.3"
+git2 = "0.18"
+indicatif = { version = "0.17", features = [
+    "improved_unicode",
+    "rayon",
+    "tokio",
+] }
+itertools = "0.12"
+log = { version = "0.4", features = ["std"] }
+quork = "0.7.0"
+rayon = "1.10"
+regex = "1.10"
+serde = { version = "1.0", features = ["derive"] }
 
 [[bench]]
 harness = false
@@ -14,14 +41,29 @@ name = "searching"
 
 [[bench]]
 harness = false
+name = "ref-matching"
+
+[[bench]]
+harness = false
 name = "serde"
+
+[[bench]]
+harness = false
+name = "autoupdate"
 
 [profile.release]
 codegen-units = 1
 lto = true
 
+[profile.profiling]
+inherits = "dev"
+opt-level = 3
+
 [features]
-default = ["info-difftrees", "v2"]
+beta = ["contexts", "sprinkles/beta"]
+contexts = []
+default = ["download", "info-difftrees", "v2"]
+download = ["sprinkles/manifest-hashes"]
 info-difftrees = []
 # Breaking changes are locked behind this feature flag
 v2 = ["sprinkles/v2"]
@@ -30,28 +72,46 @@ v2 = ["sprinkles/v2"]
 anyhow = "1.0"
 bat = "0.24"
 cfg-if = "1.0"
-clap = { version = "4.5", features = ["derive"] }
-colored = "2.1"
-git2 = "0.18"
-human-panic = "1.2"
-indicatif = { version = "0.17", features = ["improved_unicode", "rayon"] }
-itertools = "0.12"
-log = { version = "0.4", features = ["std"] }
+chrono.workspace = true
+clap = { version = "4.5", features = [
+    "derive",
+    "env",
+    "string",
+    "unicode",
+    "wrap_help",
+] }
+console.workspace = true
+crossterm = "0.27.0"
+futures.workspace = true
+git2.workspace = true
+human-panic = "2.0"
+indicatif.workspace = true
+itertools.workspace = true
+log = { workspace = true }
 open = "5.1"
 parking_lot = "0.12"
-quork = "0.6"
-rayon = "1.10"
-regex = "1.10"
+quork.workspace = true
+ratatui = { version = "0.26.2", features = ["macros"] }
+rayon.workspace = true
+regex.workspace = true
+serde.workspace = true
 serde_json = { version = "1.0", features = ["preserve_order"] }
-sfsu-derive = { path = "crates/derive" }
+sfsu-derive = { path = "./crates/derive" }
 shadow-rs = "0.27"
-sprinkles = { version = "1", path = "crates/sprinkles" }
-strum = { version = "0.26", features = ["derive"] }
+sprinkles = { path = "crates/sprinkles", features = ["clap"] }
+tokio = { version = "1.37", features = ["full"] }
+vt3 = { git = "https://github.com/winpax/vt3.git", version = "0.8", package = "async_vt3" }
 
 [dev-dependencies]
-chrono = ">=0.4.20"
-criterion = { version = "0.5", features = ["html_reports"] }
+chrono.workspace = true
+criterion = { version = "0.5", features = ["async_tokio", "html_reports"] }
+git2 = { workspace = true }
 
 [build-dependencies]
+contribs = { git = "https://github.com/winpax/contribs.git", version = "0.1.0" }
+dotenv = "0.15.0"
+git2.workspace = true
 shadow-rs = "0.27"
+tokio = { version = "1.37", features = ["full"] }
+toml_edit = "0.22.12"
 winres = "0.1"

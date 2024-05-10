@@ -1,7 +1,6 @@
-use std::fmt::Write;
+use std::{fmt::Write, sync::Arc};
 
 use clap::{Parser, ValueEnum};
-use colored::Colorize as _;
 use parking_lot::Mutex;
 use quork::prelude::*;
 use rayon::prelude::*;
@@ -9,12 +8,13 @@ use serde_json::Value;
 
 use sprinkles::{
     buckets::Bucket,
-    git::Repo,
+    config,
+    contexts::ScoopContext,
     output::{
         sectioned::{Children, Section},
         structured::Structured,
     },
-    packages::{install, status::Info},
+    packages::models::{install, status::Info},
     progress::style,
 };
 
@@ -35,11 +35,14 @@ pub struct Args {
 
     #[clap(short = 'O', long, help = "Only check the provided sections of Scoop")]
     only: Vec<Command>,
+
+    #[clap(short = 'H', long, help = "Ignore held packages")]
+    ignore_held: bool,
 }
 
 impl super::Command for Args {
-    fn runner(self) -> anyhow::Result<()> {
-        let value = Mutex::new(Value::default());
+    async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> anyhow::Result<()> {
+        let value = Arc::new(Mutex::new(Value::default()));
 
         let pb = indicatif::ProgressBar::new(3).with_style(style(None, None));
 
@@ -51,22 +54,27 @@ impl super::Command for Args {
             }
         };
 
-        let outputs = commands
-            .into_par_iter()
-            .map(|command| {
+        let outputs = commands.iter().map(|command| {
+            let command = *command;
+            let this = self.clone();
+            let pb = pb.clone();
+            let value = value.clone();
+            async move {
                 let mut output = String::new();
 
                 match command {
-                    Command::Scoop => self.handle_scoop(&value, &mut output)?,
-                    Command::Buckets => self.handle_buckets(&value, &mut output)?,
-                    Command::Apps => self.handle_packages(&value, &mut output)?,
+                    Command::Scoop => this.handle_scoop(ctx, &value, &mut output).await?,
+                    Command::Buckets => this.handle_buckets(ctx, &value, &mut output)?,
+                    Command::Apps => this.handle_packages(ctx, &value, &mut output)?,
                 };
 
                 pb.inc(1);
 
                 anyhow::Ok(output)
-            })
-            .collect::<anyhow::Result<Vec<_>>>()?;
+            }
+        });
+
+        let outputs = futures::future::try_join_all(outputs).await?;
 
         pb.finish_and_clear();
 
@@ -84,10 +92,13 @@ impl super::Command for Args {
 }
 
 impl Args {
-    fn handle_scoop(&self, value: &Mutex<Value>, output: &mut dyn Write) -> anyhow::Result<()> {
-        let scoop_repo = Repo::scoop_app()?;
-
-        let is_outdated = scoop_repo.outdated()?;
+    async fn handle_scoop(
+        &self,
+        ctx: &impl ScoopContext<config::Scoop>,
+        value: &Mutex<Value>,
+        output: &mut dyn Write,
+    ) -> anyhow::Result<()> {
+        let is_outdated = ctx.outdated().await?;
 
         if self.json {
             value.lock()["scoop"] = serde_json::to_value(is_outdated)?;
@@ -96,7 +107,10 @@ impl Args {
             writeln!(
                 output,
                 "{}",
-                "Scoop is out of date. Run `scoop update` to get the latest changes.".yellow()
+                console::style(
+                    "Scoop is out of date. Run `scoop update` to get the latest changes."
+                )
+                .yellow()
             )?;
         } else {
             writeln!(output, "Scoop app is up to date.")?;
@@ -105,8 +119,13 @@ impl Args {
         Ok(())
     }
 
-    fn handle_buckets(&self, value: &Mutex<Value>, output: &mut dyn Write) -> anyhow::Result<()> {
-        let buckets = Bucket::list_all()?;
+    fn handle_buckets(
+        &self,
+        ctx: &impl ScoopContext<config::Scoop>,
+        value: &Mutex<Value>,
+        output: &mut dyn Write,
+    ) -> anyhow::Result<()> {
+        let buckets = Bucket::list_all(ctx)?;
 
         // Handle buckets
         if self.verbose || self.json {
@@ -154,8 +173,10 @@ impl Args {
                 writeln!(
                     output,
                     "{}",
-                    "Bucket(s) are out of date. Run `scoop update` to get the latest changes."
-                        .yellow()
+                    console::style(
+                        "Bucket(s) are out of date. Run `scoop update` to get the latest changes."
+                    )
+                    .yellow()
                 )?;
             } else {
                 writeln!(output, "All buckets up to date.")?;
@@ -165,8 +186,13 @@ impl Args {
         Ok(())
     }
 
-    fn handle_packages(&self, value: &Mutex<Value>, output: &mut dyn Write) -> anyhow::Result<()> {
-        let apps = install::Manifest::list_all_unchecked()?;
+    fn handle_packages(
+        &self,
+        ctx: &impl ScoopContext<config::Scoop>,
+        value: &Mutex<Value>,
+        output: &mut dyn Write,
+    ) -> anyhow::Result<()> {
+        let apps = install::Manifest::list_all_unchecked(ctx)?;
 
         debug!("Checking {} apps", apps.len());
 
@@ -174,11 +200,11 @@ impl Args {
             .par_iter()
             .flat_map(|app| -> anyhow::Result<Info> {
                 if let Some(bucket) = &app.bucket {
-                    let local_manifest = app.get_manifest()?;
+                    let local_manifest = app.get_manifest(ctx)?;
                     // TODO: Add the option to check all buckets and find the highest version (will require semver to order versions)
-                    let bucket = Bucket::from_name(bucket)?;
+                    let bucket = Bucket::from_name(ctx, bucket)?;
 
-                    match Info::from_manifests(&local_manifest, &bucket) {
+                    match Info::from_manifests(ctx, &local_manifest, &bucket) {
                         Ok(info) => Ok(info),
                         Err(err) => {
                             error!("Failed to get status for {}: {:?}", app.name, err);
@@ -191,10 +217,20 @@ impl Args {
                 }
             })
             .filter(|app| {
+                let missing_deps = !app.missing_dependencies.is_empty();
+
+                let info_exists = if let Some(ref info) = app.info {
+                    // Ignore held packages if the flag is specified and there are no other reasons to show it
+                    if !missing_deps && info == "Held package" && self.ignore_held {
+                        return false;
+                    }
+                    true
+                } else {
+                    false
+                };
+
                 // Filter out apps that are okay
-                app.info.is_some()
-                    || !app.missing_dependencies.is_empty()
-                    || app.current != app.available
+                info_exists || missing_deps || app.current != app.available
             })
             .collect::<Vec<_>>();
 
@@ -222,7 +258,7 @@ impl Args {
             // } else {
             // TODO: Add a better way to add colours than this
             // TODO: p.s this doesnt work atm
-            // use colored::Colorize;
+            // use owo_colors::OwoColorize;
             // let values = values
             //     .into_par_iter()
             //     .map(|mut value| {

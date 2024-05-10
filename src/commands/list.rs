@@ -1,14 +1,15 @@
 use clap::{Parser, ValueEnum};
-use colored::Colorize;
 use rayon::prelude::*;
 
-use sprinkles::{output::structured::Structured, packages::MinInfo};
+use sprinkles::{
+    config, contexts::ScoopContext, output::structured::Structured, packages::MinInfo,
+};
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
     #[cfg(not(feature = "v2"))]
     #[clap(
-        help = format!("The pattern to search for (can be a regex). {}", "DEPRECATED: Use sfsu search --installed. Will be removed in v2".yellow())
+        help = format!("The pattern to search for (can be a regex). {}", console::style("DEPRECATED: Use sfsu search --installed. Will be removed in v2").yellow())
     )]
     pattern: Option<String>,
 
@@ -35,8 +36,8 @@ pub enum SortBy {
 }
 
 impl super::Command for Args {
-    fn runner(self) -> Result<(), anyhow::Error> {
-        let mut outputs = MinInfo::list_installed(self.bucket.as_ref())?;
+    async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
+        let mut outputs = MinInfo::list_installed(ctx, self.bucket.as_ref())?;
 
         outputs.par_sort_by(|a, b| match self.sort_by {
             SortBy::Name => a.name.cmp(&b.name),
