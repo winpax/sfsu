@@ -71,7 +71,7 @@ Benchmarks have been moved to [the wiki](https://github.com/jewlexx/sfsu/wiki/Be
 - Read the [Code of Conduct](CODE_OF_CONDUCT.md)
 - Install [just](https://github.com/casey/just) to run the build scripts
 - Install [pre-commit](https://pre-commit.com/) to run the pre-commit hooks
-  - After installing the tool, run `just pre-commit` to run the hooks automatically, or run `pre-commit install` and `pre-commit install --hook-type commit-msg` to install the relevant hooks to install them manually
+  - After installing the tool, run `just pre-commit` to install the hooks automatically
 
 The build instructions can be found [in the wiki](https://github.com/jewlexx/sfsu/wiki/Building)
 
