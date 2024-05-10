@@ -26,7 +26,7 @@ use gix::{
     clone::PrepareFetch,
     create::{self, Options as CreateOptions},
     open::Options as OpenOptions,
-    Repository, Url,
+    Repository,
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -50,7 +50,7 @@ pub type Result<T, E = Error> = std::result::Result<T, E>;
 ///
 /// # Errors
 /// - Git error
-pub fn clone(url: Url, path: impl AsRef<Path>) -> Result<Repository> {
+pub fn clone(url: &str, path: impl AsRef<Path>) -> Result<Repository> {
     let interrupt = AtomicBool::new(false);
 
     // Fetch the latest changes from the remote repository

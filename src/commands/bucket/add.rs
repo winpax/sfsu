@@ -39,16 +39,16 @@ impl super::Command for Args {
                 }
             });
 
+        let dest_path = ctx.buckets_path().join(&self.name);
+
+        if dest_path.exists() {
+            abandon!("Bucket {name} already exists. Remove it first if you want to add it again: `sfsu bucket rm {name}`", name = self.name);
+        }
+
         if self.disable_git {
-            abandon!("Disabling git for buckets is not yet supported");
+            sprinkles::git::clone::clone(&repo_url, dest_path)?;
         } else {
             let git_path = sprinkles::git::which().calm_expect("git not found");
-
-            let dest_path = ctx.buckets_path().join(&self.name);
-
-            if dest_path.exists() {
-                abandon!("Bucket {name} already exists. Remove it first if you want to add it again: `sfsu bucket rm {name}`", name = self.name);
-            }
 
             let exit_status = Command::new(git_path)
                 .current_dir(ctx.buckets_path())

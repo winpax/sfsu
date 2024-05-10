@@ -44,6 +44,7 @@ futures.workspace = true
 getset = { version = "0.1", optional = true }
 git2.workspace = true
 gix = { version = "0.62.0", features = [
+    "blocking-http-transport-reqwest",
     "blocking-network-client",
     "worktree-mutation",
 ] }
