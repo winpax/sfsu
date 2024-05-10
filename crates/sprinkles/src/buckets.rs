@@ -282,6 +282,21 @@ impl Bucket {
         Ok(std::fs::read_dir(self.path().join("bucket"))?.count())
     }
 
+    /// Get the number of manifests in the bucket using async I/O
+    ///
+    /// # Errors
+    /// - Could not read the bucket directory
+    pub async fn manifests_async(&self) -> Result<usize> {
+        let mut read_dir = tokio::fs::read_dir(self.path().join("bucket")).await?;
+        let mut count = 0;
+
+        while (read_dir.next_entry().await?).is_some() {
+            count += 1;
+        }
+
+        Ok(count)
+    }
+
     /// Get the bucket's source url
     ///
     /// # Errors

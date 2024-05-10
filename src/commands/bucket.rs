@@ -1,4 +1,5 @@
 pub mod add;
+pub mod list;
 pub mod outdated;
 pub mod remove;
 pub mod unused;
@@ -18,6 +19,8 @@ pub enum Commands {
     Remove(remove::Args),
     /// Remove a bucket
     Rm(remove::Args),
+    /// List all installed buckets
+    List(list::Args),
     /// Find buckets that do not have any installed packages
     Unused(unused::Args),
     #[cfg(not(feature = "v2"))]

@@ -3,6 +3,7 @@
 use std::fmt::Display;
 
 use itertools::Itertools;
+use serde::Serialize;
 use serde_json::{Map, Value};
 
 use crate::inline_const;
@@ -65,6 +66,7 @@ impl<T: Display> Display for OptionalTruncate<T> {
 }
 
 const WALL: &str = " | ";
+const SUFFIX: &str = "...";
 
 struct TruncateOrPad(String, usize);
 
@@ -74,7 +76,7 @@ impl Display for TruncateOrPad {
         if self.0.len() > length {
             write!(
                 f,
-                "{}...",
+                "{}{SUFFIX}",
                 &self.0[0..length.checked_sub(3).unwrap_or_default()]
             )
         } else {
@@ -145,26 +147,32 @@ fn print_headers(
 ///
 /// Takes a single named lifetime, given that this is intended
 /// to be constructed and used within the same function.
-pub struct Structured<'a> {
-    objects: Vec<&'a Map<String, Value>>,
+pub struct Structured {
+    objects: Vec<Map<String, Value>>,
     max_length: Option<usize>,
 }
 
-impl<'a> Structured<'a> {
+impl Structured {
     /// Construct a new [`Structured`] formatter
     ///
     /// # Panics
     /// - If the length of headers is not equal to the length of values
     /// - If the values provided are not objects
-    pub fn new(values: &'a [Value]) -> Self {
+    pub fn new(values: &[impl Serialize]) -> Self {
         let objects = values
             .iter()
-            .map(|v| v.as_object().expect("object"))
+            .map(|v| {
+                let value = serde_json::to_value(v).expect("valid value");
+
+                let object = value.as_object().expect("object").clone();
+
+                object
+            })
             .collect::<Vec<_>>();
 
         Structured {
             objects,
-            max_length: Some(30),
+            max_length: None,
         }
     }
 
@@ -176,12 +184,11 @@ impl<'a> Structured<'a> {
     }
 }
 
-impl<'a> Display for Structured<'a> {
+impl Display for Structured {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let headers = self.objects[0].keys().collect_vec();
 
         let contestants = {
-            // TODO: Make this dynamic largest header
             let default_width = headers
                 .iter()
                 .map(|header| header.len())
@@ -216,13 +223,13 @@ impl<'a> Display for Structured<'a> {
                                 OptionalTruncate::new(element)
                                     .with_length(self.max_length)
                                     // TODO: Fix suffix
-                                    .with_suffix("...")
+                                    .with_suffix(SUFFIX)
                                     .to_string()
                                     .len()
                                     + WALL.len(),
                             );
 
-                            *contestants.iter().max().unwrap()
+                            contestants.into_iter().max().unwrap()
                         })
                         .collect()
                 });
@@ -259,22 +266,23 @@ impl<'a> Display for Structured<'a> {
 
                 let element = row
                     .get(&heck::AsSnakeCase(header).to_string())
-                    .and_then(|v| {
-                        if let Some(s) = v.as_str() {
-                            Some(s.to_string())
-                        } else {
-                            v.as_array().map(|array| {
-                                array
-                                    .iter()
-                                    .map(|v| {
-                                        v.as_str()
-                                            .map(std::string::ToString::to_string)
-                                            .unwrap_or_default()
-                                    })
-                                    .collect::<Vec<String>>()
-                                    .join(", ")
-                            })
-                        }
+                    .and_then(|v| match v {
+                        Value::Null => None,
+                        Value::Bool(bool) => Some(bool.to_string()),
+                        Value::Number(number) => Some(number.to_string()),
+                        Value::String(string) => Some(string.to_string()),
+                        Value::Array(array) => Some(
+                            array
+                                .iter()
+                                .map(|v| {
+                                    v.as_str()
+                                        .map(std::string::ToString::to_string)
+                                        .unwrap_or_default()
+                                })
+                                .collect::<Vec<String>>()
+                                .join(", "),
+                        ),
+                        Value::Object(_) => panic!("Objects not supported within other objects"),
                     })
                     .unwrap_or_default();
 
