@@ -11,9 +11,17 @@ use sprinkles::{
     Architecture,
 };
 
+use crate::output::colours::eprintln_yellow;
+
 #[derive(Debug, Clone, Parser)]
 // TODO: Pass architecture
 pub struct Args {
+    #[clap(short, long, help = "Use the specified architecture, if the app supports it", default_value_t = Architecture::ARCH)]
+    arch: Architecture,
+
+    #[clap(short = 'H', long, help = "Disable hash validation")]
+    no_hash_check: bool,
+
     #[clap(help = "The packages to download")]
     packages: Vec<Package>,
 
@@ -27,6 +35,12 @@ impl super::Command for Args {
     async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
         if self.packages.is_empty() {
             abandon!("No packages provided")
+        }
+
+        if self.no_hash_check {
+            eprintln_yellow!(
+                "Hash check has been disabled! This may allow modified files to be downloaded"
+            );
         }
 
         let mp = MultiProgress::new();
@@ -78,23 +92,25 @@ impl super::Command for Args {
         for result in results {
             let result = result?;
 
-            eprint!("🔓 Checking {} hash...", result.file_name.url);
+            if !self.no_hash_check {
+                eprint!("🔓 Checking {} hash...", result.file_name.url);
 
-            let actual_hash = result.actual_hash.no_prefix();
+                let actual_hash = result.actual_hash.no_prefix();
 
-            if result.actual_hash == result.computed_hash {
-                eprintln!("\r🔒 Hash matched: {actual_hash}");
-            } else {
-                eprintln!();
-                abandon!(
-                    "🔓 Hash mismatch: expected {actual_hash}, found {}",
-                    result.computed_hash.no_prefix()
-                );
+                if result.actual_hash == result.computed_hash {
+                    eprintln!("\r🔒 Hash matched: {actual_hash}");
+                } else {
+                    eprintln!();
+                    abandon!(
+                        "🔓 Hash mismatch: expected {actual_hash}, found {}",
+                        result.computed_hash.no_prefix()
+                    );
+                }
+                // } else {
+                //     eprintln!();
+                //     warn!("🔓 No hash provided, skipping hash check");
+                // }
             }
-            // } else {
-            //     eprintln!();
-            //     warn!("🔓 No hash provided, skipping hash check");
-            // }
 
             eprintln!("✅ Downloaded {}", result.file_name.url);
         }
