@@ -47,7 +47,7 @@ impl super::Command for Args {
             let dest_path = ctx.buckets_path().join(&self.name);
 
             if dest_path.exists() {
-                abandon!("Bucket {} already exists", self.name);
+                abandon!("Bucket {name} already exists. Remove it first if you want to add it again: `sfsu bucket rm {name}`", name = self.name);
             }
 
             let exit_status = Command::new(git_path)
