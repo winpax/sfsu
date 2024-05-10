@@ -18,7 +18,7 @@
  * Adapted by me (Juliette Cordor)
 */
 
-use std::sync::atomic::AtomicBool;
+// use std::sync::atomic::AtomicBool;
 
 use gix::{
     clone::PrepareFetch,
@@ -27,9 +27,13 @@ use gix::{
     Url,
 };
 
+/// Clone a git repository
+///
+/// # Errors
+/// - Git error
 pub fn clone(url: Url, path: &str) -> Result<(), Box<dyn std::error::Error>> {
     // Fetch the latest changes from the remote repository
-    let mut fetch = PrepareFetch::new(
+    let mut _fetch = PrepareFetch::new(
         url,
         path,
         create::Kind::WithWorktree,
@@ -37,7 +41,7 @@ pub fn clone(url: Url, path: &str) -> Result<(), Box<dyn std::error::Error>> {
         OpenOptions::default(),
     )?;
     // let pb = crate::progress::ProgressBar::new(0);
-    fetch.fetch_only(pb, &AtomicBool::new(false));
+    // fetch.fetch_only(pb, &AtomicBool::new(false));
 
     Ok(())
 }
