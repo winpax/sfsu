@@ -1,22 +1,23 @@
 pub mod add;
 pub mod outdated;
-pub mod rm;
+pub mod remove;
 pub mod unused;
 
 use clap::{Parser, Subcommand};
 
-use sfsu_derive::{Hooks, Runnable};
+use sfsu_derive::Runnable;
 use sprinkles::{config, contexts::ScoopContext};
 
 use super::Command;
 
-#[derive(Debug, Hooks, Clone, Subcommand, Runnable)]
+#[derive(Debug, Clone, Subcommand, Runnable)]
 pub enum Commands {
     /// Add a bucket
     Add(add::Args),
-    #[hook_name = "rm"]
     /// Remove a bucket
-    Remove(rm::Args),
+    Remove(remove::Args),
+    /// Remove a bucket
+    Rm(remove::Args),
     /// Find buckets that do not have any installed packages
     Unused(unused::Args),
     #[cfg(not(feature = "v2"))]
