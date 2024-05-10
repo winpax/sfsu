@@ -43,7 +43,10 @@ dunce = "1.0"
 futures.workspace = true
 getset = { version = "0.1", optional = true }
 git2.workspace = true
-gix = "0.62.0"
+gix = { version = "0.62.0", features = [
+    "blocking-network-client",
+    "worktree-mutation",
+] }
 gix-object = "0.42.1"
 heck = "0.5"
 indicatif.workspace = true

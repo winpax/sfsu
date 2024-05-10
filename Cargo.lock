@@ -1212,6 +1212,7 @@ dependencies = [
  "gix-path",
  "gix-pathspec",
  "gix-prompt",
+ "gix-protocol",
  "gix-ref",
  "gix-refspec",
  "gix-revision",
@@ -1682,6 +1683,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "gix-packetline"
+version = "0.17.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b70486beda0903b6d5b65dfa6e40585098cdf4e6365ca2dff4f74c387354a515"
+dependencies = [
+ "bstr",
+ "faster-hex",
+ "gix-trace",
+ "thiserror",
+]
+
+[[package]]
 name = "gix-packetline-blocking"
 version = "0.17.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1732,6 +1745,24 @@ dependencies = [
  "parking_lot",
  "rustix",
  "thiserror",
+]
+
+[[package]]
+name = "gix-protocol"
+version = "0.45.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "aed3bb6179835a3250403baa9d7022579e559fc45f2efc416d9de1a14b5acf11"
+dependencies = [
+ "bstr",
+ "gix-credentials",
+ "gix-date",
+ "gix-features",
+ "gix-hash",
+ "gix-transport",
+ "gix-utils",
+ "maybe-async",
+ "thiserror",
+ "winnow 0.6.8",
 ]
 
 [[package]]
@@ -1882,6 +1913,22 @@ name = "gix-trace"
 version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f924267408915fddcd558e3f37295cc7d6a3e50f8bd8b606cee0808c3915157e"
+
+[[package]]
+name = "gix-transport"
+version = "0.42.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9d2f783b2fe86bf2a8cf1f3b8669d65b01ab4932f32cc0101d3893e1b16a3bd6"
+dependencies = [
+ "bstr",
+ "gix-command",
+ "gix-features",
+ "gix-packetline",
+ "gix-quote",
+ "gix-sec",
+ "gix-url",
+ "thiserror",
+]
 
 [[package]]
 name = "gix-traverse"
@@ -2550,6 +2597,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d3262e75e648fce39813cb56ac41f3c3e3f65217ebf3844d818d1f9398cfb0dc"
 dependencies = [
  "hashbrown 0.14.5",
+]
+
+[[package]]
+name = "maybe-async"
+version = "0.2.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5cf92c10c7e361d6b99666ec1c6f9805b0bea2c3bd8c78dc6fe98ac5bd78db11"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.61",
 ]
 
 [[package]]

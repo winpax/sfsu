@@ -18,30 +18,63 @@
  * Adapted by me (Juliette Cordor)
 */
 
-// use std::sync::atomic::AtomicBool;
+#![allow(clippy::result_large_err)]
+
+use std::sync::atomic::AtomicBool;
 
 use gix::{
     clone::PrepareFetch,
     create::{self, Options as CreateOptions},
     open::Options as OpenOptions,
-    Url,
+    Repository, Url,
 };
+
+#[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
+/// Clone error
+pub enum Error {
+    #[error("Clone error: {0}")]
+    Clone(#[from] gix::clone::Error),
+    #[error("Fetch error: {0}")]
+    Fetch(#[from] gix::clone::fetch::Error),
+    #[error("Failed to checkout main worktree: {0}")]
+    Checkout(#[from] gix::clone::checkout::main_worktree::Error),
+    #[error("No pack received from remote")]
+    NoPackReceived,
+}
+
+/// Clone result
+pub type Result<T, E = Error> = std::result::Result<T, E>;
 
 /// Clone a git repository
 ///
 /// # Errors
 /// - Git error
-pub fn clone(url: Url, path: &str) -> Result<(), Box<dyn std::error::Error>> {
+pub fn clone(url: Url, path: &str) -> Result<Repository> {
+    let interrupt = AtomicBool::new(false);
+
     // Fetch the latest changes from the remote repository
-    let mut _fetch = PrepareFetch::new(
+    let mut fetch = PrepareFetch::new(
         url,
         path,
         create::Kind::WithWorktree,
         CreateOptions::default(),
         OpenOptions::default(),
     )?;
-    // let pb = crate::progress::ProgressBar::new(0);
-    // fetch.fetch_only(pb, &AtomicBool::new(false));
 
-    Ok(())
+    // let pb = crate::progress::ProgressBar::new(0);
+    let (mut checkout, outcome) = fetch.fetch_then_checkout(gix::progress::Discard, &interrupt)?;
+
+    match outcome.status {
+        gix::remote::fetch::Status::NoPackReceived { dry_run, .. } => {
+            if !dry_run {
+                return Err(Error::NoPackReceived);
+            }
+        }
+        gix::remote::fetch::Status::Change { .. } => {}
+    }
+
+    let (repo, _) = checkout.main_worktree(gix::progress::Discard, &interrupt)?;
+
+    Ok(repo)
 }
