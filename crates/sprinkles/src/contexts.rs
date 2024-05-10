@@ -4,6 +4,7 @@
 //! Scoop context adapters
 
 use std::{
+    collections::HashMap,
     ffi::OsStr,
     fs::File,
     path::{Path, PathBuf},
@@ -16,6 +17,7 @@ mod user;
 
 use futures::Future;
 pub use global::Global;
+use url::Url;
 pub use user::User;
 use which::which;
 
@@ -33,6 +35,8 @@ pub enum Error {
     Git(#[from] git::Error),
     #[error("Error joining task: {0}")]
     JoinError(#[from] tokio::task::JoinError),
+    #[error("Error reading known buckets: {0}")]
+    SerdeJson(#[from] serde_json::Error),
 
     #[error("{0}")]
     Custom(#[from] Box<dyn std::error::Error + Send + Sync>),
@@ -181,6 +185,22 @@ pub trait ScoopContext<C>: Clone + Send + Sync + 'static {
     ///
     /// For example, if the context is the user context, this should return the path to the scoop app
     fn context_app_path(&self) -> PathBuf;
+
+    /// List all known buckets
+    ///
+    /// This function will return a map of bucket name to url
+    ///
+    /// # Errors
+    /// - Reading the buckets file
+    /// - Deserializing the buckets file
+    fn known_buckets(&self) -> Result<HashMap<String, Url>, Error> {
+        let buckets_path = self.context_app_path().join("buckets.json");
+        let mut file = File::open(buckets_path)?;
+
+        let buckets = serde_json::from_reader::<_, HashMap<String, Url>>(&mut file)?;
+
+        Ok(buckets)
+    }
 
     #[must_use]
     /// Check if the context is outdated

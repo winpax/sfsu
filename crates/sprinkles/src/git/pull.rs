@@ -1,6 +1,6 @@
 //! Pulls remote data into a local branch.
 //!
-//! This module is a modification of the libgit2 "pull" example, as mentioned in the license comment below.
+//! This module is a modification of the git2 "pull" example, as mentioned in the license comment below.
 
 /*
  * libgit2 "pull" example - shows how to pull remote data into a local branch.

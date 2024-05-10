@@ -81,6 +81,7 @@ clap = { version = "4.5", features = [
 ] }
 console.workspace = true
 crossterm = "0.27.0"
+dialoguer = "0.11.0"
 futures.workspace = true
 git2.workspace = true
 human-panic = "2.0"
@@ -89,6 +90,7 @@ itertools.workspace = true
 log = { workspace = true }
 open = "5.1"
 parking_lot = "0.12"
+prodash = "28.0.0"
 quork.workspace = true
 ratatui = { version = "0.26.2", features = ["macros"] }
 rayon.workspace = true
