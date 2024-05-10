@@ -66,6 +66,7 @@ impl<T: Display> Display for OptionalTruncate<T> {
 }
 
 const WALL: &str = " | ";
+const SUFFIX: &str = "...";
 
 struct TruncateOrPad(String, usize);
 
@@ -75,7 +76,7 @@ impl Display for TruncateOrPad {
         if self.0.len() > length {
             write!(
                 f,
-                "{}...",
+                "{}{SUFFIX}",
                 &self.0[0..length.checked_sub(3).unwrap_or_default()]
             )
         } else {
@@ -188,7 +189,6 @@ impl Display for Structured {
         let headers = self.objects[0].keys().collect_vec();
 
         let contestants = {
-            // TODO: Make this dynamic largest header
             let default_width = headers
                 .iter()
                 .map(|header| header.len())
@@ -223,13 +223,13 @@ impl Display for Structured {
                                 OptionalTruncate::new(element)
                                     .with_length(self.max_length)
                                     // TODO: Fix suffix
-                                    .with_suffix("...")
+                                    .with_suffix(SUFFIX)
                                     .to_string()
                                     .len()
                                     + WALL.len(),
                             );
 
-                            *contestants.iter().max().unwrap()
+                            contestants.into_iter().max().unwrap()
                         })
                         .collect()
                 });
