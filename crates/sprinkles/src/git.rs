@@ -282,21 +282,17 @@ impl Repo {
         &self,
         stats_cb: Option<ProgressCallback<'_>>,
     ) -> Result<Vec<String>> {
-        let current_branch = self.current_branch()?;
-
-        // let current_commit = self.latest_commit()?;
-
-        pull::pull(self, None, Some(current_branch.as_str()), stats_cb)?;
-
-        // let post_pull_commit = self.latest_commit()?;
-
         let mut repo: gix::Repository = self.to_gitoxide()?.into();
         repo.object_cache_size(1024 * 1024 * 1024);
 
         let current_commit = repo.head_commit().map_err(errors::GitoxideError::from)?;
 
+        pull::pull(self, None, Some(self.current_branch()?.as_str()), stats_cb)?;
+
+        let post_pull_commit = repo.head_commit().map_err(errors::GitoxideError::from)?;
+
         let revwalk = repo
-            .rev_walk([current_commit.id])
+            .rev_walk([post_pull_commit.id])
             .sorting(Sorting::ByCommitTimeNewestFirst);
 
         let mut changelog = Vec::new();
@@ -317,8 +313,6 @@ impl Repo {
                 changelog.push(summary.to_string());
             }
         }
-
-        changelog.reverse();
 
         Ok(changelog)
     }
