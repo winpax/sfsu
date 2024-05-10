@@ -44,7 +44,14 @@ impl super::Command for Args {
         } else {
             let git_path = sprinkles::git::which().calm_expect("git not found");
 
+            let dest_path = ctx.buckets_path().join(&self.name);
+
+            if dest_path.exists() {
+                abandon!("Bucket {} already exists", self.name);
+            }
+
             let exit_status = Command::new(git_path)
+                .current_dir(ctx.buckets_path())
                 .arg("clone")
                 .arg(repo_url)
                 .arg(self.name)
