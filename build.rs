@@ -139,12 +139,12 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     for colour in COLOURS {
         let output = COLOURS_TXT
-            .replace("#ident", colour)
             .replace("#ident_bright", &format!("bright_{colour}"))
-            .replace("#println", &format!("println_{colour}"))
-            .replace("#println_bright", &format!("println_bright_{colour}"))
+            .replace("#ident", colour)
+            .replace("#eprintln_bright", &format!("eprintln_bright_{colour}"))
             .replace("#eprintln", &format!("eprintln_{colour}"))
-            .replace("#eprintln_bright", &format!("eprintln_bright_{colour}"));
+            .replace("#println_bright", &format!("println_bright_{colour}"))
+            .replace("#println", &format!("println_{colour}"));
 
         colours_file.write_all(output.as_bytes())?;
     }
