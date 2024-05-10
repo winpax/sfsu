@@ -41,7 +41,7 @@ impl super::Command for Args {
         };
 
         if response {
-            std::fs::remove_dir_all(path)?;
+            tokio::fs::remove_dir_all(path).await?;
         }
 
         Ok(())
