@@ -90,6 +90,7 @@ itertools.workspace = true
 log = { workspace = true }
 open = "5.1"
 parking_lot = "0.12"
+prodash = "28.0.0"
 quork.workspace = true
 ratatui = { version = "0.26.2", features = ["macros"] }
 rayon.workspace = true
