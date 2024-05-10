@@ -1,5 +1,6 @@
 pub mod add;
 pub mod outdated;
+pub mod rm;
 pub mod unused;
 
 use clap::{Parser, Subcommand};
@@ -13,6 +14,9 @@ use super::Command;
 pub enum Commands {
     /// Add a bucket
     Add(add::Args),
+    #[hook_name = "rm"]
+    /// Remove a bucket
+    Remove(rm::Args),
     /// Find buckets that do not have any installed packages
     Unused(unused::Args),
     #[cfg(not(feature = "v2"))]

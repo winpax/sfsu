@@ -16,9 +16,6 @@ pub struct Args {
 
     #[clap(from_global)]
     disable_git: bool,
-
-    #[clap(from_global)]
-    json: bool,
 }
 
 impl super::Command for Args {
