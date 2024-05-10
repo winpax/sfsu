@@ -3,8 +3,6 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use windows::Win32::Foundation::HWND;
-
 use crate::{config, git};
 
 use super::{ScoopContext, User};
@@ -33,43 +31,8 @@ impl Global {
         let path = {
             if let Some(path) = var_os("SCOOP_GLOBAL") {
                 path.into()
-            } else if let Some(ref path) = user_context.config().global_path {
-                path.clone()
             } else {
-                use std::{ffi::OsString, os::windows::ffi::OsStringExt};
-                use windows::Win32::{
-                    Foundation::MAX_PATH,
-                    UI::Shell::{SHGetSpecialFolderPathW, CSIDL_COMMON_APPDATA},
-                };
-
-                let mut buf = [0u16; MAX_PATH as usize];
-                let success = unsafe {
-                    #[allow(clippy::cast_possible_wrap)]
-                    SHGetSpecialFolderPathW(
-                        HWND::default(),
-                        &mut buf,
-                        CSIDL_COMMON_APPDATA as i32,
-                        true,
-                    )
-                    .as_bool()
-                };
-
-                let path = if success {
-                    let string = OsString::from_wide(&buf);
-                    let utf8_string = string.to_string_lossy();
-                    let trimmed = utf8_string.trim_end_matches('\0');
-
-                    PathBuf::from(trimmed)
-                } else {
-                    "C:\\ProgramData".into()
-                }
-                .join("scoop");
-
-                if !path.exists() {
-                    std::fs::create_dir(&path).expect("could not create scoop global path");
-                }
-
-                path
+                user_context.config().global_path.clone()
             }
         };
 

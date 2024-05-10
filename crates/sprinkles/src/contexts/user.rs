@@ -21,11 +21,12 @@ impl User {
         let path = {
             if let Some(path) = crate::env::paths::scoop_path() {
                 path
-            } else if let Some(path) = config::Scoop::load()
-                .expect("scoop config loaded correctly")
-                .root_path
-            {
-                path.into()
+            } else if let Ok(path) = Ok::<_, ()>(
+                config::Scoop::load()
+                    .map(|config| config.root_path)
+                    .unwrap(),
+            ) {
+                path
             } else {
                 directories::BaseDirs::new()
                     .expect("user directories")
@@ -240,10 +241,10 @@ impl super::ScoopContext<config::Scoop> for User {
         let scoop_repo = self.open_repo().expect("scoop repo")?;
 
         let current_branch = scoop_repo.current_branch()?;
-        let scoop_config_branch = config.scoop_branch.clone().unwrap_or("master".into());
+        let scoop_config_branch = config.scoop_branch.name();
 
         if current_branch != scoop_config_branch {
-            scoop_repo.checkout(&scoop_config_branch)?;
+            scoop_repo.checkout(scoop_config_branch)?;
             debug!("Switched to branch {}", scoop_config_branch);
             return Ok(true);
         }

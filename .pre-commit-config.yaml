@@ -10,18 +10,14 @@ repos:
     rev: v3.25.0
     hooks:
       - id: commitizen
-      - id: commitizen-branch
-        stages:
-          - post-commit
-          - push
 
   - repo: https://github.com/doublify/pre-commit-rust
     rev: v1.0
     hooks:
       - id: fmt
-        stages: [pre-commit]
+        stages: [pre-push]
       - id: clippy
-        stages: [pre-commit]
+        stages: [pre-push]
         args: [
             "--all-targets",
             # "--all-features",
