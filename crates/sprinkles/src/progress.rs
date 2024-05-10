@@ -10,9 +10,8 @@ use std::{
     },
 };
 
-use gix::progress::{unit::Kind, AtomicStep, Unit};
+use gix::progress::Unit;
 use indicatif::ProgressStyle;
-use parking_lot::Mutex;
 
 #[derive(Debug, Copy, Clone, Default)]
 /// Progress bar options
@@ -104,6 +103,7 @@ pub fn style(
     .progress_chars(PROGRESS_CHARS)
 }
 
+/// A `ProgressBar`
 #[derive(Clone)]
 pub struct ProgressBar {
     bar: indicatif::ProgressBar,
@@ -113,6 +113,8 @@ pub struct ProgressBar {
 }
 
 impl ProgressBar {
+    /// Create a new progress bar
+    #[must_use]
     pub fn new(total: u64) -> Self {
         Self {
             bar: indicatif::ProgressBar::new(total),
@@ -122,18 +124,22 @@ impl ProgressBar {
         }
     }
 
+    /// Set the step of the progress bar
     pub fn set_step(&self, step: usize) {
         self.step.store(step, Ordering::Relaxed);
     }
 
+    /// Set the unit of the progress bar
     pub fn set_unit(&mut self, unit: impl Into<Unit>) {
         self.unit = unit.into();
     }
 
+    /// Increment the progress bar
     pub fn inc(&self, amount: u64) {
         self.bar.inc(amount);
     }
 
+    /// Finish the progress bar
     pub fn finish(&self) {
         self.bar.finish();
     }
@@ -156,31 +162,46 @@ impl From<ProgressBar> for indicatif::ProgressBar {
     }
 }
 
+/// A multi-progress handler
 #[derive(Clone)]
 pub struct MultiProgressHandler {
     bars: Vec<ProgressBar>,
 }
 
 impl MultiProgressHandler {
+    /// Create a new multi-progress handler
+    #[must_use]
     pub fn new() -> Self {
         Self { bars: vec![] }
     }
 
+    /// Add a child progress bar to the multi-progress handler
     pub fn add(&mut self, bar: ProgressBar) {
         self.bars.push(bar);
     }
 
+    /// Finish a child progress bar
+    ///
+    /// # Panics
+    /// - If the child progress bar does not exist
     pub fn finish(&mut self, id: gix::progress::Id) {
         let position = self.bars.iter().position(|bar| bar.id == id).unwrap();
         let bar = self.bars.remove(position);
         bar.finish();
     }
 
+    /// Finish all child progress bars
     pub fn finish_all(&mut self) {
         for bar in &self.bars {
             bar.finish();
         }
 
         self.bars.clear();
+    }
+}
+
+impl Default for MultiProgressHandler {
+    fn default() -> Self {
+        Self::new()
     }
 }
