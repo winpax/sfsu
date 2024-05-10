@@ -20,7 +20,7 @@
 
 #![allow(clippy::result_large_err)]
 
-use std::sync::atomic::AtomicBool;
+use std::{path::Path, sync::atomic::AtomicBool};
 
 use gix::{
     clone::PrepareFetch,
@@ -50,7 +50,7 @@ pub type Result<T, E = Error> = std::result::Result<T, E>;
 ///
 /// # Errors
 /// - Git error
-pub fn clone(url: Url, path: &str) -> Result<Repository> {
+pub fn clone(url: Url, path: impl AsRef<Path>) -> Result<Repository> {
     let interrupt = AtomicBool::new(false);
 
     // Fetch the latest changes from the remote repository
