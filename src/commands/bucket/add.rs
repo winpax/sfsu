@@ -48,7 +48,11 @@ impl super::Command for Args {
         if self.disable_git {
             eprintln_bright_yellow!("We do not currently support progress bars for git clones when using the `--disable-git` flag");
 
-            sprinkles::git::clone::clone(&repo_url, dest_path, Some(prodash::progress::Discard))?;
+            sprinkles::git::clone::clone(
+                &repo_url,
+                dest_path,
+                sprinkles::git::clone::progress::Discard,
+            )?;
         } else {
             let git_path = sprinkles::git::which().calm_expect("git not found");
 

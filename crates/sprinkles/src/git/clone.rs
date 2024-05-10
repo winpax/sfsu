@@ -29,6 +29,8 @@ use gix::{
     Repository,
 };
 
+pub use gix::progress;
+
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 /// Clone error
@@ -50,7 +52,7 @@ pub type Result<T, E = Error> = std::result::Result<T, E>;
 ///
 /// # Errors
 /// - Git error
-pub fn clone<P>(url: &str, path: impl AsRef<Path>, pb: Option<P>) -> Result<Repository>
+pub fn clone<P>(url: &str, path: impl AsRef<Path>, pb: P) -> Result<Repository>
 where
     P: gix::NestedProgress,
     P::SubProgress: 'static,
@@ -66,11 +68,7 @@ where
         OpenOptions::default(),
     )?;
 
-    let (mut checkout, outcome) = if let Some(pb) = pb {
-        fetch.fetch_then_checkout(pb, &interrupt)?
-    } else {
-        fetch.fetch_then_checkout(gix::progress::Discard, &interrupt)?
-    };
+    let (mut checkout, outcome) = fetch.fetch_then_checkout(pb, &interrupt)?;
 
     match outcome.status {
         gix::remote::fetch::Status::NoPackReceived { dry_run, .. } => {
