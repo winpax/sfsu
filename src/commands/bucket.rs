@@ -1,3 +1,4 @@
+pub mod add;
 pub mod outdated;
 pub mod unused;
 
@@ -10,6 +11,8 @@ use super::Command;
 
 #[derive(Debug, Hooks, Clone, Subcommand, Runnable)]
 pub enum Commands {
+    /// Add a bucket
+    Add(add::Args),
     /// Find buckets that do not have any installed packages
     Unused(unused::Args),
     #[cfg(not(feature = "v2"))]
