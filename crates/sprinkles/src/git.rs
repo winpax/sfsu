@@ -88,7 +88,8 @@ impl Repo {
             .map_err(errors::GitoxideError::from)?
             .into();
 
-        repo.object_cache_size(1024);
+        // 64 MiB cache
+        repo.object_cache_size(1024 * 1024 * 64);
 
         Ok(repo)
     }
