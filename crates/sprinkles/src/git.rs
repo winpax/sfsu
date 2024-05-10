@@ -3,7 +3,7 @@
 use std::{ffi::OsStr, fmt::Display, path::PathBuf, process::Command};
 
 use derive_more::Deref;
-use git2::{Commit, DiffOptions, Direction, FetchOptions, Oid, Progress, Remote, Repository, Sort};
+use git2::{Commit, DiffOptions, Direction, FetchOptions, Oid, Progress, Remote, Repository};
 use gix::traverse::commit::simple::Sorting;
 use indicatif::ProgressBar;
 
@@ -11,6 +11,7 @@ use crate::{buckets::Bucket, contexts::ScoopContext};
 
 use self::pull::ProgressCallback;
 
+pub mod errors;
 mod pull;
 
 /// Get the path to the git executable
@@ -58,15 +59,7 @@ pub enum Error {
     #[error("Git error: {0}")]
     Git2(#[from] git2::Error),
     #[error("Gitoxide error: {0}")]
-    GitoxideOpen(#[from] gix::open::Error),
-    #[error("Gitoxide error: {0}")]
-    GitoxideTraverse(#[from] gix::traverse::commit::simple::Error),
-    #[error("Gitoxide error: {0}")]
-    GitoxideRevWalk(#[from] gix::revision::walk::Error),
-    #[error("Gitoxide error: {0}")]
-    GitoxideHead(#[from] gix::reference::head_commit::Error),
-    #[error("Gitoxide error: {0}")]
-    GitoxideDecode(#[from] gix_object::decode::Error),
+    Gitoxide(Box<errors::GitoxideError>),
     #[error("No remote named {0}")]
     MissingRemote(String),
     #[error("Missing head in remote")]
@@ -83,10 +76,15 @@ pub type Result<T, E = Error> = std::result::Result<T, E>;
 pub struct Repo(Repository);
 
 impl Repo {
-    pub fn to_gitoxide(&self) -> Result<gix::ThreadSafeRepository, gix::open::Error> {
+    /// Convert into a gitoxide repository
+    ///
+    /// # Errors
+    /// - Git path could not be found
+    /// - Gitoxide error
+    pub fn to_gitoxide(&self) -> Result<gix::ThreadSafeRepository> {
         let git_path = self.0.path();
 
-        gix::ThreadSafeRepository::open(git_path)
+        Ok(gix::ThreadSafeRepository::open(git_path).map_err(errors::GitoxideError::from)?)
     }
 
     /// Open the repository from the bucket path
@@ -286,7 +284,7 @@ impl Repo {
     ) -> Result<Vec<String>> {
         let current_branch = self.current_branch()?;
 
-        let current_commit = self.latest_commit()?;
+        // let current_commit = self.latest_commit()?;
 
         pull::pull(self, None, Some(current_branch.as_str()), stats_cb)?;
 
@@ -295,15 +293,15 @@ impl Repo {
         let mut repo: gix::Repository = self.to_gitoxide()?.into();
         repo.object_cache_size(1024 * 1024 * 1024);
 
-        let current_commit = repo.head_commit()?;
+        let current_commit = repo.head_commit().map_err(errors::GitoxideError::from)?;
 
         let revwalk = repo
             .rev_walk([current_commit.id])
             .sorting(Sorting::ByCommitTimeNewestFirst);
 
         let mut changelog = Vec::new();
-        for commit in revwalk.all()? {
-            let info = commit?;
+        for commit in revwalk.all().map_err(errors::GitoxideError::from)? {
+            let info = commit.map_err(errors::GitoxideError::from)?;
             let Ok(commit) = info.object() else {
                 continue;
             };
