@@ -1,3 +1,5 @@
+use std::process::Command;
+
 use anyhow::Context;
 use clap::Parser;
 use sprinkles::{config, contexts::ScoopContext};
@@ -13,12 +15,15 @@ pub struct Args {
     repo: Option<String>,
 
     #[clap(from_global)]
+    disable_git: bool,
+
+    #[clap(from_global)]
     json: bool,
 }
 
 impl super::Command for Args {
     async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> anyhow::Result<()> {
-        let _repo_url = self
+        let repo_url = self
             .repo
             .clone()
             .context("No repo provided")
@@ -37,6 +42,36 @@ impl super::Command for Args {
                 }
             });
 
-        todo!()
+        if self.disable_git {
+            abandon!("Disabling git for buckets is not yet supported");
+        } else {
+            let git_path = sprinkles::git::which().calm_expect("git not found");
+
+            let exit_status = Command::new(git_path)
+                .arg("clone")
+                .arg(repo_url)
+                .arg(self.name)
+                .spawn()?
+                .wait_with_output()?;
+
+            match exit_status.status.code() {
+                Some(0) => {}
+                Some(code) => {
+                    return Err(anyhow::anyhow!(
+                        "git exited with code {}.\nOutput:\n{}",
+                        code,
+                        String::from_utf8_lossy(&exit_status.stdout)
+                    ))
+                }
+                None => {
+                    return Err(anyhow::anyhow!(
+                        "git exited without a status code.\nOutput:\n{}",
+                        String::from_utf8_lossy(&exit_status.stdout)
+                    ))
+                }
+            }
+        };
+
+        Ok(())
     }
 }
