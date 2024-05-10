@@ -3679,7 +3679,6 @@ dependencies = [
  "rayon",
  "regex",
  "reqwest",
- "ryu",
  "semver",
  "serde",
  "serde_json",
@@ -3690,13 +3689,13 @@ dependencies = [
  "strum",
  "sxd-document",
  "sxd-xpath",
- "system-proxy",
  "thiserror",
  "tokio",
  "tokio-util",
  "url",
  "urlencoding",
  "which",
+ "win-proxy",
  "windows",
  "windows-version",
  "winreg",
@@ -3858,16 +3857,6 @@ checksum = "a75fb188eb626b924683e3b95e3a48e63551fcfb51949de2f06a9d91dbee93c9"
 dependencies = [
  "core-foundation-sys",
  "libc",
-]
-
-[[package]]
-name = "system-proxy"
-version = "0.1.0"
-source = "git+https://github.com/winpax/system-proxy.git#b8f0c62446503b4e0ea5717d39b00ce988486376"
-dependencies = [
- "thiserror",
- "windows",
- "winreg",
 ]
 
 [[package]]
@@ -4439,6 +4428,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a3131afc8c575281e1e80f36ed6a092aa502c08b18ed7524e86fbbb12bb410e1"
 dependencies = [
  "glob",
+]
+
+[[package]]
+name = "win-proxy"
+version = "0.1.0"
+source = "git+https://github.com/winpax/win-proxy.git#c4daf619ca9d7a7b4712cc76cfd3cb85f1e53216"
+dependencies = [
+ "thiserror",
+ "windows",
+ "winreg",
 ]
 
 [[package]]
