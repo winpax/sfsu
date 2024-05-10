@@ -11,6 +11,7 @@ use crate::{buckets::Bucket, contexts::ScoopContext};
 
 use self::pull::ProgressCallback;
 
+pub mod clone;
 pub mod errors;
 pub mod parity;
 mod pull;
