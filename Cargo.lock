@@ -3093,6 +3093,8 @@ checksum = "744a264d26b88a6a7e37cbad97953fa233b94d585236310bcbc88474b4092d79"
 dependencies = [
  "bytesize",
  "human_format",
+ "log",
+ "parking_lot",
 ]
 
 [[package]]
@@ -3586,6 +3588,7 @@ dependencies = [
  "log",
  "open",
  "parking_lot",
+ "prodash",
  "quork",
  "ratatui",
  "rayon",

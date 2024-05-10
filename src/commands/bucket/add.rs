@@ -46,7 +46,8 @@ impl super::Command for Args {
         }
 
         if self.disable_git {
-            sprinkles::git::clone::clone(&repo_url, dest_path)?;
+            use prodash::prelude::*;
+            sprinkles::git::clone::clone(&repo_url, dest_path, None)?;
         } else {
             let git_path = sprinkles::git::which().calm_expect("git not found");
 

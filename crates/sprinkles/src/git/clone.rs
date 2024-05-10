@@ -50,7 +50,11 @@ pub type Result<T, E = Error> = std::result::Result<T, E>;
 ///
 /// # Errors
 /// - Git error
-pub fn clone(url: &str, path: impl AsRef<Path>) -> Result<Repository> {
+pub fn clone<P>(url: &str, path: impl AsRef<Path>, pb: Option<P>) -> Result<Repository>
+where
+    P: gix::NestedProgress,
+    P::SubProgress: 'static,
+{
     let interrupt = AtomicBool::new(false);
 
     // Fetch the latest changes from the remote repository
@@ -62,8 +66,11 @@ pub fn clone(url: &str, path: impl AsRef<Path>) -> Result<Repository> {
         OpenOptions::default(),
     )?;
 
-    let pb = crate::progress::MultiProgressHandler::new();
-    let (mut checkout, outcome) = fetch.fetch_then_checkout(pb, &interrupt)?;
+    let (mut checkout, outcome) = if let Some(pb) = pb {
+        fetch.fetch_then_checkout(pb, &interrupt)?
+    } else {
+        fetch.fetch_then_checkout(gix::progress::Discard, &interrupt)?
+    };
 
     match outcome.status {
         gix::remote::fetch::Status::NoPackReceived { dry_run, .. } => {
