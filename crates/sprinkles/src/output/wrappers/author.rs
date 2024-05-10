@@ -4,8 +4,11 @@ use std::fmt::Display;
 
 use derive_more::Deref;
 
+/// A wrapper around a git signature that supports git2 and gitoxide
 pub enum Signature<'a> {
+    /// A git2 signature
     Git2(git2::Signature<'a>),
+    /// A gitoxide signature
     Gitoxide(gix::actor::SignatureRef<'a>),
 }
 
