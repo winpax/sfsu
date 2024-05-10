@@ -128,11 +128,7 @@ impl Count for super::MultiProgressHandler {
     }
 
     fn step(&self) -> gix::progress::prodash::progress::Step {
-        for bar in &self.bars {
-            return bar.step();
-        }
-
-        0
+        self.bars[0].step()
     }
 
     fn inc_by(&self, step: gix::progress::prodash::progress::Step) {
@@ -142,10 +138,6 @@ impl Count for super::MultiProgressHandler {
     }
 
     fn counter(&self) -> gix::progress::StepShared {
-        for bar in &self.bars {
-            return bar.counter();
-        }
-
-        unreachable!()
+        self.bars[0].counter()
     }
 }

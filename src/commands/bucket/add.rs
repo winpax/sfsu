@@ -4,7 +4,7 @@ use anyhow::Context;
 use clap::Parser;
 use sprinkles::{config, contexts::ScoopContext};
 
-use crate::{abandon, calm_panic::CalmUnwrap};
+use crate::{abandon, calm_panic::CalmUnwrap, output::colours::eprintln_bright_yellow};
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
@@ -46,8 +46,9 @@ impl super::Command for Args {
         }
 
         if self.disable_git {
-            use prodash::prelude::*;
-            sprinkles::git::clone::clone(&repo_url, dest_path, None)?;
+            eprintln_bright_yellow!("We do not currently support progress bars for git clones when using the `--disable-git` flag");
+
+            sprinkles::git::clone::clone(&repo_url, dest_path, Some(prodash::progress::Discard))?;
         } else {
             let git_path = sprinkles::git::which().calm_expect("git not found");
 
