@@ -146,3 +146,24 @@ impl Default for Architecture {
 #[cfg(not(feature = "v2"))]
 /// Alias for [`contexts::User`]
 pub type Scoop = contexts::User;
+
+#[cfg(test)]
+mod tests {
+    use itertools::Itertools;
+
+    use crate::{
+        contexts::{ScoopContext, User},
+        packages::{CreateManifest, InstallManifest},
+    };
+
+    #[test]
+    fn test_list_install_manifests() {
+        let ctx = User::new();
+        let app_paths = ctx.installed_apps().unwrap();
+
+        app_paths
+            .into_iter()
+            .map(|path| InstallManifest::from_path(path.join("current/install.json")).unwrap())
+            .collect_vec();
+    }
+}

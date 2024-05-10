@@ -299,3 +299,36 @@ impl Bucket {
             .ok_or(git::Error::NonUtf8)?)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::contexts::User;
+
+    use super::*;
+
+    #[test]
+    fn test_list_all_buckets() {
+        let ctx = User::new();
+        let buckets = Bucket::list_all(&ctx).unwrap();
+
+        assert!(!buckets.is_empty());
+    }
+
+    #[test]
+    fn test_main_bucket_update() {
+        let ctx = User::new();
+
+        let bucket = Bucket::from_name(&ctx, "main").unwrap();
+
+        bucket.open_repo().unwrap().pull(None).unwrap();
+    }
+
+    #[test]
+    fn test_extras_bucket_update() {
+        let ctx = User::new();
+
+        let bucket = Bucket::from_name(&ctx, "extras").unwrap();
+
+        bucket.open_repo().unwrap().pull(None).unwrap();
+    }
+}
