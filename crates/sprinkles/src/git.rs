@@ -81,10 +81,16 @@ impl Repo {
     /// # Errors
     /// - Git path could not be found
     /// - Gitoxide error
-    pub fn to_gitoxide(&self) -> Result<gix::ThreadSafeRepository> {
+    pub fn to_gitoxide(&self) -> Result<gix::Repository> {
         let git_path = self.0.path();
 
-        Ok(gix::ThreadSafeRepository::open(git_path).map_err(errors::GitoxideError::from)?)
+        let mut repo: gix::Repository = gix::ThreadSafeRepository::open(git_path)
+            .map_err(errors::GitoxideError::from)?
+            .into();
+
+        repo.object_cache_size(1024);
+
+        Ok(repo)
     }
 
     /// Open the repository from the bucket path
@@ -282,8 +288,7 @@ impl Repo {
         &self,
         stats_cb: Option<ProgressCallback<'_>>,
     ) -> Result<Vec<String>> {
-        let mut repo: gix::Repository = self.to_gitoxide()?.into();
-        repo.object_cache_size(1024 * 1024 * 1024);
+        let repo = self.to_gitoxide()?;
 
         let current_commit = repo.head_commit()?;
 

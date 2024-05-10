@@ -939,7 +939,7 @@ impl Manifest {
         let bucket = Bucket::from_name(ctx, &self.bucket)?;
 
         if disable_git {
-            let repo: gix::Repository = Repo::from_bucket(&bucket)?.to_gitoxide()?.into();
+            let repo = Repo::from_bucket(&bucket)?.to_gitoxide()?;
             let latest_commit = repo.head_commit().map_err(git::Error::from)?;
 
             let revwalk = repo
