@@ -2,7 +2,6 @@ use clap::Parser;
 use indicatif::MultiProgress;
 
 use sprinkles::{
-    abandon,
     cache::{Downloader, Handle},
     config,
     contexts::ScoopContext,
@@ -10,6 +9,8 @@ use sprinkles::{
     requests::AsyncClient,
     Architecture,
 };
+
+use crate::abandon;
 
 #[derive(Debug, Clone, Parser)]
 // TODO: Pass architecture

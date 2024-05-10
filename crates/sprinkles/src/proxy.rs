@@ -2,7 +2,7 @@
 
 use std::{num::ParseIntError, str::FromStr};
 
-use crate::{abandon, let_chain};
+use crate::let_chain;
 
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
@@ -71,7 +71,7 @@ impl FromStr for Proxy {
             if let Some(auth) = auth.split_once(':') {
                 (Some(auth.0.to_string()), Some(auth.1.to_string()))
             } else if auth == "currentuser" {
-                abandon!("sfsu does not support using the windows credentials yet");
+                panic!("sfsu does not support using the windows credentials yet");
             } else {
                 (None, None)
             }

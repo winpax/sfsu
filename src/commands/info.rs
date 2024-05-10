@@ -2,7 +2,6 @@ use clap::Parser;
 use itertools::Itertools;
 
 use sprinkles::{
-    calm_panic::abandon,
     config,
     contexts::ScoopContext,
     output::{
@@ -18,6 +17,8 @@ use sprinkles::{
     },
     semver, Architecture,
 };
+
+use crate::abandon;
 
 #[derive(Debug, Clone, Parser)]
 #[allow(clippy::struct_excessive_bools)]

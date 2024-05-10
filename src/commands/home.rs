@@ -1,5 +1,7 @@
 use clap::Parser;
-use sprinkles::{calm_panic::abandon, config, contexts::ScoopContext, packages::reference};
+use sprinkles::{config, contexts::ScoopContext, packages::reference};
+
+use crate::abandon;
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {

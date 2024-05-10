@@ -7,6 +7,7 @@
 
 // TODO: Replace regex with glob
 
+mod calm_panic;
 mod commands;
 mod errors;
 mod limits;

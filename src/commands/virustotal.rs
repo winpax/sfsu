@@ -5,7 +5,6 @@ use clap::{Parser, ValueEnum};
 use indicatif::ProgressBar;
 use rayon::prelude::*;
 use sprinkles::{
-    calm_panic::CalmUnwrap,
     config,
     contexts::ScoopContext,
     hash::Hash,
@@ -16,6 +15,7 @@ use sprinkles::{
 };
 
 use crate::{
+    calm_panic::CalmUnwrap,
     errors::{RecoverableError, RecoverableResult},
     limits::RateLimiter,
     output::colours::{eprintln_green, eprintln_red, eprintln_yellow},

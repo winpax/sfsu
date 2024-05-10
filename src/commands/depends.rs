@@ -1,11 +1,12 @@
 use clap::Parser;
 use sprinkles::{
-    calm_panic::abandon,
     config,
     contexts::ScoopContext,
     output::sectioned::{Children, Section, Sections},
     packages::reference::{self, Package},
 };
+
+use crate::abandon;
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {

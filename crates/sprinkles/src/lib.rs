@@ -19,7 +19,6 @@ pub use semver;
 pub mod buckets;
 #[cfg(feature = "manifest-hashes")]
 pub mod cache;
-pub mod calm_panic;
 pub mod config;
 pub mod contexts;
 pub mod diagnostics;

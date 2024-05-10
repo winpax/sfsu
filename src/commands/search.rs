@@ -5,13 +5,14 @@ use regex::Regex;
 
 use sprinkles::{
     buckets::Bucket,
-    calm_panic::CalmUnwrap,
     config,
     contexts::ScoopContext,
     output::sectioned::{Children, Section, Sections},
     packages::SearchMode,
     Architecture,
 };
+
+use crate::calm_panic::CalmUnwrap;
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
