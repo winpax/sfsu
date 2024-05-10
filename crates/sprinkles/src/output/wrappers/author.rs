@@ -3,7 +3,14 @@
 use std::fmt::Display;
 
 use derive_more::Deref;
-use git2::Signature;
+
+/// A wrapper around a git signature that supports git2 and gitoxide
+pub enum Signature<'a> {
+    /// A git2 signature
+    Git2(git2::Signature<'a>),
+    /// A gitoxide signature
+    Gitoxide(gix::actor::SignatureRef<'a>),
+}
 
 #[derive(Deref)]
 #[must_use]
@@ -14,10 +21,19 @@ pub struct Author<'a> {
     show_emails: bool,
 }
 
-impl<'a> From<Signature<'a>> for Author<'a> {
-    fn from(signature: Signature<'a>) -> Self {
+impl<'a> From<git2::Signature<'a>> for Author<'a> {
+    fn from(signature: git2::Signature<'a>) -> Self {
         Self {
-            signature,
+            signature: Signature::Git2(signature),
+            show_emails: true,
+        }
+    }
+}
+
+impl<'a> From<gix::actor::SignatureRef<'a>> for Author<'a> {
+    fn from(signature: gix::actor::SignatureRef<'a>) -> Self {
+        Self {
+            signature: Signature::Gitoxide(signature),
             show_emails: true,
         }
     }
@@ -41,14 +57,20 @@ impl<'a> Author<'a> {
 
 impl<'a> Display for Author<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let user_name = self.name().unwrap_or("No name");
+        let user_name = match &self.signature {
+            Signature::Git2(sig) => sig.name().unwrap_or("Non-utf8 name").to_string(),
+            Signature::Gitoxide(sig) => sig.name.to_string(),
+        };
+
+        let email = match &self.signature {
+            Signature::Git2(sig) => sig.email().unwrap_or("No email").to_string(),
+            Signature::Gitoxide(sig) => sig.email.to_string(),
+        };
 
         user_name.fmt(f)?;
 
         if self.show_emails {
-            if let Some(user_email) = self.email() {
-                write!(f, " <{user_email}>")?;
-            }
+            write!(f, " <{email}>")?;
         }
 
         Ok(())

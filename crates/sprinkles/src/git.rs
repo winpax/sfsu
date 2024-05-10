@@ -3,13 +3,15 @@
 use std::{ffi::OsStr, fmt::Display, path::PathBuf, process::Command};
 
 use derive_more::Deref;
-use git2::{Commit, DiffOptions, Direction, FetchOptions, Oid, Progress, Remote, Repository, Sort};
+use git2::{Commit, DiffOptions, Direction, FetchOptions, Oid, Progress, Remote, Repository};
+use gix::traverse::commit::simple::Sorting;
 use indicatif::ProgressBar;
 
 use crate::{buckets::Bucket, contexts::ScoopContext};
 
 use self::pull::ProgressCallback;
 
+pub mod errors;
 mod pull;
 
 /// Get the path to the git executable
@@ -56,6 +58,8 @@ pub enum Error {
     NoActiveBranch,
     #[error("Git error: {0}")]
     Git2(#[from] git2::Error),
+    #[error("Gitoxide error: {0}")]
+    Gitoxide(Box<errors::GitoxideError>),
     #[error("No remote named {0}")]
     MissingRemote(String),
     #[error("Missing head in remote")]
@@ -72,6 +76,24 @@ pub type Result<T, E = Error> = std::result::Result<T, E>;
 pub struct Repo(Repository);
 
 impl Repo {
+    /// Convert into a gitoxide repository
+    ///
+    /// # Errors
+    /// - Git path could not be found
+    /// - Gitoxide error
+    pub fn to_gitoxide(&self) -> Result<gix::Repository> {
+        let git_path = self.0.path();
+
+        let mut repo: gix::Repository = gix::ThreadSafeRepository::open(git_path)
+            .map_err(errors::GitoxideError::from)?
+            .into();
+
+        // 64 MiB cache
+        repo.object_cache_size(1024 * 1024 * 64);
+
+        Ok(repo)
+    }
+
     /// Open the repository from the bucket path
     ///
     /// # Errors
@@ -267,36 +289,36 @@ impl Repo {
         &self,
         stats_cb: Option<ProgressCallback<'_>>,
     ) -> Result<Vec<String>> {
-        let current_branch = self.current_branch()?;
+        let repo = self.to_gitoxide()?;
 
-        let current_commit = self.latest_commit()?;
+        let current_commit = repo.head_commit()?;
 
-        pull::pull(self, None, Some(current_branch.as_str()), stats_cb)?;
+        pull::pull(self, None, Some(self.current_branch()?.as_str()), stats_cb)?;
 
-        // let post_pull_commit = self.latest_commit()?;
+        let post_pull_commit = repo.head_commit()?;
 
-        let mut revwalk = self.revwalk()?;
-        revwalk.push_head()?;
-        revwalk.set_sorting(Sort::TOPOLOGICAL)?;
+        let revwalk = repo
+            .rev_walk([post_pull_commit.id])
+            .sorting(Sorting::ByCommitTimeNewestFirst);
 
         let mut changelog = Vec::new();
-        for oid in revwalk {
-            let oid = oid?;
+        for commit in revwalk.all()? {
+            let info = commit?;
+            let Ok(commit) = info.object() else {
+                continue;
+            };
+
+            let oid = info.id();
 
             if oid == current_commit.id() {
                 break;
             }
 
-            let commmit = self.find_commit(oid)?;
-
-            if let Some(msg) = commmit.message() {
-                if let Some(first_line) = msg.lines().next() {
-                    changelog.push(first_line.trim().to_string());
-                }
+            if let Ok(msg) = commit.message() {
+                let summary = msg.summary();
+                changelog.push(summary.to_string());
             }
         }
-
-        changelog.reverse();
 
         Ok(changelog)
     }
