@@ -6,7 +6,7 @@ use std::{
     time::{SystemTimeError, UNIX_EPOCH},
 };
 
-use chrono::{DateTime, FixedOffset, Local};
+use chrono::{DateTime, Local};
 use git2::Commit;
 use gix::{object::tree::diff::Action, traverse::commit::simple::Sorting};
 use itertools::Itertools;
@@ -20,7 +20,7 @@ use crate::{
     buckets::{self, Bucket},
     config,
     contexts::ScoopContext,
-    git::{self, Repo},
+    git::{self, errors, Repo},
     let_chain,
     output::{
         sectioned::{Children, Section, Text},
@@ -270,6 +270,8 @@ pub enum Error {
     TimeError(#[from] SystemTimeError),
     #[error("Could not find executable in path: {0}")]
     MissingInPath(#[from] which::Error),
+    #[error("Gitoxide error: {0}")]
+    Gitoxide(#[from] Box<errors::GitoxideError>),
     #[error("Git delta did not have a path")]
     DeltaNoPath,
     #[error("Cannot find git commit where package was updated")]
@@ -1005,17 +1007,14 @@ impl Manifest {
                 })
                 .ok_or(Error::NoUpdatedCommit)??;
 
-            let date_time = {
-                let time = updated_commit.time().map_err(git::Error::from)?;
-                let secs = time.seconds;
-                let offset = time.offset * 60;
-
-                let utc_time = DateTime::from_timestamp(secs, 0).ok_or(Error::InvalidTime)?;
-
-                let offset = FixedOffset::east_opt(offset).ok_or(Error::InvalidTimeZone)?;
-
-                utc_time.with_timezone(&offset)
-            };
+            let date_time = git::parity::Time::from(
+                updated_commit
+                    .time()
+                    .map_err(git::errors::GitoxideError::from)
+                    .map_err(Box::new)?,
+            )
+            .to_datetime()
+            .ok_or(Error::InvalidTime)?;
 
             let author_wrapped = Author::from(updated_commit.author().map_err(git::Error::from)?)
                 .with_show_emails(!hide_emails);

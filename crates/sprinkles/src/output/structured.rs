@@ -3,6 +3,7 @@
 use std::fmt::Display;
 
 use itertools::Itertools;
+use serde::Serialize;
 use serde_json::{Map, Value};
 
 use crate::inline_const;
@@ -145,21 +146,27 @@ fn print_headers(
 ///
 /// Takes a single named lifetime, given that this is intended
 /// to be constructed and used within the same function.
-pub struct Structured<'a> {
-    objects: Vec<&'a Map<String, Value>>,
+pub struct Structured {
+    objects: Vec<Map<String, Value>>,
     max_length: Option<usize>,
 }
 
-impl<'a> Structured<'a> {
+impl Structured {
     /// Construct a new [`Structured`] formatter
     ///
     /// # Panics
     /// - If the length of headers is not equal to the length of values
     /// - If the values provided are not objects
-    pub fn new(values: &'a [Value]) -> Self {
+    pub fn new(values: &[impl Serialize]) -> Self {
         let objects = values
             .iter()
-            .map(|v| v.as_object().expect("object"))
+            .map(|v| {
+                let value = serde_json::to_value(v).expect("valid value");
+
+                let object = value.as_object().expect("object").clone();
+
+                object
+            })
             .collect::<Vec<_>>();
 
         Structured {
@@ -176,7 +183,7 @@ impl<'a> Structured<'a> {
     }
 }
 
-impl<'a> Display for Structured<'a> {
+impl Display for Structured {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let headers = self.objects[0].keys().collect_vec();
 
