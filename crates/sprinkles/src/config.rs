@@ -225,8 +225,6 @@ impl Scoop {
 
         let config = serde_json::to_string_pretty(self)?;
 
-        println!("{config:#?}");
-
         std::fs::write(config_path, config)?;
 
         Ok(())
