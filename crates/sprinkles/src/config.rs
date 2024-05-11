@@ -122,6 +122,7 @@ pub struct Scoop {
     /// Choose scoop shim build
     pub shim: ScoopShim,
 
+    #[serde(deserialize_with = "defaults::deserialize_scoop_root_path")]
     #[serde(default = "defaults::default_scoop_root_path")]
     /// Path to Scoop root directory
     pub root_path: PathBuf,
@@ -223,6 +224,8 @@ impl Scoop {
         let config_path = Self::get_path();
 
         let config = serde_json::to_string_pretty(self)?;
+
+        println!("{config:#?}");
 
         std::fs::write(config_path, config)?;
 
