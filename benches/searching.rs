@@ -2,7 +2,7 @@ use criterion::{black_box, criterion_group, criterion_main, BatchSize, Criterion
 
 use rayon::prelude::*;
 use regex::Regex;
-use sprinkles::{buckets::Bucket, contexts::User, packages::SearchMode, Architecture};
+use sprinkles::{buckets::Bucket, contexts::User, packages::SearchMode};
 
 fn criterion_benchmark(c: &mut Criterion) {
     let ctx = User::new();
