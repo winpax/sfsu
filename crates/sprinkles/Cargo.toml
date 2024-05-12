@@ -1,8 +1,12 @@
 [package]
+authors.workspace = true
+description = "A Rust based abstraction layer for Scoop"
 edition = "2021"
+homepage.workspace = true
 license = { workspace = true }
 name = "sprinkles"
 publish.workspace = true
+repository.workspace = true
 rust-version.workspace = true
 version.workspace = true
 

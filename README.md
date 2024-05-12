@@ -1,11 +1,11 @@
 # *S*tupid *F*ast *S*coop *U*tils
 
-![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/jewlexx/sfsu/build.yml)
-[![dependency status](https://deps.rs/repo/github/jewlexx/sfsu/status.svg)](https://deps.rs/repo/github/jewlexx/sfsu)
-![GitHub all releases](https://img.shields.io/github/downloads/jewlexx/sfsu/total)
-![GitHub](https://img.shields.io/github/license/jewlexx/sfsu)
-![Scoop Version (extras bucket)](https://img.shields.io/scoop/v/sfsu?bucket=extras)
-[![wakatime](https://wakatime.com/badge/user/69c39493-dba9-4b9d-8ae6-1a6a17e60cb4/project/ba7eaa48-0f34-4b20-95e5-4ba2e6184d39.svg)](https://wakatime.com/badge/user/69c39493-dba9-4b9d-8ae6-1a6a17e60cb4/project/ba7eaa48-0f34-4b20-95e5-4ba2e6184d39)
+[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/winpax/sfsu/build.yml)](https://github.com/winpax/sfsu/actions)
+[![dependency status](https://deps.rs/repo/github/winpax/sfsu/status.svg)](https://deps.rs/repo/github/winpax/sfsu)
+[![GitHub all releases](https://img.shields.io/github/downloads/winpax/sfsu/total)](https://github.com/winpax/sfsu/releases)
+[![GitHub](https://img.shields.io/github/license/winpax/sfsu)](LICENSE-APACHE)
+[![Scoop Version (winpax bucket)](https://img.shields.io/scoop/v/sfsu?bucket=https%3A%2F%2Fgithub.com%2Fwinpax%2Fbucket)](https://github.com/winpax/bucket)
+![wakatime](https://wakatime.com/badge/user/69c39493-dba9-4b9d-8ae6-1a6a17e60cb4/project/ba7eaa48-0f34-4b20-95e5-4ba2e6184d39.svg)
 
 > [!NOTE]
 > This is still under development. It currently does not replace even close to all the scoop commands, and is missing a lot of functionality.
@@ -61,19 +61,29 @@ The above disable demonstration also works
 
 ## Benchmarks
 
-Benchmarks have been moved to [the wiki](https://github.com/jewlexx/sfsu/wiki/Benchmarks)
+Benchmarks have been moved to [the wiki](https://github.com/winpax/sfsu/wiki/Benchmarks)
 
 ## Building yourself
 
 ### Initial setup
 
+Before you get started make sure you
+
 - Read the [Contributing Guide](CONTRIBUTING.md)
 - Read the [Code of Conduct](CODE_OF_CONDUCT.md)
-- Install [just](https://github.com/casey/just) to run the build scripts
-- Install [pre-commit](https://pre-commit.com/) to run the pre-commit hooks
-  - After installing the tool, run `just pre-commit` to install the hooks automatically
 
-The build instructions can be found [in the wiki](https://github.com/jewlexx/sfsu/wiki/Building)
+#### Prerequisites
+
+- [Rust](https://www.rust-lang.org/tools/install) as per [rust-toolchain.toml](rust-toolchain.toml)
+  - Prerequisites for the msvc toolchain are also required. This generally means you will need to install Visual Studio.
+- [Just](https://github.com/casey/just)
+- [Powershell](https://github.com/PowerShell/PowerShell)
+- Install [pre-commit](https://pre-commit.com/) to run the pre-commit hooks
+
+#### Build instructions
+
+- Run `just setup`
+- Run `cargo build` to build the project
 
 ## Long Term Goals
 
