@@ -84,8 +84,10 @@ pub struct Scoop {
     /// Choose scoop shim build
     pub shim: shim::ScoopShim,
 
-    #[serde(deserialize_with = "defaults::deserialize_scoop_root_path")]
-    #[serde(default = "defaults::default_scoop_root_path")]
+    #[serde(
+        default = "defaults::default_scoop_root_path",
+        deserialize_with = "defaults::deserialize_scoop_root_path"
+    )]
     /// Path to Scoop root directory
     pub root_path: PathBuf,
 
@@ -122,11 +124,15 @@ pub struct Scoop {
     /// Ref: https://docs.microsoft.com/dotnet/api/system.datetime.parse?view=netframework-4.5
     pub hold_update_until: Option<String>,
 
+    #[serde(
+        serialize_with = "isolated::serialize",
+        deserialize_with = "isolated::deserialize"
+    )]
     /// When set to `true` (default), Scoop will use `SCOOP_PATH` environment variable to store apps' `PATH`s.
     ///
     /// When set to arbitrary non-empty string, Scoop will use that string as the environment variable name instead.
     /// This is useful when you want to isolate Scoop from the system `PATH`.
-    pub use_isolated_path: Option<isolated::IsolatedPath>,
+    pub use_isolated_path: Option<PathBuf>,
 
     /// The timestamp of the last scoop update
     pub(crate) last_update: Option<String>,
@@ -202,30 +208,3 @@ impl Scoop {
 
 mod defaults;
 mod skips;
-
-#[cfg(test)]
-mod tests {
-    use std::{env, path::PathBuf};
-
-    use super::isolated::IsolatedPath;
-
-    #[test]
-    fn test_isolated_path_serde() {
-        let true_path = IsolatedPath::from(
-            env::var("SCOOP_PATH")
-                .map(PathBuf::from)
-                .unwrap_or_default(),
-        );
-
-        let custom_path = IsolatedPath::from(PathBuf::from("custom"));
-
-        let true_path_ser = serde_json::to_string(&true_path).unwrap();
-        let custom_path_ser = serde_json::to_string(&custom_path).unwrap();
-
-        let true_path_desere: IsolatedPath = serde_json::from_str(&true_path_ser).unwrap();
-        let custom_path_desere: IsolatedPath = serde_json::from_str(&custom_path_ser).unwrap();
-
-        assert_eq!(true_path, true_path_desere);
-        assert_eq!(custom_path, custom_path_desere);
-    }
-}
