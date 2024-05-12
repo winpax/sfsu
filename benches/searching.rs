@@ -81,44 +81,6 @@ fn criterion_benchmark(c: &mut Criterion) {
             )
         }
     });
-
-    c.bench_function("parsing packages from names", |b| {
-        let search_mode = SearchMode::Name;
-        for bucket in Bucket::list_all(&ctx).unwrap() {
-            b.iter_batched(
-                || bucket.clone(),
-                |ref bucket| {
-                    bucket
-                        .list_package_names()
-                        .unwrap()
-                        .par_iter()
-                        .filter_map(|manifest_name| {
-                            // Ignore non-matching manifests
-                            if black_box(search_mode).match_names()
-                                && !black_box(search_mode).match_binaries()
-                                && !black_box(&pattern).is_match(manifest_name)
-                            {
-                                return None;
-                            }
-
-                            bucket
-                                .get_manifest(manifest_name)
-                                .expect("manifest to exist")
-                                .parse_output(
-                                    &ctx,
-                                    bucket.name(),
-                                    false,
-                                    black_box(&pattern),
-                                    black_box(search_mode),
-                                    Architecture::ARCH,
-                                )
-                        })
-                        .collect::<Vec<_>>()
-                },
-                BatchSize::SmallInput,
-            )
-        }
-    });
 }
 
 criterion_group!(benches, criterion_benchmark);
