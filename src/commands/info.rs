@@ -154,7 +154,7 @@ impl Args {
                 .map(|notes| notes.to_string())
                 .unwrap_or_default(),
             installed: NicerBool::new(install_path.is_some()),
-            shortcuts: manifest.install_config.shortcuts.map(AliasArray::from_vec),
+            shortcuts: manifest.install_config.shortcuts.map(Into::into),
             updated_at,
             updated_by,
         };

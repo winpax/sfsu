@@ -10,3 +10,4 @@ pub mod header;
 pub mod keys;
 pub mod sizes;
 pub mod time;
+pub mod serialize;

@@ -118,7 +118,7 @@ pub struct InstallConfig {
     pub post_uninstall: Option<StringArray>,
     pub pre_install: Option<StringArray>,
     pub pre_uninstall: Option<StringArray>,
-    pub shortcuts: Option<Vec<Vec<String>>>,
+    pub shortcuts: Option<AliasArray<String>>,
     pub uninstaller: Option<Uninstaller>,
     pub url: Option<StringArray>,
 }
@@ -205,7 +205,7 @@ pub struct AutoupdateConfig {
     pub extract_dir: Option<StringArray>,
     pub hash: Option<HashExtractionOrArrayOfHashExtractions>,
     pub installer: Option<Installer>,
-    pub shortcuts: Option<Vec<Vec<String>>>,
+    pub shortcuts: Option<AliasArray<String>>,
     pub url: Option<StringArray>,
 }
 
@@ -292,15 +292,16 @@ impl<T> AliasArray<T> {
 impl<T: Display> Display for AliasArray<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            AliasArray::NestedArray(v) => v.fmt(f),
+            AliasArray::NestedArray(v) => {
+                debug!("wtf bro");
+                v.fmt(f)
+            }
             AliasArray::AliasArray(alias_array) => {
-                alias_array
+                dbg!(alias_array
                     .iter()
                     .map(|alias| &alias[1])
                     .format(", ")
-                    .fmt(f)?;
-
-                Ok(())
+                    .fmt(f))
             }
         }
     }
