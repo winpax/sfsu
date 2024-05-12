@@ -135,7 +135,13 @@ impl Repo {
 
     #[must_use]
     /// Get the origin remote
-    pub fn origin(&self) -> Option<Remote<'_>> {
+    pub fn origin(&self) -> Option<gix::Remote<'_>> {
+        self.gitoxide.find_remote("origin").ok()
+    }
+
+    #[must_use]
+    /// Get the origin remote
+    pub fn origin_git2(&self) -> Option<Remote<'_>> {
         self.git2.find_remote("origin").ok()
     }
 
@@ -204,7 +210,7 @@ impl Repo {
     /// - Missing head
     pub fn latest_remote_commit(&self) -> Result<Oid> {
         let mut remote = self
-            .origin()
+            .origin_git2()
             .ok_or(Error::MissingRemote("origin".to_string()))?;
 
         let connection = remote.connect_auth(Direction::Fetch, None, None)?;

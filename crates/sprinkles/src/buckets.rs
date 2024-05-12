@@ -314,7 +314,7 @@ impl Bucket {
             .open_repo()?
             .origin()
             .ok_or(git::Error::MissingRemote("origin".to_string()))?
-            .url()
+            .url(gix::remote::Direction::Fetch)
             .map(std::string::ToString::to_string)
             .ok_or(git::Error::NonUtf8)?)
     }
