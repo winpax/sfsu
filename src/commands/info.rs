@@ -42,9 +42,6 @@ pub struct Args {
     #[clap(from_global)]
     json: bool,
 
-    #[clap(from_global)]
-    disable_git: bool,
-
     #[clap(long, help = "Disable updated info")]
     disable_updated: bool,
 }
@@ -117,7 +114,7 @@ impl Args {
         let (updated_at, updated_by) = if self.disable_updated {
             (None, None)
         } else {
-            match manifest.last_updated_info(ctx, self.hide_emails, self.disable_git) {
+            match manifest.last_updated_info(ctx, self.hide_emails) {
                 Ok(v) => v,
                 Err(_) => match install_path {
                     Some(ref install_path) => {

@@ -2,7 +2,6 @@
 
 use std::{
     path::Path,
-    process::Stdio,
     time::{SystemTimeError, UNIX_EPOCH},
 };
 
@@ -796,114 +795,91 @@ impl Manifest {
         &self,
         ctx: &impl ScoopContext<config::Scoop>,
         hide_emails: bool,
-        disable_git: bool,
     ) -> Result<(Option<String>, Option<String>)> {
         let bucket = Bucket::from_name(ctx, &self.bucket)?;
 
-        if disable_git {
-            let repo = Repo::from_bucket(&bucket)?.to_gitoxide()?;
-            let latest_commit = repo.head_commit().map_err(git::Error::from)?;
+        let repo = Repo::from_bucket(&bucket)?.to_gitoxide()?;
+        let latest_commit = repo.head_commit().map_err(git::Error::from)?;
 
-            let revwalk = repo
-                .rev_walk([latest_commit.id])
-                .sorting(Sorting::ByCommitTimeNewestFirst);
+        let revwalk = repo
+            .rev_walk([latest_commit.id])
+            .sorting(Sorting::ByCommitTimeNewestFirst);
 
-            let updated_commit = revwalk
-                .all()
-                .map_err(git::Error::from)?
-                // .skip(1)
-                .find_map(|info| {
-                    let find_commit = || {
-                        // TODO: Add tests using personal bucket to ensure that different methods return the same info
-                        let info = info.map_err(git::Error::from)?;
-                        let commit = info.object().map_err(git::Error::from)?;
+        let updated_commit = revwalk
+            .all()
+            .map_err(git::Error::from)?
+            // .skip(1)
+            .find_map(|info| {
+                let find_commit = || {
+                    // TODO: Add tests using personal bucket to ensure that different methods return the same info
+                    let info = info.map_err(git::Error::from)?;
+                    let commit = info.object().map_err(git::Error::from)?;
 
-                        #[cfg(not(feature = "info-difftrees"))]
-                        if self.commit_message_matches(&commit) {
+                    #[cfg(not(feature = "info-difftrees"))]
+                    if self.commit_message_matches(&commit) {
+                        return Ok(commit);
+                    }
+
+                    #[cfg(feature = "info-difftrees")]
+                    {
+                        let mut matches = false;
+
+                        let other = info.parent_ids().next().ok_or(Error::MissingParent)?;
+                        let other = other.object().map_err(git::Error::from)?;
+                        let other_tree = other.peel_to_tree().map_err(git::Error::from)?;
+                        commit
+                            .tree()
+                            .map_err(git::Error::from)?
+                            .changes()
+                            .map_err(git::Error::from)?
+                            .track_filename()
+                            .for_each_to_obtain_tree(&other_tree, |change| {
+                                debug!("{change:?}");
+                                debug!("Filename: {}", change.location.to_string());
+
+                                if change.location.to_string().starts_with(&self.name) {
+                                    matches = true;
+                                    Ok::<_, Error>(Action::Cancel)
+                                } else {
+                                    Ok(Action::Continue)
+                                }
+                            })
+                            .map_err(git::Error::from)?;
+
+                        if matches {
                             return Ok(commit);
                         }
-
-                        #[cfg(feature = "info-difftrees")]
-                        {
-                            let mut matches = false;
-
-                            let other = info.parent_ids().next().ok_or(Error::MissingParent)?;
-                            let other = other.object().map_err(git::Error::from)?;
-                            let other_tree = other.peel_to_tree().map_err(git::Error::from)?;
-                            commit
-                                .tree()
-                                .map_err(git::Error::from)?
-                                .changes()
-                                .map_err(git::Error::from)?
-                                .track_filename()
-                                .for_each_to_obtain_tree(&other_tree, |change| {
-                                    debug!("{change:?}");
-                                    debug!("Filename: {}", change.location.to_string());
-
-                                    if change.location.to_string().starts_with(&self.name) {
-                                        matches = true;
-                                        Ok::<_, Error>(Action::Cancel)
-                                    } else {
-                                        Ok(Action::Continue)
-                                    }
-                                })
-                                .map_err(git::Error::from)?;
-
-                            if matches {
-                                return Ok(commit);
-                            }
-                        }
-
-                        Err(Error::NoUpdatedCommit)
-                    };
-
-                    let result = find_commit();
-
-                    match result {
-                        Ok(commit) => Some(Ok(commit)),
-                        Err(Error::NoUpdatedCommit) => None,
-                        Err(e) => Some(Err(e)),
                     }
-                })
-                .ok_or(Error::NoUpdatedCommit)??;
 
-            let date_time = git::parity::Time::from(
-                updated_commit
-                    .time()
-                    .map_err(git::errors::GitoxideError::from)
-                    .map_err(Box::new)?,
-            )
-            .to_datetime()
-            .ok_or(Error::InvalidTime)?;
+                    Err(Error::NoUpdatedCommit)
+                };
 
-            let author_wrapped = Author::from(updated_commit.author().map_err(git::Error::from)?)
-                .with_show_emails(!hide_emails);
+                let result = find_commit();
 
-            Ok((
-                Some(date_time.to_string()),
-                Some(author_wrapped.to_string()),
-            ))
-        } else {
-            let output = bucket
-                .open_repo()?
-                .log("bucket", 1, "%aD#%an")?
-                .arg(self.name.clone() + ".json")
-                .stderr(Stdio::null())
-                .output()
-                .map_err(|_| Error::MissingGitOutput)?;
+                match result {
+                    Ok(commit) => Some(Ok(commit)),
+                    Err(Error::NoUpdatedCommit) => None,
+                    Err(e) => Some(Err(e)),
+                }
+            })
+            .ok_or(Error::NoUpdatedCommit)??;
 
-            let info = String::from_utf8(output.stdout)
-                .map_err(|_| Error::NonUtf8)?
-                // Remove newline from end
-                .trim_end()
-                // Remove weird single quote from either end
-                .trim_matches('\'')
-                .split_once('#')
-                .map(|(time, author)| (time.to_string(), author.to_string()))
-                .unzip();
+        let date_time = git::parity::Time::from(
+            updated_commit
+                .time()
+                .map_err(git::errors::GitoxideError::from)
+                .map_err(Box::new)?,
+        )
+        .to_datetime()
+        .ok_or(Error::InvalidTime)?;
 
-            Ok(info)
-        }
+        let author_wrapped = Author::from(updated_commit.author().map_err(git::Error::from)?)
+            .with_show_emails(!hide_emails);
+
+        Ok((
+            Some(date_time.to_string()),
+            Some(author_wrapped.to_string()),
+        ))
     }
 
     /// Get [`InstallManifest`] for [`Manifest`]
