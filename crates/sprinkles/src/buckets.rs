@@ -9,6 +9,11 @@ use std::{
 use rayon::prelude::*;
 use regex::Regex;
 
+pub(crate) mod known {
+    #![allow(clippy::unreadable_literal)]
+    include!(concat!(env!("OUT_DIR"), "/buckets.rs"));
+}
+
 use crate::{
     config,
     contexts::ScoopContext,

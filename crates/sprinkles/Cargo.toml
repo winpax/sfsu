@@ -59,6 +59,7 @@ itertools.workspace = true
 log.workspace = true
 md-5 = "0.10"
 parking_lot = "0.12.2"
+phf = { version = "0.11.2", default-features = false }
 quick-xml = { version = "0.31", optional = true, features = ["serialize"] }
 quork.workspace = true
 rayon.workspace = true
@@ -96,3 +97,9 @@ winreg = "0.52"
 
 [dev-dependencies]
 anyhow = "1.0"
+
+[build-dependencies]
+heck = "0.5"
+phf_codegen = "0.11"
+reqwest = { version = "0.12", features = ["blocking"] }
+serde_json = "1.0"

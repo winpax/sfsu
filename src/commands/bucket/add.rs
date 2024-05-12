@@ -27,12 +27,10 @@ impl super::Command for Args {
             .clone()
             .context("No repo provided")
             .unwrap_or_else(|_| {
-                let known_buckets = ctx
-                    .known_buckets()
-                    .calm_expect("Failed to decode known buckets");
+                let known_buckets = ctx.known_buckets();
 
                 if let Some(url) = known_buckets.get(&self.name) {
-                    url.to_string()
+                    (*url).to_string()
                 } else {
                     abandon!(
                         "No bucket found with the name \"{}\". Try passing the url as well",

@@ -4,7 +4,6 @@
 //! Scoop context adapters
 
 use std::{
-    collections::HashMap,
     ffi::OsStr,
     fs::File,
     path::{Path, PathBuf},
@@ -17,7 +16,6 @@ mod user;
 
 use futures::Future;
 pub use global::Global;
-use url::Url;
 pub use user::User;
 use which::which;
 
@@ -193,13 +191,8 @@ pub trait ScoopContext<C>: Clone + Send + Sync + 'static {
     /// # Errors
     /// - Reading the buckets file
     /// - Deserializing the buckets file
-    fn known_buckets(&self) -> Result<HashMap<String, Url>, Error> {
-        let buckets_path = self.context_app_path().join("buckets.json");
-        let mut file = File::open(buckets_path)?;
-
-        let buckets = serde_json::from_reader::<_, HashMap<String, Url>>(&mut file)?;
-
-        Ok(buckets)
+    fn known_buckets(&self) -> &phf::Map<&'static str, &'static str> {
+        &crate::buckets::known::BUCKETS
     }
 
     #[must_use]

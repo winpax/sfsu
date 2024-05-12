@@ -17,12 +17,12 @@ pub struct Args {
 
 impl super::Command for Args {
     async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> anyhow::Result<()> {
-        let known_buckets = ctx.known_buckets()?;
+        let known_buckets = ctx.known_buckets();
         let known_buckets = known_buckets
-            .iter()
+            .into_iter()
             .map(|(name, source)| {
-                let name = name.to_string();
-                let source = source.to_string();
+                let name = (*name).to_string();
+                let source = (*source).to_string();
                 KnownBucket { name, source }
             })
             .collect_vec();
