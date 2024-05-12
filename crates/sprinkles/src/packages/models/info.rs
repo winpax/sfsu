@@ -3,8 +3,8 @@
 use serde::Serialize;
 
 use crate::{
-    packages::manifest::PackageLicense,
-    wrappers::{alias_vec::AliasVec, bool::NicerBool},
+    packages::manifest::{AliasArray, PackageLicense},
+    wrappers::bool::NicerBool,
 };
 
 #[derive(Debug, Clone, Serialize)]
@@ -40,5 +40,5 @@ pub struct PackageInfo {
     pub notes: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     /// The package's shortcuts
-    pub shortcuts: Option<AliasVec<String>>,
+    pub shortcuts: Option<AliasArray<String>>,
 }

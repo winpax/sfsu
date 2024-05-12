@@ -56,7 +56,7 @@ pub struct Manifest {
     /// The manifest notes
     pub notes: Option<StringArray>,
     /// Directories to persist when updating
-    pub persist: Option<AliasArray>,
+    pub persist: Option<AliasArray<String>>,
     /// The `PowerShell` module of the package
     pub psmodule: Option<Psmodule>,
     /// The suggested dependencies of the package
@@ -103,7 +103,7 @@ impl std::ops::Index<Architecture> for ManifestArchitecture {
 /// The install configuration
 pub struct InstallConfig {
     /// The package binaries
-    pub bin: Option<AliasArray>,
+    pub bin: Option<AliasArray<String>>,
     /// The checkver configuration
     pub checkver: Option<Checkver>,
     /// The directories to extract to
@@ -178,7 +178,7 @@ pub struct Autoupdate {
     pub architecture: Option<AutoupdateArchitecture>,
     pub license: Option<AutoupdateLicense>,
     pub notes: Option<StringArray>,
-    pub persist: Option<AliasArray>,
+    pub persist: Option<AliasArray<String>>,
     pub psmodule: Option<AutoupdatePsmodule>,
     #[serde(flatten)]
     pub default_config: AutoupdateConfig,
@@ -199,7 +199,7 @@ pub struct AutoupdateArchitecture {
 #[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct AutoupdateConfig {
-    pub bin: Option<AliasArray>,
+    pub bin: Option<AliasArray<String>>,
     pub env_add_path: Option<StringArray>,
     pub env_set: Option<HashMap<String, Option<serde_json::Value>>>,
     pub extract_dir: Option<StringArray>,
@@ -264,31 +264,40 @@ pub struct Suggest {}
 #[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(untagged)]
-pub enum AliasArray {
-    NestedArray(StringArray),
-    AliasArray(Vec<StringArray>),
+pub enum AliasArray<T> {
+    NestedArray(TOrArrayOfTs<T>),
+    AliasArray(Vec<Vec<T>>),
 }
 
-impl AliasArray {
+impl<T> AliasArray<T> {
     #[must_use]
-    pub fn to_vec(&self) -> Vec<String> {
+    pub fn to_vec<'a>(&'a self) -> Vec<T>
+    where
+        // &'a T: ToOwned<Owned = T>,
+        T: Clone,
+    {
         match self {
-            AliasArray::NestedArray(StringArray::Single(s)) => vec![s.clone()],
-            AliasArray::NestedArray(StringArray::Array(s)) => s.clone(),
-            AliasArray::AliasArray(s) => s
-                .iter()
-                .flat_map(|s| match s {
-                    StringArray::Single(s) => vec![s.clone()],
-                    StringArray::Array(s) => s.clone(),
-                })
-                .collect(),
+            AliasArray::NestedArray(TOrArrayOfTs::Single(v)) => vec![v.to_owned()],
+            AliasArray::NestedArray(TOrArrayOfTs::Array(v)) => v.to_owned(),
+            AliasArray::AliasArray(v) => v.into_iter().flatten().cloned().collect(),
         }
     }
 }
 
-impl Display for AliasArray {
+impl<T: Display> Display for AliasArray<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.to_vec().iter().format(", ").fmt(f)
+        match self {
+            AliasArray::NestedArray(v) => v.fmt(f),
+            AliasArray::AliasArray(alias_array) => {
+                alias_array
+                    .iter()
+                    .map(|alias| &alias[1])
+                    .format(", ")
+                    .fmt(f)?;
+
+                Ok(())
+            }
+        }
     }
 }
 
@@ -386,12 +395,12 @@ impl<A> FromIterator<A> for TOrArrayOfTs<A> {
     }
 }
 
-impl<T: Display> Display for TOrArrayOfTs<T>
-where
-    Self: Clone,
-{
+impl<T: Display> Display for TOrArrayOfTs<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.clone().to_vec().iter().format(", ").fmt(f)
+        match self {
+            TOrArrayOfTs::Single(v) => v.fmt(f),
+            TOrArrayOfTs::Array(v) => v.iter().format(", ").fmt(f),
+        }
     }
 }
 
