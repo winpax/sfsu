@@ -75,9 +75,7 @@ Before you get started make sure you
 #### Prerequisites
 
 - [Rust](https://www.rust-lang.org/tools/install) as per [rust-toolchain.toml](rust-toolchain.toml)
-
   - Prerequisites for the msvc toolchain are also required. This generally means you will need to install Visual Studio.
-
 - [Just](https://github.com/casey/just)
 - [Powershell](https://github.com/PowerShell/PowerShell)
 - Install [pre-commit](https://pre-commit.com/) to run the pre-commit hooks
