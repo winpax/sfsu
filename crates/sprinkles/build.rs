@@ -7,7 +7,7 @@ fn get_known_buckets() -> Result<String, Box<dyn Error>> {
     let body: serde_json::Value = response.json()?;
     let buckets = body.as_object().unwrap();
 
-    let mut output = "#![allow(clippy::unreadable-literal)]\n\n".to_string();
+    let mut output = String::new();
 
     for bucket in buckets {
         let name = bucket.0;
