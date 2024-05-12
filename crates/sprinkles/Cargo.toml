@@ -54,7 +54,11 @@ gix = { version = "0.62.0", features = [
 ] }
 gix-object = "0.42.1"
 heck = "0.5"
-indicatif.workspace = true
+indicatif = { version = "0.17", features = [
+    "improved_unicode",
+    "rayon",
+    "tokio",
+] }
 itertools.workspace = true
 log.workspace = true
 md-5 = "0.10"

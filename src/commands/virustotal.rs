@@ -2,14 +2,13 @@ use std::time::Duration;
 
 use anyhow::Context;
 use clap::{Parser, ValueEnum};
-use indicatif::ProgressBar;
 use rayon::prelude::*;
 use sprinkles::{
     config,
     contexts::ScoopContext,
     hash::Hash,
     packages::{reference::Package, CreateManifest, Manifest},
-    progress::{style, ProgressOptions},
+    progress::{indicatif::ProgressBar, style, ProgressOptions},
     requests::USER_AGENT,
     Architecture,
 };

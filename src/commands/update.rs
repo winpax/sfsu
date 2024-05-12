@@ -1,6 +1,5 @@
 use anyhow::Context;
 use clap::Parser;
-use indicatif::{MultiProgress, ProgressBar, ProgressFinish};
 use itertools::Itertools;
 use rayon::prelude::*;
 
@@ -10,7 +9,10 @@ use sprinkles::{
     contexts::ScoopContext,
     git::__stats_callback,
     output::sectioned::{Children, Section},
-    progress::{style, Message, ProgressOptions},
+    progress::{
+        indicatif::{MultiProgress, ProgressBar, ProgressFinish},
+        style, Message, ProgressOptions,
+    },
 };
 
 #[derive(Debug, Clone, Parser)]

@@ -3583,7 +3583,6 @@ dependencies = [
  "futures",
  "git2",
  "human-panic",
- "indicatif",
  "itertools 0.12.1",
  "log",
  "open",
