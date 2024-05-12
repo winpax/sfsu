@@ -1,9 +1,9 @@
 # *S*tupid *F*ast *S*coop *U*tils
 
-![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/winpax/sfsu/build.yml)
+[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/winpax/sfsu/build.yml)](https://github.com/winpax/sfsu/actions)
 [![dependency status](https://deps.rs/repo/github/winpax/sfsu/status.svg)](https://deps.rs/repo/github/winpax/sfsu)
-![GitHub all releases](https://img.shields.io/github/downloads/winpax/sfsu/total)
-![GitHub](https://img.shields.io/github/license/winpax/sfsu)
+[![GitHub all releases](https://img.shields.io/github/downloads/winpax/sfsu/total)](https://github.com/winpax/sfsu/releases)
+[![GitHub](https://img.shields.io/github/license/winpax/sfsu)](LICENSE-APACHE)
 [![Scoop Version (winpax bucket)](https://img.shields.io/scoop/v/sfsu?bucket=https%3A%2F%2Fgithub.com%2Fwinpax%2Fbucket)](https://github.com/winpax/bucket)
 ![wakatime](https://wakatime.com/badge/user/69c39493-dba9-4b9d-8ae6-1a6a17e60cb4/project/ba7eaa48-0f34-4b20-95e5-4ba2e6184d39.svg)
 
