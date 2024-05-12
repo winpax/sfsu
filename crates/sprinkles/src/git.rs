@@ -2,7 +2,7 @@
 
 use std::{ffi::OsStr, fmt::Display, path::PathBuf, process::Command};
 
-use git2::{Commit, DiffOptions, Direction, FetchOptions, Oid, Progress, Remote, Repository};
+use git2::{Commit, Direction, FetchOptions, Oid, Progress, Remote, Repository};
 use gix::traverse::commit::simple::Sorting;
 use indicatif::ProgressBar;
 
