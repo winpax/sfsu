@@ -774,7 +774,7 @@ impl Manifest {
 
         let manifest_path = format!("bucket/{}.json", self.name);
 
-        let diff = repo.diff_tree_to_tree(
+        let diff = repo.repo().diff_tree_to_tree(
             Some(&parent_tree),
             Some(&tree),
             Some(diff_options.pathspec(&manifest_path)),

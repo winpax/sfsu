@@ -2,7 +2,6 @@
 
 use std::{ffi::OsStr, fmt::Display, path::PathBuf, process::Command};
 
-use derive_more::Deref;
 use git2::{Commit, DiffOptions, Direction, FetchOptions, Oid, Progress, Remote, Repository};
 use gix::traverse::commit::simple::Sorting;
 use indicatif::ProgressBar;
@@ -73,11 +72,16 @@ pub enum Error {
 /// Repo result type
 pub type Result<T, E = Error> = std::result::Result<T, E>;
 
-#[derive(Deref)]
 /// A git repository
 pub struct Repo(Repository);
 
 impl Repo {
+    #[must_use]
+    /// Get the underlying git repository
+    pub fn repo(&self) -> &Repository {
+        &self.0
+    }
+
     /// Convert into a gitoxide repository
     ///
     /// # Errors
@@ -120,7 +124,7 @@ impl Repo {
     #[must_use]
     /// Get the origin remote
     pub fn origin(&self) -> Option<Remote<'_>> {
-        self.find_remote("origin").ok()
+        self.0.find_remote("origin").ok()
     }
 
     /// Checkout to another branch
@@ -211,7 +215,7 @@ impl Repo {
             "{}/{} from repo '{}'",
             head,
             local_head.id(),
-            self.path().display()
+            self.0.path().display()
         );
 
         Ok(local_head.id() != head)
@@ -343,7 +347,7 @@ impl Repo {
         let mut command = Command::new(git_path);
 
         command
-            .current_dir(self.path().parent().expect("parent dir in .git path"))
+            .current_dir(self.0.path().parent().expect("parent dir in .git path"))
             .arg("-C")
             .arg(cd)
             .arg("log")

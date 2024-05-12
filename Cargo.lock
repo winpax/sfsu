@@ -3807,6 +3807,7 @@ dependencies = [
  "git2",
  "gix",
  "gix-object",
+ "heck 0.5.0",
  "indicatif",
  "itertools 0.12.1",
  "log",
