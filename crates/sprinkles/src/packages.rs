@@ -18,7 +18,11 @@ use crate::{
     buckets::{self, Bucket},
     config,
     contexts::ScoopContext,
-    git::{self, errors, Repo},
+    git::{
+        self,
+        errors::{self, GitoxideError},
+        Repo,
+    },
     let_chain,
     wrappers::{author::Author, time::NicerTime},
     Architecture,
@@ -249,6 +253,8 @@ impl MinInfo {
 pub enum Error {
     #[error("Invalid utf8 found. This is not supported by sfsu")]
     NonUtf8,
+    #[error("Could not find parent tree")]
+    MissingParentTree,
     #[error("Missing or invalid file name. The path terminated in '..' or wasn't valid utf8")]
     MissingFileName,
     #[error("{0}")]
@@ -288,6 +294,12 @@ pub enum Error {
     MissingArchAutoUpdate,
     #[error("Commit did not have a parent")]
     MissingParent,
+}
+
+impl From<errors::GitoxideError> for Error {
+    fn from(value: errors::GitoxideError) -> Self {
+        Self::Gitoxide(Box::new(value))
+    }
 }
 
 /// The result type for package operations
@@ -766,23 +778,37 @@ impl Manifest {
     ///
     /// # Errors
     /// - Git2 errors
-    pub fn commit_diff_matches(&self, repo: &Repo, commit: &Commit<'_>) -> Result<bool> {
-        let mut diff_options = Repo::default_diff_options();
+    pub fn commit_diff_matches(&self, commit: &gix::Commit<'_>) -> Result<bool> {
+        let tree = commit.tree().map_err(GitoxideError::from)?;
+        let parent_tree = commit
+            .parent_ids()
+            .find_map(|parent| {
+                match parent.try_object() {
+                    Ok(Some(object)) => Some(object),
+                    _ => None,
+                }
+                .and_then(|object| object.peel_to_tree().ok())
+            })
+            .ok_or(Error::MissingParentTree)?;
 
-        let tree = commit.tree()?;
-        let parent_tree = commit.parent(0)?.tree()?;
+        let mut changed = false;
 
-        let manifest_path = format!("bucket/{}.json", self.name);
+        tree.changes()
+            .map_err(GitoxideError::from)?
+            .track_filename()
+            .for_each_to_obtain_tree(&parent_tree, |change| {
+                if change.location.to_string().starts_with(&self.name) {
+                    changed = true;
+                    return Ok::<_, GitoxideError>(Action::Cancel);
+                }
 
-        let diff = repo.git2().diff_tree_to_tree(
-            Some(&parent_tree),
-            Some(&tree),
-            Some(diff_options.pathspec(&manifest_path)),
-        )?;
+                Ok(Action::Continue)
+            })
+            .map_err(GitoxideError::from)?;
 
         // Given that the diffoptions ensure that we only match the specific manifest
         // we are safe to return as soon as we find a commit thats changed anything
-        Ok(diff.stats()?.files_changed() != 0)
+        Ok(changed)
     }
 
     /// Get the time and author of the commit where this manifest was last changed
