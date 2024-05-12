@@ -5,6 +5,6 @@ pub fn handle() {
         Metadata::new(env!("CARGO_PKG_NAME"), crate::versions::SFSU_LONG_VERSION)
             .authors(env!("CARGO_PKG_AUTHORS").replace(':', ", "))
             .homepage(env!("CARGO_PKG_HOMEPAGE"))
-            .support("Open an issue on GitHub: https://github.com/jewlexx/sfsu/issues/new, and upload the aforementioned report file.")
+            .support("Open an issue on GitHub: https://github.com/winpax/sfsu/issues/new, and upload the aforementioned report file.")
     };
 }
