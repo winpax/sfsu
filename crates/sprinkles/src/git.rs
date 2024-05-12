@@ -1,6 +1,11 @@
 //! Scoop git helpers
 
-use std::{ffi::OsStr, fmt::Display, path::PathBuf, process::Command};
+use std::{
+    ffi::OsStr,
+    fmt::Display,
+    path::{Path, PathBuf},
+    process::Command,
+};
 
 use git2::{Commit, Direction, FetchOptions, Oid, Progress, Remote, Repository};
 use gix::traverse::commit::simple::Sorting;
@@ -94,6 +99,17 @@ impl Repo {
         &self.gitoxide
     }
 
+    /// Open the repository from the path
+    ///
+    /// # Errors
+    /// - The path could not be opened as a repository
+    pub fn from_path(path: impl AsRef<Path>) -> Result<Self> {
+        let gitoxide = gix::open(path.as_ref())?;
+        let git2 = Repository::open(path)?;
+
+        Ok(Self { git2, gitoxide })
+    }
+
     /// Open the repository from the bucket path
     ///
     /// # Errors
@@ -148,12 +164,20 @@ impl Repo {
     ///
     /// # Errors
     /// - No active branch
+    /// - Detached head
     pub fn current_branch(&self) -> Result<String> {
-        self.git2
-            .head()?
-            .shorthand()
-            .ok_or(Error::NoActiveBranch)
-            .map(std::string::ToString::to_string)
+        let reference = self
+            .gitoxide
+            .head_name()?
+            .ok_or(Error::NoActiveBranch)?
+            .to_string();
+        let branch_name = reference
+            .split('/')
+            .last()
+            .map(String::from)
+            .ok_or(Error::NoActiveBranch)?;
+
+        Ok(branch_name)
     }
 
     /// Fetch latest changes in the repo

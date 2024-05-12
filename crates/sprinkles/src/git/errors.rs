@@ -24,6 +24,8 @@ pub enum GitoxideError {
     GitoxideObjectPeel(#[from] gix::object::peel::to_kind::Error),
     #[error("Gitoxide error: {0}")]
     GitoxideObjectDiff(#[from] gix::object::tree::diff::for_each::Error),
+    #[error("Gitoxide error: {0}")]
+    GitoxideFindExisting(#[from] gix::reference::find::existing::Error),
 }
 
 impl<T> From<T> for super::Error
