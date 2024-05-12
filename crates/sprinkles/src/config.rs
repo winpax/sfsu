@@ -125,6 +125,7 @@ pub struct Scoop {
     pub hold_update_until: Option<String>,
 
     #[serde(
+        default,
         serialize_with = "isolated::serialize",
         deserialize_with = "isolated::deserialize"
     )]

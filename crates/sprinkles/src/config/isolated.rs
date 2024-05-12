@@ -56,5 +56,5 @@ pub(super) fn deserialize<'de, D>(deserializer: D) -> Result<Option<PathBuf>, D:
 where
     D: serde::Deserializer<'de>,
 {
-    deserializer.deserialize_str(IsolatedPathVisitor)
+    deserializer.deserialize_option(IsolatedPathVisitor)
 }
