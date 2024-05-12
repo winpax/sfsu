@@ -8,12 +8,14 @@ use sprinkles::{
     buckets::Bucket,
     config,
     contexts::ScoopContext,
-    output::sectioned::{Children, Section, Sections, Text},
     packages::{Manifest, MergeDefaults, SearchMode},
     Architecture,
 };
 
-use crate::calm_panic::CalmUnwrap;
+use crate::{
+    calm_panic::CalmUnwrap,
+    output::sectioned::{Children, Section, Sections, Text},
+};
 
 #[derive(Debug, Clone)]
 #[must_use = "MatchCriteria has no side effects"]
@@ -138,7 +140,7 @@ pub fn parse_output(
             .map(|output| {
                 Text::new(format!(
                     "{}{}",
-                    sprinkles::output::WHITESPACE,
+                    crate::output::WHITESPACE,
                     console::style(output).bold()
                 ))
             })

@@ -4,10 +4,6 @@ use itertools::Itertools;
 use sprinkles::{
     config,
     contexts::ScoopContext,
-    output::{
-        structured::vertical::VTable,
-        wrappers::{alias_vec::AliasVec, bool::NicerBool, time::NicerTime},
-    },
     packages::{
         models::{
             info::PackageInfo,
@@ -15,10 +11,12 @@ use sprinkles::{
         },
         reference, Manifest, MergeDefaults,
     },
-    semver, Architecture,
+    semver,
+    wrappers::{bool::NicerBool, time::NicerTime},
+    Architecture,
 };
 
-use crate::abandon;
+use crate::{abandon, output::structured::vertical::VTable};
 
 #[derive(Debug, Clone, Parser)]
 #[allow(clippy::struct_excessive_bools)]
@@ -148,10 +146,7 @@ impl Args {
                     AliasArray::NestedArray(StringArray::Array(bins)) => bins.join(" | "),
                     AliasArray::AliasArray(bins) => bins
                         .into_iter()
-                        .map(|bin_union| match bin_union {
-                            StringArray::Single(bin) => bin,
-                            StringArray::Array(mut bin_alias) => bin_alias.remove(0),
-                        })
+                        .map(|mut bin_alias| bin_alias.remove(0))
                         .join(" | "),
                 }),
             notes: manifest
@@ -159,7 +154,7 @@ impl Args {
                 .map(|notes| notes.to_string())
                 .unwrap_or_default(),
             installed: NicerBool::new(install_path.is_some()),
-            shortcuts: manifest.install_config.shortcuts.map(AliasVec::from_vec),
+            shortcuts: manifest.install_config.shortcuts.map(AliasArray::from_vec),
             updated_at,
             updated_by,
         };

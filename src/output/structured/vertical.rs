@@ -4,8 +4,7 @@ use std::fmt::Display;
 
 use itertools::Itertools;
 use serde_json::{Map, Value};
-
-use crate::output::wrappers::header::Header;
+use sprinkles::wrappers::header::Header;
 
 #[derive(Debug)]
 #[must_use = "OptionalTruncate is lazy, and only takes effect when used in formatting"]
@@ -23,13 +22,6 @@ impl<T> OptionalTruncate<T> {
             length: None,
             suffix: None,
         }
-    }
-
-    // Generally length would not be passed as an option,
-    // but given we are just forwarding what is passed to `VTable`,
-    // it works better here
-    pub fn with_length(self, length: Option<usize>) -> Self {
-        Self { length, ..self }
     }
 
     pub fn with_suffix(self, suffix: &'static str) -> Self {
@@ -67,7 +59,6 @@ impl<T: Display> Display for OptionalTruncate<T> {
 /// to be constructed and used within the same function.
 pub struct VTable {
     object: Map<String, Value>,
-    max_length: Option<usize>,
 }
 
 impl VTable {
@@ -78,17 +69,7 @@ impl VTable {
     pub fn new(value: &Value) -> Self {
         let object = value.as_object().expect("Value must be an object").clone();
 
-        Self {
-            object,
-            max_length: None,
-        }
-    }
-
-    /// Add a max length to the [`VTable`] formatter
-    pub fn with_max_length(mut self, max: usize) -> Self {
-        self.max_length = Some(max);
-
-        self
+        Self { object }
     }
 }
 
@@ -121,7 +102,6 @@ impl Display for VTable {
                             contestants.push(base[i]);
                             contestants.push(
                                 OptionalTruncate::new(element)
-                                    .with_length(self.max_length)
                                     // TODO: Fix suffix
                                     .with_suffix("...")
                                     .to_string()
@@ -138,8 +118,7 @@ impl Display for VTable {
         for (i, (header, element)) in iters {
             let header_size = header_lengths[i];
 
-            let truncated =
-                OptionalTruncate::new(Header::new(header).to_string()).with_length(self.max_length);
+            let truncated = OptionalTruncate::new(Header::new(header).to_string());
 
             let element = if let Some(element) = element.as_str() {
                 element.to_owned()

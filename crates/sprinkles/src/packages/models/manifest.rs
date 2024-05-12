@@ -271,7 +271,12 @@ pub enum AliasArray<T> {
 
 impl<T> AliasArray<T> {
     #[must_use]
-    pub fn to_vec<'a>(&'a self) -> Vec<T>
+    pub fn from_vec(vec: Vec<Vec<T>>) -> Self {
+        Self::AliasArray(vec)
+    }
+
+    #[must_use]
+    pub fn to_vec(&self) -> Vec<T>
     where
         // &'a T: ToOwned<Owned = T>,
         T: Clone,
@@ -279,7 +284,7 @@ impl<T> AliasArray<T> {
         match self {
             AliasArray::NestedArray(TOrArrayOfTs::Single(v)) => vec![v.to_owned()],
             AliasArray::NestedArray(TOrArrayOfTs::Array(v)) => v.to_owned(),
-            AliasArray::AliasArray(v) => v.into_iter().flatten().cloned().collect(),
+            AliasArray::AliasArray(v) => v.iter().flatten().cloned().collect(),
         }
     }
 }

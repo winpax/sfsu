@@ -1,5 +1,5 @@
 use clap::Parser;
-use sprinkles::{config, contexts::ScoopContext, output::wrappers::sizes::Size};
+use sprinkles::{config, contexts::ScoopContext, wrappers::sizes::Size};
 use tokio::task::JoinSet;
 
 use crate::{commands::Command, output::colours::eprintln_bright_yellow};

@@ -8,12 +8,13 @@ use sprinkles::{
     config::{self, Scoop as ScoopConfig},
     contexts::ScoopContext,
     git::__stats_callback,
-    output::sectioned::{Children, Section},
     progress::{
         indicatif::{MultiProgress, ProgressBar, ProgressFinish},
         style, Message, ProgressOptions,
     },
 };
+
+use crate::output::sectioned::{Children, Section};
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
