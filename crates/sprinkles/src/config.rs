@@ -1,6 +1,6 @@
 //! Scoop config helpers
 
-use std::{fmt::Display, path::PathBuf};
+use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
@@ -9,47 +9,9 @@ use serde_with::skip_serializing_none;
 use crate::{proxy::Proxy, Architecture};
 
 pub mod branch;
-
-#[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "lowercase")]
-/// Scoop shim builds
-pub enum ScoopShim {
-    #[default]
-    /// Use the kiennq shim
-    Kiennq,
-    /// Use the scoopcs shim
-    Scoopcs,
-    #[serde(rename = "71")]
-    /// Use the 71 shim
-    SeventyOne,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(transparent)]
-/// The git repository containing the scoop adaptor's source code
-pub struct ScoopRepo(String);
-
-impl ScoopRepo {
-    #[must_use]
-    /// Get the url to the git repository containing the scoop adaptor's source code
-    pub fn url(&self) -> &str {
-        &self.0
-    }
-}
-
-impl Default for ScoopRepo {
-    fn default() -> Self {
-        Self("https://github.com/ScoopInstaller/Scoop".into())
-    }
-}
-
-impl Display for ScoopRepo {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
 pub mod isolated;
+pub mod repo;
+pub mod shim;
 
 #[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -72,7 +34,7 @@ pub struct Scoop {
     /// Git repository containing the scoop adaptor's source code
     ///
     /// This configuration is useful for custom forks of scoop, or a scoop replacement
-    pub scoop_repo: ScoopRepo,
+    pub scoop_repo: repo::ScoopRepo,
 
     #[serde(default, skip_serializing_if = "skips::skip")]
     /// Allow to use different branch than master
@@ -120,7 +82,7 @@ pub struct Scoop {
 
     #[serde(default, skip_serializing_if = "skips::skip")]
     /// Choose scoop shim build
-    pub shim: ScoopShim,
+    pub shim: shim::ScoopShim,
 
     #[serde(deserialize_with = "defaults::deserialize_scoop_root_path")]
     #[serde(default = "defaults::default_scoop_root_path")]
