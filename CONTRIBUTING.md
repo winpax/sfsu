@@ -23,7 +23,7 @@ All types of contributions are encouraged and valued. See the [Table of Contents
   - [Reporting Bugs](#reporting-bugs)
   - [Suggesting Enhancements](#suggesting-enhancements)
   - [Your First Code Contribution](#your-first-code-contribution)
-  - [Improving The Documentation](#improving-the-documentation)
+  <!-- - [Improving The Documentation](#improving-the-documentation) -->
 - [Styleguides](#styleguides)
   - [Commit Messages](#commit-messages)
 - [Join The Project Team](#join-the-project-team)
@@ -43,32 +43,17 @@ Before you ask a question, it is best to search for existing [Issues](https://gi
 
 If you then still feel the need to ask a question and need clarification, we recommend the following:
 
-- Open an [Issue](https://github.com/jewlexx/sfsu/issues/new).
+- If you just have a question, you can use the [Discussions](https://github.com/jewlexx/sfsu/discussions) section, otherwise, open an [Issue](https://github.com/jewlexx/sfsu/issues/new).
 - Provide as much context as you can about what you're running into.
-- Provide project and platform versions (nodejs, npm, etc), depending on what seems relevant.
+- Provide project and platform versions, as per the issue template.
 
 We will then take care of the issue as soon as possible.
-
-<!--
-You might want to create a separate issue tag for questions and include it in this description. People should then tag their issues accordingly.
-
-Depending on how large the project is, you may want to outsource the questioning, e.g. to Stack Overflow or Gitter. You may add additional contact and information possibilities:
-- IRC
-- Slack
-- Gitter
-- Stack Overflow tag
-- Blog
-- FAQ
-- Roadmap
-- E-Mail List
-- Forum
--->
 
 ## I Want To Contribute
 
 > ### Legal Notice <!-- omit in toc -->
 >
-> When contributing to this project, you must agree that you have authored 100% of the content, that you have the necessary rights to the content and that the content you contribute may be provided under the project license.
+> When contributing to this project, you must agree that you have the necessary rights to the content and that the content you contribute may be provided under the [project license](./LICENSE-APACHE).
 
 ### Reporting Bugs
 
@@ -84,18 +69,17 @@ A good bug report shouldn't leave others needing to chase you up for more inform
 - Also make sure to search the internet (including Stack Overflow) to see if users outside of the GitHub community have discussed the issue.
 - Collect information about the bug:
   - Stack trace (Traceback)
-  - OS, Platform and Version (Windows, Linux, macOS, x86, ARM)
-  - Version of the interpreter, compiler, SDK, runtime environment, package manager, depending on what seems relevant.
-  - Possibly your input and the output
-  - Can you reliably reproduce the issue? And can you also reproduce it with older versions?
+  - sfsu version
+  - Windows version
+  - Your input and the output
 
 <!-- omit in toc -->
 
 #### How Do I Submit a Good Bug Report?
 
 > You must never report security related issues, vulnerabilities or bugs including sensitive information to the issue tracker, or elsewhere in public. Instead sensitive bugs must be sent by email to <professional@maybejules.com>.
-
-<!-- You may add a PGP key to allow the messages to be sent encrypted as well. -->
+>
+> Use the [PGP Public Key](#pgp-public-key) to encrypt any sensitive messages you may send to <professional@maybejules.com>.
 
 We use GitHub issues to track bugs and errors. If you run into an issue with the project:
 
@@ -146,7 +130,9 @@ include Setup of env, IDE and typical getting started instructions?
 
 -->
 
-### Improving The Documentation
+Instructions are available in the [wiki](https://github.com/jewlexx/sfsu/wiki/Building).
+
+<!-- ### Improving The Documentation -->
 
 <!-- TODO
 Updating, improving and correcting the documentation
@@ -157,15 +143,36 @@ Updating, improving and correcting the documentation
 
 ### Commit Messages
 
-<!-- TODO
+You should install the pre-commit hooks by running `just pre-commit` in the root of the repository, before committing or pushing anything.
 
--->
+Commit messages should follow the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) specification.
 
 ## Join The Project Team
 
-<!-- TODO -->
+If you want to join the project team, you can contact me at <professional@maybejules.com>. Keep in mind that I need to trust everyone who is joining the team, so there's a good chance I won't approve you joining [winpax](https://github.com/winpax).
 
 <!-- omit in toc -->
+
+## PGP Public Key
+
+This key should be used to encrypt any sensitive messages you may send to <professional@maybejules.com>.
+
+```pgp
+-----BEGIN PGP PUBLIC KEY BLOCK-----
+
+mDMEZkBz5xYJKwYBBAHaRw8BAQdAg9xVxdtEDjG4a8Rseg+0dnRff5Zu0WJoN81K
+o/LDoQu0TEp1bGlldHRlIENvcmRvciAoRm9yIGVuY3J5cHRlZCBjb21tdW5pY2F0
+aW9ucykgPHByb2Zlc3Npb25hbEBtYXliZWp1bGVzLmNvbT6IkwQTFgoAOxYhBPhx
+DZDBEAFmUIfQWUlJ2y0P8FLsBQJmQHPnAhsDBQsJCAcCAiICBhUKCQgLAgQWAgMB
+Ah4HAheAAAoJEElJ2y0P8FLsR0wA/j5hSNNACwBj+IOBOExP2HVOXzR1eYqJBGIQ
+S5a7DFqXAQCLp9D5obDeFII1x7fcaGNLwhci8/EFudbgXNigNqWTA7g4BGZAc+cS
+CisGAQQBl1UBBQEBB0CalQz3HbAJIsyXIT1ac/sAG1LJzP3o5FAgKnc+U9srcQMB
+CAeIeAQYFgoAIBYhBPhxDZDBEAFmUIfQWUlJ2y0P8FLsBQJmQHPnAhsMAAoJEElJ
+2y0P8FLsCnoA/0C2Y8F0kHAvvVKAWRsTwFY+VX4nCl9AlUWjKNo8QtxjAQCzklxQ
+HMT5g3ExP/Mvk9jAu+Eaq8CrYVshBGf4ryXVBA==
+=mC8X
+-----END PGP PUBLIC KEY BLOCK-----
+```
 
 ## Attribution
 
