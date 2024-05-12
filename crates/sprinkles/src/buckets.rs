@@ -9,6 +9,10 @@ use std::{
 use rayon::prelude::*;
 use regex::Regex;
 
+pub(crate) mod known {
+    include!(concat!(env!("OUT_DIR"), "/buckets.rs"));
+}
+
 use crate::{
     config,
     contexts::ScoopContext,

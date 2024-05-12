@@ -112,8 +112,6 @@ git2 = { workspace = true }
 contribs = { git = "https://github.com/winpax/contribs.git", version = "0.1.0" }
 dotenv = "0.15.0"
 git2.workspace = true
-reqwest = { version = "0.12.4", features = ["blocking"] }
-serde_json = "1.0"
 shadow-rs = "0.27"
 tokio = { version = "1.37", features = ["full"] }
 toml_edit = "0.22.12"
