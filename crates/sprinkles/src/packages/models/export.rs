@@ -117,8 +117,8 @@ impl TryFrom<SfsuBucket> for Bucket {
         let updated = {
             let repo = bucket.open_repo()?;
             let latest_commit = repo.latest_commit()?;
-            let time = latest_commit.time();
-            let secs = time.seconds();
+            let time = latest_commit.time()?;
+            let secs = time.seconds;
             // let offset = time.offset_minutes() * 60;
 
             let utc_time = DateTime::from_timestamp(secs, 0).ok_or(BucketError::InvalidTime)?;

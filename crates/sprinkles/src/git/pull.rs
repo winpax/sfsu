@@ -172,6 +172,11 @@ pub fn pull(
     let remote_branch = branch.unwrap_or("master");
     let mut remote = repo.git2().find_remote(remote_name)?;
     do_fetch(repo.git2(), &[remote_branch], &mut remote, stats_cb)?;
-    let fetch_commit = repo.git2().find_commit(repo.latest_remote_commit()?)?;
+
+    let oid = {
+        let commit = repo.latest_remote_commit()?;
+        git2::Oid::from_bytes(commit.as_bytes())?
+    };
+    let fetch_commit = repo.git2().find_commit(oid)?;
     Ok(do_merge(repo.git2(), remote_branch, &fetch_commit)?)
 }

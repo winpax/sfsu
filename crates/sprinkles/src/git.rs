@@ -7,8 +7,8 @@ use std::{
     process::Command,
 };
 
-use git2::{Commit, Direction, FetchOptions, Oid, Progress, Remote, Repository};
-use gix::traverse::commit::simple::Sorting;
+use git2::{Commit, FetchOptions, Progress, Remote, Repository};
+use gix::{traverse::commit::simple::Sorting, ObjectId};
 use indicatif::ProgressBar;
 
 use crate::{buckets::Bucket, contexts::ScoopContext};
@@ -158,7 +158,7 @@ impl Repo {
 
         // Reset to ensure the working directory is clean
         self.git2.reset(
-            self.latest_commit()?.as_object(),
+            self.latest_commit_git2()?.as_object(),
             git2::ResetType::Hard,
             None,
         )?;
@@ -208,24 +208,39 @@ impl Repo {
     /// # Errors
     /// - No remote named "origin"
     /// - Missing head
-    pub fn latest_remote_commit(&self) -> Result<Oid> {
-        let mut remote = self
-            .origin_git2()
+    pub fn latest_remote_commit(&self) -> Result<ObjectId> {
+        let remote = self
+            .origin()
             .ok_or(Error::MissingRemote("origin".to_string()))?;
 
-        let connection = remote.connect_auth(Direction::Fetch, None, None)?;
+        let connection = remote.connect(gix::remote::Direction::Fetch)?;
+        let refs = connection
+            .ref_map(
+                gix::progress::Discard,
+                gix::remote::ref_map::Options::default(),
+            )?
+            .remote_refs;
 
         let current_branch = self.current_branch()?;
-        let head = connection
-            .list()?
+        let head = refs
             .iter()
-            .find(|head| {
-                let name = head.name();
-                name == format!("refs/heads/{current_branch}")
+            .find_map(|head| {
+                let (name, oid, peeled) = head.unpack();
+                if name == format!("refs/heads/{current_branch}") {
+                    if let Some(peeled) = peeled {
+                        Some(peeled)
+                    } else if let Some(oid) = oid {
+                        Some(oid)
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                }
             })
             .ok_or(Error::MissingHead)?;
 
-        Ok(head.oid())
+        Ok(head.to_owned())
     }
 
     /// Checks if the bucket is outdated
@@ -252,8 +267,17 @@ impl Repo {
     /// # Errors
     /// - Missing head
     /// - Missing latest commit
-    pub fn latest_commit(&self) -> Result<Commit<'_>> {
+    pub fn latest_commit_git2(&self) -> Result<Commit<'_>> {
         Ok(self.git2.head()?.peel_to_commit()?)
+    }
+
+    /// Get the latest commit
+    ///
+    /// # Errors
+    /// - Missing head
+    /// - Missing latest commit
+    pub fn latest_commit(&self) -> Result<gix::Commit<'_>> {
+        Ok(self.gitoxide.head()?.peel_to_commit_in_place()?)
     }
 
     /// Update the bucket by pulling any changes
