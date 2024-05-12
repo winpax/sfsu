@@ -4,7 +4,7 @@ use std::path::PathBuf;
 
 use serde::de::Visitor;
 
-pub(super) fn serialize<S>(path: &Option<PathBuf>, serializer: S) -> Result<S::Ok, S::Error>
+pub fn serialize<S>(path: &Option<PathBuf>, serializer: S) -> Result<S::Ok, S::Error>
 where
     S: serde::Serializer,
 {
@@ -52,7 +52,7 @@ impl<'de> Visitor<'de> for IsolatedPathVisitor {
     }
 }
 
-pub(super) fn deserialize<'de, D>(deserializer: D) -> Result<Option<PathBuf>, D::Error>
+pub fn deserialize<'de, D>(deserializer: D) -> Result<Option<PathBuf>, D::Error>
 where
     D: serde::Deserializer<'de>,
 {

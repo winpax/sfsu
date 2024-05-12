@@ -9,9 +9,12 @@ use serde_with::skip_serializing_none;
 use crate::{proxy::Proxy, Architecture};
 
 pub mod branch;
-pub mod isolated;
 pub mod repo;
 pub mod shim;
+
+mod defaults;
+mod isolated;
+mod skips;
 
 use skips::Skip;
 
@@ -208,6 +211,3 @@ impl Scoop {
         self.other = Map::new();
     }
 }
-
-mod defaults;
-mod skips;
