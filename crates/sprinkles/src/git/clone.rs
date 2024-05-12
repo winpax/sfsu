@@ -20,13 +20,11 @@
 
 #![allow(clippy::result_large_err)]
 
-use std::{path::Path, sync::atomic::AtomicBool};
+use std::path::Path;
 
-use gix::{
-    clone::PrepareFetch,
-    create::{self, Options as CreateOptions},
-    open::Options as OpenOptions,
-    Repository,
+use git2::{
+    build::{CheckoutBuilder, RepoBuilder},
+    FetchOptions, Progress, RemoteCallbacks,
 };
 
 pub use gix::progress;
@@ -41,6 +39,8 @@ pub enum Error {
     Fetch(#[from] gix::clone::fetch::Error),
     #[error("Failed to checkout main worktree: {0}")]
     Checkout(#[from] gix::clone::checkout::main_worktree::Error),
+    #[error("Git2 error: {0}")]
+    Git2(#[from] git2::Error),
     #[error("No pack received from remote")]
     NoPackReceived,
 }
@@ -52,34 +52,31 @@ pub type Result<T, E = Error> = std::result::Result<T, E>;
 ///
 /// # Errors
 /// - Git error
-pub fn clone<P>(url: &str, path: impl AsRef<Path>, pb: P) -> Result<Repository>
+pub fn clone<P>(
+    url: &str,
+    path: impl AsRef<Path>,
+    fetch_progress: fn(Progress<'_>) -> (),
+    checkout_progress: fn(Option<&Path>, usize, usize) -> (),
+) -> Result<git2::Repository>
 where
     P: gix::NestedProgress,
     P::SubProgress: 'static,
 {
-    let interrupt = AtomicBool::new(false);
+    let mut cb = RemoteCallbacks::new();
+    cb.transfer_progress(|stats| {
+        fetch_progress(stats);
+        true
+    });
+    let mut co = CheckoutBuilder::new();
+    co.progress(checkout_progress);
 
-    // Fetch the latest changes from the remote repository
-    let mut fetch = PrepareFetch::new(
-        url,
-        path,
-        create::Kind::WithWorktree,
-        CreateOptions::default(),
-        OpenOptions::default(),
-    )?;
+    let mut fo = FetchOptions::new();
+    fo.remote_callbacks(cb);
 
-    let (mut checkout, outcome) = fetch.fetch_then_checkout(pb, &interrupt)?;
-
-    match outcome.status {
-        gix::remote::fetch::Status::NoPackReceived { dry_run, .. } => {
-            if !dry_run {
-                return Err(Error::NoPackReceived);
-            }
-        }
-        gix::remote::fetch::Status::Change { .. } => {}
-    }
-
-    let (repo, _) = checkout.main_worktree(gix::progress::Discard, &interrupt)?;
+    let repo = RepoBuilder::new()
+        .fetch_options(fo)
+        .with_checkout(co)
+        .clone(url, path.as_ref())?;
 
     Ok(repo)
 }
