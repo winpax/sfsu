@@ -136,7 +136,7 @@ pub struct Scoop {
     pub use_isolated_path: Option<PathBuf>,
 
     /// The timestamp of the last scoop update
-    pub(crate) last_update: Option<String>,
+    pub last_update: Option<String>,
 
     #[serde(flatten)]
     /// Any other values in the config
