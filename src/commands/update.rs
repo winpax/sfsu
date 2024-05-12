@@ -23,7 +23,7 @@ impl super::Command for Args {
     async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
         const FINISH_MESSAGE: &str = "✅";
 
-        let progress_style = style(Some(ProgressOptions::Hide), Some(Message::Suffix(None)));
+        let progress_style = style(Some(ProgressOptions::Hide), Some(Message::suffix()));
 
         let buckets = Bucket::list_all(ctx)?;
 
