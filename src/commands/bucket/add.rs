@@ -1,10 +1,16 @@
-use std::time::Duration;
-
+use once_cell::sync::Lazy;
 use tokio::process::Command;
 
 use anyhow::Context;
 use clap::Parser;
-use sprinkles::{config, contexts::ScoopContext, progress::indicatif};
+use sprinkles::{
+    config,
+    contexts::ScoopContext,
+    progress::{
+        indicatif::{MultiProgress, ProgressBar},
+        style, ProgressOptions,
+    },
+};
 
 use crate::{abandon, calm_panic::CalmUnwrap};
 
@@ -47,18 +53,59 @@ impl super::Command for Args {
             abandon!("Bucket {name} already exists. Remove it first if you want to add it again: `sfsu bucket rm {name}`", name = self.name);
         }
 
+        println!("Cloning {} into {}", repo_url, dest_path.display());
+
         if self.disable_git {
-            let spinner = indicatif::ProgressBar::new_spinner();
-            spinner.set_message("Cloning repository");
-            spinner.enable_steady_tick(Duration::from_millis(100));
+            let default_style = style(Some(ProgressOptions::PosLen), None);
+            let pb = || ProgressBar::new(0).with_style(default_style.clone());
+
+            let fetch_progress = MultiProgress::new();
+            let recv_progress = Lazy::new(|| {
+                let bar = fetch_progress.add(pb());
+                bar.set_message("Receiving objects");
+                bar
+            });
+
+            let index_progress = Lazy::new(|| {
+                let bar = fetch_progress.add(pb());
+                bar.set_message("Indexing objects");
+                bar
+            });
+
+            let index_deltas = Lazy::new(|| {
+                let bar = fetch_progress.add(pb());
+                bar.set_message("Indexing deltas");
+                bar
+            });
+            let checkout_progress = Lazy::new(|| {
+                let bar = fetch_progress.add(pb());
+                bar.set_message("Checking out");
+                bar
+            });
 
             sprinkles::git::clone::clone(
                 &repo_url,
                 dest_path,
-                sprinkles::git::clone::progress::Discard,
-            )?;
+                |stats| {
+                    recv_progress.set_position(stats.received_objects() as u64);
+                    recv_progress.set_length(stats.total_objects() as u64);
 
-            spinner.finish_with_message("✅ Repository cloned");
+                    index_progress.set_position(stats.indexed_objects() as u64);
+                    index_progress.set_length(stats.total_objects() as u64);
+
+                    if stats.indexed_deltas() > 0 {
+                        index_deltas.set_position(stats.indexed_deltas() as u64);
+                        index_deltas.set_length(stats.total_deltas() as u64);
+                    }
+                },
+                |path, curr, total| {
+                    checkout_progress.set_position(curr as u64);
+                    checkout_progress.set_length(total as u64);
+                    if let Some(path) = path {
+                        checkout_progress.set_message(format!("Checking out {}", path.display()));
+                    }
+                },
+            )?;
         } else {
             let git_path = sprinkles::git::which().calm_expect("git not found");
 

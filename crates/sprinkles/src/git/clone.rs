@@ -52,16 +52,12 @@ pub type Result<T, E = Error> = std::result::Result<T, E>;
 ///
 /// # Errors
 /// - Git error
-pub fn clone<P>(
+pub fn clone(
     url: &str,
     path: impl AsRef<Path>,
-    fetch_progress: fn(Progress<'_>) -> (),
-    checkout_progress: fn(Option<&Path>, usize, usize) -> (),
-) -> Result<git2::Repository>
-where
-    P: gix::NestedProgress,
-    P::SubProgress: 'static,
-{
+    fetch_progress: impl Fn(Progress<'_>),
+    checkout_progress: impl Fn(Option<&Path>, usize, usize),
+) -> Result<git2::Repository> {
     let mut cb = RemoteCallbacks::new();
     cb.transfer_progress(|stats| {
         fetch_progress(stats);
