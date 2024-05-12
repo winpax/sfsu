@@ -12,7 +12,7 @@ members = ["crates/*"]
 package.license = "Apache-2.0"
 package.publish = false
 package.rust-version = "1.75.0"
-package.version = "1.13.0"
+package.version = "1.13.1"
 
 [workspace.dependencies]
 chrono = { version = ">=0.4.38", features = [
