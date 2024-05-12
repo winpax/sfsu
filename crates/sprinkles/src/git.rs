@@ -73,13 +73,16 @@ pub enum Error {
 pub type Result<T, E = Error> = std::result::Result<T, E>;
 
 /// A git repository
-pub struct Repo(Repository);
+pub struct Repo {
+    git2: Repository,
+    gitoxide: gix::Repository,
+}
 
 impl Repo {
     #[must_use]
     /// Get the underlying git repository
-    pub fn repo(&self) -> &Repository {
-        &self.0
+    pub fn git2(&self) -> &Repository {
+        &self.git2
     }
 
     /// Convert into a gitoxide repository
@@ -87,17 +90,8 @@ impl Repo {
     /// # Errors
     /// - Git path could not be found
     /// - Gitoxide error
-    pub fn to_gitoxide(&self) -> Result<gix::Repository> {
-        let git_path = self.0.path();
-
-        let mut repo: gix::Repository = gix::ThreadSafeRepository::open(git_path)
-            .map_err(errors::GitoxideError::from)?
-            .into();
-
-        // 64 MiB cache
-        repo.object_cache_size(1024 * 1024 * 64);
-
-        Ok(repo)
+    pub fn gitoxide(&self) -> &gix::Repository {
+        &self.gitoxide
     }
 
     /// Open the repository from the bucket path
@@ -105,9 +99,10 @@ impl Repo {
     /// # Errors
     /// - The bucket could not be opened as a repository
     pub fn from_bucket(bucket: &Bucket) -> Result<Self> {
-        let repo = Repository::open(bucket.path())?;
+        let git2 = Repository::open(bucket.path())?;
+        let gitoxide = gix::open(bucket.path())?;
 
-        Ok(Self(repo))
+        Ok(Self { git2, gitoxide })
     }
 
     /// Open Scoop app repository
@@ -116,15 +111,16 @@ impl Repo {
     /// - The Scoop app could not be opened as a repository
     pub fn scoop_app<C>(context: &impl ScoopContext<C>) -> Result<Self> {
         let scoop_path = context.apps_path().join("scoop").join("current");
-        let repo = Repository::open(scoop_path)?;
+        let git2 = Repository::open(&scoop_path)?;
+        let gitoxide = gix::open(&scoop_path)?;
 
-        Ok(Self(repo))
+        Ok(Self { git2, gitoxide })
     }
 
     #[must_use]
     /// Get the origin remote
     pub fn origin(&self) -> Option<Remote<'_>> {
-        self.0.find_remote("origin").ok()
+        self.git2.find_remote("origin").ok()
     }
 
     /// Checkout to another branch
@@ -135,11 +131,11 @@ impl Repo {
     /// - No remote named "origin"
     pub fn checkout(&self, branch: &str) -> Result<()> {
         let branch = format!("refs/heads/{branch}");
-        self.0.set_head(&branch)?;
-        self.0.checkout_head(None)?;
+        self.git2.set_head(&branch)?;
+        self.git2.checkout_head(None)?;
 
         // Reset to ensure the working directory is clean
-        self.0.reset(
+        self.git2.reset(
             self.latest_commit()?.as_object(),
             git2::ResetType::Hard,
             None,
@@ -153,7 +149,7 @@ impl Repo {
     /// # Errors
     /// - No active branch
     pub fn current_branch(&self) -> Result<String> {
-        self.0
+        self.git2
             .head()?
             .shorthand()
             .ok_or(Error::NoActiveBranch)
@@ -171,7 +167,7 @@ impl Repo {
         // Fetch the latest changes from the remote repository
         let mut fetch_options = FetchOptions::new();
         fetch_options.update_fetchhead(true);
-        let mut remote = self.0.find_remote("origin")?;
+        let mut remote = self.git2.find_remote("origin")?;
         remote.fetch(&[current_branch], Some(&mut fetch_options), None)?;
 
         Ok(())
@@ -215,7 +211,7 @@ impl Repo {
             "{}/{} from repo '{}'",
             head,
             local_head.id(),
-            self.0.path().display()
+            self.git2.path().display()
         );
 
         Ok(local_head.id() != head)
@@ -227,7 +223,7 @@ impl Repo {
     /// - Missing head
     /// - Missing latest commit
     pub fn latest_commit(&self) -> Result<Commit<'_>> {
-        Ok(self.0.head()?.peel_to_commit()?)
+        Ok(self.git2.head()?.peel_to_commit()?)
     }
 
     /// Update the bucket by pulling any changes
@@ -295,7 +291,7 @@ impl Repo {
         &self,
         stats_cb: Option<ProgressCallback<'_>>,
     ) -> Result<Vec<String>> {
-        let repo = self.to_gitoxide()?;
+        let repo = self.gitoxide();
 
         let current_commit = repo.head_commit()?;
 
@@ -347,7 +343,7 @@ impl Repo {
         let mut command = Command::new(git_path);
 
         command
-            .current_dir(self.0.path().parent().expect("parent dir in .git path"))
+            .current_dir(self.git2.path().parent().expect("parent dir in .git path"))
             .arg("-C")
             .arg(cd)
             .arg("log")

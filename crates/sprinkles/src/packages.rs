@@ -774,7 +774,7 @@ impl Manifest {
 
         let manifest_path = format!("bucket/{}.json", self.name);
 
-        let diff = repo.repo().diff_tree_to_tree(
+        let diff = repo.git2().diff_tree_to_tree(
             Some(&parent_tree),
             Some(&tree),
             Some(diff_options.pathspec(&manifest_path)),
@@ -798,10 +798,11 @@ impl Manifest {
     ) -> Result<(Option<String>, Option<String>)> {
         let bucket = Bucket::from_name(ctx, &self.bucket)?;
 
-        let repo = Repo::from_bucket(&bucket)?.to_gitoxide()?;
-        let latest_commit = repo.head_commit().map_err(git::Error::from)?;
+        let repo = Repo::from_bucket(&bucket)?;
+        let gitoxide = repo.gitoxide();
+        let latest_commit = gitoxide.head_commit().map_err(git::Error::from)?;
 
-        let revwalk = repo
+        let revwalk = gitoxide
             .rev_walk([latest_commit.id])
             .sorting(Sorting::ByCommitTimeNewestFirst);
 
