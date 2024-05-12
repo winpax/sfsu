@@ -3,8 +3,8 @@
 use serde::Serialize;
 
 use crate::{
-    output::wrappers::{alias_vec::AliasVec, bool::NicerBool},
     packages::manifest::PackageLicense,
+    wrappers::{alias_vec::AliasVec, bool::NicerBool},
 };
 
 #[derive(Debug, Clone, Serialize)]

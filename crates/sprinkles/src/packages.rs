@@ -21,7 +21,7 @@ use crate::{
     contexts::ScoopContext,
     git::{self, errors, Repo},
     let_chain,
-    output::wrappers::{author::Author, time::NicerTime},
+    wrappers::{author::Author, time::NicerTime},
     Architecture,
 };
 
