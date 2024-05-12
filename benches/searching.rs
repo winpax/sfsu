@@ -28,30 +28,6 @@ fn criterion_benchmark(c: &mut Criterion) {
         })
     });
 
-    c.bench_function("parsing output", |b| {
-        for bucket in Bucket::list_all(&ctx).unwrap() {
-            b.iter_batched(
-                || bucket.list_packages_unchecked().unwrap(),
-                |ref bucket_contents| {
-                    bucket_contents
-                        .par_iter()
-                        .filter_map(|manifest| {
-                            manifest.parse_output(
-                                &ctx,
-                                bucket.name(),
-                                false,
-                                &pattern,
-                                black_box(SearchMode::Name),
-                                Architecture::ARCH,
-                            )
-                        })
-                        .collect::<Vec<_>>()
-                },
-                BatchSize::SmallInput,
-            )
-        }
-    });
-
     c.bench_function("listing packages unchecked", |b| {
         for bucket in Bucket::list_all(&ctx).unwrap() {
             b.iter_batched(
