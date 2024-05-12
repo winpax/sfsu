@@ -85,8 +85,6 @@ Before you get started make sure you
 - Run `just setup`
 - Run `cargo build` to build the project
 
-The build instructions can be found [in the wiki](https://github.com/winpax/sfsu/wiki/Building)
-
 ## Long Term Goals
 
 I have a couple of long term goals.

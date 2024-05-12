@@ -130,7 +130,7 @@ include Setup of env, IDE and typical getting started instructions?
 
 -->
 
-Instructions are available in the [wiki](https://github.com/winpax/sfsu/wiki/Building).
+Instructions are available in the [README](README.md).
 
 <!-- ### Improving The Documentation -->
 
