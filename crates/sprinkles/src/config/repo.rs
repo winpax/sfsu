@@ -15,6 +15,12 @@ impl ScoopRepo {
     pub fn url(&self) -> &str {
         &self.0
     }
+
+    #[must_use]
+    /// Get the url to the git repository containing the scoop adaptor's source code
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
 }
 
 impl Default for ScoopRepo {
