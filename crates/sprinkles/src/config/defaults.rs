@@ -1,5 +1,7 @@
 use std::path::PathBuf;
 
+use serde::{Deserialize, Deserializer};
+
 // pub fn default_scoop_repo() -> String {
 //     "https://github.com/ScoopInstaller/Scoop".into()
 // }
@@ -12,6 +14,14 @@ pub fn default_scoop_root_path() -> PathBuf {
     );
     path.push("scoop");
     path
+}
+
+pub fn deserialize_scoop_root_path<'de, D>(deserializer: D) -> Result<PathBuf, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let opt = Option::deserialize(deserializer)?;
+    Ok(opt.unwrap_or_else(default_scoop_root_path))
 }
 
 /// Gets the default scoop path

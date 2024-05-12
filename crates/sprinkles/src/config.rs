@@ -122,6 +122,7 @@ pub struct Scoop {
     /// Choose scoop shim build
     pub shim: ScoopShim,
 
+    #[serde(deserialize_with = "defaults::deserialize_scoop_root_path")]
     #[serde(default = "defaults::default_scoop_root_path")]
     /// Path to Scoop root directory
     pub root_path: PathBuf,
