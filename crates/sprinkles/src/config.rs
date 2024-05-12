@@ -13,30 +13,32 @@ pub mod isolated;
 pub mod repo;
 pub mod shim;
 
+use skips::Skip;
+
 #[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[allow(clippy::struct_excessive_bools)]
 /// Scoop configuration
 pub struct Scoop {
-    #[serde(default, skip_serializing_if = "skips::skip")]
+    #[serde(default, skip_serializing_if = "Skip::skip")]
     /// External 7zip (from path) will be used for archives extraction
     pub use_external_7zip: bool,
 
-    #[serde(default, skip_serializing_if = "skips::skip")]
+    #[serde(default, skip_serializing_if = "Skip::skip")]
     /// Prefer lessmsi utility over native msiexec
     pub use_lessmsi: bool,
 
-    #[serde(default, skip_serializing_if = "skips::skip")]
+    #[serde(default, skip_serializing_if = "Skip::skip")]
     /// The 'current' version alias will not be used. Shims and shortcuts will point to specific version instead
     pub no_junction: bool,
 
-    #[serde(default, skip_serializing_if = "skips::skip")]
+    #[serde(default, skip_serializing_if = "Skip::skip")]
     /// Git repository containing the scoop adaptor's source code
     ///
     /// This configuration is useful for custom forks of scoop, or a scoop replacement
     pub scoop_repo: repo::ScoopRepo,
 
-    #[serde(default, skip_serializing_if = "skips::skip")]
+    #[serde(default, skip_serializing_if = "Skip::skip")]
     /// Allow to use different branch than master
     ///
     /// Could be used for testing specific functionalities before released into all users
@@ -52,35 +54,35 @@ pub struct Scoop {
     ///   * To bypass the system proxy and connect directly, use 'none' (with no username or password)
     pub proxy: Option<Proxy>,
 
-    #[serde(default, skip_serializing_if = "skips::skip")]
+    #[serde(default, skip_serializing_if = "Skip::skip")]
     /// When a conflict is detected during updating, Scoop will auto-stash the uncommitted changes.
     /// (Default is `false`, which will abort the update)
     pub autostash_on_conflict: bool,
 
-    #[serde(default, skip_serializing_if = "skips::skip")]
+    #[serde(default, skip_serializing_if = "Skip::skip")]
     /// Allow to configure preferred architecture for application installation
     ///
     /// If not specified, architecture is determined by system
     pub default_architecture: Architecture,
 
-    #[serde(default, skip_serializing_if = "skips::skip")]
+    #[serde(default, skip_serializing_if = "Skip::skip")]
     /// Additional and detailed output will be shown
     pub debug: bool,
 
-    #[serde(default, skip_serializing_if = "skips::skip")]
+    #[serde(default, skip_serializing_if = "Skip::skip")]
     /// Force apps updating to bucket's version
     pub force_update: bool,
 
-    #[serde(default, skip_serializing_if = "skips::skip")]
+    #[serde(default, skip_serializing_if = "Skip::skip")]
     /// Show update log
     pub show_update_log: bool,
 
-    #[serde(default, skip_serializing_if = "skips::skip")]
+    #[serde(default, skip_serializing_if = "Skip::skip")]
     /// Displays the manifest of every app that's about to
     /// be installed, then asks user if they wish to proceed
     pub show_manifest: bool,
 
-    #[serde(default, skip_serializing_if = "skips::skip")]
+    #[serde(default, skip_serializing_if = "Skip::skip")]
     /// Choose scoop shim build
     pub shim: shim::ScoopShim,
 
@@ -109,7 +111,7 @@ pub struct Scoop {
     /// See: 'https://support.virustotal.com/hc/en-us/articles/115002088769-Please-give-me-an-API-key'
     pub virustotal_api_key: Option<String>,
 
-    #[serde(default, skip_serializing_if = "skips::skip")]
+    #[serde(default, skip_serializing_if = "Skip::skip")]
     /// When set to `false` (default), Scoop would stop its procedure immediately if it detects
     /// any target app process is running. Procedure here refers to reset/uninstall/update.
     ///
