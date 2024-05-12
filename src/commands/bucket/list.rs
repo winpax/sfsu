@@ -2,13 +2,10 @@ use anyhow::Context;
 use chrono::{DateTime, FixedOffset};
 use clap::Parser;
 use serde::Serialize;
-use sprinkles::{
-    buckets::Bucket,
-    config,
-    contexts::ScoopContext,
-    output::{self, wrappers::time::NicerTime},
-};
+use sprinkles::{buckets::Bucket, config, contexts::ScoopContext, wrappers::time::NicerTime};
 use tokio::task::JoinSet;
+
+use crate::output;
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {

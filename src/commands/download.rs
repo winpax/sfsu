@@ -1,11 +1,11 @@
 use clap::Parser;
-use indicatif::MultiProgress;
 
 use sprinkles::{
     cache::{Downloader, Handle},
     config,
     contexts::ScoopContext,
     packages::reference::Package,
+    progress::indicatif::MultiProgress,
     requests::AsyncClient,
     Architecture,
 };

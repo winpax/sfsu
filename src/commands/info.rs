@@ -4,10 +4,6 @@ use itertools::Itertools;
 use sprinkles::{
     config,
     contexts::ScoopContext,
-    output::{
-        structured::vertical::VTable,
-        wrappers::{alias_vec::AliasVec, bool::NicerBool, time::NicerTime},
-    },
     packages::{
         models::{
             info::PackageInfo,
@@ -15,10 +11,12 @@ use sprinkles::{
         },
         reference, Manifest, MergeDefaults,
     },
-    semver, Architecture,
+    semver,
+    wrappers::{bool::NicerBool, time::NicerTime},
+    Architecture,
 };
 
-use crate::abandon;
+use crate::{abandon, output::structured::vertical::VTable};
 
 #[derive(Debug, Clone, Parser)]
 #[allow(clippy::struct_excessive_bools)]
@@ -43,9 +41,6 @@ pub struct Args {
 
     #[clap(from_global)]
     json: bool,
-
-    #[clap(from_global)]
-    disable_git: bool,
 
     #[clap(long, help = "Disable updated info")]
     disable_updated: bool,
@@ -119,7 +114,7 @@ impl Args {
         let (updated_at, updated_by) = if self.disable_updated {
             (None, None)
         } else {
-            match manifest.last_updated_info(ctx, self.hide_emails, self.disable_git) {
+            match manifest.last_updated_info(ctx, self.hide_emails) {
                 Ok(v) => v,
                 Err(_) => match install_path {
                     Some(ref install_path) => {
@@ -148,10 +143,7 @@ impl Args {
                     AliasArray::NestedArray(StringArray::Array(bins)) => bins.join(" | "),
                     AliasArray::AliasArray(bins) => bins
                         .into_iter()
-                        .map(|bin_union| match bin_union {
-                            StringArray::Single(bin) => bin,
-                            StringArray::Array(mut bin_alias) => bin_alias.remove(0),
-                        })
+                        .map(|mut bin_alias| bin_alias.remove(0))
                         .join(" | "),
                 }),
             notes: manifest
@@ -159,7 +151,7 @@ impl Args {
                 .map(|notes| notes.to_string())
                 .unwrap_or_default(),
             installed: NicerBool::new(install_path.is_some()),
-            shortcuts: manifest.install_config.shortcuts.map(AliasVec::from_vec),
+            shortcuts: manifest.install_config.shortcuts.map(Into::into),
             updated_at,
             updated_by,
         };

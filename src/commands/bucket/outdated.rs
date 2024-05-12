@@ -1,13 +1,11 @@
 use clap::Parser;
 use itertools::Itertools;
-use sprinkles::{
-    buckets::Bucket,
-    config,
-    contexts::ScoopContext,
+use sprinkles::{buckets::Bucket, config, contexts::ScoopContext};
+
+use crate::{
+    commands::{self, DeprecationMessage, DeprecationWarning},
     output::sectioned::{Children, Section},
 };
-
-use crate::commands::{self, DeprecationMessage, DeprecationWarning};
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {

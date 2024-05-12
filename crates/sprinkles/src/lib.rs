@@ -27,7 +27,6 @@ pub mod git;
 pub mod hacks;
 #[cfg(feature = "manifest-hashes")]
 pub mod hash;
-pub mod output;
 pub mod packages;
 pub mod progress;
 pub mod proxy;
@@ -36,6 +35,7 @@ pub mod shell;
 #[cfg(not(feature = "v2"))]
 pub mod stream;
 pub mod version;
+pub mod wrappers;
 
 mod env;
 

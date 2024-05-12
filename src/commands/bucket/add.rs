@@ -4,7 +4,7 @@ use tokio::process::Command;
 
 use anyhow::Context;
 use clap::Parser;
-use sprinkles::{config, contexts::ScoopContext};
+use sprinkles::{config, contexts::ScoopContext, progress::indicatif};
 
 use crate::{abandon, calm_panic::CalmUnwrap};
 

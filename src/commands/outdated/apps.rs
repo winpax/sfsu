@@ -5,9 +5,10 @@ use sprinkles::{
     buckets::Bucket,
     config,
     contexts::ScoopContext,
-    output::structured::Structured,
     packages::models::{install, outdated},
 };
+
+use crate::output::structured::Structured;
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {

@@ -1,15 +1,12 @@
 use clap::Parser;
 
 use rayon::prelude::*;
-use sprinkles::{
-    buckets::Bucket,
-    config,
-    contexts::ScoopContext,
-    output::sectioned::{Children, Section},
-    packages::InstallManifest,
-};
+use sprinkles::{buckets::Bucket, config, contexts::ScoopContext, packages::InstallManifest};
 
-use crate::commands;
+use crate::{
+    commands,
+    output::sectioned::{Children, Section},
+};
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {

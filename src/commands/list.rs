@@ -1,9 +1,9 @@
 use clap::{Parser, ValueEnum};
 use rayon::prelude::*;
 
-use sprinkles::{
-    config, contexts::ScoopContext, output::structured::Structured, packages::MinInfo,
-};
+use sprinkles::{config, contexts::ScoopContext, packages::MinInfo};
+
+use crate::output::structured::Structured;
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {

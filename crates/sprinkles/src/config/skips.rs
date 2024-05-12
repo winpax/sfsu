@@ -12,11 +12,6 @@ impl<T: Default + Eq> Skip for T {
     }
 }
 
-#[inline]
-pub fn skip(value: &impl Skip) -> bool {
-    value.skip()
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -25,6 +20,6 @@ mod tests {
     fn test_skip() {
         let value = true;
 
-        assert!(!skip(&value));
+        assert!(!Skip::skip(&value));
     }
 }

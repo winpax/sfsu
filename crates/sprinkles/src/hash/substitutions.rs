@@ -114,7 +114,7 @@ impl Substitute for Vec<Vec<String>> {
     }
 }
 
-impl Substitute for AliasArray {
+impl Substitute for AliasArray<String> {
     fn into_substituted(self, params: &SubstitutionMap, regex_escape: bool) -> Self {
         match self {
             AliasArray::NestedArray(StringArray::Single(s)) => AliasArray::NestedArray(

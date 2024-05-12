@@ -35,16 +35,6 @@ impl<T> FromIterator<Section<T>> for Sections<T> {
 }
 
 impl<T> Sections<T> {
-    /// Create a section from a vector of children
-    pub fn from_vec(vec: Vec<Section<T>>) -> Self {
-        Self(vec)
-    }
-
-    /// Sort the section by title
-    pub fn sort(&mut self) {
-        self.0.sort_by(Section::cmp);
-    }
-
     /// Sort the section by title in parallel
     pub fn par_sort(&mut self)
     where
@@ -172,14 +162,6 @@ impl<T: Display> Text<T> {
     /// Create a new text section
     pub fn new(text: T) -> Self {
         Self(text)
-    }
-
-    /// Convert to a section
-    pub fn as_section(&self) -> Section<&T> {
-        Section {
-            title: None,
-            children: Children::Single(&self.0),
-        }
     }
 }
 

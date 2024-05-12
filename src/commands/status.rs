@@ -10,12 +10,13 @@ use sprinkles::{
     buckets::Bucket,
     config,
     contexts::ScoopContext,
-    output::{
-        sectioned::{Children, Section},
-        structured::Structured,
-    },
     packages::models::{install, status::Info},
-    progress::style,
+    progress::{indicatif::ProgressBar, style},
+};
+
+use crate::output::{
+    sectioned::{Children, Section},
+    structured::Structured,
 };
 
 #[derive(Debug, Copy, Clone, ValueEnum, ListVariants)]
@@ -44,7 +45,7 @@ impl super::Command for Args {
     async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> anyhow::Result<()> {
         let value = Arc::new(Mutex::new(Value::default()));
 
-        let pb = indicatif::ProgressBar::new(3).with_style(style(None, None));
+        let pb = ProgressBar::new(3).with_style(style(None, None));
 
         let commands: &[Command] = {
             if self.only.is_empty() {

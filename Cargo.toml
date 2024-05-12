@@ -26,11 +26,7 @@ chrono = { version = ">=0.4.38", features = [
 console = { version = "0.15", features = ["windows-console-colors"] }
 futures = "0.3"
 git2 = "0.18"
-indicatif = { version = "0.17", features = [
-    "improved_unicode",
-    "rayon",
-    "tokio",
-] }
+heck = "0.5"
 itertools = "0.12"
 log = { version = "0.4", features = ["std"] }
 quork = "0.7.0"
@@ -87,8 +83,8 @@ crossterm = "0.27.0"
 dialoguer = "0.11.0"
 futures.workspace = true
 git2.workspace = true
+heck.workspace = true
 human-panic = "2.0"
-indicatif.workspace = true
 itertools.workspace = true
 log = { workspace = true }
 open = "5.1"

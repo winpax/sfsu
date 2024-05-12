@@ -9,34 +9,39 @@ use serde_with::skip_serializing_none;
 use crate::{proxy::Proxy, Architecture};
 
 pub mod branch;
-pub mod isolated;
 pub mod repo;
 pub mod shim;
+
+mod defaults;
+mod isolated;
+mod skips;
+
+use skips::Skip;
 
 #[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[allow(clippy::struct_excessive_bools)]
 /// Scoop configuration
 pub struct Scoop {
-    #[serde(default, skip_serializing_if = "skips::skip")]
+    #[serde(default, skip_serializing_if = "Skip::skip")]
     /// External 7zip (from path) will be used for archives extraction
     pub use_external_7zip: bool,
 
-    #[serde(default, skip_serializing_if = "skips::skip")]
+    #[serde(default, skip_serializing_if = "Skip::skip")]
     /// Prefer lessmsi utility over native msiexec
     pub use_lessmsi: bool,
 
-    #[serde(default, skip_serializing_if = "skips::skip")]
+    #[serde(default, skip_serializing_if = "Skip::skip")]
     /// The 'current' version alias will not be used. Shims and shortcuts will point to specific version instead
     pub no_junction: bool,
 
-    #[serde(default, skip_serializing_if = "skips::skip")]
+    #[serde(default, skip_serializing_if = "Skip::skip")]
     /// Git repository containing the scoop adaptor's source code
     ///
     /// This configuration is useful for custom forks of scoop, or a scoop replacement
     pub scoop_repo: repo::ScoopRepo,
 
-    #[serde(default, skip_serializing_if = "skips::skip")]
+    #[serde(default, skip_serializing_if = "Skip::skip")]
     /// Allow to use different branch than master
     ///
     /// Could be used for testing specific functionalities before released into all users
@@ -52,40 +57,42 @@ pub struct Scoop {
     ///   * To bypass the system proxy and connect directly, use 'none' (with no username or password)
     pub proxy: Option<Proxy>,
 
-    #[serde(default, skip_serializing_if = "skips::skip")]
+    #[serde(default, skip_serializing_if = "Skip::skip")]
     /// When a conflict is detected during updating, Scoop will auto-stash the uncommitted changes.
     /// (Default is `false`, which will abort the update)
     pub autostash_on_conflict: bool,
 
-    #[serde(default, skip_serializing_if = "skips::skip")]
+    #[serde(default, skip_serializing_if = "Skip::skip")]
     /// Allow to configure preferred architecture for application installation
     ///
     /// If not specified, architecture is determined by system
     pub default_architecture: Architecture,
 
-    #[serde(default, skip_serializing_if = "skips::skip")]
+    #[serde(default, skip_serializing_if = "Skip::skip")]
     /// Additional and detailed output will be shown
     pub debug: bool,
 
-    #[serde(default, skip_serializing_if = "skips::skip")]
+    #[serde(default, skip_serializing_if = "Skip::skip")]
     /// Force apps updating to bucket's version
     pub force_update: bool,
 
-    #[serde(default, skip_serializing_if = "skips::skip")]
+    #[serde(default, skip_serializing_if = "Skip::skip")]
     /// Show update log
     pub show_update_log: bool,
 
-    #[serde(default, skip_serializing_if = "skips::skip")]
+    #[serde(default, skip_serializing_if = "Skip::skip")]
     /// Displays the manifest of every app that's about to
     /// be installed, then asks user if they wish to proceed
     pub show_manifest: bool,
 
-    #[serde(default, skip_serializing_if = "skips::skip")]
+    #[serde(default, skip_serializing_if = "Skip::skip")]
     /// Choose scoop shim build
     pub shim: shim::ScoopShim,
 
-    #[serde(deserialize_with = "defaults::deserialize_scoop_root_path")]
-    #[serde(default = "defaults::default_scoop_root_path")]
+    #[serde(
+        default = "defaults::default_scoop_root_path",
+        deserialize_with = "defaults::deserialize_scoop_root_path"
+    )]
     /// Path to Scoop root directory
     pub root_path: PathBuf,
 
@@ -107,7 +114,7 @@ pub struct Scoop {
     /// See: 'https://support.virustotal.com/hc/en-us/articles/115002088769-Please-give-me-an-API-key'
     pub virustotal_api_key: Option<String>,
 
-    #[serde(default, skip_serializing_if = "skips::skip")]
+    #[serde(default, skip_serializing_if = "Skip::skip")]
     /// When set to `false` (default), Scoop would stop its procedure immediately if it detects
     /// any target app process is running. Procedure here refers to reset/uninstall/update.
     ///
@@ -122,14 +129,19 @@ pub struct Scoop {
     /// Ref: https://docs.microsoft.com/dotnet/api/system.datetime.parse?view=netframework-4.5
     pub hold_update_until: Option<String>,
 
+    #[serde(
+        default,
+        serialize_with = "isolated::serialize",
+        deserialize_with = "isolated::deserialize"
+    )]
     /// When set to `true` (default), Scoop will use `SCOOP_PATH` environment variable to store apps' `PATH`s.
     ///
     /// When set to arbitrary non-empty string, Scoop will use that string as the environment variable name instead.
     /// This is useful when you want to isolate Scoop from the system `PATH`.
-    pub use_isolated_path: Option<isolated::IsolatedPath>,
+    pub use_isolated_path: Option<PathBuf>,
 
     /// The timestamp of the last scoop update
-    pub(crate) last_update: Option<String>,
+    pub last_update: Option<String>,
 
     #[serde(flatten)]
     /// Any other values in the config
@@ -197,35 +209,5 @@ impl Scoop {
     /// This will remove all fields that are not in the config struct
     pub fn make_strict(&mut self) {
         self.other = Map::new();
-    }
-}
-
-mod defaults;
-mod skips;
-
-#[cfg(test)]
-mod tests {
-    use std::{env, path::PathBuf};
-
-    use super::isolated::IsolatedPath;
-
-    #[test]
-    fn test_isolated_path_serde() {
-        let true_path = IsolatedPath::from(
-            env::var("SCOOP_PATH")
-                .map(PathBuf::from)
-                .unwrap_or_default(),
-        );
-
-        let custom_path = IsolatedPath::from(PathBuf::from("custom"));
-
-        let true_path_ser = serde_json::to_string(&true_path).unwrap();
-        let custom_path_ser = serde_json::to_string(&custom_path).unwrap();
-
-        let true_path_desere: IsolatedPath = serde_json::from_str(&true_path_ser).unwrap();
-        let custom_path_desere: IsolatedPath = serde_json::from_str(&custom_path_ser).unwrap();
-
-        assert_eq!(true_path, true_path_desere);
-        assert_eq!(custom_path, custom_path_desere);
     }
 }

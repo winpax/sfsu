@@ -2,6 +2,8 @@
 
 mod gitoxide;
 
+pub use indicatif;
+
 use std::{
     fmt::Display,
     sync::{
@@ -25,19 +27,53 @@ pub enum ProgressOptions {
     Hide,
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Default, Copy, Clone, PartialEq, Eq)]
 /// Message position
-pub enum Message<'a> {
-    /// Before progress bar
-    Prefix(Option<&'a str>),
-    /// After progress bar
-    Suffix(Option<&'a str>),
+pub struct Message<'a> {
+    message: Option<&'a str>,
+    position: MessagePosition,
 }
 
-impl<'a> Default for Message<'a> {
-    fn default() -> Self {
-        Message::Prefix(None)
+impl<'a> Message<'a> {
+    #[must_use]
+    /// Construct a new prefix message
+    pub fn prefix() -> Self {
+        Self {
+            message: None,
+            position: MessagePosition::Prefix,
+        }
     }
+
+    #[must_use]
+    /// Construct a new suffix message
+    pub fn suffix() -> Self {
+        Self {
+            message: None,
+            position: MessagePosition::Suffix,
+        }
+    }
+
+    #[must_use]
+    /// Add a message to the message
+    ///
+    /// By default the message will be "{msg}",
+    /// which will be interpolated by [`indicatif`] with the provided message
+    pub fn with_message(self, message: &'a str) -> Self {
+        Self {
+            message: Some(message),
+            position: self.position,
+        }
+    }
+}
+
+#[derive(Debug, Default, Copy, Clone, PartialEq, Eq)]
+/// Message position
+pub enum MessagePosition {
+    #[default]
+    /// Before progress bar
+    Prefix,
+    /// After progress bar
+    Suffix,
 }
 
 impl<'a> Message<'a> {
@@ -56,19 +92,19 @@ struct MessageDisplay<'a> {
 
 impl<'a> Display for MessageDisplay<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self.message {
-            Message::Prefix(message) => {
+        match self.message.position {
+            MessagePosition::Prefix => {
                 if self.prefix {
-                    write!(f, "{}", message.unwrap_or("{msg}"))
+                    write!(f, "{}", self.message.message.unwrap_or("{msg}"))
                 } else {
                     Ok(())
                 }
             }
-            Message::Suffix(message) => {
+            MessagePosition::Suffix => {
                 if self.prefix {
                     Ok(())
                 } else {
-                    write!(f, "{}", message.unwrap_or("{msg}"))
+                    write!(f, "{}", self.message.message.unwrap_or("{msg}"))
                 }
             }
         }

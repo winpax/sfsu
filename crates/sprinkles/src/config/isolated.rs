@@ -1,56 +1,29 @@
 //! The path to use for Scoop instead of the system path
 
-use serde::{de::Visitor, Deserialize, Serialize};
+use std::path::PathBuf;
 
-use std::path::{Path, PathBuf};
+use serde::de::Visitor;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-/// The path to use for Scoop instead of the system path
-pub struct IsolatedPath(PathBuf);
-
-impl From<PathBuf> for IsolatedPath {
-    fn from(path: PathBuf) -> Self {
-        Self(path)
-    }
-}
-
-impl From<&PathBuf> for IsolatedPath {
-    fn from(path: &PathBuf) -> Self {
-        Self(path.clone())
-    }
-}
-
-impl From<&Path> for IsolatedPath {
-    fn from(path: &Path) -> Self {
-        Self(path.to_path_buf())
-    }
-}
-
-impl AsRef<Path> for IsolatedPath {
-    fn as_ref(&self) -> &Path {
-        self.0.as_path()
-    }
-}
-
-impl Serialize for IsolatedPath {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        let path = self.0.as_path();
+pub fn serialize<S>(path: &Option<PathBuf>, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+{
+    if let Some(path) = path {
         if let Some(scoop_path_env) = crate::env::paths::scoop_path() {
-            if path == scoop_path_env {
+            if path == &scoop_path_env {
                 return serializer.serialize_bool(true);
             }
         }
 
         serializer.serialize_str(&path.display().to_string())
+    } else {
+        serializer.serialize_none()
     }
 }
 
 struct IsolatedPathVisitor;
 impl<'de> Visitor<'de> for IsolatedPathVisitor {
-    type Value = IsolatedPath;
+    type Value = Option<PathBuf>;
 
     fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         formatter.write_str("true or a custom variable name")
@@ -61,7 +34,7 @@ impl<'de> Visitor<'de> for IsolatedPathVisitor {
         E: serde::de::Error,
     {
         if v {
-            Ok(IsolatedPath(crate::env::paths::scoop_path().unwrap()))
+            Ok(Some(crate::env::paths::scoop_path().unwrap()))
         } else {
             Err(serde::de::Error::custom("expected true"))
         }
@@ -74,16 +47,14 @@ impl<'de> Visitor<'de> for IsolatedPathVisitor {
         match v {
             "true" => self.visit_bool(true),
             "false" => self.visit_bool(false),
-            _ => Ok(IsolatedPath(PathBuf::from(v))),
+            _ => Ok(Some(PathBuf::from(v))),
         }
     }
 }
 
-impl<'de> Deserialize<'de> for IsolatedPath {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        deserializer.deserialize_str(IsolatedPathVisitor)
-    }
+pub fn deserialize<'de, D>(deserializer: D) -> Result<Option<PathBuf>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    deserializer.deserialize_option(IsolatedPathVisitor)
 }

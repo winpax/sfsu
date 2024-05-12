@@ -1,14 +1,11 @@
 use clap::Parser;
 
-use sprinkles::{
-    buckets::Bucket,
-    config,
-    contexts::ScoopContext,
-    output::sectioned::{Children, Section, Sections, Text},
-    packages::Manifest,
-};
+use sprinkles::{buckets::Bucket, config, contexts::ScoopContext, packages::Manifest};
 
-use super::{DeprecationMessage, DeprecationWarning};
+use crate::{
+    commands::{DeprecationMessage, DeprecationWarning},
+    output::sectioned::{Children, Section, Sections, Text},
+};
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {

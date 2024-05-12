@@ -6,9 +6,7 @@ use itertools::Itertools;
 use serde::Serialize;
 use serde_json::{Map, Value};
 
-use crate::inline_const;
-
-use super::wrappers::header::Header;
+use sprinkles::{hacks::inline_const::inline_const, wrappers::header::Header};
 
 pub mod vertical;
 

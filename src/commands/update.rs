@@ -1,6 +1,5 @@
 use anyhow::Context;
 use clap::Parser;
-use indicatif::{MultiProgress, ProgressBar, ProgressFinish};
 use itertools::Itertools;
 use rayon::prelude::*;
 
@@ -9,9 +8,13 @@ use sprinkles::{
     config::{self, Scoop as ScoopConfig},
     contexts::ScoopContext,
     git::__stats_callback,
-    output::sectioned::{Children, Section},
-    progress::{style, Message, ProgressOptions},
+    progress::{
+        indicatif::{MultiProgress, ProgressBar, ProgressFinish},
+        style, Message, ProgressOptions,
+    },
 };
+
+use crate::output::sectioned::{Children, Section};
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
@@ -23,7 +26,7 @@ impl super::Command for Args {
     async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
         const FINISH_MESSAGE: &str = "✅";
 
-        let progress_style = style(Some(ProgressOptions::Hide), Some(Message::Suffix(None)));
+        let progress_style = style(Some(ProgressOptions::Hide), Some(Message::suffix()));
 
         let buckets = Bucket::list_all(ctx)?;
 

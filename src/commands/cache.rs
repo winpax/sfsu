@@ -5,7 +5,7 @@ use clap::{Parser, Subcommand};
 use regex::Regex;
 use serde::Serialize;
 use sfsu_derive::Runnable;
-use sprinkles::{config, contexts::ScoopContext, output::wrappers::sizes::Size};
+use sprinkles::{config, contexts::ScoopContext, wrappers::sizes::Size};
 use tokio::task::JoinSet;
 
 mod rm;

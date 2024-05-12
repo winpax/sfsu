@@ -31,7 +31,7 @@ impl super::Command for Args {
             let output = serde_json::to_string_pretty(&known_buckets)?;
             println!("{output}");
         } else {
-            let structured = sprinkles::output::structured::Structured::new(&known_buckets);
+            let structured = crate::output::structured::Structured::new(&known_buckets);
 
             println!("{structured}");
         }

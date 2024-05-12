@@ -1,11 +1,10 @@
 use clap::Parser;
-use sprinkles::{
-    config,
-    contexts::ScoopContext,
-    output::{structured::Structured, wrappers::sizes::Size},
-};
+use sprinkles::{config, contexts::ScoopContext, wrappers::sizes::Size};
 
-use crate::{commands::Command, output::colours::eprintln_bright_yellow};
+use crate::{
+    commands::Command,
+    output::{colours::eprintln_bright_yellow, structured::Structured},
+};
 
 use super::CacheEntry;
 
