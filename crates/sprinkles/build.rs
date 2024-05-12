@@ -7,7 +7,8 @@ fn get_known_buckets() -> Result<String, Box<dyn Error>> {
     let body: serde_json::Value = response.json()?;
     let buckets = body.as_object().unwrap();
 
-    let mut output = String::new();
+    let mut output = "#![allow(clippy::unreadable-literal)]\n\n".to_string();
+
     for bucket in buckets {
         let name = bucket.0;
         let url = bucket.1.as_str().unwrap();
@@ -21,11 +22,8 @@ fn get_known_buckets() -> Result<String, Box<dyn Error>> {
 
     let mut map = phf_codegen::Map::new();
 
-    for bucket in buckets {
-        let name = bucket.0;
-        let url = bucket.1.as_str().unwrap();
-
-        map.entry(name, &format!("\"{}\"", url));
+    for (name, _) in buckets {
+        map.entry(name, &heck::AsShoutySnakeCase(name).to_string());
     }
 
     output += &format!(
