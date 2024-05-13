@@ -6,7 +6,6 @@ use std::{
 };
 
 use chrono::{DateTime, Local};
-use git2::Commit;
 use gix::{object::tree::diff::Action, traverse::commit::simple::Sorting};
 use quork::traits::truthy::ContainsTruth as _;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
@@ -766,9 +765,9 @@ impl Manifest {
 
     #[must_use]
     /// Check if the commit's message matches the name of the manifest
-    pub fn commit_message_matches(&self, commit: &Commit<'_>) -> bool {
-        if let Some(message) = commit.message() {
-            message.starts_with(&self.name)
+    pub fn commit_message_matches(&self, commit: &gix::Commit<'_>) -> bool {
+        if let Ok(message) = commit.message() {
+            message.summary().to_string().starts_with(&self.name)
         } else {
             false
         }
