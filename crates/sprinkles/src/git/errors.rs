@@ -32,6 +32,10 @@ pub enum GitoxideError {
     GitoxidePeelCommit(#[from] gix::head::peel::to_commit::Error),
     #[error("Gitoxide error: {0}")]
     GitoxideRefMap(#[from] gix::remote::ref_map::Error),
+    #[error("Gitoxide error: {0}")]
+    GitoxidePrepareFetch(#[from] gix::remote::fetch::prepare::Error),
+    #[error("Gitoxide error: {0}")]
+    GitoxideFetch(#[from] gix::remote::fetch::Error),
 }
 
 impl<T> From<T> for super::Error

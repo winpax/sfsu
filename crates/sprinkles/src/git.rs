@@ -5,10 +5,11 @@ use std::{
     fmt::Display,
     path::{Path, PathBuf},
     process::Command,
+    sync::atomic::AtomicBool,
 };
 
-use git2::{Commit, FetchOptions, Progress, Repository};
-use gix::{traverse::commit::simple::Sorting, ObjectId};
+use git2::{Commit, Progress};
+use gix::{remote::ref_map, traverse::commit::simple::Sorting, ObjectId, Repository};
 use indicatif::ProgressBar;
 
 use crate::{buckets::Bucket, contexts::ScoopContext};
@@ -79,14 +80,14 @@ pub type Result<T, E = Error> = std::result::Result<T, E>;
 
 /// A git repository
 pub struct Repo {
-    git2: Repository,
-    gitoxide: gix::Repository,
+    git2: git2::Repository,
+    gitoxide: Repository,
 }
 
 impl Repo {
     #[must_use]
     /// Get the underlying git repository
-    pub fn git2(&self) -> &Repository {
+    pub fn git2(&self) -> &git2::Repository {
         &self.git2
     }
 
@@ -95,7 +96,7 @@ impl Repo {
     /// # Errors
     /// - Git path could not be found
     /// - Gitoxide error
-    pub fn gitoxide(&self) -> &gix::Repository {
+    pub fn gitoxide(&self) -> &Repository {
         &self.gitoxide
     }
 
@@ -105,7 +106,7 @@ impl Repo {
     /// - The path could not be opened as a repository
     pub fn from_path(path: impl AsRef<Path>) -> Result<Self> {
         let gitoxide = gix::open(path.as_ref())?;
-        let git2 = Repository::open(path)?;
+        let git2 = git2::Repository::open(path)?;
 
         Ok(Self { git2, gitoxide })
     }
@@ -115,7 +116,7 @@ impl Repo {
     /// # Errors
     /// - The bucket could not be opened as a repository
     pub fn from_bucket(bucket: &Bucket) -> Result<Self> {
-        let git2 = Repository::open(bucket.path())?;
+        let git2 = git2::Repository::open(bucket.path())?;
         let gitoxide = gix::open(bucket.path())?;
 
         Ok(Self { git2, gitoxide })
@@ -127,7 +128,7 @@ impl Repo {
     /// - The Scoop app could not be opened as a repository
     pub fn scoop_app<C>(context: &impl ScoopContext<C>) -> Result<Self> {
         let scoop_path = context.apps_path().join("scoop").join("current");
-        let git2 = Repository::open(&scoop_path)?;
+        let git2 = git2::Repository::open(&scoop_path)?;
         let gitoxide = gix::open(&scoop_path)?;
 
         Ok(Self { git2, gitoxide })
@@ -185,16 +186,19 @@ impl Repo {
     /// # Errors
     /// - No remote named "origin"
     /// - No active branch
-    pub fn fetch(&self) -> Result<()> {
-        let current_branch = self.current_branch()?;
+    pub fn fetch(&self) -> Result<gix::remote::fetch::Outcome> {
+        let remote = self
+            .origin()
+            .ok_or(Error::MissingRemote("origin".to_string()))?;
 
-        // Fetch the latest changes from the remote repository
-        let mut fetch_options = FetchOptions::new();
-        fetch_options.update_fetchhead(true);
-        let mut remote = self.git2.find_remote("origin")?;
-        remote.fetch(&[current_branch], Some(&mut fetch_options), None)?;
+        let connection = remote.connect(gix::remote::Direction::Fetch)?;
 
-        Ok(())
+        let fetch =
+            connection.prepare_fetch(gix::progress::Discard, ref_map::Options::default())?;
+
+        let outcome = fetch.receive(gix::progress::Discard, &AtomicBool::new(false))?;
+
+        Ok(outcome)
     }
 
     /// Get the latest commit in the remote repository
@@ -209,10 +213,7 @@ impl Repo {
 
         let connection = remote.connect(gix::remote::Direction::Fetch)?;
         let refs = connection
-            .ref_map(
-                gix::progress::Discard,
-                gix::remote::ref_map::Options::default(),
-            )?
+            .ref_map(gix::progress::Discard, ref_map::Options::default())?
             .remote_refs;
 
         let current_branch = self.current_branch()?;
