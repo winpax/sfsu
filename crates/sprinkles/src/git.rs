@@ -7,7 +7,7 @@ use std::{
     process::Command,
 };
 
-use git2::{Commit, FetchOptions, Progress, Remote, Repository};
+use git2::{Commit, FetchOptions, Progress, Repository};
 use gix::{traverse::commit::simple::Sorting, ObjectId};
 use indicatif::ProgressBar;
 
@@ -137,12 +137,6 @@ impl Repo {
     /// Get the origin remote
     pub fn origin(&self) -> Option<gix::Remote<'_>> {
         self.gitoxide.find_remote("origin").ok()
-    }
-
-    #[must_use]
-    /// Get the origin remote
-    pub fn origin_git2(&self) -> Option<Remote<'_>> {
-        self.git2.find_remote("origin").ok()
     }
 
     /// Checkout to another branch
