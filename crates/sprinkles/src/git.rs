@@ -63,6 +63,8 @@ pub fn __stats_callback(stats: &Progress<'_>, thin: bool, pb: &ProgressBar) {
 pub enum Error {
     #[error("Could not find the active branch (HEAD)")]
     NoActiveBranch,
+    #[error("Could not find the parent directory for the .git directory")]
+    GitParent,
     #[error("Git error: {0}")]
     Git2(#[from] git2::Error),
     #[error("Gitoxide error: {0}")]
@@ -251,7 +253,11 @@ impl Repo {
             "{}/{} from repo '{}'",
             head,
             local_head.id(),
-            self.git2.path().display()
+            self.gitoxide
+                .path()
+                .parent()
+                .ok_or(Error::GitParent)?
+                .display()
         );
 
         Ok(local_head.id() != head)
