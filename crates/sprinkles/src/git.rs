@@ -8,13 +8,12 @@ use std::{
     sync::atomic::AtomicBool,
 };
 
-use git2::{Commit, Progress};
-use gix::{remote::ref_map, traverse::commit::simple::Sorting, ObjectId, Repository};
+use gix::{remote::ref_map, traverse::commit::simple::Sorting, Commit, ObjectId, Repository};
 use indicatif::ProgressBar;
 
 use crate::{buckets::Bucket, contexts::ScoopContext};
 
-use self::pull::ProgressCallback;
+use pull::ProgressCallback;
 
 pub mod clone;
 pub mod errors;
@@ -38,7 +37,7 @@ pub fn which() -> which::Result<PathBuf> {
 ///
 /// This is meant primarily for internal sfsu use.
 /// You are welcome to use this yourself, but it will likely not meet your requirements.
-pub fn __stats_callback(stats: &Progress<'_>, thin: bool, pb: &ProgressBar) {
+pub fn __stats_callback(stats: &git2::Progress<'_>, thin: bool, pb: &ProgressBar) {
     if thin {
         pb.set_position(stats.indexed_objects() as u64);
         pb.set_length(stats.total_objects() as u64);
@@ -264,7 +263,7 @@ impl Repo {
     /// # Errors
     /// - Missing head
     /// - Missing latest commit
-    pub fn latest_commit_git2(&self) -> Result<Commit<'_>> {
+    pub fn latest_commit_git2(&self) -> Result<git2::Commit<'_>> {
         Ok(self.git2.head()?.peel_to_commit()?)
     }
 
@@ -273,7 +272,7 @@ impl Repo {
     /// # Errors
     /// - Missing head
     /// - Missing latest commit
-    pub fn latest_commit(&self) -> Result<gix::Commit<'_>> {
+    pub fn latest_commit(&self) -> Result<Commit<'_>> {
         Ok(self.gitoxide.head()?.peel_to_commit_in_place()?)
     }
 
