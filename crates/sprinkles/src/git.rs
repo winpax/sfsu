@@ -253,11 +253,7 @@ impl Repo {
             "{}/{} from repo '{}'",
             head,
             local_head.id(),
-            self.gitoxide
-                .path()
-                .parent()
-                .ok_or(Error::GitParent)?
-                .display()
+            self.path().ok_or(Error::GitParent)?.display()
         );
 
         Ok(local_head.id() != head)
@@ -355,6 +351,13 @@ impl Repo {
         Ok(changelog)
     }
 
+    /// Get the path to the git repository
+    ///
+    /// Will return `None` if the `.git` directory did not have a parent directory
+    pub fn path(&self) -> Option<&Path> {
+        self.gitoxide.path().parent()
+    }
+
     /// Equivalent of `git log -n {n} -s --format='{format}'`
     ///
     /// # Panics
@@ -373,7 +376,7 @@ impl Repo {
         let mut command = Command::new(git_path);
 
         command
-            .current_dir(self.git2.path().parent().expect("parent dir in .git path"))
+            .current_dir(self.path().expect("parent dir in .git path"))
             .arg("-C")
             .arg(cd)
             .arg("log")
