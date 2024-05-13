@@ -35,6 +35,8 @@ pub enum Error {
     MissingGitOutput,
     #[error("Could not find executable in path: {0}")]
     MissingInPath(#[from] which::Error),
+    #[error("Git error: {0}")]
+    GixCommit(#[from] gix::object::commit::Error),
     #[error("Invalid time. (time went backwards or way way way too far forwards (hello future! whats it like?))")]
     InvalidTime,
     #[error("Invalid timezone provided. (where are you?)")]
@@ -314,7 +316,7 @@ impl Bucket {
             .open_repo()?
             .origin()
             .ok_or(git::Error::MissingRemote("origin".to_string()))?
-            .url()
+            .url(gix::remote::Direction::Fetch)
             .map(std::string::ToString::to_string)
             .ok_or(git::Error::NonUtf8)?)
     }

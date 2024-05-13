@@ -48,22 +48,14 @@ impl Time {
     pub fn to_datetime(&self) -> Option<DateTime<FixedOffset>> {
         match self {
             Time::Git2(time) => {
-                let secs = time.seconds();
-                let offset = time.offset_minutes() * 60;
-
-                let utc_time = DateTime::from_timestamp(secs, 0)?;
-
-                let offset = FixedOffset::east_opt(offset)?;
+                let utc_time = DateTime::from_timestamp(time.seconds(), 0)?;
+                let offset = FixedOffset::east_opt(time.offset_minutes() * 60)?;
 
                 Some(utc_time.with_timezone(&offset))
             }
             Time::Gitoxide(time) => {
-                let secs = time.seconds;
-                let offset = time.offset * 60;
-
-                let utc_time = DateTime::from_timestamp(secs, 0)?;
-
-                let offset = FixedOffset::east_opt(offset)?;
+                let utc_time = DateTime::from_timestamp(time.seconds, 0)?;
+                let offset = FixedOffset::east_opt(time.offset)?;
 
                 Some(utc_time.with_timezone(&offset))
             }

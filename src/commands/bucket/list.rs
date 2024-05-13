@@ -28,7 +28,7 @@ impl BucketInfo {
         let updated_time = {
             let repo = bucket.open_repo()?;
             let latest_commit = repo.latest_commit()?;
-            let time = sprinkles::git::parity::Time::from(latest_commit.time());
+            let time = sprinkles::git::parity::Time::from(latest_commit.time()?);
 
             time.to_datetime().context("invalid time")?
         };
