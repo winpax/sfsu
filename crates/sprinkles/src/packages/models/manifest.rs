@@ -296,13 +296,11 @@ impl<T: Display> Display for AliasArray<T> {
                 debug!("wtf bro");
                 v.fmt(f)
             }
-            AliasArray::AliasArray(alias_array) => {
-                dbg!(alias_array
-                    .iter()
-                    .map(|alias| &alias[1])
-                    .format(", ")
-                    .fmt(f))
-            }
+            AliasArray::AliasArray(alias_array) => alias_array
+                .iter()
+                .map(|alias| &alias[1])
+                .format(", ")
+                .fmt(f),
         }
     }
 }
