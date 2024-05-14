@@ -23,7 +23,10 @@ use clap::Parser;
 
 use commands::Commands;
 use logging::Logger;
-use sprinkles::contexts::{AnyContext, Global, User};
+use sprinkles::contexts::{AnyContext, User};
+
+#[cfg(feature = "contexts")]
+use sprinkles::contexts::Global;
 
 mod versions {
     #![allow(clippy::needless_raw_string_hashes)]
