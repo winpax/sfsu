@@ -8,15 +8,17 @@ use std::{
     sync::atomic::AtomicBool,
 };
 
-use gix::{remote::ref_map, traverse::commit::simple::Sorting, Commit, ObjectId, Repository};
-use indicatif::ProgressBar;
+use gix::{
+    bstr::BStr, remote::ref_map, traverse::commit::simple::Sorting, Commit, ObjectId, Repository,
+};
 
-use crate::{buckets::Bucket, contexts::ScoopContext};
+use crate::{buckets::Bucket, config, contexts::ScoopContext};
 
 use pull::ProgressCallback;
 
 pub mod clone;
 pub mod errors;
+pub mod options;
 pub mod parity;
 mod pull;
 
@@ -30,30 +32,6 @@ mod pull;
 /// - The found path could not be canonicalized
 pub fn which() -> which::Result<PathBuf> {
     which::which("git")
-}
-
-#[doc(hidden)]
-/// Progress callback
-///
-/// This is meant primarily for internal sfsu use.
-/// You are welcome to use this yourself, but it will likely not meet your requirements.
-pub fn __stats_callback(stats: &git2::Progress<'_>, thin: bool, pb: &ProgressBar) {
-    if thin {
-        pb.set_position(stats.indexed_objects() as u64);
-        pb.set_length(stats.total_objects() as u64);
-
-        return;
-    }
-
-    if stats.received_objects() == stats.total_objects() {
-        pb.set_position(stats.indexed_deltas() as u64);
-        pb.set_length(stats.total_deltas() as u64);
-        pb.set_message("Resolving deltas");
-    } else if stats.total_objects() > 0 {
-        pb.set_position(stats.received_objects() as u64);
-        pb.set_length(stats.total_objects() as u64);
-        pb.set_message("Receiving objects");
-    }
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -135,10 +113,15 @@ impl Repo {
         Ok(Self { git2, gitoxide })
     }
 
+    /// Get a reference to a named remote
+    pub fn find_remote<'a>(&self, name: impl Into<&'a BStr>) -> Option<gix::Remote<'_>> {
+        self.gitoxide.find_remote(name).ok()
+    }
+
     #[must_use]
     /// Get the origin remote
     pub fn origin(&self) -> Option<gix::Remote<'_>> {
-        self.gitoxide.find_remote("origin").ok()
+        self.find_remote("origin")
     }
 
     /// Checkout to another branch
@@ -276,16 +259,6 @@ impl Repo {
         Ok(self.gitoxide.head()?.peel_to_commit_in_place()?)
     }
 
-    /// Update the bucket by pulling any changes
-    pub fn update(&self) {
-        unimplemented!()
-    }
-
-    /// Get the remote url of the bucket
-    pub fn get_remote(&self) {
-        unimplemented!()
-    }
-
     /// Pull the latest changes from the remote repository
     ///
     /// # Errors
@@ -295,10 +268,14 @@ impl Repo {
     /// - Missing head
     /// - Missing latest commit
     /// - Git error
-    pub fn pull(&self, stats_cb: Option<ProgressCallback<'_>>) -> Result<()> {
+    pub fn pull(
+        &self,
+        ctx: &impl ScoopContext<config::Scoop>,
+        stats_cb: Option<ProgressCallback<'_>>,
+    ) -> Result<()> {
         let current_branch = self.current_branch()?;
 
-        pull::pull(self, None, Some(current_branch.as_str()), stats_cb)?;
+        pull::pull(ctx, self, None, Some(current_branch.as_str()), stats_cb)?;
 
         Ok(())
     }
@@ -314,13 +291,14 @@ impl Repo {
     /// - Git error
     pub fn pull_with_changelog(
         &self,
+        ctx: &impl ScoopContext<config::Scoop>,
         stats_cb: Option<ProgressCallback<'_>>,
     ) -> Result<Vec<String>> {
         let repo = self.gitoxide();
 
         let current_commit = repo.head_commit()?;
 
-        pull::pull(self, None, Some(self.current_branch()?.as_str()), stats_cb)?;
+        self.pull(ctx, stats_cb)?;
 
         let post_pull_commit = repo.head_commit()?;
 

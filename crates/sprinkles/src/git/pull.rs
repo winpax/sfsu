@@ -18,31 +18,27 @@
  * Adapted by me (Juliette Cordor)
  */
 
-use std::str;
-
 use git2::Repository;
+
+use crate::{config, contexts::ScoopContext};
 
 pub type ProgressCallback<'a> = &'a dyn Fn(git2::Progress<'_>, bool) -> bool;
 
 fn do_fetch<'a>(
+    ctx: &impl ScoopContext<config::Scoop>,
     repo: &'a git2::Repository,
     refs: &[&str],
     remote: &'a mut git2::Remote<'_>,
     stats_cb: Option<ProgressCallback<'_>>,
 ) -> Result<git2::AnnotatedCommit<'a>, git2::Error> {
-    let mut cb = git2::RemoteCallbacks::new();
-
-    // Print out our transfer progress.
+    let mut fo = crate::git::options::fetch::FetchOptions::new(ctx);
     if let Some(stats_cb) = stats_cb.as_ref() {
-        cb.transfer_progress(|stats| stats_cb(stats, false));
+        fo.transfer_progress(|stats| stats_cb(stats, false));
     }
-
-    let mut fo = git2::FetchOptions::new();
-    fo.remote_callbacks(cb);
     // Always fetch all tags.
     // Perform a download and also update tips
-    fo.download_tags(git2::AutotagOption::All);
-    remote.fetch(refs, Some(&mut fo), None)?;
+    fo.as_git2_mut().download_tags(git2::AutotagOption::All);
+    remote.fetch(refs, Some(fo.as_git2_mut()), None)?;
 
     let stats = remote.stats();
 
@@ -163,6 +159,7 @@ fn do_merge<'a>(
 /// # Errors
 /// - git2 errors
 pub fn pull(
+    ctx: &impl ScoopContext<config::Scoop>,
     repo: &super::Repo,
     remote: Option<&str>,
     branch: Option<&str>,
@@ -171,7 +168,7 @@ pub fn pull(
     let remote_name = remote.unwrap_or("origin");
     let remote_branch = branch.unwrap_or("master");
     let mut remote = repo.git2().find_remote(remote_name)?;
-    do_fetch(repo.git2(), &[remote_branch], &mut remote, stats_cb)?;
+    do_fetch(ctx, repo.git2(), &[remote_branch], &mut remote, stats_cb)?;
 
     let oid = {
         let commit = repo.latest_remote_commit()?;

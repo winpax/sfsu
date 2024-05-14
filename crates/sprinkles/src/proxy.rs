@@ -59,6 +59,16 @@ impl TryFrom<Proxy> for reqwest::Proxy {
     }
 }
 
+impl<'a> From<Proxy> for git2::ProxyOptions<'a> {
+    fn from(value: Proxy) -> Self {
+        let mut proxy = git2::ProxyOptions::new();
+
+        proxy.url(&value.to_string());
+
+        proxy
+    }
+}
+
 impl FromStr for Proxy {
     type Err = Error;
 
