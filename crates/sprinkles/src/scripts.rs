@@ -3,14 +3,15 @@
 //! This module provides a way to create and run Powershell scripts
 //!
 //! # Example
-//! ```
-//! use sprinkles::scripts::PowershellScript;
+//! ```no_run
+//! # use sprinkles::{scripts::PowershellScript, contexts::{User, ScoopContext}};
 //!
 //! let script = PowershellScript::new("Write-Host 'Hello, world!'");
-//!
-//! let path = script.save_to("C:\\Users\\me\\Desktop").unwrap();
-//!
-//! let output = script.run().unwrap();
+//! # let ctx = User::new();
+//! let runner = script.save_to(ctx.scripts_path()).unwrap();
+//! # tokio::runtime::Runtime::new().unwrap().block_on(async {
+//! runner.run().await.unwrap();
+//! # });
 //! ```
 
 use std::{
@@ -48,8 +49,10 @@ pub struct PowershellScript {
 impl PowershellScript {
     #[must_use]
     /// Create a new powershell script
-    pub fn new(script: impl Into<Self>) -> Self {
-        script.into()
+    pub fn new(script: impl Into<String>) -> Self {
+        Self {
+            script: script.into(),
+        }
     }
 
     #[must_use]
@@ -64,10 +67,10 @@ impl PowershellScript {
     ///
     /// # Errors
     /// - The script could not be written to the directory
-    pub fn save_to(&self, directory: &Path) -> Result<ScriptRunner> {
+    pub fn save_to(&self, directory: impl AsRef<Path>) -> Result<ScriptRunner> {
         let hash = blake3::hash(self.script.as_bytes());
 
-        let file_path = directory.join(format!("{hash}.ps1"));
+        let file_path = directory.as_ref().join(format!("{hash}.ps1"));
 
         std::fs::write(&file_path, self.script.as_bytes())?;
 
@@ -77,7 +80,7 @@ impl PowershellScript {
 
 impl From<String> for PowershellScript {
     fn from(value: String) -> Self {
-        Self { script: value }
+        Self::new(value)
     }
 }
 
