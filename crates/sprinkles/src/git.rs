@@ -275,7 +275,7 @@ impl Repo {
     ) -> Result<()> {
         let current_branch = self.current_branch()?;
 
-        pull::pull_gitoxide(ctx, self, None, Some(current_branch.as_str()), stats_cb)?;
+        pull::pull(ctx, self, None, Some(current_branch.as_str()), stats_cb)?;
 
         Ok(())
     }
