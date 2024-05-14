@@ -11,6 +11,7 @@ use crossterm::{
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
     ExecutableCommand,
 };
+use itertools::Itertools;
 use parking_lot::Mutex;
 use ratatui::{
     backend::CrosstermBackend,
@@ -20,6 +21,8 @@ use ratatui::{
     widgets::{Block, Borders, List},
     Frame, Terminal,
 };
+use serde::Serialize;
+use serde_json::Map;
 use sprinkles::{config, contexts::ScoopContext};
 
 mod contributors {
@@ -107,11 +110,57 @@ impl<T: Display> Display for Url<T> {
 pub struct Args {
     #[clap(short, long, help = "Show packages")]
     packages: bool,
+
+    #[clap(from_global)]
+    json: bool,
 }
 
 impl super::Command for Args {
     async fn runner(self, _: &impl ScoopContext<config::Scoop>) -> anyhow::Result<()> {
-        if console::colors_enabled() {
+        if self.json {
+            #[derive(Debug, Clone, Serialize)]
+            struct JsonOutput<'a> {
+                contributors: Vec<Contributor<'a>>,
+
+                #[serde(skip_serializing_if = "Vec::is_empty")]
+                packages: Vec<Package<'a>>,
+            }
+
+            #[derive(Debug, Clone, Serialize)]
+            struct Contributor<'a> {
+                name: &'a str,
+                url: &'a str,
+            }
+
+            #[derive(Debug, Clone, Serialize)]
+            struct Package<'a> {
+                name: &'a str,
+                version: &'a str,
+            }
+
+            let contributors = contributors::CONTRIBUTORS
+                .into_iter()
+                .map(|(name, url)| Contributor { name, url })
+                .collect_vec();
+
+            let packages = if self.packages {
+                packages::PACKAGES
+                    .into_iter()
+                    .map(|(name, version)| Package { name, version })
+                    .collect_vec()
+            } else {
+                vec![]
+            };
+
+            let output = JsonOutput {
+                contributors,
+                packages,
+            };
+
+            let output = serde_json::to_string_pretty(&output)?;
+
+            println!("{output}");
+        } else if console::colors_enabled() {
             self.terminal_ui()?;
         } else {
             println!("{}", titles::TITLE);
