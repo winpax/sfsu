@@ -7,6 +7,7 @@
 pub mod colours;
 pub mod sectioned;
 pub mod structured;
+pub mod truncate;
 
 /// Opinionated whitespace for formatting
 pub const WHITESPACE: &str = "  ";

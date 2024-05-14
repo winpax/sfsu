@@ -8,60 +8,9 @@ use serde_json::{Map, Value};
 
 use sprinkles::{hacks::inline_const::inline_const, wrappers::header::Header};
 
+use super::truncate::OptionalTruncate;
+
 pub mod vertical;
-
-#[derive(Debug)]
-#[must_use = "OptionalTruncate is lazy, and only takes effect when used in formatting"]
-struct OptionalTruncate<T> {
-    data: T,
-    length: Option<usize>,
-    suffix: Option<&'static str>,
-}
-
-impl<T> OptionalTruncate<T> {
-    /// Construct a new [`OptionalTruncate`] from the provided data
-    pub fn new(data: T) -> Self {
-        Self {
-            data,
-            length: None,
-            suffix: None,
-        }
-    }
-
-    // Generally length would not be passed as an option,
-    // but given we are just forwarding what is passed to `Structured`,
-    // it works better here
-    pub fn with_length(self, length: Option<usize>) -> Self {
-        Self { length, ..self }
-    }
-
-    pub fn with_suffix(self, suffix: &'static str) -> Self {
-        Self {
-            suffix: Some(suffix),
-            ..self
-        }
-    }
-}
-
-impl<T: Display> Display for OptionalTruncate<T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if let Some(length) = self.length {
-            use quork::truncate::Truncate;
-
-            let mut truncation = Truncate::new(&self.data, length);
-
-            if let Some(ref suffix) = self.suffix {
-                truncation = truncation.with_suffix(suffix);
-            }
-
-            truncation.to_string();
-
-            truncation.fmt(f)
-        } else {
-            self.data.fmt(f)
-        }
-    }
-}
 
 const WALL: &str = " | ";
 const SUFFIX: &str = "...";
@@ -219,7 +168,6 @@ impl Display for Structured {
                             contestants.push(base[i]);
                             contestants.push(
                                 OptionalTruncate::new(element)
-                                    .with_length(self.max_length)
                                     // TODO: Fix suffix
                                     .with_suffix(SUFFIX)
                                     .to_string()
