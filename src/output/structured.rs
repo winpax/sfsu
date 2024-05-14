@@ -62,9 +62,8 @@ fn print_headers(
     for (i, header) in headers.iter().enumerate() {
         let header_size = access_lengths[i];
 
-        let truncated =
-            TruncateOrPad::new(Header::new(header).to_string(), header_size).to_string();
-        write!(f, "{truncated}{WALL}")?;
+        let truncated = TruncateOrPad::new(Header::new(header));
+        write!(f, "{truncated:header_size$}{WALL}")?;
     }
 
     Ok(())
@@ -173,9 +172,8 @@ impl Display for Structured {
         for (i, header) in headers.iter().enumerate() {
             let header_size = access_lengths[i];
 
-            let truncated =
-                TruncateOrPad::new(Header::new(header).to_string(), header_size).to_string();
-            write!(f, "{truncated}{WALL}")?;
+            let truncated = TruncateOrPad::new(Header::new(header));
+            write!(f, "{truncated:header_size$}{WALL}")?;
         }
 
         // Enter new row
@@ -207,12 +205,12 @@ impl Display for Structured {
                     })
                     .unwrap_or_default();
 
-                let with_suffix = TruncateOrPad::new(element, value_size);
+                let with_suffix = TruncateOrPad::new(element);
 
                 #[cfg(feature = "v2")]
-                write!(f, "{with_suffix}{WALL}")?;
+                write!(f, "{with_suffix:value_size$}{WALL}")?;
                 #[cfg(not(feature = "v2"))]
-                write!(f, "{with_suffix}{WALL}")?;
+                write!(f, "{with_suffix:value_size$}{WALL}")?;
             }
 
             // Enter new row
