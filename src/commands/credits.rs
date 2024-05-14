@@ -22,7 +22,6 @@ use ratatui::{
     Frame, Terminal,
 };
 use serde::Serialize;
-use serde_json::Map;
 use sprinkles::{config, contexts::ScoopContext};
 
 mod contributors {
