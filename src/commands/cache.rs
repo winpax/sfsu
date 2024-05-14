@@ -8,7 +8,7 @@ use sfsu_derive::Runnable;
 use sprinkles::{config, contexts::ScoopContext, wrappers::sizes::Size};
 use tokio::task::JoinSet;
 
-mod rm;
+mod remove;
 mod show;
 
 use crate::{abandon, commands::CommandRunner};
@@ -97,8 +97,9 @@ impl CacheEntry {
 enum Commands {
     /// List cache entries
     Show(show::Args),
+    #[clap(alias = "rm")]
     /// Remove cache entries
-    Rm(rm::Args),
+    Remove(remove::Args),
 }
 
 #[derive(Debug, Clone, Parser)]
