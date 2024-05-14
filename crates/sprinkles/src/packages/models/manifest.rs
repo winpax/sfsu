@@ -266,13 +266,18 @@ pub struct Suggest {}
 #[serde(untagged)]
 pub enum AliasArray<T> {
     NestedArray(TOrArrayOfTs<T>),
-    AliasArray(Vec<Vec<T>>),
+    AliasArray(Vec<TOrArrayOfTs<T>>),
 }
 
 impl<T> AliasArray<T> {
     #[must_use]
     pub fn from_vec(vec: Vec<Vec<T>>) -> Self {
-        Self::AliasArray(vec)
+        let output = vec
+            .into_iter()
+            .map(TOrArrayOfTs::from_vec_or_default)
+            .collect();
+
+        Self::AliasArray(output)
     }
 
     #[must_use]
@@ -284,7 +289,7 @@ impl<T> AliasArray<T> {
         match self {
             AliasArray::NestedArray(TOrArrayOfTs::Single(v)) => vec![v.to_owned()],
             AliasArray::NestedArray(TOrArrayOfTs::Array(v)) => v.to_owned(),
-            AliasArray::AliasArray(v) => v.iter().flatten().cloned().collect(),
+            AliasArray::AliasArray(v) => v.iter().cloned().flat_map(TOrArrayOfTs::to_vec).collect(),
         }
     }
 }
@@ -298,7 +303,10 @@ impl<T: Display> Display for AliasArray<T> {
             }
             AliasArray::AliasArray(alias_array) => alias_array
                 .iter()
-                .map(|alias| &alias[1])
+                .map(|alias| match alias {
+                    TOrArrayOfTs::Single(v) => v,
+                    TOrArrayOfTs::Array(v) => &v[1],
+                })
                 .format(", ")
                 .fmt(f),
         }
