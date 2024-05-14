@@ -8,27 +8,9 @@ use serde_json::{Map, Value};
 
 use sprinkles::{hacks::inline_const::inline_const, wrappers::header::Header};
 
+use super::{consts::WALL, truncate::TruncateOrPad};
+
 pub mod vertical;
-
-const WALL: &str = " | ";
-const SUFFIX: &str = "...";
-
-struct TruncateOrPad(String, usize);
-
-impl Display for TruncateOrPad {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let length = self.1 - WALL.len();
-        if self.0.len() > length {
-            write!(
-                f,
-                "{}{SUFFIX}",
-                &self.0[0..length.checked_sub(3).unwrap_or_default()]
-            )
-        } else {
-            write!(f, "{:width$}", self.0, width = length)
-        }
-    }
-}
 
 #[deprecated]
 #[allow(dead_code, unused_variables)]
@@ -80,7 +62,8 @@ fn print_headers(
     for (i, header) in headers.iter().enumerate() {
         let header_size = access_lengths[i];
 
-        let truncated = TruncateOrPad(Header::new(header).to_string(), header_size).to_string();
+        let truncated =
+            TruncateOrPad::new(Header::new(header).to_string(), header_size).to_string();
         write!(f, "{truncated}{WALL}")?;
     }
 
@@ -190,7 +173,8 @@ impl Display for Structured {
         for (i, header) in headers.iter().enumerate() {
             let header_size = access_lengths[i];
 
-            let truncated = TruncateOrPad(Header::new(header).to_string(), header_size).to_string();
+            let truncated =
+                TruncateOrPad::new(Header::new(header).to_string(), header_size).to_string();
             write!(f, "{truncated}{WALL}")?;
         }
 
@@ -223,7 +207,7 @@ impl Display for Structured {
                     })
                     .unwrap_or_default();
 
-                let with_suffix = TruncateOrPad(element, value_size);
+                let with_suffix = TruncateOrPad::new(element, value_size);
 
                 #[cfg(feature = "v2")]
                 write!(f, "{with_suffix}{WALL}")?;
