@@ -23,7 +23,7 @@ use clap::Parser;
 
 use commands::Commands;
 use logging::Logger;
-use sprinkles::contexts::{AnyContext, User};
+use sprinkles::contexts::{AnyContext, Global, User};
 
 mod versions {
     #![allow(clippy::needless_raw_string_hashes)]
@@ -104,7 +104,7 @@ pub(crate) static COLOR_ENABLED: AtomicBool = AtomicBool::new(true);
 impl From<&Args> for AnyContext {
     fn from(args: &Args) -> Self {
         if args.global {
-            AnyContext::Global(sprinkles::contexts::Global::new())
+            AnyContext::Global(Global::new())
         } else {
             AnyContext::User(User::new())
         }
