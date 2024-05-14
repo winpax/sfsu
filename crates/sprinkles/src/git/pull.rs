@@ -18,9 +18,10 @@
  * Adapted by me (Juliette Cordor)
  */
 
-use std::str;
+use std::{str, sync::atomic::AtomicBool};
 
 use git2::Repository;
+use gix::remote::ref_map;
 
 use crate::{config, contexts::ScoopContext};
 
@@ -178,4 +179,23 @@ pub fn pull(
     };
     let fetch_commit = repo.git2().find_commit(oid)?;
     Ok(do_merge(repo.git2(), remote_branch, &fetch_commit)?)
+}
+
+pub fn pull_gitoxide(
+    ctx: &impl ScoopContext<config::Scoop>,
+    repo: &super::Repo,
+    remote: Option<&str>,
+    branch: Option<&str>,
+    stats_cb: Option<ProgressCallback<'_>>,
+) -> super::Result<()> {
+    let remote_name = remote.unwrap_or("origin");
+    let remote = repo.find_remote(remote_name).expect("origin remote");
+
+    let connection = remote.connect(gix::remote::Direction::Fetch)?;
+    // TODO: Configure transport
+
+    let fetch = connection.prepare_fetch(gix::progress::Discard, ref_map::Options::default())?;
+    let _ = fetch.receive(gix::progress::Discard, &AtomicBool::new(false))?;
+
+    Ok(())
 }
