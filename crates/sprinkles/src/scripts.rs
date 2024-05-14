@@ -65,6 +65,9 @@ impl PowershellScript {
     ///
     /// The file will be named `<script-hash>.ps1`
     ///
+    /// Note that the file will not be overwritten if it already exists.
+    /// If you do not plan to re-use the script, you should clean it up yourself.
+    ///
     /// # Errors
     /// - The script could not be written to the directory
     pub fn save_to(&self, directory: impl AsRef<Path>) -> Result<ScriptRunner> {
@@ -72,7 +75,9 @@ impl PowershellScript {
 
         let file_path = directory.as_ref().join(format!("{hash}.ps1"));
 
-        std::fs::write(&file_path, self.script.as_bytes())?;
+        if !file_path.exists() {
+            std::fs::write(&file_path, self.script.as_bytes())?;
+        }
 
         ScriptRunner::from_path(file_path)
     }
