@@ -163,7 +163,7 @@ pub struct MinInfo {
     /// The package's source (eg. bucket name)
     pub source: String,
     /// The last time the package was updated
-    pub updated: NicerTime<DateTime<Local>>,
+    pub updated: NicerTime<Local>,
     /// The package's notes
     pub notes: String,
 }
