@@ -8,8 +8,6 @@ use serde_json::{Map, Value};
 
 use sprinkles::{hacks::inline_const::inline_const, wrappers::header::Header};
 
-use super::truncate::OptionalTruncate;
-
 pub mod vertical;
 
 const WALL: &str = " | ";
@@ -166,14 +164,7 @@ impl Display for Structured {
 
                             let mut contestants = contestants.clone();
                             contestants.push(base[i]);
-                            contestants.push(
-                                OptionalTruncate::new(element)
-                                    // TODO: Fix suffix
-                                    .with_suffix(SUFFIX)
-                                    .to_string()
-                                    .len()
-                                    + WALL.len(),
-                            );
+                            contestants.push(element.len() + WALL.len());
 
                             contestants.into_iter().max().unwrap()
                         })

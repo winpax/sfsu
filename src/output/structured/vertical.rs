@@ -6,8 +6,6 @@ use itertools::Itertools;
 use serde_json::{Map, Value};
 use sprinkles::wrappers::header::Header;
 
-use crate::output::truncate::OptionalTruncate;
-
 #[must_use = "VTable is lazy, and only takes effect when used in formatting"]
 /// A table of data
 ///
@@ -56,13 +54,7 @@ impl Display for VTable {
                         .map(|(i, _)| {
                             let mut contestants = contestants.clone();
                             contestants.push(base[i]);
-                            contestants.push(
-                                OptionalTruncate::new(element)
-                                    // TODO: Fix suffix
-                                    .with_suffix("...")
-                                    .to_string()
-                                    .len(),
-                            );
+                            contestants.push(element.len());
 
                             *contestants.iter().max().unwrap()
                         })
@@ -74,7 +66,7 @@ impl Display for VTable {
         for (i, (header, element)) in iters {
             let header_size = header_lengths[i];
 
-            let truncated = OptionalTruncate::new(Header::new(header).to_string());
+            let header = Header::new(header).to_string();
 
             let element = if let Some(element) = element.as_str() {
                 element.to_owned()
@@ -92,7 +84,7 @@ impl Display for VTable {
                 element.to_string()
             };
 
-            writeln!(f, "{truncated:header_size$} : {element}")?;
+            writeln!(f, "{header:header_size$} : {element}")?;
         }
 
         Ok(())
