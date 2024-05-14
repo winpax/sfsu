@@ -298,13 +298,7 @@ impl Repo {
 
         let current_commit = repo.head_commit()?;
 
-        pull::pull(
-            ctx,
-            self,
-            None,
-            Some(self.current_branch()?.as_str()),
-            stats_cb,
-        )?;
+        self.pull(ctx, stats_cb)?;
 
         let post_pull_commit = repo.head_commit()?;
 
