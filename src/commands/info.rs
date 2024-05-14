@@ -7,7 +7,7 @@ use sprinkles::{
     packages::{
         models::{
             info::PackageInfo,
-            manifest::{AliasArray, StringArray},
+            manifest::{AliasArray, StringArray, TOrArrayOfTs},
         },
         reference, Manifest, MergeDefaults,
     },
@@ -143,7 +143,10 @@ impl Args {
                     AliasArray::NestedArray(StringArray::Array(bins)) => bins.join(" | "),
                     AliasArray::AliasArray(bins) => bins
                         .into_iter()
-                        .map(|mut bin_alias| bin_alias.remove(0))
+                        .map(|bin_alias| match bin_alias {
+                            TOrArrayOfTs::Single(v) => v,
+                            TOrArrayOfTs::Array(mut array) => array.remove(0),
+                        })
                         .join(" | "),
                 }),
             notes: manifest
