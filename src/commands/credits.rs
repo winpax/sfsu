@@ -190,8 +190,10 @@ impl Args {
 
         let mut should_quit = false;
         while !should_quit {
-            terminal.draw(|f| Self::ui(f, timer.as_ref(), titles::TITLE, &mut items))?;
             should_quit = Self::handle_events(timer.as_ref())?;
+            terminal.draw(|f| {
+                should_quit = Self::ui(f, timer.as_ref(), titles::TITLE, &mut items);
+            })?;
         }
 
         disable_raw_mode()?;
@@ -230,11 +232,21 @@ impl Args {
         timer: Option<&Timer>,
         title: &str,
         items: &mut VecDeque<Text<'_>>,
-    ) {
+    ) -> bool {
         if let Some(timer) = timer {
             if timer.tick() {
                 items.pop_front();
             }
+        }
+
+        let mut footer = "Press Q to exit".to_string();
+
+        if timer.is_some() {
+            footer += " | Press Down to speed up the credits scrolling";
+        }
+
+        if items.is_empty() {
+            return true;
         }
 
         frame.render_widget(
@@ -248,10 +260,12 @@ impl Args {
                 Block::default()
                     .title(title)
                     .title_alignment(Alignment::Center)
-                    .title_bottom("Press Q to exit")
+                    .title_bottom(footer)
                     .borders(Borders::ALL),
             ),
             frame.size(),
         );
+
+        false
     }
 }
