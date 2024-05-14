@@ -34,6 +34,7 @@ v2 = []
 
 [dependencies]
 base64 = { version = "0.22", optional = true }
+blake3 = { version = "1.5.1", features = ["rayon"] }
 bytes = "1.6"
 cfg-if = "1.0"
 chrono.workspace = true
