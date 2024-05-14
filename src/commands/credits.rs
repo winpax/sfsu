@@ -15,8 +15,8 @@ use parking_lot::Mutex;
 use ratatui::{
     backend::CrosstermBackend,
     layout::Alignment,
-    style::{Modifier, Style},
-    text::Text,
+    style::{Color, Modifier, Style},
+    text::{Line, Span, Text},
     widgets::{Block, Borders, List},
     Frame, Terminal,
 };
@@ -173,11 +173,13 @@ impl Args {
                 Text::raw(""),
             ]);
 
-            items.extend(
-                packages::PACKAGES
-                    .into_iter()
-                    .map(|(name, version)| Text::from(format!("{name}@{version}"))),
-            );
+            items.extend(packages::PACKAGES.into_iter().map(|(name, version)| {
+                Text::from(Line::from(vec![
+                    Span::styled(name, Style::default()),
+                    Span::raw(" - "),
+                    Span::styled(version, Style::default().fg(Color::Yellow)),
+                ]))
+            }));
         }
 
         let mut items: VecDeque<Text<'_>> = items.into();
@@ -190,10 +192,13 @@ impl Args {
 
         let mut should_quit = false;
         while !should_quit {
-            should_quit = Self::handle_events(timer.as_ref())?;
             terminal.draw(|f| {
                 should_quit = Self::ui(f, timer.as_ref(), titles::TITLE, &mut items);
             })?;
+
+            if !should_quit {
+                should_quit = Self::handle_events(timer.as_ref())?;
+            }
         }
 
         disable_raw_mode()?;
