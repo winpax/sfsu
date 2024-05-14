@@ -11,7 +11,6 @@ use std::{
 use gix::{
     bstr::BStr, remote::ref_map, traverse::commit::simple::Sorting, Commit, ObjectId, Repository,
 };
-use indicatif::ProgressBar;
 
 use crate::{buckets::Bucket, config, contexts::ScoopContext};
 
@@ -33,30 +32,6 @@ mod pull;
 /// - The found path could not be canonicalized
 pub fn which() -> which::Result<PathBuf> {
     which::which("git")
-}
-
-#[doc(hidden)]
-/// Progress callback
-///
-/// This is meant primarily for internal sfsu use.
-/// You are welcome to use this yourself, but it will likely not meet your requirements.
-pub fn __stats_callback(stats: &git2::Progress<'_>, thin: bool, pb: &ProgressBar) {
-    if thin {
-        pb.set_position(stats.indexed_objects() as u64);
-        pb.set_length(stats.total_objects() as u64);
-
-        return;
-    }
-
-    if stats.received_objects() == stats.total_objects() {
-        pb.set_position(stats.indexed_deltas() as u64);
-        pb.set_length(stats.total_deltas() as u64);
-        pb.set_message("Resolving deltas");
-    } else if stats.total_objects() > 0 {
-        pb.set_position(stats.received_objects() as u64);
-        pb.set_length(stats.total_objects() as u64);
-        pb.set_message("Receiving objects");
-    }
 }
 
 #[derive(Debug, thiserror::Error)]
