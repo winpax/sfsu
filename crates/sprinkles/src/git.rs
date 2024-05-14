@@ -8,7 +8,9 @@ use std::{
     sync::atomic::AtomicBool,
 };
 
-use gix::{remote::ref_map, traverse::commit::simple::Sorting, Commit, ObjectId, Repository};
+use gix::{
+    bstr::BStr, remote::ref_map, traverse::commit::simple::Sorting, Commit, ObjectId, Repository,
+};
 use indicatif::ProgressBar;
 
 use crate::{buckets::Bucket, config, contexts::ScoopContext};
@@ -136,10 +138,15 @@ impl Repo {
         Ok(Self { git2, gitoxide })
     }
 
+    /// Get a reference to a named remote
+    pub fn find_remote<'a>(&self, name: impl Into<&'a BStr>) -> Option<gix::Remote<'_>> {
+        self.gitoxide.find_remote(name).ok()
+    }
+
     #[must_use]
     /// Get the origin remote
     pub fn origin(&self) -> Option<gix::Remote<'_>> {
-        self.gitoxide.find_remote("origin").ok()
+        self.find_remote("origin")
     }
 
     /// Checkout to another branch
@@ -275,16 +282,6 @@ impl Repo {
     /// - Missing latest commit
     pub fn latest_commit(&self) -> Result<Commit<'_>> {
         Ok(self.gitoxide.head()?.peel_to_commit_in_place()?)
-    }
-
-    /// Update the bucket by pulling any changes
-    pub fn update(&self) {
-        unimplemented!()
-    }
-
-    /// Get the remote url of the bucket
-    pub fn get_remote(&self) {
-        unimplemented!()
     }
 
     /// Pull the latest changes from the remote repository
