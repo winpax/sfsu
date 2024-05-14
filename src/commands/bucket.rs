@@ -10,7 +10,7 @@ use clap::{Parser, Subcommand};
 use sfsu_derive::Runnable;
 use sprinkles::{config, contexts::ScoopContext};
 
-use super::Command;
+use super::{Command, CommandRunner};
 
 #[derive(Debug, Clone, Subcommand, Runnable)]
 pub enum Commands {

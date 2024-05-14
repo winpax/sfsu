@@ -3,7 +3,7 @@ use serde_json::Map;
 use sfsu_derive::Runnable;
 use sprinkles::{config, contexts::ScoopContext};
 
-use super::{Command, DeprecationMessage, DeprecationWarning};
+use super::{Command, CommandRunner, DeprecationMessage, DeprecationWarning};
 
 mod apps;
 mod buckets;

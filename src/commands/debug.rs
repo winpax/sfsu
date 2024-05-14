@@ -2,7 +2,7 @@ use clap::{Parser, Subcommand};
 use sfsu_derive::{Hooks, Runnable};
 use sprinkles::{config, contexts::ScoopContext};
 
-use super::Command;
+use super::{Command, CommandRunner};
 
 mod save;
 

@@ -76,9 +76,11 @@ pub trait Command {
 
     const DEPRECATED: Option<DeprecationWarning> = None;
 
-    async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error>;
+    async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> anyhow::Result<()>;
+}
 
-    async fn run(self, ctx: &impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error>
+pub trait CommandRunner: Command {
+    async fn run(self, ctx: &impl ScoopContext<config::Scoop>) -> anyhow::Result<()>
     where
         Self: Sized,
     {
@@ -99,6 +101,8 @@ pub trait Command {
         self.runner(ctx).await
     }
 }
+
+impl<T: Command> CommandRunner for T {}
 
 #[derive(Debug, Clone, Subcommand, Hooks, Runnable)]
 pub enum Commands {
