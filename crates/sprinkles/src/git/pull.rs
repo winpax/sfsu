@@ -18,10 +18,7 @@
  * Adapted by me (Juliette Cordor)
  */
 
-use std::{str, sync::atomic::AtomicBool};
-
 use git2::Repository;
-use gix::remote::ref_map;
 
 use crate::{config, contexts::ScoopContext};
 
