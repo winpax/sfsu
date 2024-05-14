@@ -31,18 +31,23 @@ mod packages {
 }
 
 mod titles {
+    use shadow_rs::formatcp;
+
     pub const TITLE: &str = concat!(
         "🚀 sfsu v",
         env!("CARGO_PKG_VERSION"),
         ", created by Juliette Cordor 🚀"
     );
     pub const CONTRIBUTORS: &str = "💖 Many thanks to all our incredible contributors 💖";
-    pub const PACKAGES: &str = "📦 And all the incredible crates we use 📦";
+    pub const PACKAGES: &str = formatcp!(
+        "📦 And all the incredible {} crates we use 📦",
+        super::packages::PACKAGES.len()
+    );
 }
 
 #[derive(Debug)]
 struct Timer {
-    timeout: Duration,
+    timeout: Mutex<Duration>,
     current: Mutex<Duration>,
     now: Mutex<std::time::Instant>,
 }
@@ -50,7 +55,7 @@ struct Timer {
 impl Timer {
     pub fn new(timeout: Duration) -> Self {
         Self {
-            timeout,
+            timeout: Mutex::new(timeout),
             current: Mutex::new(Duration::ZERO),
             now: Mutex::new(Instant::now()),
         }
@@ -64,12 +69,16 @@ impl Timer {
         let mut current = self.current.lock();
         *current += delta;
 
-        if *current >= self.timeout {
+        if *current >= *self.timeout.lock() {
             *current = Duration::ZERO;
             true
         } else {
             false
         }
+    }
+
+    pub fn set_timeout(&self, timeout: Duration) {
+        *self.timeout.lock() = timeout;
     }
 }
 
@@ -182,7 +191,7 @@ impl Args {
         let mut should_quit = false;
         while !should_quit {
             terminal.draw(|f| Self::ui(f, timer.as_ref(), titles::TITLE, &mut items))?;
-            should_quit = Self::handle_events()?;
+            should_quit = Self::handle_events(timer.as_ref())?;
         }
 
         disable_raw_mode()?;
@@ -191,11 +200,25 @@ impl Args {
         Ok(())
     }
 
-    fn handle_events() -> anyhow::Result<bool> {
+    fn handle_events(draw_timer: Option<&Timer>) -> anyhow::Result<bool> {
         if event::poll(Duration::from_millis(50))? {
             if let Event::Key(key) = event::read()? {
                 if key.kind == event::KeyEventKind::Press && key.code == KeyCode::Char('q') {
                     return Ok(true);
+                }
+
+                if key.code == KeyCode::Down {
+                    if key.kind == event::KeyEventKind::Press {
+                        if let Some(draw_timer) = draw_timer {
+                            draw_timer.set_timeout(Duration::from_millis(16));
+                        }
+                    }
+
+                    if key.kind == event::KeyEventKind::Release {
+                        if let Some(draw_timer) = draw_timer {
+                            draw_timer.set_timeout(Duration::from_millis(743));
+                        }
+                    }
                 }
             }
         }
