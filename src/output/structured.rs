@@ -8,7 +8,7 @@ use serde_json::{Map, Value};
 
 use sprinkles::{hacks::inline_const::inline_const, wrappers::header::Header};
 
-use super::{consts::WALL, truncate::TruncateOrPad};
+use super::{consts::WALL, truncate::FixedLength};
 
 pub mod vertical;
 
@@ -62,7 +62,7 @@ fn print_headers(
     for (i, header) in headers.iter().enumerate() {
         let header_size = access_lengths[i];
 
-        let truncated = TruncateOrPad::new(Header::new(header));
+        let truncated = FixedLength::new(Header::new(header));
         write!(f, "{truncated:header_size$}{WALL}")?;
     }
 
@@ -172,7 +172,7 @@ impl Display for Structured {
         for (i, header) in headers.iter().enumerate() {
             let header_size = access_lengths[i];
 
-            let truncated = TruncateOrPad::new(Header::new(header));
+            let truncated = FixedLength::new(Header::new(header));
             write!(f, "{truncated:header_size$}{WALL}")?;
         }
 
@@ -205,7 +205,7 @@ impl Display for Structured {
                     })
                     .unwrap_or_default();
 
-                let with_suffix = TruncateOrPad::new(element);
+                let with_suffix = FixedLength::new(element);
 
                 #[cfg(feature = "v2")]
                 write!(f, "{with_suffix:value_size$}{WALL}")?;
