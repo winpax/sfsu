@@ -8,80 +8,9 @@ use serde_json::{Map, Value};
 
 use sprinkles::{hacks::inline_const::inline_const, wrappers::header::Header};
 
+use super::{consts::WALL, truncate::FixedLength};
+
 pub mod vertical;
-
-#[derive(Debug)]
-#[must_use = "OptionalTruncate is lazy, and only takes effect when used in formatting"]
-struct OptionalTruncate<T> {
-    data: T,
-    length: Option<usize>,
-    suffix: Option<&'static str>,
-}
-
-impl<T> OptionalTruncate<T> {
-    /// Construct a new [`OptionalTruncate`] from the provided data
-    pub fn new(data: T) -> Self {
-        Self {
-            data,
-            length: None,
-            suffix: None,
-        }
-    }
-
-    // Generally length would not be passed as an option,
-    // but given we are just forwarding what is passed to `Structured`,
-    // it works better here
-    pub fn with_length(self, length: Option<usize>) -> Self {
-        Self { length, ..self }
-    }
-
-    pub fn with_suffix(self, suffix: &'static str) -> Self {
-        Self {
-            suffix: Some(suffix),
-            ..self
-        }
-    }
-}
-
-impl<T: Display> Display for OptionalTruncate<T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if let Some(length) = self.length {
-            use quork::truncate::Truncate;
-
-            let mut truncation = Truncate::new(&self.data, length);
-
-            if let Some(ref suffix) = self.suffix {
-                truncation = truncation.with_suffix(suffix);
-            }
-
-            truncation.to_string();
-
-            truncation.fmt(f)
-        } else {
-            self.data.fmt(f)
-        }
-    }
-}
-
-const WALL: &str = " | ";
-const SUFFIX: &str = "...";
-
-struct TruncateOrPad(String, usize);
-
-impl Display for TruncateOrPad {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let length = self.1 - WALL.len();
-        if self.0.len() > length {
-            write!(
-                f,
-                "{}{SUFFIX}",
-                &self.0[0..length.checked_sub(3).unwrap_or_default()]
-            )
-        } else {
-            write!(f, "{:width$}", self.0, width = length)
-        }
-    }
-}
 
 #[deprecated]
 #[allow(dead_code, unused_variables)]
@@ -133,8 +62,8 @@ fn print_headers(
     for (i, header) in headers.iter().enumerate() {
         let header_size = access_lengths[i];
 
-        let truncated = TruncateOrPad(Header::new(header).to_string(), header_size).to_string();
-        write!(f, "{truncated}{WALL}")?;
+        let truncated = FixedLength::new(Header::new(header));
+        write!(f, "{truncated:header_size$}{WALL}")?;
     }
 
     Ok(())
@@ -217,15 +146,7 @@ impl Display for Structured {
 
                             let mut contestants = contestants.clone();
                             contestants.push(base[i]);
-                            contestants.push(
-                                OptionalTruncate::new(element)
-                                    .with_length(self.max_length)
-                                    // TODO: Fix suffix
-                                    .with_suffix(SUFFIX)
-                                    .to_string()
-                                    .len()
-                                    + WALL.len(),
-                            );
+                            contestants.push(element.len() + WALL.len());
 
                             contestants.into_iter().max().unwrap()
                         })
@@ -251,8 +172,8 @@ impl Display for Structured {
         for (i, header) in headers.iter().enumerate() {
             let header_size = access_lengths[i];
 
-            let truncated = TruncateOrPad(Header::new(header).to_string(), header_size).to_string();
-            write!(f, "{truncated}{WALL}")?;
+            let truncated = FixedLength::new(Header::new(header));
+            write!(f, "{truncated:header_size$}{WALL}")?;
         }
 
         // Enter new row
@@ -284,12 +205,12 @@ impl Display for Structured {
                     })
                     .unwrap_or_default();
 
-                let with_suffix = TruncateOrPad(element, value_size);
+                let with_suffix = FixedLength::new(element);
 
                 #[cfg(feature = "v2")]
-                write!(f, "{with_suffix}{WALL}")?;
+                write!(f, "{with_suffix:value_size$}{WALL}")?;
                 #[cfg(not(feature = "v2"))]
-                write!(f, "{with_suffix}{WALL}")?;
+                write!(f, "{with_suffix:value_size$}{WALL}")?;
             }
 
             // Enter new row

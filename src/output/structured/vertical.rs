@@ -6,52 +6,6 @@ use itertools::Itertools;
 use serde_json::{Map, Value};
 use sprinkles::wrappers::header::Header;
 
-#[derive(Debug)]
-#[must_use = "OptionalTruncate is lazy, and only takes effect when used in formatting"]
-struct OptionalTruncate<T> {
-    data: T,
-    length: Option<usize>,
-    suffix: Option<&'static str>,
-}
-
-impl<T> OptionalTruncate<T> {
-    /// Construct a new [`OptionalTruncate`] from the provided data
-    pub fn new(data: T) -> Self {
-        Self {
-            data,
-            length: None,
-            suffix: None,
-        }
-    }
-
-    pub fn with_suffix(self, suffix: &'static str) -> Self {
-        Self {
-            suffix: Some(suffix),
-            ..self
-        }
-    }
-}
-
-impl<T: Display> Display for OptionalTruncate<T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if let Some(length) = self.length {
-            use quork::truncate::Truncate;
-
-            let mut truncation = Truncate::new(&self.data, length);
-
-            if let Some(ref suffix) = self.suffix {
-                truncation = truncation.with_suffix(suffix);
-            }
-
-            truncation.to_string();
-
-            truncation.fmt(f)
-        } else {
-            self.data.fmt(f)
-        }
-    }
-}
-
 #[must_use = "VTable is lazy, and only takes effect when used in formatting"]
 /// A table of data
 ///
@@ -100,13 +54,7 @@ impl Display for VTable {
                         .map(|(i, _)| {
                             let mut contestants = contestants.clone();
                             contestants.push(base[i]);
-                            contestants.push(
-                                OptionalTruncate::new(element)
-                                    // TODO: Fix suffix
-                                    .with_suffix("...")
-                                    .to_string()
-                                    .len(),
-                            );
+                            contestants.push(element.len());
 
                             *contestants.iter().max().unwrap()
                         })
@@ -118,7 +66,7 @@ impl Display for VTable {
         for (i, (header, element)) in iters {
             let header_size = header_lengths[i];
 
-            let truncated = OptionalTruncate::new(Header::new(header).to_string());
+            let header = Header::new(header).to_string();
 
             let element = if let Some(element) = element.as_str() {
                 element.to_owned()
@@ -136,7 +84,7 @@ impl Display for VTable {
                 element.to_string()
             };
 
-            writeln!(f, "{truncated:header_size$} : {element}")?;
+            writeln!(f, "{header:header_size$} : {element}")?;
         }
 
         Ok(())
