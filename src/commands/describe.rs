@@ -17,12 +17,10 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    fn deprecated() -> Option<DeprecationWarning> {
-        Some(DeprecationWarning {
-            message: DeprecationMessage::Replacement("sfsu info"),
-            version: Some(2.0),
-        })
-    }
+    const DEPRECATED: Option<DeprecationWarning> = Some(DeprecationWarning {
+        message: DeprecationMessage::Replacement("sfsu info"),
+        version: Some(2.0),
+    });
 
     async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
         let buckets = Bucket::one_or_all(ctx, self.bucket)?;
