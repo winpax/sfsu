@@ -163,7 +163,7 @@ pub struct MinInfo {
     /// The package's source (eg. bucket name)
     pub source: String,
     /// The last time the package was updated
-    pub updated: NicerTime<DateTime<Local>>,
+    pub updated: NicerTime<Local>,
     /// The package's notes
     pub notes: String,
 }
@@ -227,21 +227,38 @@ impl MinInfo {
 
         let app_current = path.join("current");
 
-        let manifest = Manifest::from_path(app_current.join("manifest.json")).unwrap_or_default();
+        let (manifest_broken, manifest) =
+            if let Ok(manifest) = Manifest::from_path(app_current.join("manifest.json")) {
+                (false, manifest)
+            } else {
+                (true, Manifest::default())
+            };
 
-        let install_manifest =
-            InstallManifest::from_path(app_current.join("install.json")).unwrap_or_default();
+        let (install_manifest_broken, install_manifest) = if let Ok(install_manifest) =
+            InstallManifest::from_path(app_current.join("install.json"))
+        {
+            (false, install_manifest)
+        } else {
+            (true, InstallManifest::default())
+        };
+
+        let broken = manifest_broken || install_manifest_broken;
+
+        let mut notes = vec![];
+
+        if broken {
+            notes.push("Install failed".to_string());
+        }
+        if install_manifest.hold.contains_truth() {
+            notes.push("Held package".to_string());
+        }
 
         Ok(Self {
             name: package_name.to_string(),
             version: manifest.version.to_string(),
             source: install_manifest.get_source(),
             updated: updated_time.into(),
-            notes: if install_manifest.hold.contains_truth() {
-                String::from("Held")
-            } else {
-                String::new()
-            },
+            notes: notes.join(", "),
         })
     }
 }

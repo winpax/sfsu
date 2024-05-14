@@ -27,6 +27,7 @@ use sprinkles::{config, contexts::ScoopContext};
 
 use crate::{abandon, output::colours::eprintln_yellow};
 
+#[derive(Debug, Clone, Copy)]
 pub struct DeprecationWarning {
     /// Deprecation message
     message: DeprecationMessage,
@@ -35,7 +36,7 @@ pub struct DeprecationWarning {
 }
 
 #[allow(dead_code)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum DeprecationMessage {
     /// Replacement info
     Replacement(&'static str),
@@ -43,36 +44,48 @@ pub enum DeprecationMessage {
     Warning(&'static str),
 }
 
+impl std::fmt::Display for DeprecationMessage {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            DeprecationMessage::Replacement(replacement) => {
+                write!(f, "Use `{replacement}` instead")
+            }
+            DeprecationMessage::Warning(warning) => write!(f, "{warning}"),
+        }
+    }
+}
+
+impl std::fmt::Display for DeprecationWarning {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "DEPRECATED: ")?;
+
+        std::fmt::Display::fmt(&self.message, f)?;
+
+        if let Some(version) = self.version {
+            write!(f, "Will be removed in v{version}. ")?;
+        }
+
+        Ok(())
+    }
+}
+
 // TODO: Run command could return `impl Display` and print that itself
 pub trait Command {
     const BETA: bool = false;
     const NEEDS_ELEVATION: bool = false;
 
-    fn deprecated() -> Option<DeprecationWarning> {
-        None
-    }
+    const DEPRECATED: Option<DeprecationWarning> = None;
 
-    async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error>;
+    async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> anyhow::Result<()>;
+}
 
-    async fn run(self, ctx: &impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error>
+pub trait CommandRunner: Command {
+    async fn run(self, ctx: &impl ScoopContext<config::Scoop>) -> anyhow::Result<()>
     where
         Self: Sized,
     {
-        if let Some(deprecation_warning) = Self::deprecated() {
-            let mut output = String::from("DEPRECATED: ");
-
-            match deprecation_warning.message {
-                DeprecationMessage::Replacement(replacement) => {
-                    output += &format!("Use `{replacement}` instead. ");
-                }
-                DeprecationMessage::Warning(warning) => output += warning,
-            }
-
-            if let Some(version) = deprecation_warning.version {
-                output += &format!("Will be removed in v{version}. ");
-            }
-
-            eprintln_yellow!("{output}\n");
+        if let Some(deprecation_warning) = Self::DEPRECATED {
+            eprintln_yellow!("{deprecation_warning}\n");
         }
 
         if Self::NEEDS_ELEVATION && !quork::root::is_root()? {
@@ -88,6 +101,8 @@ pub trait Command {
         self.runner(ctx).await
     }
 }
+
+impl<T: Command> CommandRunner for T {}
 
 #[derive(Debug, Clone, Subcommand, Hooks, Runnable)]
 pub enum Commands {

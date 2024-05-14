@@ -11,7 +11,7 @@ use tokio::task::JoinSet;
 mod rm;
 mod show;
 
-use crate::{abandon, commands::Command};
+use crate::{abandon, commands::CommandRunner};
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq, PartialOrd, Ord)]
 struct CacheEntry {

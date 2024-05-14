@@ -14,12 +14,10 @@ pub struct Args {
 }
 
 impl commands::Command for Args {
-    fn deprecated() -> Option<commands::DeprecationWarning> {
-        Some(DeprecationWarning {
-            message: DeprecationMessage::Replacement("sfsu status"),
-            version: Some(2.0),
-        })
-    }
+    const DEPRECATED: Option<DeprecationWarning> = Some(DeprecationWarning {
+        message: DeprecationMessage::Replacement("sfsu status"),
+        version: Some(2.0),
+    });
 
     async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> anyhow::Result<()> {
         let buckets = Bucket::list_all(ctx)?;

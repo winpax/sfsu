@@ -1,5 +1,5 @@
 use anyhow::Context;
-use chrono::{DateTime, FixedOffset};
+use chrono::FixedOffset;
 use clap::Parser;
 use serde::Serialize;
 use sprinkles::{buckets::Bucket, config, contexts::ScoopContext, wrappers::time::NicerTime};
@@ -17,7 +17,7 @@ pub struct Args {
 struct BucketInfo {
     name: String,
     source: String,
-    updated: NicerTime<DateTime<FixedOffset>>,
+    updated: NicerTime<FixedOffset>,
     manifests: usize,
 }
 
