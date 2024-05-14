@@ -95,7 +95,11 @@ pub trait ScoopContext<C>: Clone + Send + Sync + 'static {
             _ = std::fs::create_dir_all(&path);
         }
 
-        path
+        if let Ok(dunced) = dunce::canonicalize(&path) {
+            dunced
+        } else {
+            path
+        }
     }
 
     #[must_use]
@@ -121,6 +125,12 @@ pub trait ScoopContext<C>: Clone + Send + Sync + 'static {
     #[must_use]
     /// Get the contexts's workspace path
     fn workspace_path(&self) -> PathBuf;
+
+    #[must_use]
+    /// Get the contexts's scripts path
+    fn scripts_path(&self) -> PathBuf {
+        self.sub_path("workspace/scripts")
+    }
 
     /// Get the path to the log directory
     fn logging_dir(&self) -> std::io::Result<PathBuf>;

@@ -34,6 +34,7 @@ v2 = []
 
 [dependencies]
 base64 = { version = "0.22", optional = true }
+blake3 = { version = "1.5.1", features = ["rayon"] }
 bytes = "1.6"
 cfg-if = "1.0"
 chrono.workspace = true
@@ -85,7 +86,13 @@ strum = { version = "0.26", features = ["derive"] }
 sxd-document = { version = "0.3", optional = true }
 sxd-xpath = { version = "0.4", optional = true }
 thiserror = "1.0"
-tokio = { version = "1.37", features = ["fs", "macros", "parking_lot", "time"] }
+tokio = { version = "1.37", features = [
+    "fs",
+    "macros",
+    "parking_lot",
+    "process",
+    "time",
+] }
 tokio-util = { version = "0.7", features = ["codec"], optional = true }
 url = { version = "2.5", features = ["serde"], optional = true }
 urlencoding = { version = "2.1", optional = true }
@@ -104,5 +111,5 @@ anyhow = "1.0"
 [build-dependencies]
 heck = "0.5"
 phf_codegen = "0.11"
-reqwest = { version = "0.12", features = ["blocking"] }
+reqwest = { version = "0.12", features = ["blocking", "json"] }
 serde_json = "1.0"

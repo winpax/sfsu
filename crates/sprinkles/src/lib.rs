@@ -31,6 +31,7 @@ pub mod packages;
 pub mod progress;
 pub mod proxy;
 pub mod requests;
+pub mod scripts;
 pub mod shell;
 #[cfg(not(feature = "v2"))]
 pub mod stream;
