@@ -156,3 +156,35 @@ impl ScriptRunner {
         Ok(())
     }
 }
+
+mod ser_de {
+    use serde::{Deserialize, Serialize};
+
+    use crate::packages::models::manifest::TOrArrayOfTs;
+
+    use super::PowershellScript;
+
+    impl Serialize for PowershellScript {
+        fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: serde::Serializer,
+        {
+            let lines = self.script.lines().collect::<Vec<_>>();
+
+            let script_array = TOrArrayOfTs::from_vec(lines);
+
+            script_array.serialize(serializer)
+        }
+    }
+
+    impl<'de> Deserialize<'de> for PowershellScript {
+        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where
+            D: serde::Deserializer<'de>,
+        {
+            let script_array = TOrArrayOfTs::<String>::deserialize(deserializer)?;
+
+            Ok(PowershellScript::from(script_array))
+        }
+    }
+}
