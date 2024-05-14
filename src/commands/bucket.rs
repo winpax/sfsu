@@ -16,10 +16,9 @@ use super::Command;
 pub enum Commands {
     /// Add a bucket
     Add(add::Args),
+    #[clap(alias = "rm")]
     /// Remove a bucket
     Remove(remove::Args),
-    /// Remove a bucket
-    Rm(remove::Args),
     /// List all installed buckets
     List(list::Args),
     /// List all known buckets
