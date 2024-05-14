@@ -46,15 +46,21 @@ impl super::Command for Args {
 
         let scoop_changelog = if ctx.outdated().await? {
             let mut changelog = if self.changelog {
-                scoop_repo.pull_with_changelog(Some(&|stats, thin| {
-                    __stats_callback(&stats, thin, &pb);
-                    true
-                }))?
+                scoop_repo.pull_with_changelog(
+                    ctx,
+                    Some(&|stats, thin| {
+                        __stats_callback(&stats, thin, &pb);
+                        true
+                    }),
+                )?
             } else {
-                scoop_repo.pull(Some(&|stats, thin| {
-                    __stats_callback(&stats, thin, &pb);
-                    true
-                }))?;
+                scoop_repo.pull(
+                    ctx,
+                    Some(&|stats, thin| {
+                        __stats_callback(&stats, thin, &pb);
+                        true
+                    }),
+                )?;
                 vec![]
             };
 
@@ -101,15 +107,21 @@ impl super::Command for Args {
                 debug!("Beggining pull for {}", bucket.name());
 
                 let changelog = if self.changelog {
-                    repo.pull_with_changelog(Some(&|stats, thin| {
-                        __stats_callback(&stats, thin, pb);
-                        true
-                    }))?
+                    repo.pull_with_changelog(
+                        ctx,
+                        Some(&|stats, thin| {
+                            __stats_callback(&stats, thin, pb);
+                            true
+                        }),
+                    )?
                 } else {
-                    repo.pull(Some(&|stats, thin| {
-                        __stats_callback(&stats, thin, pb);
-                        true
-                    }))?;
+                    repo.pull(
+                        ctx,
+                        Some(&|stats, thin| {
+                            __stats_callback(&stats, thin, pb);
+                            true
+                        }),
+                    )?;
 
                     vec![]
                 };
@@ -150,3 +162,5 @@ impl super::Command for Args {
         Ok(())
     }
 }
+
+impl Args {}

@@ -11,7 +11,7 @@ use std::{
 use gix::{remote::ref_map, traverse::commit::simple::Sorting, Commit, ObjectId, Repository};
 use indicatif::ProgressBar;
 
-use crate::{buckets::Bucket, contexts::ScoopContext};
+use crate::{buckets::Bucket, config, contexts::ScoopContext};
 
 use pull::ProgressCallback;
 
@@ -296,10 +296,14 @@ impl Repo {
     /// - Missing head
     /// - Missing latest commit
     /// - Git error
-    pub fn pull(&self, stats_cb: Option<ProgressCallback<'_>>) -> Result<()> {
+    pub fn pull(
+        &self,
+        ctx: &impl ScoopContext<config::Scoop>,
+        stats_cb: Option<ProgressCallback<'_>>,
+    ) -> Result<()> {
         let current_branch = self.current_branch()?;
 
-        pull::pull(self, None, Some(current_branch.as_str()), stats_cb)?;
+        pull::pull(ctx, self, None, Some(current_branch.as_str()), stats_cb)?;
 
         Ok(())
     }
@@ -315,13 +319,20 @@ impl Repo {
     /// - Git error
     pub fn pull_with_changelog(
         &self,
+        ctx: &impl ScoopContext<config::Scoop>,
         stats_cb: Option<ProgressCallback<'_>>,
     ) -> Result<Vec<String>> {
         let repo = self.gitoxide();
 
         let current_commit = repo.head_commit()?;
 
-        pull::pull(self, None, Some(self.current_branch()?.as_str()), stats_cb)?;
+        pull::pull(
+            ctx,
+            self,
+            None,
+            Some(self.current_branch()?.as_str()),
+            stats_cb,
+        )?;
 
         let post_pull_commit = repo.head_commit()?;
 

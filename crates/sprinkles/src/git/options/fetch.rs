@@ -1,3 +1,5 @@
+//! An opinionated [`git2::FetchOptions`] wrapper
+
 use git2::{Progress, ProxyOptions, RemoteCallbacks};
 
 use crate::{config, contexts::ScoopContext};
@@ -20,8 +22,8 @@ impl<'a> FetchOptions<'a> {
     pub fn new(ctx: &impl ScoopContext<config::Scoop>) -> Self {
         let mut this = Self::default();
 
-        if let Some(ref proxy) = ctx.config().proxy {
-            this.proxy = Some(proxy.try_into().expect("valid proxy"));
+        if let Some(proxy) = ctx.config().proxy.clone() {
+            this.proxy(proxy);
         }
 
         this
@@ -33,6 +35,7 @@ impl<'a> FetchOptions<'a> {
         callbacks.transfer_progress(progress);
     }
 
+    /// Set the proxy for the fetch operation
     pub fn proxy(&mut self, proxy: impl Into<ProxyOptions<'a>>) {
         self.proxy = Some(proxy.into());
     }
