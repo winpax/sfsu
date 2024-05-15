@@ -1,6 +1,7 @@
 use anyhow::Context;
 use chrono::FixedOffset;
 use clap::Parser;
+use rayon::prelude::*;
 use serde::Serialize;
 use sprinkles::{buckets::Bucket, config, contexts::ScoopContext, wrappers::time::NicerTime};
 
@@ -47,7 +48,7 @@ impl super::Command for Args {
 
         let buckets = {
             let mut buckets = buckets
-                .iter()
+                .par_iter()
                 .map(BucketInfo::collect)
                 .collect::<Result<Vec<_>, _>>()?;
 
