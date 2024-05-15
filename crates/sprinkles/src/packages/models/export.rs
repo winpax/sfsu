@@ -8,6 +8,7 @@ use crate::{
     buckets::{Bucket as SfsuBucket, Error as BucketError},
     config,
     contexts::ScoopContext,
+    git,
     packages::{Error as PackageError, MinInfo},
 };
 
@@ -107,7 +108,7 @@ impl From<MinInfo> for App {
 }
 
 impl TryFrom<SfsuBucket> for Bucket {
-    type Error = BucketError;
+    type Error = PackageError;
 
     fn try_from(bucket: SfsuBucket) -> Result<Self, Self::Error> {
         let name = bucket.name();
@@ -117,7 +118,7 @@ impl TryFrom<SfsuBucket> for Bucket {
         let updated = {
             let repo = bucket.open_repo()?;
             let latest_commit = repo.latest_commit()?;
-            let time = latest_commit.time()?;
+            let time = latest_commit.time().map_err(git::Error::from)?;
             let secs = time.seconds;
             // let offset = time.offset_minutes() * 60;
 

@@ -52,7 +52,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         for bucket in Bucket::list_all(&ctx).unwrap() {
             b.iter_batched(
                 || bucket.clone(),
-                |ref bucket| bucket.list_package_names().unwrap(),
+                |ref bucket| bucket.list_package_paths().unwrap(),
                 BatchSize::SmallInput,
             )
         }

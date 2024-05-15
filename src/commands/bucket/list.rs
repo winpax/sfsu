@@ -1,9 +1,9 @@
 use anyhow::Context;
 use chrono::FixedOffset;
 use clap::Parser;
+use rayon::prelude::*;
 use serde::Serialize;
 use sprinkles::{buckets::Bucket, config, contexts::ScoopContext, wrappers::time::NicerTime};
-use tokio::task::JoinSet;
 
 use crate::output;
 
@@ -22,8 +22,8 @@ struct BucketInfo {
 }
 
 impl BucketInfo {
-    async fn collect(bucket: Bucket) -> anyhow::Result<Self> {
-        let manifests = bucket.manifests_async().await?;
+    fn collect(bucket: &Bucket) -> anyhow::Result<Self> {
+        let manifests = bucket.manifests()?;
 
         let updated_time = {
             let repo = bucket.open_repo()?;
@@ -46,19 +46,11 @@ impl super::Command for Args {
     async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> anyhow::Result<()> {
         let buckets = Bucket::list_all(ctx)?;
 
-        let mut set = JoinSet::new();
-
-        for bucket in buckets {
-            set.spawn(BucketInfo::collect(bucket));
-        }
-
         let buckets = {
-            let mut buckets = vec![];
-
-            while let Some(result) = set.join_next().await {
-                let result = result??;
-                buckets.push(result);
-            }
+            let mut buckets = buckets
+                .par_iter()
+                .map(BucketInfo::collect)
+                .collect::<Result<Vec<_>, _>>()?;
 
             buckets.sort_by(|a, b| a.name.cmp(&b.name));
 
