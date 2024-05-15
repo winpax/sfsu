@@ -14,8 +14,8 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
-        let diagnostics = Diagnostics::collect(ctx)?;
+    async fn runner(self, ctx: impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
+        let diagnostics = Diagnostics::collect(&ctx)?;
 
         if self.json {
             println!("{}", serde_json::to_string_pretty(&diagnostics)?);

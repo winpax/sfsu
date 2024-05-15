@@ -22,8 +22,8 @@ impl super::Command for Args {
         version: Some(2.0),
     });
 
-    async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
-        let buckets = Bucket::one_or_all(ctx, self.bucket)?;
+    async fn runner(self, ctx: impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
+        let buckets = Bucket::one_or_all(&ctx, self.bucket)?;
 
         let manifests: Vec<(String, String, Manifest)> = buckets
             .iter()

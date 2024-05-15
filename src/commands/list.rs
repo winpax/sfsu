@@ -36,8 +36,8 @@ pub enum SortBy {
 }
 
 impl super::Command for Args {
-    async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
-        let mut outputs = MinInfo::list_installed(ctx, self.bucket.as_ref())?;
+    async fn runner(self, ctx: impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
+        let mut outputs = MinInfo::list_installed(&ctx, self.bucket.as_ref())?;
 
         outputs.par_sort_by(|a, b| match self.sort_by {
             SortBy::Name => a.name.cmp(&b.name),

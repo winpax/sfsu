@@ -181,7 +181,7 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
+    async fn runner(self, ctx: impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
         let (bucket, raw_pattern) =
             if let Some((bucket, raw_pattern)) = self.pattern.split_once('/') {
                 // Bucket flag overrides bucket/package syntax
@@ -204,23 +204,23 @@ impl super::Command for Args {
         };
 
         let matching_buckets: Vec<Bucket> =
-            if let Some(Ok(bucket)) = bucket.map(|name| Bucket::from_name(ctx, name)) {
+            if let Some(Ok(bucket)) = bucket.map(|name| Bucket::from_name(&ctx, name)) {
                 vec![bucket]
             } else {
-                Bucket::list_all(ctx)?
+                Bucket::list_all(&ctx)?
             };
 
         let mut matches: Sections<_> = matching_buckets
             .par_iter()
             .filter_map(
-                |bucket| match bucket.matches(ctx, self.installed, &pattern, self.mode) {
+                |bucket| match bucket.matches(&ctx, self.installed, &pattern, self.mode) {
                     Ok(manifest) => {
                         let sections = manifest
                             .into_par_iter()
                             .filter_map(|manifest| {
                                 parse_output(
                                     &manifest,
-                                    ctx,
+                                    &ctx,
                                     &manifest.bucket,
                                     self.installed,
                                     &pattern,

@@ -10,8 +10,8 @@ pub struct Args {
 }
 
 impl super::super::Command for Args {
-    async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
-        self.run_direct(ctx, true)?;
+    async fn runner(self, ctx: impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
+        self.run_direct(&ctx, true)?;
 
         Ok(())
     }

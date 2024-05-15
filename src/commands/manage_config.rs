@@ -29,7 +29,7 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> anyhow::Result<()> {
+    async fn runner(self, ctx: impl ScoopContext<config::Scoop>) -> anyhow::Result<()> {
         if let Some(command) = self.command {
             return command.run(ctx).await;
         }

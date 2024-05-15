@@ -10,10 +10,10 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
+    async fn runner(self, ctx: impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
         let manifest = self
             .package
-            .first(ctx)
+            .first(&ctx)
             .ok_or(anyhow::anyhow!("Package not found"))?;
 
         let Some(homepage) = manifest.homepage else {

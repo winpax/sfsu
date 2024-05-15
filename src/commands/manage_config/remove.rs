@@ -1,6 +1,8 @@
 use clap::Parser;
 use sprinkles::{config, contexts::ScoopContext};
 
+use crate::commands::manage_config::management;
+
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
     #[clap(help = "The key to remove")]
@@ -11,7 +13,8 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> anyhow::Result<()> {
+    async fn runner(self, mut ctx: impl ScoopContext<config::Scoop>) -> anyhow::Result<()> {
+        let config_manager = management::ManageConfig::new(ctx.config_mut());
         todo!()
     }
 }
