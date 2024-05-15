@@ -3,6 +3,7 @@
 use std::{
     borrow::Cow,
     collections::HashSet,
+    ffi::OsStr,
     path::{Path, PathBuf},
 };
 
@@ -166,10 +167,50 @@ impl Bucket {
     /// - The bucket is invalid
     /// - See more at [`packages::Error`]
     pub fn list_package_paths(&self) -> packages::Result<Vec<PathBuf>> {
-        let dir = std::fs::read_dir(self.path().join("bucket"))?;
+        enum BucketPath {
+            Valid(PathBuf),
+            Invalid(PathBuf),
+        }
 
-        dir.map(|entry| entry.map(|file| file.path()).map_err(packages::Error::from))
-            .collect()
+        impl BucketPath {
+            fn is_valid(&self) -> bool {
+                matches!(self, BucketPath::Valid(_))
+            }
+        }
+
+        impl AsRef<Path> for BucketPath {
+            fn as_ref(&self) -> &Path {
+                match self {
+                    BucketPath::Invalid(path) | BucketPath::Valid(path) => path,
+                }
+            }
+        }
+
+        let bucket_path = {
+            let bucket_path = self.path().join("bucket");
+
+            if bucket_path.exists() {
+                BucketPath::Valid(bucket_path)
+            } else {
+                BucketPath::Invalid(self.path().to_owned())
+            }
+        };
+
+        let dir = std::fs::read_dir(&bucket_path)?;
+
+        let paths = dir.map(|entry| entry.map(|file| file.path()).map_err(packages::Error::from));
+
+        if bucket_path.is_valid() {
+            paths.collect()
+        } else {
+            paths
+                .filter_map(|path| match path {
+                    Ok(path) if path.extension() == Some(OsStr::new("json")) => Some(Ok(path)),
+                    Err(e) => Some(Err(e)),
+                    _ => None,
+                })
+                .collect()
+        }
     }
 
     /// List all packages contained within this bucket, returning their names
