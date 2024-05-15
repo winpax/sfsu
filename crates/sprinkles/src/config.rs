@@ -129,16 +129,12 @@ pub struct Scoop {
     /// Ref: https://docs.microsoft.com/dotnet/api/system.datetime.parse?view=netframework-4.5
     pub hold_update_until: Option<String>,
 
-    #[serde(
-        default,
-        serialize_with = "isolated::serialize",
-        deserialize_with = "isolated::deserialize"
-    )]
+    #[serde(default)]
     /// When set to `true` (default), Scoop will use `SCOOP_PATH` environment variable to store apps' `PATH`s.
     ///
     /// When set to arbitrary non-empty string, Scoop will use that string as the environment variable name instead.
     /// This is useful when you want to isolate Scoop from the system `PATH`.
-    pub use_isolated_path: Option<PathBuf>,
+    pub use_isolated_path: isolated::IsolatedPath,
 
     /// The timestamp of the last scoop update
     pub last_update: Option<String>,
@@ -209,5 +205,31 @@ impl Scoop {
     /// This will remove all fields that are not in the config struct
     pub fn make_strict(&mut self) {
         self.other = Map::new();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use tests::isolated::IsolatedPath;
+
+    use super::*;
+
+    #[test]
+    fn test_isolated_path() {
+        let path = IsolatedPath::Path("NOT_SCOOP_PATH".into());
+        let serialized = serde_json::to_string(&path).unwrap();
+        let deserialized: IsolatedPath = serde_json::from_str(serialized.as_str()).unwrap();
+
+        assert_eq!(path, deserialized);
+
+        let path = "true";
+        let deserialized: IsolatedPath = serde_json::from_str(path).unwrap();
+
+        assert_eq!(IsolatedPath::Bool(true), deserialized);
+
+        let path = "false";
+        let deserialized: IsolatedPath = serde_json::from_str(path).unwrap();
+
+        assert_eq!(IsolatedPath::Bool(false), deserialized);
     }
 }
