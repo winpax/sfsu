@@ -28,16 +28,14 @@ fn print_headers(
             .map(|(i, header)| -> Result<usize, std::fmt::Error> {
                 let header_size = access_lengths[i];
 
-                let truncated = OptionalTruncate::new(Header::new(header))
-                    .with_length(max_length)
-                    .to_string();
+                let truncated = FixedLength::new(Header::new(header));
                 write!(
                     f,
                     "{:header_size$}{WALL}",
                     console::style(&truncated).green().bright()
                 )?;
 
-                Ok(truncated.len())
+                Ok(truncated.to_string().len())
             })
             .collect::<Result<Vec<_>, _>>()?;
 
