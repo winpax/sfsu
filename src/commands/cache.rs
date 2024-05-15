@@ -5,13 +5,13 @@ use clap::{Parser, Subcommand};
 use regex::Regex;
 use serde::Serialize;
 use sfsu_derive::Runnable;
-use sprinkles::{abandon, config, contexts::ScoopContext, output::wrappers::sizes::Size};
+use sprinkles::{config, contexts::ScoopContext, wrappers::sizes::Size};
 use tokio::task::JoinSet;
 
-mod rm;
+mod remove;
 mod show;
 
-use crate::commands::Command;
+use crate::{abandon, commands::CommandRunner};
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq, PartialOrd, Ord)]
 struct CacheEntry {
@@ -97,8 +97,9 @@ impl CacheEntry {
 enum Commands {
     /// List cache entries
     Show(show::Args),
+    #[clap(alias = "rm")]
     /// Remove cache entries
-    Rm(rm::Args),
+    Remove(remove::Args),
 }
 
 #[derive(Debug, Clone, Parser)]

@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 //! Calm Panic helpers
 //!
 //! This module provides ways to exit the program with an error message, without panicking
@@ -17,25 +18,25 @@ impl<T, E: Debug> CalmUnwrap<T> for Result<T, E> {
     fn calm_unwrap(self) -> T {
         match self {
             Ok(v) => v,
-            Err(e) => abandon!("`Result` had error value: {e:?}"),
+            Err(e) => crate::abandon!("`Result` had error value: {e:?}"),
         }
     }
 
     fn calm_expect(self, msg: impl AsRef<str>) -> T {
         match self {
             Ok(v) => v,
-            Err(e) => abandon!("{}. {e:?}", msg.as_ref()),
+            Err(e) => crate::abandon!("{}. {e:?}", msg.as_ref()),
         }
     }
 }
 
 impl<T> CalmUnwrap<T> for Option<T> {
     fn calm_unwrap(self) -> T {
-        self.unwrap_or_else(|| abandon!("Option had no value"))
+        self.unwrap_or_else(|| crate::abandon!("Option had no value"))
     }
 
     fn calm_expect(self, msg: impl AsRef<str>) -> T {
-        self.unwrap_or_else(|| abandon!("{}", msg.as_ref()))
+        self.unwrap_or_else(|| crate::abandon!("{}", msg.as_ref()))
     }
 }
 
@@ -51,5 +52,3 @@ macro_rules! abandon {
         std::process::exit(1);
     }};
 }
-
-pub use abandon;

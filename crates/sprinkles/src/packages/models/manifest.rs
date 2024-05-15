@@ -56,7 +56,7 @@ pub struct Manifest {
     /// The manifest notes
     pub notes: Option<StringArray>,
     /// Directories to persist when updating
-    pub persist: Option<AliasArray>,
+    pub persist: Option<AliasArray<String>>,
     /// The `PowerShell` module of the package
     pub psmodule: Option<Psmodule>,
     /// The suggested dependencies of the package
@@ -103,7 +103,7 @@ impl std::ops::Index<Architecture> for ManifestArchitecture {
 /// The install configuration
 pub struct InstallConfig {
     /// The package binaries
-    pub bin: Option<AliasArray>,
+    pub bin: Option<AliasArray<String>>,
     /// The checkver configuration
     pub checkver: Option<Checkver>,
     /// The directories to extract to
@@ -118,7 +118,7 @@ pub struct InstallConfig {
     pub post_uninstall: Option<StringArray>,
     pub pre_install: Option<StringArray>,
     pub pre_uninstall: Option<StringArray>,
-    pub shortcuts: Option<Vec<Vec<String>>>,
+    pub shortcuts: Option<AliasArray<String>>,
     pub uninstaller: Option<Uninstaller>,
     pub url: Option<StringArray>,
 }
@@ -178,7 +178,7 @@ pub struct Autoupdate {
     pub architecture: Option<AutoupdateArchitecture>,
     pub license: Option<AutoupdateLicense>,
     pub notes: Option<StringArray>,
-    pub persist: Option<AliasArray>,
+    pub persist: Option<AliasArray<String>>,
     pub psmodule: Option<AutoupdatePsmodule>,
     #[serde(flatten)]
     pub default_config: AutoupdateConfig,
@@ -199,13 +199,13 @@ pub struct AutoupdateArchitecture {
 #[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct AutoupdateConfig {
-    pub bin: Option<AliasArray>,
+    pub bin: Option<AliasArray<String>>,
     pub env_add_path: Option<StringArray>,
     pub env_set: Option<HashMap<String, Option<serde_json::Value>>>,
     pub extract_dir: Option<StringArray>,
     pub hash: Option<HashExtractionOrArrayOfHashExtractions>,
     pub installer: Option<Installer>,
-    pub shortcuts: Option<Vec<Vec<String>>>,
+    pub shortcuts: Option<AliasArray<String>>,
     pub url: Option<StringArray>,
 }
 
@@ -264,31 +264,52 @@ pub struct Suggest {}
 #[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(untagged)]
-pub enum AliasArray {
-    NestedArray(StringArray),
-    AliasArray(Vec<StringArray>),
+pub enum AliasArray<T> {
+    NestedArray(TOrArrayOfTs<T>),
+    AliasArray(Vec<TOrArrayOfTs<T>>),
 }
 
-impl AliasArray {
+impl<T> AliasArray<T> {
     #[must_use]
-    pub fn to_vec(&self) -> Vec<String> {
+    pub fn from_vec(vec: Vec<Vec<T>>) -> Self {
+        let output = vec
+            .into_iter()
+            .map(TOrArrayOfTs::from_vec_or_default)
+            .collect();
+
+        Self::AliasArray(output)
+    }
+
+    #[must_use]
+    pub fn to_vec(&self) -> Vec<T>
+    where
+        // &'a T: ToOwned<Owned = T>,
+        T: Clone,
+    {
         match self {
-            AliasArray::NestedArray(StringArray::Single(s)) => vec![s.clone()],
-            AliasArray::NestedArray(StringArray::Array(s)) => s.clone(),
-            AliasArray::AliasArray(s) => s
-                .iter()
-                .flat_map(|s| match s {
-                    StringArray::Single(s) => vec![s.clone()],
-                    StringArray::Array(s) => s.clone(),
-                })
-                .collect(),
+            AliasArray::NestedArray(TOrArrayOfTs::Single(v)) => vec![v.to_owned()],
+            AliasArray::NestedArray(TOrArrayOfTs::Array(v)) => v.to_owned(),
+            AliasArray::AliasArray(v) => v.iter().cloned().flat_map(TOrArrayOfTs::to_vec).collect(),
         }
     }
 }
 
-impl Display for AliasArray {
+impl<T: Display> Display for AliasArray<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.to_vec().iter().format(", ").fmt(f)
+        match self {
+            AliasArray::NestedArray(v) => {
+                debug!("wtf bro");
+                v.fmt(f)
+            }
+            AliasArray::AliasArray(alias_array) => alias_array
+                .iter()
+                .map(|alias| match alias {
+                    TOrArrayOfTs::Single(v) => v,
+                    TOrArrayOfTs::Array(v) => &v[1],
+                })
+                .format(", ")
+                .fmt(f),
+        }
     }
 }
 
@@ -386,12 +407,12 @@ impl<A> FromIterator<A> for TOrArrayOfTs<A> {
     }
 }
 
-impl<T: Display> Display for TOrArrayOfTs<T>
-where
-    Self: Clone,
-{
+impl<T: Display> Display for TOrArrayOfTs<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.clone().to_vec().iter().format(", ").fmt(f)
+        match self {
+            TOrArrayOfTs::Single(v) => v.fmt(f),
+            TOrArrayOfTs::Array(v) => v.iter().format(", ").fmt(f),
+        }
     }
 }
 
@@ -507,9 +528,9 @@ mod tests {
 
     #[test]
     fn test_equal_generated_manifests() {
-        const SCOOP_GENERATED: &str = r#"{"version":"1.10.1","description":"Stupid Fast Scoop Utilities. Incredibly fast replacements for commonly used Scoop commands, written in Rust.","homepage":"https://github.com/jewlexx/sfsu","license":"Apache-2.0","architecture":{"64bit":{"url":"https://github.com/jewlexx/sfsu/releases/download/v1.10.1/sfsu-x86_64.exe#/sfsu.exe","hash":"e2a1c7dd49d547fdfe05fc45f0c9e276cb992bd94af151f0cf7d3e2ecfdc4233"},"32bit":{"url":"https://github.com/jewlexx/sfsu/releases/download/v1.10.1/sfsu-i686.exe#/sfsu.exe","hash":"b40478dc261fb58caecadd058dc7897a65167ca1f43993908b12dd389790dbd5"},"arm64":{"url":"https://github.com/jewlexx/sfsu/releases/download/v1.10.1/sfsu-aarch64.exe#/sfsu.exe","hash":"17d813fd810d074fd52bd9da8aabc6e52cf27d78a34d2b4403025d5da4b0e13d"}},"notes":"In order to replace scoop commands use `Invoke-Expression (&sfsu hook)` in your Powershell profile.","bin":"sfsu.exe","checkver":"github","autoupdate":{"architecture":{"64bit":{"url":"https://github.com/jewlexx/sfsu/releases/download/v$version/sfsu-x86_64.exe#/sfsu.exe"},"32bit":{"url":"https://github.com/jewlexx/sfsu/releases/download/v$version/sfsu-i686.exe#/sfsu.exe"},"arm64":{"url":"https://github.com/jewlexx/sfsu/releases/download/v$version/sfsu-aarch64.exe#/sfsu.exe"}},"hash":{"url":"$url.sha256"}}}"#;
+        const SCOOP_GENERATED: &str = r#"{"version":"1.10.1","description":"Stupid Fast Scoop Utilities. Incredibly fast replacements for commonly used Scoop commands, written in Rust.","homepage":"https://github.com/winpax/sfsu","license":"Apache-2.0","architecture":{"64bit":{"url":"https://github.com/winpax/sfsu/releases/download/v1.10.1/sfsu-x86_64.exe#/sfsu.exe","hash":"e2a1c7dd49d547fdfe05fc45f0c9e276cb992bd94af151f0cf7d3e2ecfdc4233"},"32bit":{"url":"https://github.com/winpax/sfsu/releases/download/v1.10.1/sfsu-i686.exe#/sfsu.exe","hash":"b40478dc261fb58caecadd058dc7897a65167ca1f43993908b12dd389790dbd5"},"arm64":{"url":"https://github.com/winpax/sfsu/releases/download/v1.10.1/sfsu-aarch64.exe#/sfsu.exe","hash":"17d813fd810d074fd52bd9da8aabc6e52cf27d78a34d2b4403025d5da4b0e13d"}},"notes":"In order to replace scoop commands use `Invoke-Expression (&sfsu hook)` in your Powershell profile.","bin":"sfsu.exe","checkver":"github","autoupdate":{"architecture":{"64bit":{"url":"https://github.com/winpax/sfsu/releases/download/v$version/sfsu-x86_64.exe#/sfsu.exe"},"32bit":{"url":"https://github.com/winpax/sfsu/releases/download/v$version/sfsu-i686.exe#/sfsu.exe"},"arm64":{"url":"https://github.com/winpax/sfsu/releases/download/v$version/sfsu-aarch64.exe#/sfsu.exe"}},"hash":{"url":"$url.sha256"}}}"#;
 
-        const SFSU_GENERATED: &str = r#"{"architecture":{"32bit":{"hash":"b40478dc261fb58caecadd058dc7897a65167ca1f43993908b12dd389790dbd5","url":"https://github.com/jewlexx/sfsu/releases/download/v1.10.1/sfsu-i686.exe#/sfsu.exe"},"64bit":{"hash":"e2a1c7dd49d547fdfe05fc45f0c9e276cb992bd94af151f0cf7d3e2ecfdc4233","url":"https://github.com/jewlexx/sfsu/releases/download/v1.10.1/sfsu-x86_64.exe#/sfsu.exe"},"arm64":{"hash":"17d813fd810d074fd52bd9da8aabc6e52cf27d78a34d2b4403025d5da4b0e13d","url":"https://github.com/jewlexx/sfsu/releases/download/v1.10.1/sfsu-aarch64.exe#/sfsu.exe"}},"autoupdate":{"architecture":{"32bit":{"url":"https://github.com/jewlexx/sfsu/releases/download/v$version/sfsu-i686.exe#/sfsu.exe"},"64bit":{"url":"https://github.com/jewlexx/sfsu/releases/download/v$version/sfsu-x86_64.exe#/sfsu.exe"},"arm64":{"url":"https://github.com/jewlexx/sfsu/releases/download/v$version/sfsu-aarch64.exe#/sfsu.exe"}},"hash":{"url":"$url.sha256"}},"description":"Stupid Fast Scoop Utilities. Incredibly fast replacements for commonly used Scoop commands, written in Rust.","homepage":"https://github.com/jewlexx/sfsu","license":"Apache-2.0","notes":"In order to replace scoop commands use `Invoke-Expression (&sfsu hook)` in your Powershell profile.","version":"1.10.1","bin":"sfsu.exe","checkver":"github"}"#;
+        const SFSU_GENERATED: &str = r#"{"architecture":{"32bit":{"hash":"b40478dc261fb58caecadd058dc7897a65167ca1f43993908b12dd389790dbd5","url":"https://github.com/winpax/sfsu/releases/download/v1.10.1/sfsu-i686.exe#/sfsu.exe"},"64bit":{"hash":"e2a1c7dd49d547fdfe05fc45f0c9e276cb992bd94af151f0cf7d3e2ecfdc4233","url":"https://github.com/winpax/sfsu/releases/download/v1.10.1/sfsu-x86_64.exe#/sfsu.exe"},"arm64":{"hash":"17d813fd810d074fd52bd9da8aabc6e52cf27d78a34d2b4403025d5da4b0e13d","url":"https://github.com/winpax/sfsu/releases/download/v1.10.1/sfsu-aarch64.exe#/sfsu.exe"}},"autoupdate":{"architecture":{"32bit":{"url":"https://github.com/winpax/sfsu/releases/download/v$version/sfsu-i686.exe#/sfsu.exe"},"64bit":{"url":"https://github.com/winpax/sfsu/releases/download/v$version/sfsu-x86_64.exe#/sfsu.exe"},"arm64":{"url":"https://github.com/winpax/sfsu/releases/download/v$version/sfsu-aarch64.exe#/sfsu.exe"}},"hash":{"url":"$url.sha256"}},"description":"Stupid Fast Scoop Utilities. Incredibly fast replacements for commonly used Scoop commands, written in Rust.","homepage":"https://github.com/winpax/sfsu","license":"Apache-2.0","notes":"In order to replace scoop commands use `Invoke-Expression (&sfsu hook)` in your Powershell profile.","version":"1.10.1","bin":"sfsu.exe","checkver":"github"}"#;
 
         let scoop_generated: Manifest = serde_json::from_str(SCOOP_GENERATED).unwrap();
         let sfsu_generated: Manifest = serde_json::from_str(SFSU_GENERATED).unwrap();

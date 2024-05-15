@@ -1,9 +1,9 @@
 use std::{fs::File, io::Read, sync::atomic::Ordering};
 
 use clap::Parser;
-use sprinkles::{calm_panic::abandon, config, contexts::ScoopContext, packages::reference};
+use sprinkles::{config, contexts::ScoopContext, packages::reference};
 
-use crate::COLOR_ENABLED;
+use crate::{abandon, COLOR_ENABLED};
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {

@@ -1,4 +1,5 @@
 use clap::Parser;
+use sprinkles::{config, contexts::ScoopContext};
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {

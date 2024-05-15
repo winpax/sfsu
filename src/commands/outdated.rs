@@ -3,7 +3,7 @@ use serde_json::Map;
 use sfsu_derive::Runnable;
 use sprinkles::{config, contexts::ScoopContext};
 
-use super::{Command, DeprecationMessage, DeprecationWarning};
+use super::{Command, CommandRunner, DeprecationMessage, DeprecationWarning};
 
 mod apps;
 mod buckets;
@@ -26,12 +26,10 @@ pub struct Args {
 }
 
 impl Command for Args {
-    fn deprecated() -> Option<DeprecationWarning> {
-        Some(DeprecationWarning {
-            message: DeprecationMessage::Replacement("sfsu status"),
-            version: Some(2.0),
-        })
-    }
+    const DEPRECATED: Option<DeprecationWarning> = Some(DeprecationWarning {
+        message: DeprecationMessage::Replacement("sfsu status"),
+        version: Some(2.0),
+    });
 
     async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> anyhow::Result<()> {
         if let Some(command) = self.command {

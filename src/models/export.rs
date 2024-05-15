@@ -4,26 +4,13 @@ use chrono::{DateTime, Local, SecondsFormat};
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use crate::{
+use sprinkles::{
     buckets::{Bucket as SfsuBucket, Error as BucketError},
     config,
     contexts::ScoopContext,
+    git,
     packages::{Error as PackageError, MinInfo},
 };
-
-#[derive(Debug, thiserror::Error)]
-/// Export errors
-pub enum Error {
-    #[error("Failed to load Scoop config: {0}")]
-    /// An error occurred while loading the Scoop configuration
-    LoadingScoop(#[from] std::io::Error),
-    #[error("Failed to list buckets: {0}")]
-    /// An error occurred while listing the buckets
-    BucketError(#[from] BucketError),
-    #[error("Failed to list installed apps: {0}")]
-    /// An error occurred while listing the installed apps
-    PackageError(#[from] PackageError),
-}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 /// The export data
@@ -77,7 +64,7 @@ impl Export {
     /// - The buckets could not be listed
     /// - The installed apps could not be listed
     /// - The buckets could not be converted
-    pub fn load(ctx: &impl ScoopContext<config::Scoop>) -> Result<Self, Error> {
+    pub fn load(ctx: &impl ScoopContext<config::Scoop>) -> anyhow::Result<Self> {
         let config = config::Scoop::load()?;
         let buckets = SfsuBucket::list_all(ctx)?
             .into_iter()
@@ -107,7 +94,7 @@ impl From<MinInfo> for App {
 }
 
 impl TryFrom<SfsuBucket> for Bucket {
-    type Error = BucketError;
+    type Error = PackageError;
 
     fn try_from(bucket: SfsuBucket) -> Result<Self, Self::Error> {
         let name = bucket.name();
@@ -117,8 +104,8 @@ impl TryFrom<SfsuBucket> for Bucket {
         let updated = {
             let repo = bucket.open_repo()?;
             let latest_commit = repo.latest_commit()?;
-            let time = latest_commit.time();
-            let secs = time.seconds();
+            let time = latest_commit.time().map_err(git::Error::from)?;
+            let secs = time.seconds;
             // let offset = time.offset_minutes() * 60;
 
             let utc_time = DateTime::from_timestamp(secs, 0).ok_or(BucketError::InvalidTime)?;

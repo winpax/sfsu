@@ -4,13 +4,18 @@ use itertools::Itertools as _;
 use quork::traits::truthy::ContainsTruth;
 use serde::Serialize;
 
-use crate::config;
-use crate::contexts::ScoopContext;
-use crate::{buckets::Bucket, packages::reference::ManifestRef};
-
-use crate::packages::{reference, Manifest, Result};
+use sprinkles::{
+    buckets::Bucket,
+    config,
+    contexts::ScoopContext,
+    packages::{
+        reference::{self, ManifestRef},
+        Manifest, Result,
+    },
+};
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq, Hash)]
+#[allow(clippy::struct_field_names)]
 /// The status info
 pub struct Info {
     /// The name of the package

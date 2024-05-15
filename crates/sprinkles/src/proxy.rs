@@ -2,7 +2,7 @@
 
 use std::{num::ParseIntError, str::FromStr};
 
-use crate::{abandon, let_chain};
+use crate::let_chain;
 
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
@@ -59,6 +59,16 @@ impl TryFrom<Proxy> for reqwest::Proxy {
     }
 }
 
+impl<'a> From<Proxy> for git2::ProxyOptions<'a> {
+    fn from(value: Proxy) -> Self {
+        let mut proxy = git2::ProxyOptions::new();
+
+        proxy.url(&value.to_string());
+
+        proxy
+    }
+}
+
 impl FromStr for Proxy {
     type Err = Error;
 
@@ -71,7 +81,7 @@ impl FromStr for Proxy {
             if let Some(auth) = auth.split_once(':') {
                 (Some(auth.0.to_string()), Some(auth.1.to_string()))
             } else if auth == "currentuser" {
-                abandon!("sfsu does not support using the windows credentials yet");
+                panic!("sfsu does not support using the windows credentials yet");
             } else {
                 (None, None)
             }

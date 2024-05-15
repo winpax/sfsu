@@ -1,8 +1,7 @@
 use clap::Parser;
-use sprinkles::{config, contexts::ScoopContext, output::wrappers::sizes::Size};
-use tokio::task::JoinSet;
+use sprinkles::{config, contexts::ScoopContext, wrappers::sizes::Size};
 
-use crate::{commands::Command, output::colours::eprintln_yellow_bright};
+use crate::{commands::Command, output::colours::eprintln_bright_yellow};
 
 use super::CacheEntry;
 
@@ -21,23 +20,19 @@ impl Command for Args {
             .iter()
             .fold(Size::new(0), |acc, entry| acc + entry.size);
 
-        let mut set = JoinSet::new();
-
-        for entry in cache_entries {
-            set.spawn(async move {
+        let cache_results =
+            futures::future::try_join_all(cache_entries.into_iter().map(|entry| async move {
                 tokio::fs::remove_file(&entry.file_path).await?;
 
                 Ok::<_, std::io::Error>(entry)
-            });
-        }
+            }))
+            .await?;
 
-        while let Some(result) = set.join_next().await {
-            let entry = result??;
-
+        for entry in cache_results {
             eprintln!("Removed: {}", entry.url);
         }
 
-        eprintln_yellow_bright!("Deleted {total_entires} files, {total_size}");
+        eprintln_bright_yellow!("Deleted {total_entires} files, {total_size}");
 
         Ok(())
     }

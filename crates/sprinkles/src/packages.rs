@@ -2,14 +2,11 @@
 
 use std::{
     path::Path,
-    process::Stdio,
     time::{SystemTimeError, UNIX_EPOCH},
 };
 
-use chrono::{DateTime, FixedOffset, Local};
-use git2::Commit;
+use chrono::{DateTime, Local};
 use gix::{object::tree::diff::Action, traverse::commit::simple::Sorting};
-use itertools::Itertools;
 use quork::traits::truthy::ContainsTruth as _;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use regex::Regex;
@@ -20,12 +17,13 @@ use crate::{
     buckets::{self, Bucket},
     config,
     contexts::ScoopContext,
-    git::{self, Repo},
-    let_chain,
-    output::{
-        sectioned::{Children, Section, Text},
-        wrappers::{author::Author, time::NicerTime},
+    git::{
+        self,
+        errors::{self, GitoxideError},
+        Repo,
     },
+    let_chain,
+    wrappers::{author::Author, time::NicerTime},
     Architecture,
 };
 
@@ -165,7 +163,7 @@ pub struct MinInfo {
     /// The package's source (eg. bucket name)
     pub source: String,
     /// The last time the package was updated
-    pub updated: NicerTime<DateTime<Local>>,
+    pub updated: NicerTime<Local>,
     /// The package's notes
     pub notes: String,
 }
@@ -229,21 +227,38 @@ impl MinInfo {
 
         let app_current = path.join("current");
 
-        let manifest = Manifest::from_path(app_current.join("manifest.json")).unwrap_or_default();
+        let (manifest_broken, manifest) =
+            if let Ok(manifest) = Manifest::from_path(app_current.join("manifest.json")) {
+                (false, manifest)
+            } else {
+                (true, Manifest::default())
+            };
 
-        let install_manifest =
-            InstallManifest::from_path(app_current.join("install.json")).unwrap_or_default();
+        let (install_manifest_broken, install_manifest) = if let Ok(install_manifest) =
+            InstallManifest::from_path(app_current.join("install.json"))
+        {
+            (false, install_manifest)
+        } else {
+            (true, InstallManifest::default())
+        };
+
+        let broken = manifest_broken || install_manifest_broken;
+
+        let mut notes = vec![];
+
+        if broken {
+            notes.push("Install failed".to_string());
+        }
+        if install_manifest.hold.contains_truth() {
+            notes.push("Held package".to_string());
+        }
 
         Ok(Self {
             name: package_name.to_string(),
             version: manifest.version.to_string(),
             source: install_manifest.get_source(),
             updated: updated_time.into(),
-            notes: if install_manifest.hold.contains_truth() {
-                String::from("Held")
-            } else {
-                String::new()
-            },
+            notes: notes.join(", "),
         })
     }
 }
@@ -254,6 +269,8 @@ impl MinInfo {
 pub enum Error {
     #[error("Invalid utf8 found. This is not supported by sfsu")]
     NonUtf8,
+    #[error("Could not find parent tree")]
+    MissingParentTree,
     #[error("Missing or invalid file name. The path terminated in '..' or wasn't valid utf8")]
     MissingFileName,
     #[error("{0}")]
@@ -270,6 +287,8 @@ pub enum Error {
     TimeError(#[from] SystemTimeError),
     #[error("Could not find executable in path: {0}")]
     MissingInPath(#[from] which::Error),
+    #[error("Gitoxide error: {0}")]
+    Gitoxide(#[from] Box<errors::GitoxideError>),
     #[error("Git delta did not have a path")]
     DeltaNoPath,
     #[error("Cannot find git commit where package was updated")]
@@ -291,6 +310,12 @@ pub enum Error {
     MissingArchAutoUpdate,
     #[error("Commit did not have a parent")]
     MissingParent,
+}
+
+impl From<errors::GitoxideError> for Error {
+    fn from(value: errors::GitoxideError) -> Self {
+        Self::Gitoxide(Box::new(value))
+    }
 }
 
 /// The result type for package operations
@@ -367,71 +392,6 @@ impl SearchMode {
         }
 
         false
-    }
-}
-
-#[derive(Debug, Clone)]
-#[must_use = "MatchCriteria has no side effects"]
-/// The criteria for a match
-pub struct MatchCriteria {
-    name: bool,
-    bins: Vec<String>,
-}
-
-impl MatchCriteria {
-    /// Create a new match criteria
-    pub const fn new() -> Self {
-        Self {
-            name: false,
-            bins: vec![],
-        }
-    }
-
-    /// Check if the name matches
-    pub fn matches(
-        file_name: &str,
-        manifest: Option<&Manifest>,
-        mode: SearchMode,
-        pattern: &Regex,
-        arch: Architecture,
-    ) -> Self {
-        let file_name = file_name.to_string();
-
-        let mut output = MatchCriteria::new();
-
-        if mode.match_names() && pattern.is_match(&file_name) {
-            output.name = true;
-        }
-
-        if let Some(manifest) = manifest {
-            let binaries = manifest
-                .architecture
-                .merge_default(manifest.install_config.clone(), arch)
-                .bin
-                .map(|b| b.to_vec())
-                .unwrap_or_default();
-
-            let binary_matches = binaries
-                .into_iter()
-                .filter(|binary| pattern.is_match(binary))
-                .filter_map(|b| {
-                    if pattern.is_match(&b) {
-                        Some(b.clone())
-                    } else {
-                        None
-                    }
-                });
-
-            output.bins.extend(binary_matches);
-        }
-
-        output
-    }
-}
-
-impl Default for MatchCriteria {
-    fn default() -> Self {
-        Self::new()
     }
 }
 
@@ -669,77 +629,6 @@ impl Manifest {
             .collect::<Vec<_>>())
     }
 
-    #[doc(hidden)]
-    pub fn parse_output(
-        &self,
-        ctx: &impl ScoopContext<config::Scoop>,
-        bucket: impl AsRef<str>,
-        installed_only: bool,
-        pattern: &Regex,
-        mode: SearchMode,
-        arch: Architecture,
-    ) -> Option<Section<Text<String>>> {
-        // TODO: Better display of output
-
-        // This may be a bit of a hack, but it works
-
-        let match_output = MatchCriteria::matches(
-            &self.name,
-            if mode.match_binaries() {
-                Some(self)
-            } else {
-                None
-            },
-            mode,
-            pattern,
-            arch,
-        );
-
-        if !match_output.name && match_output.bins.is_empty() {
-            return None;
-        }
-
-        let is_installed = self.is_installed(ctx, Some(bucket.as_ref()));
-        if installed_only && !is_installed {
-            return None;
-        }
-
-        let styled_package_name = if self.name == pattern.to_string() {
-            console::style(&self.name).bold().to_string()
-        } else {
-            self.name.clone()
-        };
-
-        let installed_text = if is_installed && !installed_only {
-            "[installed] "
-        } else {
-            ""
-        };
-
-        let title = format!("{styled_package_name} ({}) {installed_text}", self.version);
-
-        let package = if mode.match_binaries() {
-            let bins = match_output
-                .bins
-                .iter()
-                .map(|output| {
-                    Text::new(format!(
-                        "{}{}",
-                        crate::output::WHITESPACE,
-                        console::style(output).bold()
-                    ))
-                })
-                .collect_vec();
-
-            Section::new(Children::from(bins))
-        } else {
-            Section::new(Children::None)
-        }
-        .with_title(title);
-
-        Some(package)
-    }
-
     #[must_use]
     /// Check if the manifest is installed
     pub fn is_installed(
@@ -893,9 +782,9 @@ impl Manifest {
 
     #[must_use]
     /// Check if the commit's message matches the name of the manifest
-    pub fn commit_message_matches(&self, commit: &Commit<'_>) -> bool {
-        if let Some(message) = commit.message() {
-            message.starts_with(&self.name)
+    pub fn commit_message_matches(&self, commit: &gix::Commit<'_>) -> bool {
+        if let Ok(message) = commit.message() {
+            message.summary().to_string().starts_with(&self.name)
         } else {
             false
         }
@@ -905,23 +794,37 @@ impl Manifest {
     ///
     /// # Errors
     /// - Git2 errors
-    pub fn commit_diff_matches(&self, repo: &Repo, commit: &Commit<'_>) -> Result<bool> {
-        let mut diff_options = Repo::default_diff_options();
+    pub fn commit_diff_matches(&self, commit: &gix::Commit<'_>) -> Result<bool> {
+        let tree = commit.tree().map_err(GitoxideError::from)?;
+        let parent_tree = commit
+            .parent_ids()
+            .find_map(|parent| {
+                match parent.try_object() {
+                    Ok(Some(object)) => Some(object),
+                    _ => None,
+                }
+                .and_then(|object| object.peel_to_tree().ok())
+            })
+            .ok_or(Error::MissingParentTree)?;
 
-        let tree = commit.tree()?;
-        let parent_tree = commit.parent(0)?.tree()?;
+        let mut changed = false;
 
-        let manifest_path = format!("bucket/{}.json", self.name);
+        tree.changes()
+            .map_err(GitoxideError::from)?
+            .track_filename()
+            .for_each_to_obtain_tree(&parent_tree, |change| {
+                if change.location.to_string().starts_with(&self.name) {
+                    changed = true;
+                    return Ok::<_, GitoxideError>(Action::Cancel);
+                }
 
-        let diff = repo.diff_tree_to_tree(
-            Some(&parent_tree),
-            Some(&tree),
-            Some(diff_options.pathspec(&manifest_path)),
-        )?;
+                Ok(Action::Continue)
+            })
+            .map_err(GitoxideError::from)?;
 
         // Given that the diffoptions ensure that we only match the specific manifest
         // we are safe to return as soon as we find a commit thats changed anything
-        Ok(diff.stats()?.files_changed() != 0)
+        Ok(changed)
     }
 
     /// Get the time and author of the commit where this manifest was last changed
@@ -934,117 +837,92 @@ impl Manifest {
         &self,
         ctx: &impl ScoopContext<config::Scoop>,
         hide_emails: bool,
-        disable_git: bool,
     ) -> Result<(Option<String>, Option<String>)> {
         let bucket = Bucket::from_name(ctx, &self.bucket)?;
 
-        if disable_git {
-            let repo = Repo::from_bucket(&bucket)?.to_gitoxide()?;
-            let latest_commit = repo.head_commit().map_err(git::Error::from)?;
+        let repo = Repo::from_bucket(&bucket)?;
+        let gitoxide = repo.gitoxide();
+        let latest_commit = gitoxide.head_commit().map_err(git::Error::from)?;
 
-            let revwalk = repo
-                .rev_walk([latest_commit.id])
-                .sorting(Sorting::ByCommitTimeNewestFirst);
+        let revwalk = gitoxide
+            .rev_walk([latest_commit.id])
+            .sorting(Sorting::ByCommitTimeNewestFirst);
 
-            let updated_commit = revwalk
-                .all()
-                .map_err(git::Error::from)?
-                // .skip(1)
-                .find_map(|info| {
-                    let find_commit = || {
-                        // TODO: Add tests using personal bucket to ensure that different methods return the same info
-                        let info = info.map_err(git::Error::from)?;
-                        let commit = info.object().map_err(git::Error::from)?;
+        let updated_commit = revwalk
+            .all()
+            .map_err(git::Error::from)?
+            // .skip(1)
+            .find_map(|info| {
+                let find_commit = || {
+                    // TODO: Add tests using personal bucket to ensure that different methods return the same info
+                    let info = info.map_err(git::Error::from)?;
+                    let commit = info.object().map_err(git::Error::from)?;
 
-                        #[cfg(not(feature = "info-difftrees"))]
-                        if self.commit_message_matches(&commit) {
+                    #[cfg(not(feature = "info-difftrees"))]
+                    if self.commit_message_matches(&commit) {
+                        return Ok(commit);
+                    }
+
+                    #[cfg(feature = "info-difftrees")]
+                    {
+                        let mut matches = false;
+
+                        let other = info.parent_ids().next().ok_or(Error::MissingParent)?;
+                        let other = other.object().map_err(git::Error::from)?;
+                        let other_tree = other.peel_to_tree().map_err(git::Error::from)?;
+                        commit
+                            .tree()
+                            .map_err(git::Error::from)?
+                            .changes()
+                            .map_err(git::Error::from)?
+                            .track_filename()
+                            .for_each_to_obtain_tree(&other_tree, |change| {
+                                debug!("{change:?}");
+                                debug!("Filename: {}", change.location.to_string());
+
+                                if change.location.to_string().starts_with(&self.name) {
+                                    matches = true;
+                                    Ok::<_, Error>(Action::Cancel)
+                                } else {
+                                    Ok(Action::Continue)
+                                }
+                            })
+                            .map_err(git::Error::from)?;
+
+                        if matches {
                             return Ok(commit);
                         }
-
-                        #[cfg(feature = "info-difftrees")]
-                        {
-                            let mut matches = false;
-
-                            let other = info.parent_ids().next().ok_or(Error::MissingParent)?;
-                            let other = other.object().map_err(git::Error::from)?;
-                            let other_tree = other.peel_to_tree().map_err(git::Error::from)?;
-                            commit
-                                .tree()
-                                .map_err(git::Error::from)?
-                                .changes()
-                                .map_err(git::Error::from)?
-                                .track_filename()
-                                .for_each_to_obtain_tree(&other_tree, |change| {
-                                    debug!("{change:?}");
-                                    debug!("Filename: {}", change.location.to_string());
-
-                                    if change.location.to_string().starts_with(&self.name) {
-                                        matches = true;
-                                        Ok::<_, Error>(Action::Cancel)
-                                    } else {
-                                        Ok(Action::Continue)
-                                    }
-                                })
-                                .map_err(git::Error::from)?;
-
-                            if matches {
-                                return Ok(commit);
-                            }
-                        }
-
-                        Err(Error::NoUpdatedCommit)
-                    };
-
-                    let result = find_commit();
-
-                    match result {
-                        Ok(commit) => Some(Ok(commit)),
-                        Err(Error::NoUpdatedCommit) => None,
-                        Err(e) => Some(Err(e)),
                     }
-                })
-                .ok_or(Error::NoUpdatedCommit)??;
 
-            let date_time = {
-                let time = updated_commit.time().map_err(git::Error::from)?;
-                let secs = time.seconds;
-                let offset = time.offset * 60;
+                    Err(Error::NoUpdatedCommit)
+                };
 
-                let utc_time = DateTime::from_timestamp(secs, 0).ok_or(Error::InvalidTime)?;
+                let result = find_commit();
 
-                let offset = FixedOffset::east_opt(offset).ok_or(Error::InvalidTimeZone)?;
+                match result {
+                    Ok(commit) => Some(Ok(commit)),
+                    Err(Error::NoUpdatedCommit) => None,
+                    Err(e) => Some(Err(e)),
+                }
+            })
+            .ok_or(Error::NoUpdatedCommit)??;
 
-                utc_time.with_timezone(&offset)
-            };
+        let date_time = git::parity::Time::from(
+            updated_commit
+                .time()
+                .map_err(git::errors::GitoxideError::from)
+                .map_err(Box::new)?,
+        )
+        .to_datetime()
+        .ok_or(Error::InvalidTime)?;
 
-            let author_wrapped = Author::from(updated_commit.author().map_err(git::Error::from)?)
-                .with_show_emails(!hide_emails);
+        let author_wrapped = Author::from(updated_commit.author().map_err(git::Error::from)?)
+            .with_show_emails(!hide_emails);
 
-            Ok((
-                Some(date_time.to_string()),
-                Some(author_wrapped.to_string()),
-            ))
-        } else {
-            let output = bucket
-                .open_repo()?
-                .log("bucket", 1, "%aD#%an")?
-                .arg(self.name.clone() + ".json")
-                .stderr(Stdio::null())
-                .output()
-                .map_err(|_| Error::MissingGitOutput)?;
-
-            let info = String::from_utf8(output.stdout)
-                .map_err(|_| Error::NonUtf8)?
-                // Remove newline from end
-                .trim_end()
-                // Remove weird single quote from either end
-                .trim_matches('\'')
-                .split_once('#')
-                .map(|(time, author)| (time.to_string(), author.to_string()))
-                .unzip();
-
-            Ok(info)
-        }
+        Ok((
+            Some(date_time.to_string()),
+            Some(author_wrapped.to_string()),
+        ))
     }
 
     /// Get [`InstallManifest`] for [`Manifest`]

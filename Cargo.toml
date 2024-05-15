@@ -9,10 +9,13 @@ version.workspace = true
 
 [workspace]
 members = ["crates/*"]
+package.authors = ["Juliette Cordor <professional@maybejules.com>"]
+package.homepage = "https://github.com/winpax/sfsu"
 package.license = "Apache-2.0"
 package.publish = false
+package.repository = "https://github.com/winpax/sfsu"
 package.rust-version = "1.75.0"
-package.version = "1.12.0"
+package.version = "1.13.4"
 
 [workspace.dependencies]
 chrono = { version = ">=0.4.38", features = [
@@ -23,14 +26,10 @@ chrono = { version = ">=0.4.38", features = [
 console = { version = "0.15", features = ["windows-console-colors"] }
 futures = "0.3"
 git2 = "0.18"
-indicatif = { version = "0.17", features = [
-    "improved_unicode",
-    "rayon",
-    "tokio",
-] }
+heck = "0.5"
 itertools = "0.12"
 log = { version = "0.4", features = ["std"] }
-quork = "0.7.0"
+quork = "0.7"
 rayon = "1.10"
 regex = "1.10"
 serde = { version = "1.0", features = ["derive"] }
@@ -82,10 +81,10 @@ clap = { version = "4.5", features = [
 ] }
 console.workspace = true
 crossterm = "0.27.0"
+dialoguer = "0.11.0"
 futures.workspace = true
-git2.workspace = true
+heck.workspace = true
 human-panic = "2.0"
-indicatif.workspace = true
 itertools.workspace = true
 log = { workspace = true }
 open = "5.1"

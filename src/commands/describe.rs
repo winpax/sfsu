@@ -1,14 +1,11 @@
 use clap::Parser;
 
-use sprinkles::{
-    buckets::Bucket,
-    config,
-    contexts::ScoopContext,
-    output::sectioned::{Children, Section, Sections, Text},
-    packages::Manifest,
-};
+use sprinkles::{buckets::Bucket, config, contexts::ScoopContext, packages::Manifest};
 
-use super::{DeprecationMessage, DeprecationWarning};
+use crate::{
+    commands::{DeprecationMessage, DeprecationWarning},
+    output::sectioned::{Children, Section, Sections, Text},
+};
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
@@ -20,12 +17,10 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    fn deprecated() -> Option<DeprecationWarning> {
-        Some(DeprecationWarning {
-            message: DeprecationMessage::Replacement("sfsu info"),
-            version: Some(2.0),
-        })
-    }
+    const DEPRECATED: Option<DeprecationWarning> = Some(DeprecationWarning {
+        message: DeprecationMessage::Replacement("sfsu info"),
+        version: Some(2.0),
+    });
 
     async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
         let buckets = Bucket::one_or_all(ctx, self.bucket)?;

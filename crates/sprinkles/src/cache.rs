@@ -235,7 +235,7 @@ impl Downloader {
                 ProgressBar::new(content_length)
                     .with_style(progress::style(
                         Some(progress::ProgressOptions::Bytes),
-                        Some(progress::Message::Prefix(Some(&message))),
+                        Some(progress::Message::prefix().with_message(&message)),
                     ))
                     .with_finish(indicatif::ProgressFinish::WithMessage("Finished ✅".into())),
             );

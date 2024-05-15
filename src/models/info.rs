@@ -2,14 +2,14 @@
 
 use serde::Serialize;
 
-use crate::{
-    output::wrappers::{alias_vec::AliasVec, bool::NicerBool},
-    packages::manifest::PackageLicense,
+use sprinkles::{
+    packages::models::manifest::{AliasArray, PackageLicense},
+    wrappers::{bool::NicerBool, serialize::SerializeDisplay},
 };
 
 #[derive(Debug, Clone, Serialize)]
 /// Summary package information
-pub struct PackageInfo {
+pub struct Package {
     /// The name of the package
     pub name: String,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -40,5 +40,5 @@ pub struct PackageInfo {
     pub notes: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     /// The package's shortcuts
-    pub shortcuts: Option<AliasVec<String>>,
+    pub shortcuts: Option<SerializeDisplay<AliasArray<String>>>,
 }

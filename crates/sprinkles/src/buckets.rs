@@ -3,11 +3,17 @@
 use std::{
     borrow::Cow,
     collections::HashSet,
+    ffi::OsStr,
     path::{Path, PathBuf},
 };
 
 use rayon::prelude::*;
 use regex::Regex;
+
+pub(crate) mod known {
+    #![allow(clippy::unreadable_literal)]
+    include!(concat!(env!("OUT_DIR"), "/buckets.rs"));
+}
 
 use crate::{
     config,
@@ -30,6 +36,8 @@ pub enum Error {
     MissingGitOutput,
     #[error("Could not find executable in path: {0}")]
     MissingInPath(#[from] which::Error),
+    #[error("Git error: {0}")]
+    GixCommit(#[from] gix::object::commit::Error),
     #[error("Invalid time. (time went backwards or way way way too far forwards (hello future! whats it like?))")]
     InvalidTime,
     #[error("Invalid timezone provided. (where are you?)")]
@@ -132,26 +140,24 @@ impl Bucket {
     /// - Any package has an invalid path or invalid contents
     /// - See more at [`packages::Error`]
     pub fn list_packages(&self) -> packages::Result<Vec<Manifest>> {
-        let dir = std::fs::read_dir(self.path().join("bucket"))?;
+        let packages = self.list_package_paths()?;
 
-        dir.map(|manifest| Manifest::from_path(manifest?.path()))
-            .collect()
+        // TODO: Use rayon here
+        packages.into_iter().map(Manifest::from_path).collect()
     }
 
-    /// List all packages contained within this bucket, ignoring errors
+    /// List all packages contained within this bucket, ignoring invalid buckets
     ///
     /// # Errors
     /// - The bucket is invalid
     /// - See more at [`packages::Error`]
     pub fn list_packages_unchecked(&self) -> packages::Result<Vec<Manifest>> {
-        let dir = std::fs::read_dir(self.path().join("bucket"))?;
+        let packages = self.list_package_paths()?;
 
-        Ok(dir
-            .map(|manifest| Manifest::from_path(manifest?.path()))
-            .filter_map(|result| match result {
-                Ok(v) => Some(v),
-                Err(_) => None,
-            })
+        // TODO: Use rayon here
+        Ok(packages
+            .into_iter()
+            .filter_map(|path| Manifest::from_path(path).ok())
             .collect())
     }
 
@@ -160,21 +166,67 @@ impl Bucket {
     /// # Errors
     /// - The bucket is invalid
     /// - See more at [`packages::Error`]
-    pub fn list_package_names(&self) -> packages::Result<Vec<String>> {
-        let dir = std::fs::read_dir(self.path().join("bucket"))?;
+    pub fn list_package_paths(&self) -> packages::Result<Vec<PathBuf>> {
+        enum BucketPath {
+            Valid(PathBuf),
+            Invalid(PathBuf),
+        }
 
-        Ok(dir
-            .map(|entry| {
-                entry.map(|file| {
-                    file.path()
-                        .with_extension("")
-                        .file_name()
-                        .map(|file_name| file_name.to_string_lossy().to_string())
+        impl BucketPath {
+            fn is_valid(&self) -> bool {
+                matches!(self, BucketPath::Valid(_))
+            }
+        }
+
+        impl AsRef<Path> for BucketPath {
+            fn as_ref(&self) -> &Path {
+                match self {
+                    BucketPath::Invalid(path) | BucketPath::Valid(path) => path,
+                }
+            }
+        }
+
+        let bucket_path = {
+            let bucket_path = self.path().join("bucket");
+
+            if bucket_path.exists() {
+                BucketPath::Valid(bucket_path)
+            } else {
+                BucketPath::Invalid(self.path().to_owned())
+            }
+        };
+
+        let dir = std::fs::read_dir(&bucket_path)?;
+
+        let paths = dir.map(|entry| entry.map(|file| file.path()).map_err(packages::Error::from));
+
+        if bucket_path.is_valid() {
+            paths.collect()
+        } else {
+            paths
+                .filter_map(|path| match path {
+                    Ok(path) if path.extension() == Some(OsStr::new("json")) => Some(Ok(path)),
+                    Err(e) => Some(Err(e)),
+                    _ => None,
                 })
-            })
-            .filter_map(|file_name| match file_name {
-                Ok(Some(file_name)) => Some(file_name),
-                _ => None,
+                .collect()
+        }
+    }
+
+    /// List all packages contained within this bucket, returning their names
+    ///
+    /// # Errors
+    /// - The bucket is invalid
+    /// - See more at [`packages::Error`]
+    pub fn list_package_names(&self) -> packages::Result<Vec<String>> {
+        let packages = self.list_package_paths()?;
+
+        Ok(packages
+            .into_iter()
+            .filter_map(|path| {
+                path.with_extension("")
+                    .file_name()
+                    .map(|file_name| file_name.to_string_lossy().to_string())
             })
             .collect())
     }
@@ -278,8 +330,25 @@ impl Bucket {
     ///
     /// # Errors
     /// - Could not read the bucket directory
-    pub fn manifests(&self) -> Result<usize> {
-        Ok(std::fs::read_dir(self.path().join("bucket"))?.count())
+    pub fn manifests(&self) -> packages::Result<usize> {
+        Ok(self.list_package_paths()?.len())
+    }
+
+    #[deprecated(note = "Use `manifests` instead. This function is much slower")]
+    #[cfg(not(feature = "v2"))]
+    /// Get the number of manifests in the bucket using async I/O
+    ///
+    /// # Errors
+    /// - Could not read the bucket directory
+    pub async fn manifests_async(&self) -> Result<usize> {
+        let mut read_dir = tokio::fs::read_dir(self.path().join("bucket")).await?;
+        let mut count = 0;
+
+        while (read_dir.next_entry().await?).is_some() {
+            count += 1;
+        }
+
+        Ok(count)
     }
 
     /// Get the bucket's source url
@@ -294,8 +363,49 @@ impl Bucket {
             .open_repo()?
             .origin()
             .ok_or(git::Error::MissingRemote("origin".to_string()))?
-            .url()
+            .url(gix::remote::Direction::Fetch)
             .map(std::string::ToString::to_string)
             .ok_or(git::Error::NonUtf8)?)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::contexts::User;
+
+    use super::*;
+
+    #[test]
+    fn test_list_all_buckets() {
+        let ctx = User::new();
+        let buckets = Bucket::list_all(&ctx).unwrap();
+
+        assert!(!buckets.is_empty());
+    }
+
+    #[test]
+    fn test_main_bucket_update() {
+        let ctx = User::new();
+
+        let bucket = Bucket::from_name(&ctx, "main").unwrap();
+
+        bucket
+            .open_repo()
+            .unwrap()
+            .pull(&User::new(), None)
+            .unwrap();
+    }
+
+    #[test]
+    fn test_extras_bucket_update() {
+        let ctx = User::new();
+
+        let bucket = Bucket::from_name(&ctx, "extras").unwrap();
+
+        bucket
+            .open_repo()
+            .unwrap()
+            .pull(&User::new(), None)
+            .unwrap();
     }
 }

@@ -11,15 +11,17 @@ use crossterm::{
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
     ExecutableCommand,
 };
+use itertools::Itertools;
 use parking_lot::Mutex;
 use ratatui::{
     backend::CrosstermBackend,
     layout::Alignment,
-    style::{Modifier, Style},
-    text::Text,
+    style::{Color, Modifier, Style},
+    text::{Line, Span, Text},
     widgets::{Block, Borders, List},
     Frame, Terminal,
 };
+use serde::Serialize;
 use sprinkles::{config, contexts::ScoopContext};
 
 mod contributors {
@@ -31,18 +33,23 @@ mod packages {
 }
 
 mod titles {
+    use shadow_rs::formatcp;
+
     pub const TITLE: &str = concat!(
         "🚀 sfsu v",
         env!("CARGO_PKG_VERSION"),
         ", created by Juliette Cordor 🚀"
     );
     pub const CONTRIBUTORS: &str = "💖 Many thanks to all our incredible contributors 💖";
-    pub const PACKAGES: &str = "📦 And all the incredible crates we use 📦";
+    pub const PACKAGES: &str = formatcp!(
+        "📦 And all the incredible {} crates we use 📦",
+        super::packages::PACKAGES.len()
+    );
 }
 
 #[derive(Debug)]
 struct Timer {
-    timeout: Duration,
+    timeout: Mutex<Duration>,
     current: Mutex<Duration>,
     now: Mutex<std::time::Instant>,
 }
@@ -50,7 +57,7 @@ struct Timer {
 impl Timer {
     pub fn new(timeout: Duration) -> Self {
         Self {
-            timeout,
+            timeout: Mutex::new(timeout),
             current: Mutex::new(Duration::ZERO),
             now: Mutex::new(Instant::now()),
         }
@@ -64,12 +71,16 @@ impl Timer {
         let mut current = self.current.lock();
         *current += delta;
 
-        if *current >= self.timeout {
+        if *current >= *self.timeout.lock() {
             *current = Duration::ZERO;
             true
         } else {
             false
         }
+    }
+
+    pub fn set_timeout(&self, timeout: Duration) {
+        *self.timeout.lock() = timeout;
     }
 }
 
@@ -98,11 +109,57 @@ impl<T: Display> Display for Url<T> {
 pub struct Args {
     #[clap(short, long, help = "Show packages")]
     packages: bool,
+
+    #[clap(from_global)]
+    json: bool,
 }
 
 impl super::Command for Args {
     async fn runner(self, _: &impl ScoopContext<config::Scoop>) -> anyhow::Result<()> {
-        if console::colors_enabled() {
+        if self.json {
+            #[derive(Debug, Clone, Serialize)]
+            struct JsonOutput<'a> {
+                contributors: Vec<Contributor<'a>>,
+
+                #[serde(skip_serializing_if = "Vec::is_empty")]
+                packages: Vec<Package<'a>>,
+            }
+
+            #[derive(Debug, Clone, Serialize)]
+            struct Contributor<'a> {
+                name: &'a str,
+                url: &'a str,
+            }
+
+            #[derive(Debug, Clone, Serialize)]
+            struct Package<'a> {
+                name: &'a str,
+                version: &'a str,
+            }
+
+            let contributors = contributors::CONTRIBUTORS
+                .into_iter()
+                .map(|(name, url)| Contributor { name, url })
+                .collect_vec();
+
+            let packages = if self.packages {
+                packages::PACKAGES
+                    .into_iter()
+                    .map(|(name, version)| Package { name, version })
+                    .collect_vec()
+            } else {
+                vec![]
+            };
+
+            let output = JsonOutput {
+                contributors,
+                packages,
+            };
+
+            let output = serde_json::to_string_pretty(&output)?;
+
+            println!("{output}");
+        } else if console::colors_enabled() {
             self.terminal_ui()?;
         } else {
             println!("{}", titles::TITLE);
@@ -164,11 +221,13 @@ impl Args {
                 Text::raw(""),
             ]);
 
-            items.extend(
-                packages::PACKAGES
-                    .into_iter()
-                    .map(|(name, version)| Text::from(format!("{name}@{version}"))),
-            );
+            items.extend(packages::PACKAGES.into_iter().map(|(name, version)| {
+                Text::from(Line::from(vec![
+                    Span::styled(name, Style::default()),
+                    Span::raw(" - "),
+                    Span::styled(version, Style::default().fg(Color::Yellow)),
+                ]))
+            }));
         }
 
         let mut items: VecDeque<Text<'_>> = items.into();
@@ -181,8 +240,13 @@ impl Args {
 
         let mut should_quit = false;
         while !should_quit {
-            terminal.draw(|f| Self::ui(f, timer.as_ref(), titles::TITLE, &mut items))?;
-            should_quit = Self::handle_events()?;
+            terminal.draw(|f| {
+                should_quit = Self::ui(f, timer.as_ref(), titles::TITLE, &mut items);
+            })?;
+
+            if !should_quit {
+                should_quit = Self::handle_events(timer.as_ref())?;
+            }
         }
 
         disable_raw_mode()?;
@@ -191,11 +255,25 @@ impl Args {
         Ok(())
     }
 
-    fn handle_events() -> anyhow::Result<bool> {
+    fn handle_events(draw_timer: Option<&Timer>) -> anyhow::Result<bool> {
         if event::poll(Duration::from_millis(50))? {
             if let Event::Key(key) = event::read()? {
                 if key.kind == event::KeyEventKind::Press && key.code == KeyCode::Char('q') {
                     return Ok(true);
+                }
+
+                if key.code == KeyCode::Down {
+                    if key.kind == event::KeyEventKind::Press {
+                        if let Some(draw_timer) = draw_timer {
+                            draw_timer.set_timeout(Duration::from_millis(16));
+                        }
+                    }
+
+                    if key.kind == event::KeyEventKind::Release {
+                        if let Some(draw_timer) = draw_timer {
+                            draw_timer.set_timeout(Duration::from_millis(743));
+                        }
+                    }
                 }
             }
         }
@@ -207,11 +285,21 @@ impl Args {
         timer: Option<&Timer>,
         title: &str,
         items: &mut VecDeque<Text<'_>>,
-    ) {
+    ) -> bool {
         if let Some(timer) = timer {
             if timer.tick() {
                 items.pop_front();
             }
+        }
+
+        let mut footer = "Press Q to exit".to_string();
+
+        if timer.is_some() {
+            footer += " | Press Down to speed up the credits scrolling";
+        }
+
+        if items.is_empty() {
+            return true;
         }
 
         frame.render_widget(
@@ -225,10 +313,12 @@ impl Args {
                 Block::default()
                     .title(title)
                     .title_alignment(Alignment::Center)
-                    .title_bottom("Press Q to exit")
+                    .title_bottom(footer)
                     .borders(Borders::ALL),
             ),
             frame.size(),
         );
+
+        false
     }
 }

@@ -2,20 +2,19 @@ use std::time::Duration;
 
 use anyhow::Context;
 use clap::{Parser, ValueEnum};
-use indicatif::ProgressBar;
 use rayon::prelude::*;
 use sprinkles::{
-    calm_panic::CalmUnwrap,
     config,
     contexts::ScoopContext,
     hash::Hash,
     packages::{reference::Package, CreateManifest, Manifest},
-    progress::{style, ProgressOptions},
+    progress::{indicatif::ProgressBar, style, ProgressOptions},
     requests::USER_AGENT,
     Architecture,
 };
 
 use crate::{
+    calm_panic::CalmUnwrap,
     errors::{RecoverableError, RecoverableResult},
     limits::RateLimiter,
     output::colours::{eprintln_green, eprintln_red, eprintln_yellow},

@@ -32,6 +32,8 @@ pub enum Error {
     Git(#[from] git::Error),
     #[error("Error joining task: {0}")]
     JoinError(#[from] tokio::task::JoinError),
+    #[error("Error reading known buckets: {0}")]
+    SerdeJson(#[from] serde_json::Error),
 
     #[error("{0}")]
     Custom(#[from] Box<dyn std::error::Error + Send + Sync>),
@@ -66,11 +68,11 @@ pub trait ScoopContext<C>: Clone + Send + Sync + 'static {
     /// This string should match what the app's name is in Scoop, if applicable.
     const CONTEXT_NAME: &'static str;
 
-    /// Load the context's configuration
-    ///
-    /// Generally the actual loading should be implemented in the context's construction (i.e the `new` function),
-    /// and this function should just return a reference to the configuration.
+    /// Get a reference to the context's configuration
     fn config(&self) -> &C;
+
+    /// Get a mutable reference to the context's configuration
+    fn config_mut(&mut self) -> &mut C;
 
     #[must_use]
     /// Gets the context's path
@@ -92,7 +94,11 @@ pub trait ScoopContext<C>: Clone + Send + Sync + 'static {
             _ = std::fs::create_dir_all(&path);
         }
 
-        path
+        if let Ok(dunced) = dunce::canonicalize(&path) {
+            dunced
+        } else {
+            path
+        }
     }
 
     #[must_use]
@@ -118,6 +124,12 @@ pub trait ScoopContext<C>: Clone + Send + Sync + 'static {
     #[must_use]
     /// Get the contexts's workspace path
     fn workspace_path(&self) -> PathBuf;
+
+    #[must_use]
+    /// Get the contexts's scripts path
+    fn scripts_path(&self) -> PathBuf {
+        self.sub_path("workspace/scripts")
+    }
 
     /// Get the path to the log directory
     fn logging_dir(&self) -> std::io::Result<PathBuf>;
@@ -163,6 +175,17 @@ pub trait ScoopContext<C>: Clone + Send + Sync + 'static {
     /// For example, if the context is the user context, this should return the path to the scoop app
     fn context_app_path(&self) -> PathBuf;
 
+    /// List all known buckets
+    ///
+    /// This function will return a map of bucket name to url
+    ///
+    /// # Errors
+    /// - Reading the buckets file
+    /// - Deserializing the buckets file
+    fn known_buckets(&self) -> &phf::Map<&'static str, &'static str> {
+        &crate::buckets::known::BUCKETS
+    }
+
     #[must_use]
     /// Check if the context is outdated
     ///
@@ -192,6 +215,13 @@ impl ScoopContext<config::Scoop> for AnyContext {
         match self {
             AnyContext::User(user) => user.config(),
             AnyContext::Global(global) => global.config(),
+        }
+    }
+
+    fn config_mut(&mut self) -> &mut config::Scoop {
+        match self {
+            AnyContext::User(user) => user.config_mut(),
+            AnyContext::Global(global) => global.config_mut(),
         }
     }
 

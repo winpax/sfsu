@@ -7,10 +7,12 @@
 
 // TODO: Replace regex with glob
 
+mod calm_panic;
 mod commands;
 mod errors;
 mod limits;
 mod logging;
+mod models;
 mod output;
 
 use std::{
@@ -23,6 +25,9 @@ use clap::Parser;
 use commands::Commands;
 use logging::Logger;
 use sprinkles::contexts::{AnyContext, User};
+
+#[cfg(feature = "contexts")]
+use sprinkles::contexts::Global;
 
 mod versions {
     #![allow(clippy::needless_raw_string_hashes)]
@@ -100,13 +105,15 @@ struct Args {
 pub(crate) static COLOR_ENABLED: AtomicBool = AtomicBool::new(true);
 
 #[cfg(feature = "contexts")]
-impl From<&Args> for AnyContext {
-    fn from(args: &Args) -> Self {
-        if args.global {
-            AnyContext::Global(sprinkles::contexts::Global::new())
+impl TryFrom<&Args> for AnyContext {
+    type Error = anyhow::Error;
+
+    fn try_from(args: &Args) -> anyhow::Result<Self> {
+        Ok(if args.global {
+            AnyContext::Global(Global::new()?)
         } else {
             AnyContext::User(User::new())
-        }
+        })
     }
 }
 
@@ -119,7 +126,7 @@ async fn main() -> anyhow::Result<()> {
     let ctx: AnyContext = {
         cfg_if::cfg_if! {
             if #[cfg(feature = "contexts")] {
-                (&args).into()
+                (&args).try_into()?
             } else {
                 AnyContext::User(User::new())
             }

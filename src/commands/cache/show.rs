@@ -1,11 +1,10 @@
 use clap::Parser;
-use sprinkles::{
-    config,
-    contexts::ScoopContext,
-    output::{structured::Structured, wrappers::sizes::Size},
-};
+use sprinkles::{config, contexts::ScoopContext, wrappers::sizes::Size};
 
-use crate::{commands::Command, output::colours::eprintln_yellow_bright};
+use crate::{
+    commands::Command,
+    output::{colours::eprintln_bright_yellow, structured::Structured},
+};
 
 use super::CacheEntry;
 
@@ -26,7 +25,7 @@ impl Command for Args {
             .iter()
             .fold(Size::new(0), |acc, entry| acc + entry.size);
 
-        eprintln_yellow_bright!("Total: {} files, {total_size}", cache_entries.len());
+        eprintln_bright_yellow!("Total: {} files, {total_size}", cache_entries.len());
 
         let values = cache_entries
             .into_iter()

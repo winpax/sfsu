@@ -11,16 +11,12 @@ pub struct Global {
     user_context: User,
 }
 
-impl Default for Global {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl Global {
-    #[must_use]
     /// Construct a new global context adapter
-    pub fn new() -> Self {
+    ///
+    /// # Errors
+    /// - If the scoop global path does not exist and cannot be created
+    pub fn new() -> std::io::Result<Self> {
         use std::env::var_os;
 
         let user_context = User::new();
@@ -36,10 +32,10 @@ impl Global {
         let path = if path.exists() {
             dunce::canonicalize(path).expect("failed to find real path to scoop")
         } else {
-            panic!("Scoop path does not exist");
+            path
         };
 
-        Self { path, user_context }
+        Ok(Self { path, user_context })
     }
 }
 
@@ -48,6 +44,10 @@ impl ScoopContext<config::Scoop> for Global {
 
     fn config(&self) -> &config::Scoop {
         self.user_context.config()
+    }
+
+    fn config_mut(&mut self) -> &mut config::Scoop {
+        self.user_context.config_mut()
     }
 
     fn path(&self) -> &Path {

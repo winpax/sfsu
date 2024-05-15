@@ -1,13 +1,9 @@
 use clap::Parser;
 use rayon::prelude::*;
 use serde_json::Value;
-use sprinkles::{
-    buckets::Bucket,
-    config,
-    contexts::ScoopContext,
-    output::structured::Structured,
-    packages::models::{install, outdated},
-};
+use sprinkles::{buckets::Bucket, config, contexts::ScoopContext, packages::models::install};
+
+use crate::{models::outdated::Info, output::structured::Structured};
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
@@ -35,9 +31,9 @@ impl Args {
     ) -> Result<Option<Vec<Value>>, anyhow::Error> {
         let apps = install::Manifest::list_all_unchecked(ctx)?;
 
-        let mut outdated: Vec<outdated::Info> = apps
+        let mut outdated: Vec<Info> = apps
             .par_iter()
-            .flat_map(|app| -> anyhow::Result<outdated::Info> {
+            .flat_map(|app| -> anyhow::Result<Info> {
                 if let Some(bucket) = &app.bucket {
                     let local_manifest = app.get_manifest(ctx)?;
                     // TODO: Add the option to check all buckets and find the highest version (will require semver to order versions)
@@ -45,9 +41,7 @@ impl Args {
 
                     let remote_manifest = bucket.get_manifest(&app.name)?;
 
-                    if let Some(info) =
-                        outdated::Info::from_manifests(&local_manifest, &remote_manifest)
-                    {
+                    if let Some(info) = Info::from_manifests(&local_manifest, &remote_manifest) {
                         Ok(info)
                     } else {
                         anyhow::bail!("no update available")

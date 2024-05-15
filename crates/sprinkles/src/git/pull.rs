@@ -1,6 +1,6 @@
 //! Pulls remote data into a local branch.
 //!
-//! This module is a modification of the libgit2 "pull" example, as mentioned in the license comment below.
+//! This module is a modification of the git2 "pull" example, as mentioned in the license comment below.
 
 /*
  * libgit2 "pull" example - shows how to pull remote data into a local branch.
@@ -18,31 +18,27 @@
  * Adapted by me (Juliette Cordor)
  */
 
-use std::str;
-
 use git2::Repository;
+
+use crate::{config, contexts::ScoopContext};
 
 pub type ProgressCallback<'a> = &'a dyn Fn(git2::Progress<'_>, bool) -> bool;
 
 fn do_fetch<'a>(
+    ctx: &impl ScoopContext<config::Scoop>,
     repo: &'a git2::Repository,
     refs: &[&str],
     remote: &'a mut git2::Remote<'_>,
     stats_cb: Option<ProgressCallback<'_>>,
 ) -> Result<git2::AnnotatedCommit<'a>, git2::Error> {
-    let mut cb = git2::RemoteCallbacks::new();
-
-    // Print out our transfer progress.
+    let mut fo = crate::git::options::fetch::FetchOptions::new(ctx);
     if let Some(stats_cb) = stats_cb.as_ref() {
-        cb.transfer_progress(|stats| stats_cb(stats, false));
+        fo.transfer_progress(|stats| stats_cb(stats, false));
     }
-
-    let mut fo = git2::FetchOptions::new();
-    fo.remote_callbacks(cb);
     // Always fetch all tags.
     // Perform a download and also update tips
-    fo.download_tags(git2::AutotagOption::All);
-    remote.fetch(refs, Some(&mut fo), None)?;
+    fo.as_git2_mut().download_tags(git2::AutotagOption::All);
+    remote.fetch(refs, Some(fo.as_git2_mut()), None)?;
 
     let stats = remote.stats();
 
@@ -163,6 +159,7 @@ fn do_merge<'a>(
 /// # Errors
 /// - git2 errors
 pub fn pull(
+    ctx: &impl ScoopContext<config::Scoop>,
     repo: &super::Repo,
     remote: Option<&str>,
     branch: Option<&str>,
@@ -170,8 +167,13 @@ pub fn pull(
 ) -> Result<(), crate::git::Error> {
     let remote_name = remote.unwrap_or("origin");
     let remote_branch = branch.unwrap_or("master");
-    let mut remote = repo.find_remote(remote_name)?;
-    do_fetch(repo, &[remote_branch], &mut remote, stats_cb)?;
-    let fetch_commit = repo.find_commit(repo.latest_remote_commit()?)?;
-    Ok(do_merge(repo, remote_branch, &fetch_commit)?)
+    let mut remote = repo.git2().find_remote(remote_name)?;
+    do_fetch(ctx, repo.git2(), &[remote_branch], &mut remote, stats_cb)?;
+
+    let oid = {
+        let commit = repo.latest_remote_commit()?;
+        git2::Oid::from_bytes(commit.as_bytes())?
+    };
+    let fetch_commit = repo.git2().find_commit(oid)?;
+    Ok(do_merge(repo.git2(), remote_branch, &fetch_commit)?)
 }

@@ -19,7 +19,6 @@ pub use semver;
 pub mod buckets;
 #[cfg(feature = "manifest-hashes")]
 pub mod cache;
-pub mod calm_panic;
 pub mod config;
 pub mod contexts;
 pub mod diagnostics;
@@ -28,15 +27,16 @@ pub mod git;
 pub mod hacks;
 #[cfg(feature = "manifest-hashes")]
 pub mod hash;
-pub mod output;
 pub mod packages;
 pub mod progress;
 pub mod proxy;
 pub mod requests;
+pub mod scripts;
 pub mod shell;
 #[cfg(not(feature = "v2"))]
 pub mod stream;
 pub mod version;
+pub mod wrappers;
 
 mod env;
 
@@ -146,3 +146,34 @@ impl Default for Architecture {
 #[cfg(not(feature = "v2"))]
 /// Alias for [`contexts::User`]
 pub type Scoop = contexts::User;
+
+#[cfg(test)]
+mod tests {
+    use itertools::Itertools;
+
+    use crate::{
+        contexts::{ScoopContext, User},
+        packages::{self, CreateManifest, InstallManifest},
+    };
+
+    #[test]
+    fn test_list_install_manifests() {
+        let ctx = User::new();
+        let app_paths = ctx.installed_apps().unwrap();
+
+        app_paths
+            .into_iter()
+            .filter_map(|path| {
+                let path = path.join("current/install.json");
+                let result = InstallManifest::from_path(path);
+
+                match result {
+                    Ok(v) => Some(v),
+                    // These are really the only errors we care about
+                    Err(packages::Error::ParsingManifest(name, err)) => panic!("{name}: {err}"),
+                    Err(_) => None,
+                }
+            })
+            .collect_vec();
+    }
+}
