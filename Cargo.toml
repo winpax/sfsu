@@ -61,8 +61,9 @@ opt-level = 3
 [features]
 beta = ["contexts", "sprinkles/beta"]
 contexts = []
-default = ["download"]
+default = ["download", "info-difftrees", "v2"]
 download = ["sprinkles/manifest-hashes"]
+info-difftrees = []
 # Breaking changes are locked behind this feature flag
 v2 = ["sprinkles/v2"]
 

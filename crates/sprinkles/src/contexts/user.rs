@@ -1,9 +1,4 @@
-use std::{
-    fs::File,
-    path::{Path, PathBuf},
-};
-
-use chrono::Local;
+use std::path::{Path, PathBuf};
 
 use crate::{config, contexts::Error, git};
 
@@ -149,75 +144,6 @@ impl super::ScoopContext<config::Scoop> for User {
         }
 
         Ok(logs_path)
-    }
-
-    /// Create a new log file
-    ///
-    /// # Errors
-    /// - Creating the file fails
-    ///
-    /// # Panics
-    /// - Could not convert tokio file into std file
-    async fn new_log(&self) -> Result<File, Error> {
-        let logs_dir = self.logging_dir()?;
-        let date = Local::now();
-
-        let log_file = async {
-            use tokio::fs::File;
-
-            let mut i = 0;
-            loop {
-                i += 1;
-
-                let log_path =
-                    logs_dir.join(format!("sfsu-{}-{i}.log", date.format("%Y-%m-%d-%H-%M-%S")));
-
-                if !log_path.exists() {
-                    break File::create(log_path).await;
-                }
-            }
-        };
-        let timeout = async {
-            use std::time::Duration;
-            use tokio::time;
-
-            time::sleep(Duration::from_secs(5)).await;
-        };
-
-        let log_file = tokio::select! {
-            res = log_file => Ok(res),
-            () = timeout => Err(Error::TimeoutCreatingLog),
-        }??;
-
-        Ok(log_file
-            .try_into_std()
-            .expect("converted tokio file into std file"))
-    }
-
-    /// Create a new log file
-    ///
-    /// This function is synchronous and does not allow for timeouts.
-    /// If for some reason there are no available log files, this function will block indefinitely.
-    ///
-    /// # Errors
-    /// - Creating the file fails
-    fn new_log_sync(&self) -> Result<File, Error> {
-        let logs_dir = self.logging_dir()?;
-        let date = Local::now();
-
-        let mut i = 0;
-        let file = loop {
-            i += 1;
-
-            let log_path =
-                logs_dir.join(format!("sfsu-{}-{i}.log", date.format("%Y-%m-%d-%H-%M-%S")));
-
-            if !log_path.exists() {
-                break File::create(log_path)?;
-            }
-        };
-
-        Ok(file)
     }
 
     /// Open Scoop app repository
