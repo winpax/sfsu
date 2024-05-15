@@ -3643,7 +3643,7 @@ dependencies = [
 
 [[package]]
 name = "sfsu"
-version = "1.13.3"
+version = "1.13.4"
 dependencies = [
  "anyhow",
  "async_vt3",
@@ -3811,7 +3811,7 @@ dependencies = [
 
 [[package]]
 name = "sprinkles"
-version = "1.13.3"
+version = "1.13.4"
 dependencies = [
  "anyhow",
  "base64 0.22.1",
