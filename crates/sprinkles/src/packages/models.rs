@@ -2,5 +2,4 @@
 
 pub mod install;
 pub mod manifest;
-pub mod outdated;
 pub mod status;
