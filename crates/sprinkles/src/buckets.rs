@@ -168,13 +168,8 @@ impl Bucket {
     pub fn list_package_paths(&self) -> packages::Result<Vec<PathBuf>> {
         let dir = std::fs::read_dir(self.path().join("bucket"))?;
 
-        Ok(dir
-            .map(|entry| entry.map(|file| file.path()))
-            .filter_map(|file_name| match file_name {
-                Ok(file_name) => Some(file_name),
-                _ => None,
-            })
-            .collect())
+        dir.map(|entry| entry.map(|file| file.path()).map_err(packages::Error::from))
+            .collect()
     }
 
     /// List all packages contained within this bucket, returning their names
@@ -294,11 +289,12 @@ impl Bucket {
     ///
     /// # Errors
     /// - Could not read the bucket directory
-    pub fn manifests(&self) -> Result<usize> {
-        Ok(std::fs::read_dir(self.path().join("bucket"))?.count())
+    pub fn manifests(&self) -> packages::Result<usize> {
+        Ok(self.list_package_paths()?.len())
     }
 
     #[deprecated(note = "Use `manifests` instead. This function is much slower")]
+    #[cfg(not(feature = "v2"))]
     /// Get the number of manifests in the bucket using async I/O
     ///
     /// # Errors
