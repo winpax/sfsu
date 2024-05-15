@@ -3157,8 +3157,6 @@ checksum = "744a264d26b88a6a7e37cbad97953fa233b94d585236310bcbc88474b4092d79"
 dependencies = [
  "bytesize",
  "human_format",
- "log",
- "parking_lot",
 ]
 
 [[package]]
@@ -3645,7 +3643,7 @@ dependencies = [
 
 [[package]]
 name = "sfsu"
-version = "1.13.3"
+version = "1.13.4"
 dependencies = [
  "anyhow",
  "async_vt3",
@@ -3667,7 +3665,6 @@ dependencies = [
  "log",
  "open",
  "parking_lot",
- "prodash",
  "quork",
  "ratatui",
  "rayon",
@@ -3814,7 +3811,7 @@ dependencies = [
 
 [[package]]
 name = "sprinkles"
-version = "1.13.3"
+version = "1.13.4"
 dependencies = [
  "anyhow",
  "base64 0.22.1",
