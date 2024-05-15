@@ -82,7 +82,6 @@ console.workspace = true
 crossterm = "0.27.0"
 dialoguer = "0.11.0"
 futures.workspace = true
-git2.workspace = true
 heck.workspace = true
 human-panic = "2.0"
 itertools.workspace = true

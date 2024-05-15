@@ -157,7 +157,9 @@ impl Args {
         Ok(Some(changelog))
     }
 
-    fn gen_stats_callback(pb: &ProgressBar) -> impl Fn(git2::Progress<'_>, bool) -> bool + '_ {
+    fn gen_stats_callback(
+        pb: &ProgressBar,
+    ) -> impl Fn(sprinkles::git::implementations::git2::Progress<'_>, bool) -> bool + '_ {
         |stats, thin| {
             if thin {
                 pb.set_position(stats.indexed_objects() as u64);
