@@ -10,13 +10,16 @@ use sprinkles::{
     buckets::Bucket,
     config,
     contexts::ScoopContext,
-    packages::models::{install, status::Info},
+    packages::models::install,
     progress::{indicatif::ProgressBar, style},
 };
 
-use crate::output::{
-    sectioned::{Children, Section},
-    structured::Structured,
+use crate::{
+    models::status::Info,
+    output::{
+        sectioned::{Children, Section},
+        structured::Structured,
+    },
 };
 
 #[derive(Debug, Copy, Clone, ValueEnum, ListVariants)]
