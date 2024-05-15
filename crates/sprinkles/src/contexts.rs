@@ -69,11 +69,11 @@ pub trait ScoopContext<C>: Clone + Send + Sync + 'static {
     /// This string should match what the app's name is in Scoop, if applicable.
     const CONTEXT_NAME: &'static str;
 
-    /// Load the context's configuration
-    ///
-    /// Generally the actual loading should be implemented in the context's construction (i.e the `new` function),
-    /// and this function should just return a reference to the configuration.
+    /// Get a reference to the context's configuration
     fn config(&self) -> &C;
+
+    /// Get a mutable reference to the context's configuration
+    fn config_mut(&mut self) -> &mut C;
 
     #[must_use]
     /// Gets the context's path
@@ -234,6 +234,13 @@ impl ScoopContext<config::Scoop> for AnyContext {
         match self {
             AnyContext::User(user) => user.config(),
             AnyContext::Global(global) => global.config(),
+        }
+    }
+
+    fn config_mut(&mut self) -> &mut config::Scoop {
+        match self {
+            AnyContext::User(user) => user.config_mut(),
+            AnyContext::Global(global) => global.config_mut(),
         }
     }
 
