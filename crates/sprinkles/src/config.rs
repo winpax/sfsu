@@ -207,3 +207,19 @@ impl Scoop {
         self.other = Map::new();
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use tests::isolated::IsolatedPath;
+
+    use super::*;
+
+    #[test]
+    fn test_isolated_path() {
+        let path = IsolatedPath::Path("C:\\Program Files\\Scoop".into());
+        let json = serde_json::to_string(&path).unwrap();
+        let deserialized: IsolatedPath = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(path, deserialized);
+    }
+}
