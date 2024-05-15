@@ -14,7 +14,12 @@ pub struct Args {
 
 impl super::Command for Args {
     async fn runner(self, mut ctx: impl ScoopContext<config::Scoop>) -> anyhow::Result<()> {
-        let config_manager = management::ManageConfig::new(ctx.config_mut());
-        todo!()
+        let mut config_manager = management::ManageConfig::new(ctx.config_mut());
+
+        config_manager.remove(self.field)?;
+
+        ctx.config().save()?;
+
+        Ok(())
     }
 }
