@@ -13,6 +13,7 @@ pub mod home;
 pub mod hook;
 pub mod info;
 pub mod list;
+pub mod manage_config;
 #[cfg(not(feature = "v2"))]
 pub mod outdated;
 pub mod search;
@@ -152,6 +153,8 @@ pub enum Commands {
     #[no_hook]
     /// Show credits
     Credits(credits::Args),
+    /// Get or set configuration values
+    Config(manage_config::Args),
     #[no_hook]
     #[cfg(debug_assertions)]
     /// Debugging commands
