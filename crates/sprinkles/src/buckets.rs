@@ -139,25 +139,40 @@ impl Bucket {
     /// - Any package has an invalid path or invalid contents
     /// - See more at [`packages::Error`]
     pub fn list_packages(&self) -> packages::Result<Vec<Manifest>> {
-        let dir = std::fs::read_dir(self.path().join("bucket"))?;
+        let packages = self.list_package_paths()?;
 
-        dir.map(|manifest| Manifest::from_path(manifest?.path()))
-            .collect()
+        // TODO: Use rayon here
+        packages.into_iter().map(Manifest::from_path).collect()
     }
 
-    /// List all packages contained within this bucket, ignoring errors
+    /// List all packages contained within this bucket, ignoring invalid buckets
     ///
     /// # Errors
     /// - The bucket is invalid
     /// - See more at [`packages::Error`]
     pub fn list_packages_unchecked(&self) -> packages::Result<Vec<Manifest>> {
+        let packages = self.list_package_paths()?;
+
+        // TODO: Use rayon here
+        Ok(packages
+            .into_iter()
+            .filter_map(|path| Manifest::from_path(path).ok())
+            .collect())
+    }
+
+    /// List all packages contained within this bucket, returning their names
+    ///
+    /// # Errors
+    /// - The bucket is invalid
+    /// - See more at [`packages::Error`]
+    pub fn list_package_paths(&self) -> packages::Result<Vec<PathBuf>> {
         let dir = std::fs::read_dir(self.path().join("bucket"))?;
 
         Ok(dir
-            .map(|manifest| Manifest::from_path(manifest?.path()))
-            .filter_map(|result| match result {
-                Ok(v) => Some(v),
-                Err(_) => None,
+            .map(|entry| entry.map(|file| file.path()))
+            .filter_map(|file_name| match file_name {
+                Ok(file_name) => Some(file_name),
+                _ => None,
             })
             .collect())
     }
@@ -168,20 +183,14 @@ impl Bucket {
     /// - The bucket is invalid
     /// - See more at [`packages::Error`]
     pub fn list_package_names(&self) -> packages::Result<Vec<String>> {
-        let dir = std::fs::read_dir(self.path().join("bucket"))?;
+        let packages = self.list_package_paths()?;
 
-        Ok(dir
-            .map(|entry| {
-                entry.map(|file| {
-                    file.path()
-                        .with_extension("")
-                        .file_name()
-                        .map(|file_name| file_name.to_string_lossy().to_string())
-                })
-            })
-            .filter_map(|file_name| match file_name {
-                Ok(Some(file_name)) => Some(file_name),
-                _ => None,
+        Ok(packages
+            .into_iter()
+            .filter_map(|path| {
+                path.with_extension("")
+                    .file_name()
+                    .map(|file_name| file_name.to_string_lossy().to_string())
             })
             .collect())
     }
@@ -289,6 +298,7 @@ impl Bucket {
         Ok(std::fs::read_dir(self.path().join("bucket"))?.count())
     }
 
+    #[deprecated(note = "Use `manifests` instead. This function is much slower")]
     /// Get the number of manifests in the bucket using async I/O
     ///
     /// # Errors
