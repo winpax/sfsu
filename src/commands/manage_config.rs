@@ -5,36 +5,26 @@ use sprinkles::{config, contexts::ScoopContext};
 use super::{Command, CommandRunner};
 
 pub mod remove;
+pub mod set;
 
 #[derive(Debug, Clone, Subcommand, Runnable)]
 pub enum Commands {
     #[clap(alias = "rm")]
-    /// List outdated buckets
+    /// Remove a value from the config
     Remove(remove::Args),
+    /// Set a value in the config
+    Set(set::Args),
 }
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
-    #[clap(help = "The key to set")]
-    field: Option<String>,
-
-    #[clap(help = "The value to set")]
-    value: Option<String>,
-
     #[clap(subcommand)]
-    command: Option<Commands>,
-
-    #[clap(from_global)]
-    json: bool,
+    command: Commands,
 }
 
 impl super::Command for Args {
     async fn runner(self, ctx: impl ScoopContext<config::Scoop>) -> anyhow::Result<()> {
-        if let Some(command) = self.command {
-            return command.run(ctx).await;
-        }
-
-        Ok(())
+        self.command.run(ctx).await
     }
 }
 
