@@ -15,24 +15,24 @@ impl super::Command for Args {
     async fn runner(self, mut ctx: impl ScoopContext<config::Scoop>) -> anyhow::Result<()> {
         let mut config_manager = super::management::ManageConfig::new(ctx.config_mut());
 
-        config_manager.set(self.field, string_to_value(self.value))?;
+        config_manager.set(&self.field, string_to_value(&self.value))?;
 
-        ctx.config().save()?;
+        println!("'{}' has been set to '{}'", self.field, self.value);
 
         Ok(())
     }
 }
 
-fn string_to_value(string: String) -> Value {
-    match string.as_str() {
+fn string_to_value(string: impl AsRef<str>) -> Value {
+    match string.as_ref() {
         "true" => return Value::Bool(true),
         "false" => return Value::Bool(false),
         _ => {}
     };
 
-    if let Ok(number) = string.parse::<Number>() {
+    if let Ok(number) = string.as_ref().parse::<Number>() {
         return Value::Number(number);
     }
 
-    Value::String(string)
+    Value::String(string.as_ref().into())
 }

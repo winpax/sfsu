@@ -3669,6 +3669,7 @@ dependencies = [
  "ratatui",
  "rayon",
  "regex",
+ "scopeguard",
  "serde",
  "serde_json",
  "sfsu-derive",

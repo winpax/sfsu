@@ -4,6 +4,7 @@ use sprinkles::{config, contexts::ScoopContext};
 
 use super::{Command, CommandRunner};
 
+pub mod get;
 pub mod remove;
 pub mod set;
 
@@ -14,17 +15,27 @@ pub enum Commands {
     Remove(remove::Args),
     /// Set a value in the config
     Set(set::Args),
+    /// Get a value from the config
+    Get(get::Args),
 }
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
     #[clap(subcommand)]
-    command: Commands,
+    command: Option<Commands>,
 }
 
 impl super::Command for Args {
     async fn runner(self, ctx: impl ScoopContext<config::Scoop>) -> anyhow::Result<()> {
-        self.command.run(ctx).await
+        let ctx = scopeguard::guard(ctx, |ctx| {
+            ctx.config().save().expect("could not save config");
+        });
+
+        if let Some(command) = self.command {
+            return command.run(ctx.clone()).await;
+        }
+
+        todo!("print config");
     }
 }
 
@@ -59,6 +70,17 @@ mod management {
                 field: field.into(),
                 value,
             })
+        }
+
+        pub fn get(&self, field: impl Into<String>) -> anyhow::Result<Value> {
+            let value = self.config.to_object()?;
+
+            let object = value.as_object().context("invalid json object")?;
+
+            object
+                .get(&field.into())
+                .context("field not found")
+                .cloned()
         }
 
         fn execute(&mut self, operation: Operation) -> anyhow::Result<()> {

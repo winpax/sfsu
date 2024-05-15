@@ -1,24 +1,17 @@
 use clap::Parser;
 use sprinkles::{config, contexts::ScoopContext};
 
-use crate::commands::manage_config::management;
-
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
     #[clap(help = "The key to remove")]
     field: String,
-
-    #[clap(from_global)]
-    json: bool,
 }
 
 impl super::Command for Args {
     async fn runner(self, mut ctx: impl ScoopContext<config::Scoop>) -> anyhow::Result<()> {
-        let mut config_manager = management::ManageConfig::new(ctx.config_mut());
+        let mut config_manager = super::management::ManageConfig::new(ctx.config_mut());
 
         config_manager.remove(self.field)?;
-
-        ctx.config().save()?;
 
         Ok(())
     }
