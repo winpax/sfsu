@@ -216,10 +216,19 @@ mod tests {
 
     #[test]
     fn test_isolated_path() {
-        let path = IsolatedPath::Path("C:\\Program Files\\Scoop".into());
-        let json = serde_json::to_string(&path).unwrap();
-        let deserialized: IsolatedPath = serde_json::from_str(&json).unwrap();
+        let path = "C:\\Program Files\\Scoop";
+        let deserialized: IsolatedPath = serde_json::from_str(path).unwrap();
 
-        assert_eq!(path, deserialized);
+        assert_eq!(IsolatedPath::Path(path.into()), deserialized);
+
+        let path = "true";
+        let deserialized: IsolatedPath = serde_json::from_str(path).unwrap();
+
+        assert_eq!(IsolatedPath::Bool(true), deserialized);
+
+        let path = "false";
+        let deserialized: IsolatedPath = serde_json::from_str(path).unwrap();
+
+        assert_eq!(IsolatedPath::Bool(false), deserialized);
     }
 }
