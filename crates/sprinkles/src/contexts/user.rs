@@ -64,6 +64,10 @@ impl super::ScoopContext<config::Scoop> for User {
         &self.config
     }
 
+    fn config_mut(&mut self) -> &mut config::Scoop {
+        &mut self.config
+    }
+
     #[must_use]
     /// Gets the user's scoop path, via either the default path or as provided by the SCOOP env variable
     ///

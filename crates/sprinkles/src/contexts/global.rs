@@ -49,6 +49,10 @@ impl ScoopContext<config::Scoop> for Global {
         self.user_context.config()
     }
 
+    fn config_mut(&mut self) -> &mut config::Scoop {
+        self.user_context.config_mut()
+    }
+
     fn path(&self) -> &Path {
         &self.path
     }
