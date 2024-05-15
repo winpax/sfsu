@@ -5,10 +5,7 @@ use sprinkles::{
     config,
     contexts::ScoopContext,
     packages::{
-        models::{
-            info::PackageInfo,
-            manifest::{AliasArray, StringArray, TOrArrayOfTs},
-        },
+        models::manifest::{AliasArray, StringArray, TOrArrayOfTs},
         reference, Manifest, MergeDefaults,
     },
     semver,
@@ -16,7 +13,7 @@ use sprinkles::{
     Architecture,
 };
 
-use crate::{abandon, output::structured::vertical::VTable};
+use crate::{abandon, models::info::Package, output::structured::vertical::VTable};
 
 #[derive(Debug, Clone, Parser)]
 #[allow(clippy::struct_excessive_bools)]
@@ -127,7 +124,7 @@ impl Args {
             }
         };
 
-        let pkg_info = PackageInfo {
+        let pkg_info = Package {
             name: manifest.name,
             bucket: manifest.bucket,
             description: manifest.description,

@@ -2,14 +2,14 @@
 
 use serde::Serialize;
 
-use crate::{
-    packages::manifest::{AliasArray, PackageLicense},
+use sprinkles::{
+    packages::models::manifest::{AliasArray, PackageLicense},
     wrappers::{bool::NicerBool, serialize::SerializeDisplay},
 };
 
 #[derive(Debug, Clone, Serialize)]
 /// Summary package information
-pub struct PackageInfo {
+pub struct Package {
     /// The name of the package
     pub name: String,
     #[serde(skip_serializing_if = "Option::is_none")]

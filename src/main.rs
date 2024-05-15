@@ -12,6 +12,7 @@ mod commands;
 mod errors;
 mod limits;
 mod logging;
+mod models;
 mod output;
 
 use std::{
