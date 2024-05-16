@@ -74,6 +74,7 @@ mod tests {
     use super::*;
 
     #[test]
+    #[ignore = "imagemagick website connection timing out"]
     pub fn test_finding_imagemagick_hashes() {
         const RDF_URL: &str = "https://download.imagemagick.org/archive/binaries/digest.rdf";
 
