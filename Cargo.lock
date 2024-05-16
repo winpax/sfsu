@@ -3861,7 +3861,6 @@ dependencies = [
  "url",
  "urlencoding",
  "which",
- "win-proxy",
  "windows",
  "windows-version",
  "winreg",
@@ -4594,16 +4593,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a3131afc8c575281e1e80f36ed6a092aa502c08b18ed7524e86fbbb12bb410e1"
 dependencies = [
  "glob",
-]
-
-[[package]]
-name = "win-proxy"
-version = "0.1.0"
-source = "git+https://github.com/winpax/win-proxy.git#c4daf619ca9d7a7b4712cc76cfd3cb85f1e53216"
-dependencies = [
- "thiserror",
- "windows",
- "winreg",
 ]
 
 [[package]]
