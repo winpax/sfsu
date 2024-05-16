@@ -1,3 +1,4 @@
+pub mod backup;
 pub mod bucket;
 pub mod cache;
 pub mod cat;
@@ -8,7 +9,6 @@ pub mod depends;
 pub mod describe;
 #[cfg(feature = "download")]
 pub mod download;
-pub mod export;
 pub mod home;
 pub mod hook;
 pub mod info;
@@ -140,8 +140,10 @@ pub enum Commands {
     Home(home::Args),
     /// Show content of specified manifest
     Cat(cat::Args),
+    #[cfg(not(feature = "v2"))]
+    #[cfg_attr(not(feature = "v2"), command_name = "backup export")]
     /// Exports installed apps, buckets (and optionally configs) in JSON format
-    Export(export::Args),
+    Export(backup::export::Args),
     /// Check for common issues
     Checkup(checkup::Args),
     #[cfg(feature = "download")]
