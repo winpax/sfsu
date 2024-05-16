@@ -4,7 +4,6 @@ edition = "2021"
 license = { workspace = true }
 name = "sfsu"
 publish.workspace = true
-rust-version.workspace = true
 version.workspace = true
 
 [workspace]
@@ -14,7 +13,6 @@ package.homepage = "https://github.com/winpax/sfsu"
 package.license = "Apache-2.0"
 package.publish = false
 package.repository = "https://github.com/winpax/sfsu"
-package.rust-version = "1.75.0"
 package.version = "1.13.4"
 
 [workspace.dependencies]

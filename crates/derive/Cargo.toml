@@ -3,7 +3,7 @@ edition = "2021"
 license = { workspace = true }
 name = "sfsu-derive"
 publish.workspace = true
-rust-version.workspace = true
+rust-version = "1.69.0"
 version = "0.1.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
