@@ -115,7 +115,7 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    async fn runner(self, _: &impl ScoopContext<config::Scoop>) -> anyhow::Result<()> {
+    async fn runner(self, _: impl ScoopContext<config::Scoop>) -> anyhow::Result<()> {
         if self.json {
             #[derive(Debug, Clone, Serialize)]
             struct JsonOutput<'a> {

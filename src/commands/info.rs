@@ -44,8 +44,8 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> anyhow::Result<()> {
-        let manifests = self.package.list_manifests(ctx).await?;
+    async fn runner(self, ctx: impl ScoopContext<config::Scoop>) -> anyhow::Result<()> {
+        let manifests = self.package.list_manifests(&ctx).await?;
 
         if manifests.is_empty() {
             abandon!("No package found with the name \"{}\"", self.package);
@@ -72,10 +72,10 @@ impl super::Command for Args {
                         .unwrap_or(std::cmp::Ordering::Equal)
                 }).expect("something went terribly wrong (no manifests found even though we just checked for manifests)");
 
-            self.print_manifest(ctx, latest, &installed_apps, Architecture::ARCH)?;
+            self.print_manifest(&ctx, latest, &installed_apps, Architecture::ARCH)?;
         } else {
             for manifest in manifests {
-                self.print_manifest(ctx, manifest, &installed_apps, Architecture::ARCH)?;
+                self.print_manifest(&ctx, manifest, &installed_apps, Architecture::ARCH)?;
             }
         }
 

@@ -31,7 +31,7 @@ pub struct Args {
 impl super::Command for Args {
     const BETA: bool = true;
 
-    async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
+    async fn runner(self, ctx: impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
         if self.packages.is_empty() {
             abandon!("No packages provided")
         }
@@ -48,6 +48,7 @@ impl super::Command for Args {
         let downloaders: Vec<Downloader> =
             futures::future::try_join_all(self.packages.into_iter().map(|package| {
                 let mp = mp.clone();
+                let ctx = &ctx;
                 async move {
                     let manifest = match package.manifest(ctx).await {
                         Ok(manifest) => manifest,

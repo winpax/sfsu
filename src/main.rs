@@ -150,7 +150,7 @@ async fn main() -> anyhow::Result<()> {
 
     debug!("Running command: {:?}", args.command);
 
-    args.command.run(&ctx).await?;
+    args.command.run(ctx).await?;
 
     Ok(())
 }

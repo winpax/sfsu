@@ -57,3 +57,13 @@ impl Display for ScoopBranch {
         write!(f, "{}", self.name())
     }
 }
+
+impl<T: AsRef<str>> From<T> for ScoopBranch {
+    fn from(value: T) -> Self {
+        match value.as_ref() {
+            "master" => Self::Master,
+            "develop" => Self::Develop,
+            _ => Self::Other(value.as_ref().to_string()),
+        }
+    }
+}

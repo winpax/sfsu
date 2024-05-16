@@ -31,7 +31,7 @@ impl Command for Args {
         version: Some(2.0),
     });
 
-    async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> anyhow::Result<()> {
+    async fn runner(self, ctx: impl ScoopContext<config::Scoop>) -> anyhow::Result<()> {
         if let Some(command) = self.command {
             command.run(ctx).await
         } else {
@@ -39,11 +39,11 @@ impl Command for Args {
                 let mut map = Map::new();
 
                 let apps = apps::Args { json: self.json }
-                    .run_direct(ctx, false)?
+                    .run_direct(&ctx, false)?
                     .unwrap_or_default();
 
                 let buckets = buckets::Args { json: self.json }
-                    .run_direct(ctx, false)?
+                    .run_direct(&ctx, false)?
                     .unwrap_or_default();
 
                 map.insert("outdated_apps".into(), apps.into());
@@ -55,7 +55,7 @@ impl Command for Args {
             } else {
                 println!("Outdated Apps:");
                 Commands::Apps(apps::Args { json: self.json })
-                    .run(ctx)
+                    .run(ctx.clone())
                     .await?;
                 println!("\nOutdated Buckets:");
                 Commands::Buckets(buckets::Args { json: self.json })

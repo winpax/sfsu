@@ -12,8 +12,8 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
-        let manifests = self.package.list_manifest_paths(ctx);
+    async fn runner(self, ctx: impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
+        let manifests = self.package.list_manifest_paths(&ctx);
 
         if manifests.is_empty() {
             abandon!("No manifests found for {}", self.package);

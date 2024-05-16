@@ -45,7 +45,7 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> anyhow::Result<()> {
+    async fn runner(self, ctx: impl ScoopContext<config::Scoop>) -> anyhow::Result<()> {
         let value = Arc::new(Mutex::new(Value::default()));
 
         let pb = ProgressBar::new(3).with_style(style(None, None));
@@ -63,6 +63,7 @@ impl super::Command for Args {
             let this = self.clone();
             let pb = pb.clone();
             let value = value.clone();
+            let ctx = &ctx;
             async move {
                 let mut output = String::new();
 

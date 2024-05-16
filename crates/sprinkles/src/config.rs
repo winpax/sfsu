@@ -211,6 +211,22 @@ impl Scoop {
     pub fn make_strict(&mut self) {
         self.other = Map::new();
     }
+
+    /// Convert the config to a JSON object
+    ///
+    /// # Errors
+    /// - The config could not be converted to a JSON object
+    pub fn to_object(&self) -> serde_json::Result<Value> {
+        serde_json::to_value(self)
+    }
+
+    /// Convert the JSON object to [`Scoop`] config
+    ///
+    /// # Errors
+    /// - The JSON object could not be deserialized to a [`Scoop`] config
+    pub fn from_object(object: Value) -> serde_json::Result<Self> {
+        serde_json::from_value(object)
+    }
 }
 
 #[cfg(test)]

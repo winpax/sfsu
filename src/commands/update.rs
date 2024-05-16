@@ -23,10 +23,10 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
+    async fn runner(self, ctx: impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
         let progress_style = style(Some(ProgressOptions::Hide), Some(Message::suffix()));
 
-        let buckets = Bucket::list_all(ctx)?;
+        let buckets = Bucket::list_all(&ctx)?;
 
         let longest_bucket_name = buckets
             .iter()
@@ -38,7 +38,7 @@ impl super::Command for Args {
         _ = ctx.outdated().await?;
 
         let scoop_changelog =
-            self.update_scoop(ctx, longest_bucket_name, progress_style.clone())?;
+            self.update_scoop(&ctx, longest_bucket_name, progress_style.clone())?;
 
         let mp = MultiProgress::new();
 
@@ -59,7 +59,7 @@ impl super::Command for Args {
             })
             .collect_vec();
 
-        let bucket_changelogs = self.update_buckets(ctx, &outdated_buckets)?;
+        let bucket_changelogs = self.update_buckets(&ctx, &outdated_buckets)?;
 
         let mut scoop_config = ScoopConfig::load()?;
         scoop_config.update_last_update_time();
