@@ -2,6 +2,8 @@ use clap::{Parser, Subcommand};
 use sfsu_derive::Runnable;
 use sprinkles::{config, contexts::ScoopContext};
 
+use crate::output::structured;
+
 use super::{Command, CommandRunner};
 
 pub mod get;
@@ -23,6 +25,9 @@ pub enum Commands {
 pub struct Args {
     #[clap(subcommand)]
     command: Option<Commands>,
+
+    #[clap(from_global)]
+    json: bool,
 }
 
 impl super::Command for Args {
@@ -33,6 +38,18 @@ impl super::Command for Args {
 
         if let Some(command) = self.command {
             return command.run(ctx.clone()).await;
+        }
+
+        if self.json {
+            let config = ctx.config();
+
+            println!("{}", serde_json::to_string_pretty(&config)?);
+        } else {
+            let config = ctx.config();
+            let mut vtable = structured::vertical::VTable::new(config);
+            vtable.snake_case_headers();
+
+            println!("{vtable}");
         }
 
         todo!("print config");

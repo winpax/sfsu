@@ -3,6 +3,7 @@
 use std::fmt::Display;
 
 use itertools::Itertools;
+use serde::Serialize;
 use serde_json::{Map, Value};
 use sprinkles::wrappers::header::Header;
 
@@ -13,6 +14,7 @@ use sprinkles::wrappers::header::Header;
 /// to be constructed and used within the same function.
 pub struct VTable {
     object: Map<String, Value>,
+    format_headers: bool,
 }
 
 impl VTable {
@@ -20,10 +22,18 @@ impl VTable {
     ///
     /// # Panics
     /// - If the values provided are not objects
-    pub fn new(value: &Value) -> Self {
+    pub fn new(value: impl Serialize) -> Self {
+        let value = serde_json::to_value(value).expect("valid value");
         let object = value.as_object().expect("Value must be an object").clone();
 
-        Self { object }
+        Self {
+            object,
+            format_headers: true,
+        }
+    }
+
+    pub fn snake_case_headers(&mut self) {
+        self.format_headers = false;
     }
 }
 
@@ -66,7 +76,11 @@ impl Display for VTable {
         for (i, (header, element)) in iters {
             let header_size = header_lengths[i];
 
-            let header = Header::new(header).to_string();
+            let header = if self.format_headers {
+                Header::new(header).to_string()
+            } else {
+                (*header).clone()
+            };
 
             let element = if let Some(element) = element.as_str() {
                 element.to_owned()
