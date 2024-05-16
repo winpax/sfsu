@@ -153,6 +153,7 @@ pub enum Commands {
     #[no_hook]
     /// Show credits
     Credits(credits::Args),
+    #[cfg(feature = "v2")]
     /// Get or set configuration values
     Config(manage_config::Args),
     #[no_hook]
