@@ -1,6 +1,10 @@
 //! Proxy helpers
 
-use std::{num::ParseIntError, str::FromStr};
+use std::{
+    net::{AddrParseError, SocketAddr},
+    num::ParseIntError,
+    str::FromStr,
+};
 
 use crate::let_chain;
 
@@ -10,12 +14,18 @@ use crate::let_chain;
 pub enum Error {
     #[error("Invalid port: {0}")]
     InvalidPort(#[from] ParseIntError),
-    #[error("Loading system proxy: {0}")]
-    SystemProxy(#[from] win_proxy::Error),
+    #[error("Loading system proxy from registry: {0}")]
+    Registry(#[from] std::io::Error),
+    #[error("Parsing proxy address: {0}")]
+    ParsingAddr(#[from] AddrParseError),
     #[error("Missing host")]
     MissingHost,
     #[error("Missing port")]
     MissingPort,
+    #[error("Missing proxy config")]
+    MissingProxyConfig,
+    #[error("System proxy is disabled")]
+    SystemProxyDisabled,
 }
 
 #[derive(Debug, Clone)]
@@ -90,9 +100,29 @@ impl FromStr for Proxy {
         };
 
         let host = if host == "default" {
-            let sysproxy = win_proxy::SystemProxy::get_system_proxy()?;
+            let (address, port) = {
+                let hklm = winreg::RegKey::predef(winreg::enums::HKEY_LOCAL_MACHINE);
+                let key =
+                    hklm.open_subkey("SYSTEM\\CurrentControlSet\\Services\\Tcpip\\Parameters")?;
 
-            format!("{}:{}", sysproxy.address, sysproxy.port)
+                if key.get_value("EnableProxy").unwrap_or(0u32) != 1 {
+                    return Err(Error::SystemProxyDisabled);
+                }
+
+                let server: String = key.get_value("ProxyServer")?;
+
+                let (host, port) = if server.is_empty() {
+                    return Err(Error::MissingProxyConfig);
+                } else {
+                    let socket = SocketAddr::from_str(&server)?;
+
+                    (socket.ip(), socket.port())
+                };
+
+                (host, port)
+            };
+
+            format!("{address}:{port}")
         } else {
             host.to_string()
         };
