@@ -17,6 +17,7 @@ pub mod list;
 pub mod outdated;
 pub mod search;
 pub mod status;
+pub mod uninstall;
 pub mod update;
 pub mod virustotal;
 
@@ -73,8 +74,11 @@ impl std::fmt::Display for DeprecationWarning {
 pub trait Command {
     const BETA: bool = false;
     const NEEDS_ELEVATION: bool = false;
-
     const DEPRECATED: Option<DeprecationWarning> = None;
+
+    fn needs_elevation(&self) -> bool {
+        false
+    }
 
     async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> anyhow::Result<()>;
 }
@@ -88,7 +92,7 @@ pub trait CommandRunner: Command {
             eprintln_yellow!("{deprecation_warning}\n");
         }
 
-        if Self::NEEDS_ELEVATION && !quork::root::is_root()? {
+        if self.needs_elevation() && !quork::root::is_root()? {
             abandon!("This command requires elevation. Please run as an administrator.");
         }
 
@@ -152,6 +156,8 @@ pub enum Commands {
     #[no_hook]
     /// Show credits
     Credits(credits::Args),
+    /// Uninstall an app
+    Uninstall(uninstall::Args),
     #[no_hook]
     #[cfg(debug_assertions)]
     /// Debugging commands
