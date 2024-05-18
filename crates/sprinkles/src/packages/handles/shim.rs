@@ -19,9 +19,9 @@ pub struct DeleteFlags(u8);
 
 impl DeleteFlags {
     /// Delete just the executable
-    pub const EXECUTABLE: Self = Self(1);
+    pub const EXECUTABLE: Self = Self(0b10);
     /// Delete just the shim
-    pub const SHIM: Self = Self(1 >> 1);
+    pub const SHIM: Self = Self(0b01);
 
     #[must_use]
     /// Check if we should delete the executable
@@ -118,5 +118,32 @@ impl ShimHandle {
         }
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_delete_flags() {
+        assert_eq!(DeleteFlags::EXECUTABLE.0, 0b10);
+        assert_eq!(DeleteFlags::SHIM.0, 0b01);
+        assert_eq!((DeleteFlags::EXECUTABLE | DeleteFlags::SHIM).0, 0b11);
+
+        let flags = DeleteFlags::EXECUTABLE | DeleteFlags::SHIM;
+
+        assert!(flags.is_executable());
+        assert!(flags.is_shim());
+
+        let flags = DeleteFlags::EXECUTABLE;
+
+        assert!(flags.is_executable());
+        assert!(!flags.is_shim());
+
+        let flags = DeleteFlags::SHIM;
+
+        assert!(!flags.is_executable());
+        assert!(flags.is_shim());
     }
 }
