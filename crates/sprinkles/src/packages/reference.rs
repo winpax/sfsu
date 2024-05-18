@@ -42,16 +42,16 @@ mod ser_de {
 
     use super::{manifest, package};
 
-    impl Serialize for package::Package {
+    impl Serialize for package::Reference {
         fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
             serializer.collect_str(self)
         }
     }
 
-    impl<'de> Deserialize<'de> for package::Package {
+    impl<'de> Deserialize<'de> for package::Reference {
         fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
             let s = String::deserialize(deserializer)?;
-            package::Package::from_str(&s).map_err(serde::de::Error::custom)
+            package::Reference::from_str(&s).map_err(serde::de::Error::custom)
         }
     }
 

@@ -6,7 +6,7 @@ use crate::abandon;
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
     #[clap(help = "The package to open the homepage for")]
-    package: reference::package::Package,
+    package: reference::package::Reference,
 }
 
 impl super::Command for Args {

@@ -29,8 +29,8 @@ pub enum Reference {
 impl Reference {
     #[must_use]
     /// Convert the [`ManifestRef`] into a [`Package`] reference
-    pub fn into_package_ref(self) -> package::Package {
-        package::Package {
+    pub fn into_package_ref(self) -> package::Reference {
+        package::Reference {
             manifest: self,
             version: None,
         }
@@ -43,7 +43,7 @@ impl fmt::Display for Reference {
             Reference::BucketNamePair { bucket, name } => write!(f, "{bucket}/{name}"),
             Reference::Name(name) => write!(f, "{name}"),
             Reference::File(_) => {
-                let name = package::Package::from(self.clone()).name().unwrap();
+                let name = package::Reference::from(self.clone()).name().unwrap();
                 write!(f, "{name}")
             }
             #[cfg(feature = "manifest-hashes")]

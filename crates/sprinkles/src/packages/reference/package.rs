@@ -17,14 +17,14 @@ use super::{manifest, Error};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 /// A package reference with an optional version
-pub struct Package {
+pub struct Reference {
     /// The manifest reference
     pub manifest: manifest::Reference,
     /// The manifest version
     pub version: Option<String>,
 }
 
-impl Package {
+impl Reference {
     #[must_use]
     /// Convert the [`ManifestRef`] into a [`Package`] reference
     pub fn from_ref(manifest: manifest::Reference) -> Self {
@@ -254,13 +254,13 @@ impl Package {
     }
 }
 
-impl From<manifest::Reference> for Package {
+impl From<manifest::Reference> for Reference {
     fn from(manifest: manifest::Reference) -> Self {
         Self::from_ref(manifest)
     }
 }
 
-impl fmt::Display for Package {
+impl fmt::Display for Reference {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.manifest)?;
 
@@ -272,18 +272,18 @@ impl fmt::Display for Package {
     }
 }
 
-impl FromStr for Package {
+impl FromStr for Reference {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let parts = s.split('@').collect_vec();
 
         match parts.len() {
-            1 => Ok(Package {
+            1 => Ok(Reference {
                 manifest: manifest::Reference::from_str(s)?,
                 version: None,
             }),
-            2 => Ok(Package {
+            2 => Ok(Reference {
                 manifest: manifest::Reference::from_str(parts[0])?,
                 version: Some(parts[1].to_string()),
             }),

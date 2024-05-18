@@ -25,7 +25,7 @@ pub struct Info {
     /// The available version
     pub available: String,
     /// The missing dependencies
-    pub missing_dependencies: Vec<reference::package::Package>,
+    pub missing_dependencies: Vec<reference::package::Reference>,
     /// Additional information
     pub info: Option<String>,
 }

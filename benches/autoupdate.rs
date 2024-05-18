@@ -19,14 +19,14 @@ fn criterion_benchmark(c: &mut Criterion) {
         .unwrap();
 
     c.bench_function("parse package", |b| {
-        b.iter(|| black_box(package::Package::from_str("extras/sfsu").unwrap()));
+        b.iter(|| black_box(package::Reference::from_str("extras/sfsu").unwrap()));
     });
 
     c.bench_function("get package manifest", |b| {
         b.to_async(&runtime).iter_batched(
             || {
                 (
-                    package::Package::from_str("extras/sfsu").unwrap(),
+                    package::Reference::from_str("extras/sfsu").unwrap(),
                     ctx.clone(),
                 )
             },
@@ -46,7 +46,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("open handle", |b| {
         b.to_async(&runtime).iter_batched(
             || async {
-                package::Package::from_str("extras/sfsu")
+                package::Reference::from_str("extras/sfsu")
                     .unwrap()
                     .manifest(&ctx)
                     .await
@@ -68,7 +68,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         b.to_async(&runtime).iter_batched(
             || {
                 (
-                    package::Package::from_str("extras/sfsu").unwrap(),
+                    package::Reference::from_str("extras/sfsu").unwrap(),
                     ctx.clone(),
                 )
             },
@@ -85,7 +85,7 @@ fn criterion_benchmark(c: &mut Criterion) {
             || async {
                 Handle::open_manifest(
                     ctx.cache_path(),
-                    &package::Package::from_str("extras/sfsu")
+                    &package::Reference::from_str("extras/sfsu")
                         .unwrap()
                         .manifest(&ctx)
                         .await

@@ -22,7 +22,7 @@ pub struct Args {
     no_hash_check: bool,
 
     #[clap(help = "The packages to download")]
-    packages: Vec<package::Package>,
+    packages: Vec<package::Reference>,
 
     #[clap(from_global)]
     json: bool,

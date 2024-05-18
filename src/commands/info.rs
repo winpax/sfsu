@@ -20,7 +20,7 @@ use crate::{abandon, models::info::Package, output::structured::vertical::VTable
 // TODO: Pass architecture
 pub struct Args {
     #[clap(help = "The package to get info from")]
-    package: reference::package::Package,
+    package: reference::package::Reference,
 
     #[cfg(not(feature = "v2"))]
     #[clap(

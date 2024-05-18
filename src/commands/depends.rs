@@ -13,7 +13,7 @@ use crate::{
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
     #[clap(help = "The package to list dependencies for")]
-    package: package::Package,
+    package: package::Reference,
 
     #[clap(help = "The bucket of the given package")]
     bucket: Option<String>,
