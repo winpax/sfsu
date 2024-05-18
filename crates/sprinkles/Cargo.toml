@@ -30,7 +30,6 @@ manifest-hashes = [
     "url",
     "urlencoding",
 ]
-unstable = []
 v2 = []
 
 [dependencies]
