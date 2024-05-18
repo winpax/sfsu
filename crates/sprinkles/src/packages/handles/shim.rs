@@ -101,6 +101,13 @@ impl ShimHandle {
 
     /// Delete the shim and/or the executable
     ///
+    /// # Examples
+    /// ```no_run
+    /// # use sprinkles::packages::handles::{ShimHandle, DeleteFlags};
+    /// # let shim = ShimHandle::new(PathBuf::from("executable.exe"), PathBuf::from("shim.exe"));
+    /// shim.delete(DeleteFlags::EXECUTABLE | DeleteFlags::SHIM);
+    /// ```
+    ///
     /// # Errors
     /// - Deleting the shim failed
     /// - Deleting the executable failed
