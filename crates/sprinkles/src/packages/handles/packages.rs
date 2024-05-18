@@ -1,6 +1,6 @@
 //! Package handles
 
-use std::path::PathBuf;
+use std::{path::PathBuf, rc::Rc};
 
 use crate::{
     config,
@@ -163,5 +163,16 @@ impl<'a, C: ScoopContext<config::Scoop>> PackageHandle<'a, C> {
         fs::symlink_dir(version_dir, current_path)?;
 
         Ok(())
+    }
+
+    /// Get the package's version paths
+    ///
+    /// # Errors
+    /// - Reading the package's version paths failed
+    pub fn version_paths(&self) -> Result<Rc<[PathBuf]>> {
+        self.path
+            .read_dir()?
+            .map(|entry| entry.map(|e| e.path()).map_err(Error::from))
+            .collect()
     }
 }
