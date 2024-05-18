@@ -731,13 +731,13 @@ mod tests {
     }
 
     pub struct TestHandler {
-        package: reference::Package,
+        package: reference::package::Package,
     }
 
     // TODO: Implement tests for entire application autoupdate
 
     impl TestHandler {
-        pub fn new(package: reference::Package) -> Self {
+        pub fn new(package: reference::package::Package) -> Self {
             Self { package }
         }
 
@@ -762,7 +762,7 @@ mod tests {
     #[tokio::test]
     #[ignore = "Duplicate of `test_googlechrome`"]
     async fn test_handlers_implemented() -> anyhow::Result<()> {
-        let package = reference::Package::from_str("extras/googlechrome")?;
+        let package = reference::package::Package::from_str("extras/googlechrome")?;
 
         let handler = TestHandler::new(package);
 
@@ -774,7 +774,7 @@ mod tests {
     #[tokio::test]
     #[ignore = "Broken (not my fault, the chrome xml file does not include the hash for the current version)"]
     async fn test_googlechrome() -> anyhow::Result<()> {
-        let package = reference::Package::from_str("extras/googlechrome")?;
+        let package = reference::package::Package::from_str("extras/googlechrome")?;
 
         let handler = TestHandler::new(package);
 
@@ -785,7 +785,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_springboot() -> anyhow::Result<()> {
-        let package = reference::Package::from_str("extras/springboot")?;
+        let package = reference::package::Package::from_str("extras/springboot")?;
         let handler = TestHandler::new(package);
         handler.test().await?;
         Ok(())
@@ -793,7 +793,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_sfsu() -> anyhow::Result<()> {
-        let package = reference::Package::from_str("extras/sfsu")?;
+        let package = reference::package::Package::from_str("extras/sfsu")?;
 
         let handler = TestHandler::new(package);
 
@@ -804,7 +804,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_finding_vcredistaio_hashes() -> anyhow::Result<()> {
-        let package = reference::Package::from_str("extras/vcredist-aio")?;
+        let package = reference::package::Package::from_str("extras/vcredist-aio")?;
 
         let handler = TestHandler::new(package);
 
@@ -823,7 +823,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_keepass() -> anyhow::Result<()> {
-        let package = reference::Package::from_str("extras/keepass")?;
+        let package = reference::package::Package::from_str("extras/keepass")?;
 
         let handler = TestHandler::new(package);
 
@@ -834,7 +834,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_hwinfo() -> anyhow::Result<()> {
-        let package = reference::Package::from_str("extras/hwinfo")?;
+        let package = reference::package::Package::from_str("extras/hwinfo")?;
 
         let handler = TestHandler::new(package);
 
@@ -846,7 +846,7 @@ mod tests {
     #[tokio::test]
     #[ignore = "sfsu does not yet support custom matches"]
     async fn test_ungoogled_chromium() -> anyhow::Result<()> {
-        let package = reference::Package::from_str("extras/ungoogled-chromium")?;
+        let package = reference::package::Package::from_str("extras/ungoogled-chromium")?;
         let handler = TestHandler::new(package);
         handler.test().await?;
         Ok(())
@@ -854,13 +854,13 @@ mod tests {
 
     #[tokio::test]
     async fn test_firefox() -> anyhow::Result<()> {
-        let package = reference::Package::from_str("extras/firefox")?;
+        let package = reference::package::Package::from_str("extras/firefox")?;
         TestHandler::new(package).test().await
     }
 
     #[tokio::test]
     async fn test_sfsu_autoupdate() -> anyhow::Result<()> {
-        let mut package = reference::Package::from_str("extras/sfsu")?;
+        let mut package = reference::package::Package::from_str("extras/sfsu")?;
         package.set_version("1.10.2".to_string());
         let manifest = package.manifest(&User::new()).await?;
 
@@ -885,7 +885,7 @@ mod tests {
     async fn test_computed_hash() -> anyhow::Result<()> {
         let ctx = User::new();
 
-        let package = reference::Package::from_str("extras/sfsu")?;
+        let package = reference::package::Package::from_str("extras/sfsu")?;
         let mut manifest = package.manifest(&ctx).await?;
         manifest.autoupdate.as_mut().unwrap().default_config.hash = None;
 

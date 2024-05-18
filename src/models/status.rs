@@ -9,7 +9,7 @@ use sprinkles::{
     config,
     contexts::ScoopContext,
     packages::{
-        reference::{self, ManifestRef},
+        reference::{self, manifest},
         Manifest, Result,
     },
 };
@@ -25,7 +25,7 @@ pub struct Info {
     /// The available version
     pub available: String,
     /// The missing dependencies
-    pub missing_dependencies: Vec<reference::Package>,
+    pub missing_dependencies: Vec<reference::package::Package>,
     /// Additional information
     pub info: Option<String>,
 }
@@ -62,7 +62,7 @@ impl Info {
         let missing_dependencies = local_manifest
             .depends()
             .into_iter()
-            .map(ManifestRef::into_package_ref)
+            .map(manifest::Reference::into_package_ref)
             .filter(|reference| {
                 debug!(
                     "Checking if {} is installed.",

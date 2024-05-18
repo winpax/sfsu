@@ -7,7 +7,7 @@ use sprinkles::{
     config,
     contexts::ScoopContext,
     hash::Hash,
-    packages::{reference::Package, CreateManifest, Manifest},
+    packages::{reference::package::Package, CreateManifest, Manifest},
     progress::{indicatif::ProgressBar, style, ProgressOptions},
     requests::USER_AGENT,
     Architecture,

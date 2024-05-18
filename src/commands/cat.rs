@@ -8,7 +8,7 @@ use crate::{abandon, COLOR_ENABLED};
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
     #[clap(help = "The manifest to display")]
-    package: reference::Package,
+    package: reference::package::Package,
 }
 
 impl super::Command for Args {
