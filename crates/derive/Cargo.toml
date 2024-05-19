@@ -22,5 +22,5 @@ syn = { version = "2.0", features = ["full"] }
 [dev-dependencies]
 anyhow = "1.0"
 quork.workspace = true
-sprinkles = { path = "../../crates/sprinkles" }
+sprinkles = { version = "0.1", git = "https://github.com/winpax/sprinkles" }
 strum = { version = "0.26", features = ["derive"] }
