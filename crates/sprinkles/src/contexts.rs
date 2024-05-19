@@ -67,7 +67,16 @@ pub trait ScoopContext<C>: Clone + Send + Sync + 'static {
     /// and to display the context name in the output.
     ///
     /// This string should match what the app's name is in Scoop, if applicable.
-    const CONTEXT_NAME: &'static str;
+    const APP_NAME: &'static str;
+
+    /// The name of the context
+    ///
+    /// This should be the actual name of the context, not the name of the app.
+    /// For example, the name of the global context should be "global",
+    /// and the name of the user context should be "user".
+    ///
+    /// This will default to the value of [`ScoopContext::APP_NAME`], but can be overridden.
+    const CONTEXT_NAME: &'static str = Self::APP_NAME;
 
     /// Get a reference to the context's configuration
     fn config(&self) -> &C;
@@ -149,7 +158,7 @@ pub trait ScoopContext<C>: Clone + Send + Sync + 'static {
                 let path = package.expect("valid path").path();
 
                 // We cannot search the scoop app as it is built in and hence doesn't contain any manifest
-                if path.file_name() == Some(OsStr::new(Self::CONTEXT_NAME)) {
+                if path.file_name() == Some(OsStr::new(Self::APP_NAME)) {
                     None
                 } else {
                     Some(path)
@@ -228,7 +237,8 @@ pub enum AnyContext {
 }
 
 impl ScoopContext<config::Scoop> for AnyContext {
-    const CONTEXT_NAME: &'static str = User::CONTEXT_NAME;
+    const APP_NAME: &'static str = User::APP_NAME;
+    const CONTEXT_NAME: &'static str = "Unknown context";
 
     fn config(&self) -> &config::Scoop {
         match self {

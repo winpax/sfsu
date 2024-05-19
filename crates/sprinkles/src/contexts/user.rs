@@ -54,7 +54,8 @@ impl Default for User {
 }
 
 impl super::ScoopContext<config::Scoop> for User {
-    const CONTEXT_NAME: &'static str = "scoop";
+    const APP_NAME: &'static str = "scoop";
+    const CONTEXT_NAME: &'static str = "user";
 
     /// Load the Scoop configuration
     ///

@@ -43,7 +43,8 @@ impl Global {
 }
 
 impl ScoopContext<config::Scoop> for Global {
-    const CONTEXT_NAME: &'static str = User::CONTEXT_NAME;
+    const APP_NAME: &'static str = User::APP_NAME;
+    const CONTEXT_NAME: &'static str = "global";
 
     fn config(&self) -> &config::Scoop {
         self.user_context.config()
