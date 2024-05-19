@@ -21,7 +21,10 @@ use std::{
 
 use tokio::process::Command;
 
-use crate::{config, contexts::ScoopContext, packages::models::manifest::TOrArrayOfTs};
+use crate::{
+    config, contexts::ScoopContext, hash::substitutions::Substitute,
+    packages::models::manifest::TOrArrayOfTs,
+};
 
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
@@ -114,6 +117,17 @@ impl From<TOrArrayOfTs<String>> for PowershellScript {
             TOrArrayOfTs::Single(s) => Self::from(s),
             TOrArrayOfTs::Array(array) => Self::from(array.join("\n")),
         }
+    }
+}
+
+impl Substitute for PowershellScript {
+    fn into_substituted(
+        mut self,
+        params: &crate::hash::substitutions::SubstitutionMap,
+        regex_escape: bool,
+    ) -> Self {
+        self.script.substitute(params, regex_escape);
+        self
     }
 }
 

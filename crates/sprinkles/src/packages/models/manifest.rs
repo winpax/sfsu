@@ -152,6 +152,13 @@ pub struct SourceforgeClass {
     pub project: Option<String>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(untagged)]
+pub enum InstallerRunner {
+    File(String),
+    Script(PowershellScript),
+}
+
 #[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Installer {
@@ -161,7 +168,18 @@ pub struct Installer {
     pub args: Option<StringArray>,
     pub file: Option<String>,
     pub keep: Option<bool>,
-    pub script: Option<StringArray>,
+    pub script: Option<PowershellScript>,
+}
+
+impl Installer {
+    #[must_use]
+    /// Get the installer runner
+    pub fn get_runner(&self) -> Option<InstallerRunner> {
+        self.file
+            .clone()
+            .map(InstallerRunner::File)
+            .or_else(|| self.script.clone().map(InstallerRunner::Script))
+    }
 }
 
 #[skip_serializing_none]
