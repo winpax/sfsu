@@ -11,7 +11,7 @@ use itertools::Itertools as _;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 
-use crate::{hash::Hash, version::Version, Architecture};
+use crate::{hash::Hash, scripts::PowershellScript, version::Version, Architecture};
 
 #[skip_serializing_none]
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
@@ -114,10 +114,10 @@ pub struct InstallConfig {
     pub installer: Option<Installer>,
     #[deprecated]
     pub msi: Option<StringArray>,
-    pub post_install: Option<StringArray>,
-    pub post_uninstall: Option<StringArray>,
-    pub pre_install: Option<StringArray>,
-    pub pre_uninstall: Option<StringArray>,
+    pub post_install: Option<PowershellScript>,
+    pub post_uninstall: Option<PowershellScript>,
+    pub pre_install: Option<PowershellScript>,
+    pub pre_uninstall: Option<PowershellScript>,
     pub shortcuts: Option<AliasArray<String>>,
     pub uninstaller: Option<Uninstaller>,
     pub url: Option<StringArray>,

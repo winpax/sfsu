@@ -91,11 +91,16 @@ impl<'a, C: ScoopContext<config::Scoop>> PackageHandle<'a, C> {
         }
     }
 
+    /// Get the package's remote manifest
+    pub fn remote_manifest(&self) -> &Manifest {
+        &self.remote_manifest
+    }
+
     /// Get the package's manifest
     ///
     /// # Errors
     /// - Loading and parsing the manifest failed
-    pub fn manifest(&self) -> Result<Manifest> {
+    pub fn local_manifest(&self) -> Result<Manifest> {
         let manifest_path = self.current().join("manifest.json");
 
         Ok(Manifest::from_path(manifest_path)?)
@@ -109,6 +114,12 @@ impl<'a, C: ScoopContext<config::Scoop>> PackageHandle<'a, C> {
         let install_path = self.current().join("install.json");
 
         Ok(InstallManifest::from_path(install_path)?)
+    }
+
+    #[must_use]
+    /// Get the package's persist directory
+    pub fn persist_dir(&self) -> PathBuf {
+        self.ctx.persist_path().join(self.name())
     }
 
     #[must_use]
@@ -174,6 +185,12 @@ impl<'a, C: ScoopContext<config::Scoop>> PackageHandle<'a, C> {
             .read_dir()?
             .map(|entry| entry.map(|e| e.path()).map_err(Error::from))
             .collect()
+    }
+
+    #[must_use]
+    /// Get the package's name
+    pub fn name(&self) -> &str {
+        &self.remote_manifest.name
     }
 
     #[must_use]

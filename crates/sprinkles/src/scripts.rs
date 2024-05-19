@@ -21,7 +21,7 @@ use std::{
 
 use tokio::process::Command;
 
-use crate::packages::models::manifest::TOrArrayOfTs;
+use crate::{config, contexts::ScoopContext, packages::models::manifest::TOrArrayOfTs};
 
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
@@ -59,6 +59,19 @@ impl PowershellScript {
     /// Get the script as a string
     pub fn as_str(&self) -> &str {
         &self.script
+    }
+
+    /// Save the script to the context's scripts path, and return the path
+    ///
+    /// The file will be named `<script-hash>.ps1`
+    ///
+    /// Note that the file will not be overwritten if it already exists.
+    /// If you do not plan to re-use the script, you should clean it up yourself.
+    ///
+    /// # Errors
+    /// - The script could not be written to the directory
+    pub fn save(&self, ctx: &impl ScoopContext<config::Scoop>) -> Result<ScriptRunner> {
+        self.save_to(ctx.scripts_path())
     }
 
     /// Save the script to a directory, and return the path
@@ -105,6 +118,7 @@ impl From<TOrArrayOfTs<String>> for PowershellScript {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[must_use]
 /// A script runner
 ///
 /// This is used to run scripts in a powershell environment

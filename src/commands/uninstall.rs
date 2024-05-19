@@ -5,6 +5,7 @@ use sprinkles::{
     config,
     contexts::ScoopContext,
     packages::reference::{manifest, package},
+    Architecture,
 };
 
 use crate::output::colours::eprintln_red;
@@ -61,7 +62,22 @@ impl super::Command for Args {
             futures::future::try_join_all(packages_future).await?
         };
 
-        for _handle in packages_with_manifest {}
+        for handle in packages_with_manifest {
+            handle.unlink_current()?;
+
+            // let version_dir = handle.version_dir();
+            // let persist_dir = handle.persist_dir();
+
+            let manifest = handle.local_manifest()?;
+
+            let install_config = manifest.install_config(Architecture::ARCH);
+
+            // Run the pre-uninstall script
+            if let Some(ref pre_uninstall) = install_config.pre_uninstall {
+                let script_runner = pre_uninstall.save(ctx)?;
+                script_runner.run().await?;
+            }
+        }
 
         todo!()
     }
