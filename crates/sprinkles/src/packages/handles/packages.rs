@@ -91,6 +91,7 @@ impl<'a, C: ScoopContext<config::Scoop>> PackageHandle<'a, C> {
         }
     }
 
+    #[must_use]
     /// Get the package's remote manifest
     pub fn remote_manifest(&self) -> &Manifest {
         &self.remote_manifest

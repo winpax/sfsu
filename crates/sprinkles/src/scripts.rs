@@ -128,7 +128,6 @@ pub struct ScriptRunner {
 }
 
 impl ScriptRunner {
-    #[must_use]
     /// Create a new script runner
     pub fn new(path: impl AsRef<Path>, powershell_path: impl AsRef<Path>) -> Self {
         let path = path.as_ref().to_path_buf();
