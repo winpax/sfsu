@@ -61,7 +61,7 @@ impl super::Command for Args {
             futures::future::try_join_all(packages_future).await?
         };
 
-        for handle in packages_with_manifest {}
+        for _handle in packages_with_manifest {}
 
         todo!()
     }
