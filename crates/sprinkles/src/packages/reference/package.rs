@@ -9,7 +9,10 @@ use crate::{
     config,
     contexts::ScoopContext,
     let_chain,
-    packages::{CreateManifest, Manifest},
+    packages::{
+        handles::packages::{self, PackageHandle},
+        CreateManifest, Manifest,
+    },
     requests::Client,
 };
 
@@ -251,6 +254,17 @@ impl Reference {
         let name = self.name().ok_or(Error::MissingAppName)?;
 
         Ok(ctx.app_installed(name)?)
+    }
+
+    /// Open a package handle
+    ///
+    /// # Errors
+    /// - The package is not installed
+    pub async fn open_handle<C: ScoopContext<config::Scoop>>(
+        self,
+        ctx: &C,
+    ) -> Result<PackageHandle<'_, C>, packages::Error> {
+        packages::PackageHandle::new(ctx, self).await
     }
 }
 

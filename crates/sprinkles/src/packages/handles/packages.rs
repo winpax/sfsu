@@ -175,4 +175,16 @@ impl<'a, C: ScoopContext<config::Scoop>> PackageHandle<'a, C> {
             .map(|entry| entry.map(|e| e.path()).map_err(Error::from))
             .collect()
     }
+
+    #[must_use]
+    /// Get the package's reference
+    pub fn reference(&self) -> &package::Reference {
+        self.as_ref()
+    }
+}
+
+impl<C> AsRef<package::Reference> for PackageHandle<'_, C> {
+    fn as_ref(&self) -> &package::Reference {
+        &self.reference
+    }
 }

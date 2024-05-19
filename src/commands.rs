@@ -156,6 +156,7 @@ pub enum Commands {
     #[no_hook]
     /// Show credits
     Credits(credits::Args),
+    #[cfg(feature = "contexts")]
     /// Uninstall an app
     Uninstall(uninstall::Args),
     #[no_hook]
