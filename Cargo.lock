@@ -3811,7 +3811,7 @@ dependencies = [
 
 [[package]]
 name = "sprinkles"
-version = "1.13.4"
+version = "0.1.0"
 dependencies = [
  "anyhow",
  "base64 0.22.1",
