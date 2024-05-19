@@ -175,10 +175,10 @@ impl Installer {
     #[must_use]
     /// Get the installer runner
     pub fn get_runner(&self) -> Option<InstallerRunner> {
-        self.file
+        self.script
             .clone()
-            .map(InstallerRunner::File)
-            .or_else(|| self.script.clone().map(InstallerRunner::Script))
+            .map(InstallerRunner::Script)
+            .or_else(|| self.file.clone().map(InstallerRunner::File))
     }
 }
 
