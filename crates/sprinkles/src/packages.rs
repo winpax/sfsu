@@ -858,40 +858,37 @@ impl Manifest {
                     let info = info.map_err(git::Error::from)?;
                     let commit = info.object().map_err(git::Error::from)?;
 
-                    #[cfg(not(feature = "info-difftrees"))]
+                    // Check for commit message matches first
                     if self.commit_message_matches(&commit) {
                         return Ok(commit);
                     }
 
-                    #[cfg(feature = "info-difftrees")]
-                    {
-                        let mut matches = false;
+                    let mut matches = false;
 
-                        let other = info.parent_ids().next().ok_or(Error::MissingParent)?;
-                        let other = other.object().map_err(git::Error::from)?;
-                        let other_tree = other.peel_to_tree().map_err(git::Error::from)?;
-                        commit
-                            .tree()
-                            .map_err(git::Error::from)?
-                            .changes()
-                            .map_err(git::Error::from)?
-                            .track_filename()
-                            .for_each_to_obtain_tree(&other_tree, |change| {
-                                debug!("{change:?}");
-                                debug!("Filename: {}", change.location.to_string());
+                    let other = info.parent_ids().next().ok_or(Error::MissingParent)?;
+                    let other = other.object().map_err(git::Error::from)?;
+                    let other_tree = other.peel_to_tree().map_err(git::Error::from)?;
+                    commit
+                        .tree()
+                        .map_err(git::Error::from)?
+                        .changes()
+                        .map_err(git::Error::from)?
+                        .track_filename()
+                        .for_each_to_obtain_tree(&other_tree, |change| {
+                            debug!("{change:?}");
+                            debug!("Filename: {}", change.location.to_string());
 
-                                if change.location.to_string().starts_with(&self.name) {
-                                    matches = true;
-                                    Ok::<_, Error>(Action::Cancel)
-                                } else {
-                                    Ok(Action::Continue)
-                                }
-                            })
-                            .map_err(git::Error::from)?;
+                            if change.location.to_string().starts_with(&self.name) {
+                                matches = true;
+                                Ok::<_, Error>(Action::Cancel)
+                            } else {
+                                Ok(Action::Continue)
+                            }
+                        })
+                        .map_err(git::Error::from)?;
 
-                        if matches {
-                            return Ok(commit);
-                        }
+                    if matches {
+                        return Ok(commit);
                     }
 
                     Err(Error::NoUpdatedCommit)

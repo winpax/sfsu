@@ -8,14 +8,13 @@ name = "sprinkles"
 publish.workspace = true
 repository.workspace = true
 rust-version = "1.75.0"
-version.workspace = true
+version = "0.1.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
 beta = []
-default = ["info-difftrees", "manifest-hashes"]
-info-difftrees = []
+default = ["manifest-hashes"]
 manifest-hashes = [
     "base64",
     "digest",
