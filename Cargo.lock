@@ -2482,6 +2482,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "itertools"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "413ee7dfc52ee1a4949ceeb7dbc8a33f2d6c088194d9f922fb8318faf1f01186"
+dependencies = [
+ "either",
+]
+
+[[package]]
 name = "itoa"
 version = "1.0.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3673,7 +3682,7 @@ dependencies = [
  "serde_json",
  "sfsu-derive",
  "shadow-rs",
- "sprinkles",
+ "sprinkles-rs",
  "tokio",
  "toml_edit 0.22.12",
  "winres",
@@ -3690,7 +3699,7 @@ dependencies = [
  "proc-macro2",
  "quork",
  "quote",
- "sprinkles",
+ "sprinkles-rs",
  "strum",
  "syn 2.0.61",
 ]
@@ -3810,10 +3819,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "sprinkles"
-version = "1.13.4"
+name = "sprinkles-rs"
+version = "0.13.4"
+source = "git+https://github.com/winpax/sprinkles?branch=uninstall#7052a23b451d7e62b15eaaf03502912047453c54"
 dependencies = [
- "anyhow",
  "base64 0.22.1",
  "blake3",
  "bytes",
@@ -3833,7 +3842,7 @@ dependencies = [
  "gix-object",
  "heck 0.5.0",
  "indicatif",
- "itertools 0.12.1",
+ "itertools 0.13.0",
  "log",
  "md-5",
  "parking_lot",

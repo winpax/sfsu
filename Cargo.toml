@@ -31,6 +31,9 @@ quork = "0.7"
 rayon = "1.10"
 regex = "1.10"
 serde = { version = "1.0", features = ["derive"] }
+sprinkles-rs = { version = "0.13", git = "https://github.com/winpax/sprinkles", branch = "uninstall", features = [
+    "clap",
+] }
 
 [[bench]]
 harness = false
@@ -57,12 +60,12 @@ inherits = "dev"
 opt-level = 3
 
 [features]
-beta = ["contexts", "sprinkles/beta"]
+beta = ["contexts", "sprinkles-rs/beta"]
 contexts = []
 default = ["download"]
-download = ["sprinkles/manifest-hashes"]
+download = ["sprinkles-rs/manifest-hashes"]
 # Breaking changes are locked behind this feature flag
-v2 = ["sprinkles/v2"]
+v2 = ["sprinkles-rs/v1"]
 
 [dependencies]
 anyhow = "1.0"
@@ -94,7 +97,7 @@ serde.workspace = true
 serde_json = { version = "1.0", features = ["preserve_order"] }
 sfsu-derive = { path = "./crates/derive" }
 shadow-rs = "0.27"
-sprinkles = { path = "crates/sprinkles", features = ["clap"] }
+sprinkles-rs.workspace = true
 tokio = { version = "1.37", features = ["full"] }
 vt3 = { git = "https://github.com/winpax/vt3.git", version = "0.8", package = "async_vt3" }
 
