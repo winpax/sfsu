@@ -37,7 +37,6 @@ use crate::{
 };
 
 pub mod downloading;
-pub mod handles;
 pub mod installer;
 pub mod models;
 pub mod reference;

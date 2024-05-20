@@ -8,11 +8,9 @@ use crate::{
     buckets::Bucket,
     config,
     contexts::ScoopContext,
+    handles::{self, packages::PackageHandle},
     let_chain,
-    packages::{
-        handles::packages::{self, PackageHandle},
-        CreateManifest, Manifest,
-    },
+    packages::{CreateManifest, Manifest},
     requests::Client,
 };
 
@@ -263,8 +261,8 @@ impl Reference {
     pub async fn open_handle<C: ScoopContext<config::Scoop>>(
         self,
         ctx: &C,
-    ) -> Result<PackageHandle<'_, C>, packages::Error> {
-        packages::PackageHandle::new(ctx, self).await
+    ) -> Result<PackageHandle<'_, C>, handles::packages::Error> {
+        PackageHandle::new(ctx, self).await
     }
 }
 
