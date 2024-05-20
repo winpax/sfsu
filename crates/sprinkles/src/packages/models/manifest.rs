@@ -11,7 +11,10 @@ use itertools::Itertools as _;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 
-use crate::{hash::Hash, scripts::PowershellScript, version::Version, Architecture};
+use crate::{
+    config, contexts::ScoopContext, hash::Hash, scripts::PowershellScript, version::Version,
+    Architecture,
+};
 
 #[skip_serializing_none]
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
@@ -179,6 +182,20 @@ impl Installer {
             .clone()
             .map(InstallerRunner::Script)
             .or_else(|| self.file.clone().map(InstallerRunner::File))
+    }
+
+    pub fn run(&self, ctx: &impl ScoopContext<config::Scoop>) -> Result<()> {
+        let runner = self.get_runner();
+        let args = self.args.clone().map(TOrArrayOfTs::to_vec);
+
+        match runner {
+            Some(InstallerRunner::File(file)) => std::process::Command::new(file)
+                .args(&args)
+                .spawn()?
+                .wait()?,
+            Some(InstallerRunner::Script(script)) => script.save(ctx).run(),
+            None => Ok(()),
+        }
     }
 }
 
