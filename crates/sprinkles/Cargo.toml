@@ -14,8 +14,7 @@ version = "0.1.0"
 
 [features]
 beta = []
-default = ["info-difftrees", "manifest-hashes"]
-info-difftrees = []
+default = ["manifest-hashes"]
 manifest-hashes = [
     "base64",
     "digest",
