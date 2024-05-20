@@ -31,7 +31,7 @@ quork = "0.7"
 rayon = "1.10"
 regex = "1.10"
 serde = { version = "1.0", features = ["derive"] }
-sprinkles-rs = { version = "0.1", git = "https://github.com/winpax/sprinkles", features = [
+sprinkles-rs = { version = "0.13", git = "https://github.com/winpax/sprinkles", features = [
     "clap",
 ] }
 
