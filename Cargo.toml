@@ -65,7 +65,7 @@ contexts = []
 default = ["download"]
 download = ["sprinkles-rs/manifest-hashes"]
 # Breaking changes are locked behind this feature flag
-v2 = ["sprinkles-rs/v2"]
+v2 = ["sprinkles-rs/v1"]
 
 [dependencies]
 anyhow = "1.0"
