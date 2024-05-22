@@ -9,6 +9,6 @@
   ],
   "settings": {
     "rust-analyzer.showUnlinkedFileNotification": false,
-    "rust-analyzer.cargo.features": ["beta", "sprinkles-rs/clap"]
+    "rust-analyzer.cargo.features": "all"
   }
 }
