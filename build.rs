@@ -150,7 +150,17 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     shadow_rs::new()?;
 
-    std::fs::write(out_path.clone() + "/contributors.rs", get_contributors()?)?;
+    std::fs::write(out_path.clone() + "/contributors.rs", {
+        let contributors = get_contributors();
+
+        match contributors {
+            Ok(contributors) => contributors,
+            Err(e) if std::env::var("IS_RELEASE").is_ok() => {
+                panic!("Getting contributors failed with error: {e}");
+            }
+            _ => "pub const CONTRIBUTORS: [(&str, &str); 0] = [];".to_string(),
+        }
+    })?;
     std::fs::write(out_path.clone() + "/packages.rs", get_packages())?;
 
     let mut colours_file = std::fs::File::create(out_path.clone() + "/colours.rs")?;
