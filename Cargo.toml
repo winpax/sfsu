@@ -3,8 +3,8 @@ description = "Stupid Fast Scoop Utils"
 edition = "2021"
 license = { workspace = true }
 name = "sfsu"
-publish.workspace = true
-version.workspace = true
+publish = false
+version = "1.13.4"
 
 [workspace]
 members = ["crates/*"]
@@ -13,7 +13,6 @@ package.homepage = "https://github.com/winpax/sfsu"
 package.license = "Apache-2.0"
 package.publish = false
 package.repository = "https://github.com/winpax/sfsu"
-package.version = "1.13.4"
 
 [workspace.dependencies]
 chrono = { version = ">=0.4.38", features = [
@@ -80,8 +79,8 @@ clap = { version = "4.5", features = [
     "wrap_help",
 ] }
 console.workspace = true
-crossterm = "0.27.0"
-dialoguer = "0.11.0"
+crossterm = "0.27"
+dialoguer = "0.11"
 futures.workspace = true
 heck.workspace = true
 human-panic = "2.0"
@@ -90,7 +89,7 @@ log = { workspace = true }
 open = "5.1"
 parking_lot = "0.12"
 quork.workspace = true
-ratatui = { version = "0.26.2", features = ["macros"] }
+ratatui = { version = "0.26", features = ["macros"] }
 rayon.workspace = true
 regex.workspace = true
 serde.workspace = true
@@ -107,10 +106,10 @@ criterion = { version = "0.5", features = ["async_tokio", "html_reports"] }
 git2 = { workspace = true }
 
 [build-dependencies]
-contribs = { git = "https://github.com/winpax/contribs.git", version = "0.1.0" }
-dotenv = "0.15.0"
+contribs = { git = "https://github.com/winpax/contribs.git", version = "0.1" }
+dotenv = "0.15"
 git2.workspace = true
 shadow-rs = "0.27"
 tokio = { version = "1.37", features = ["full"] }
-toml_edit = "0.22.12"
+toml_edit = "0.22"
 winres = "0.1"
