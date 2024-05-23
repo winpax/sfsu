@@ -5,7 +5,7 @@ use criterion::{black_box, criterion_group, criterion_main, BatchSize, Criterion
 use sprinkles::{
     cache::{Downloader, Handle},
     contexts::{ScoopContext, User},
-    packages::reference::Package,
+    packages::reference::package,
     requests::{AsyncClient, Client},
     Architecture,
 };
@@ -19,12 +19,17 @@ fn criterion_benchmark(c: &mut Criterion) {
         .unwrap();
 
     c.bench_function("parse package", |b| {
-        b.iter(|| black_box(Package::from_str("extras/sfsu").unwrap()));
+        b.iter(|| black_box(package::Reference::from_str("extras/sfsu").unwrap()));
     });
 
     c.bench_function("get package manifest", |b| {
         b.to_async(&runtime).iter_batched(
-            || (Package::from_str("extras/sfsu").unwrap(), ctx.clone()),
+            || {
+                (
+                    package::Reference::from_str("extras/sfsu").unwrap(),
+                    ctx.clone(),
+                )
+            },
             |(package, ctx)| async move { black_box(package.manifest(&ctx).await.unwrap()) },
             BatchSize::SmallInput,
         );
@@ -41,7 +46,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("open handle", |b| {
         b.to_async(&runtime).iter_batched(
             || async {
-                Package::from_str("extras/sfsu")
+                package::Reference::from_str("extras/sfsu")
                     .unwrap()
                     .manifest(&ctx)
                     .await
@@ -61,7 +66,12 @@ fn criterion_benchmark(c: &mut Criterion) {
 
     slow.bench_function("set version", |b| {
         b.to_async(&runtime).iter_batched(
-            || (Package::from_str("extras/sfsu").unwrap(), ctx.clone()),
+            || {
+                (
+                    package::Reference::from_str("extras/sfsu").unwrap(),
+                    ctx.clone(),
+                )
+            },
             |(mut package, ctx)| async move {
                 black_box(&mut package).set_version("1.10.2".to_string());
                 black_box(package.manifest(&ctx).await.unwrap());
@@ -75,7 +85,7 @@ fn criterion_benchmark(c: &mut Criterion) {
             || async {
                 Handle::open_manifest(
                     ctx.cache_path(),
-                    &Package::from_str("extras/sfsu")
+                    &package::Reference::from_str("extras/sfsu")
                         .unwrap()
                         .manifest(&ctx)
                         .await

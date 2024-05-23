@@ -2,7 +2,7 @@ use clap::Parser;
 use sprinkles::{
     config,
     contexts::ScoopContext,
-    packages::reference::{self, Package},
+    packages::reference::{manifest, package},
 };
 
 use crate::{
@@ -13,7 +13,7 @@ use crate::{
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
     #[clap(help = "The package to list dependencies for")]
-    package: Package,
+    package: package::Reference,
 
     #[clap(help = "The bucket of the given package")]
     bucket: Option<String>,
@@ -41,7 +41,7 @@ impl super::Command for Args {
             return Ok(());
         }
 
-        let output: Sections<reference::ManifestRef> = manifests
+        let output: Sections<manifest::Reference> = manifests
             .into_iter()
             .filter_map(|manifest| {
                 Children::from(manifest.depends())
