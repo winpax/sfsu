@@ -145,6 +145,7 @@ fn write_colours(output_file: &mut impl Write) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+#[allow(unused_variables, unreachable_code)]
 fn main() -> Result<(), Box<dyn Error>> {
     let out_path = std::env::var("OUT_DIR")?;
 
