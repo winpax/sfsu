@@ -150,12 +150,14 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     shadow_rs::new()?;
 
+    panic!("{:#?}", std::env::var("IS_RELEASE"));
+
     std::fs::write(out_path.clone() + "/contributors.rs", {
         let contributors = get_contributors();
 
         match contributors {
             Ok(contributors) => contributors,
-            Err(e) if std::env::var("IS_RELEASE").is_ok() => {
+            Err(e) if std::env::var("IS_RELEASE").is_ok_and(|v| v == "true") => {
                 panic!("Getting contributors failed with error: {e}");
             }
             _ => "pub const CONTRIBUTORS: [(&str, &str); 0] = [];".to_string(),
