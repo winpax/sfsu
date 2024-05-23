@@ -151,8 +151,6 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     shadow_rs::new()?;
 
-    panic!("{:#?}", std::env::var("IS_RELEASE"));
-
     std::fs::write(out_path.clone() + "/contributors.rs", {
         let contributors = get_contributors();
 
