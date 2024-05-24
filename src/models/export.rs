@@ -9,8 +9,10 @@ use sprinkles::{
     config,
     contexts::ScoopContext,
     git,
-    packages::{Error as PackageError, MinInfo},
+    packages::Error as PackageError,
 };
+
+use super::min::MinInfo;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 /// The export data
