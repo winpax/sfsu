@@ -3,7 +3,7 @@ use rayon::prelude::*;
 
 use sprinkles::{config, contexts::ScoopContext};
 
-use crate::{models::min::MinInfo, output::structured::Structured};
+use crate::{models::min::Info, output::structured::Structured};
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
@@ -37,7 +37,7 @@ pub enum SortBy {
 
 impl super::Command for Args {
     async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
-        let mut outputs = MinInfo::list_installed(ctx, self.bucket.as_ref())?;
+        let mut outputs = Info::list_installed(ctx, self.bucket.as_ref())?;
 
         outputs.par_sort_by(|a, b| match self.sort_by {
             SortBy::Name => a.name.cmp(&b.name),

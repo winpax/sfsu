@@ -1,8 +1,7 @@
-use std::path::Path;
-use std::time::UNIX_EPOCH;
 use anyhow::Context;
 use chrono::{DateTime, Local};
 use quork::traits::truthy::ContainsTruth;
+use rayon::prelude::*;
 use serde::Serialize;
 use sprinkles::{
     config,
@@ -10,11 +9,12 @@ use sprinkles::{
     packages::{CreateManifest, InstallManifest, Manifest},
     wrappers::time::NicerTime,
 };
-use rayon::prelude::*;
+use std::path::Path;
+use std::time::UNIX_EPOCH;
 
 #[derive(Debug, Serialize)]
 /// Minimal package info
-pub struct MinInfo {
+pub struct Info {
     /// The name of the package
     pub name: String,
     /// The version of the package
@@ -27,7 +27,7 @@ pub struct MinInfo {
     pub notes: String,
 }
 
-impl MinInfo {
+impl Info {
     /// Parse minmal package info for every installed app
     ///
     /// # Errors
@@ -41,17 +41,17 @@ impl MinInfo {
         let apps = ctx.installed_apps()?;
 
         apps.par_iter()
-        .map(Self::from_path)
-        .filter(|package| {
-            if let Ok(pkg) = package {
-                if let Some(bucket) = bucket {
-                    return &pkg.source == bucket;
+            .map(Self::from_path)
+            .filter(|package| {
+                if let Ok(pkg) = package {
+                    if let Some(bucket) = bucket {
+                        return &pkg.source == bucket;
+                    }
                 }
-            }
-            // Keep errors so that the following line will return the error
-            true
-        })
-        .collect()
+                // Keep errors so that the following line will return the error
+                true
+            })
+            .collect()
     }
 
     /// Parse minimal package into from a given path
@@ -68,7 +68,8 @@ impl MinInfo {
 
         let package_name = path
             .file_name()
-            .map(|f| f.to_string_lossy()).context("Missing file name")?;
+            .map(|f| f.to_string_lossy())
+            .context("Missing file name")?;
 
         let updated_time = {
             let updated = {
