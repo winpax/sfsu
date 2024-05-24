@@ -4,7 +4,7 @@ use sprinkles::{
     cache::{Downloader, Handle},
     config,
     contexts::ScoopContext,
-    packages::reference::Package,
+    packages::reference::package,
     progress::indicatif::MultiProgress,
     requests::AsyncClient,
     Architecture,
@@ -22,7 +22,7 @@ pub struct Args {
     no_hash_check: bool,
 
     #[clap(help = "The packages to download")]
-    packages: Vec<Package>,
+    packages: Vec<package::Reference>,
 
     #[clap(from_global)]
     json: bool,

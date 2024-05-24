@@ -6,7 +6,8 @@ use sprinkles::{
     contexts::ScoopContext,
     packages::{
         models::manifest::{AliasArray, StringArray, TOrArrayOfTs},
-        reference, Manifest, MergeDefaults,
+        reference::package,
+        Manifest, MergeDefaults,
     },
     semver,
     wrappers::{bool::NicerBool, time::NicerTime},
@@ -20,7 +21,7 @@ use crate::{abandon, models::info::Package, output::structured::vertical::VTable
 // TODO: Pass architecture
 pub struct Args {
     #[clap(help = "The package to get info from")]
-    package: reference::Package,
+    package: package::Reference,
 
     #[cfg(not(feature = "v2"))]
     #[clap(
