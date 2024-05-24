@@ -3670,7 +3670,7 @@ dependencies = [
  "git2",
  "heck 0.5.0",
  "human-panic",
- "itertools 0.12.1",
+ "itertools 0.13.0",
  "log",
  "open",
  "parking_lot",
