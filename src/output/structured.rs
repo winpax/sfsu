@@ -20,45 +20,6 @@ fn print_headers(
     max_length: Option<usize>,
     access_lengths: &[usize],
 ) -> std::fmt::Result {
-    #[cfg(feature = "v2")]
-    {
-        use owo_colors::OwoColorize;
-
-        let header_lengths = headers
-            .iter()
-            .enumerate()
-            .map(|(i, header)| -> Result<usize, std::fmt::Error> {
-                let header_size = access_lengths[i];
-
-                let truncated = OptionalTruncate::new(Header::new(header))
-                    .with_length(max_length)
-                    .to_string();
-                write!(
-                    f,
-                    "{:header_size$}{WALL}",
-                    console::style(truncated).green().bright()
-                )?;
-
-                Ok(truncated.len())
-            })
-            .collect::<Result<Vec<_>, _>>()?;
-
-        writeln!(f)?;
-
-        for (i, length) in header_lengths.into_iter().enumerate() {
-            let header_size = access_lengths[i];
-
-            let underscores = "-".repeat(length);
-
-            write!(
-                f,
-                "{:header_size$}{WALL}",
-                console::style(underscores).green().bright()
-            )?;
-        }
-    }
-
-    #[cfg(not(feature = "v2"))]
     for (i, header) in headers.iter().enumerate() {
         let header_size = access_lengths[i];
 
