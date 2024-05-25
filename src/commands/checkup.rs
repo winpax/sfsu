@@ -1,11 +1,9 @@
 use clap::Parser;
 
 use itertools::Itertools;
-use sprinkles::{
-    config,
-    contexts::ScoopContext,
-    diagnostics::{Diagnostics, LongPathsStatus},
-};
+use sprinkles::{config, contexts::ScoopContext};
+
+use crate::diagnostics::{Diagnostics, LongPathsStatus};
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
