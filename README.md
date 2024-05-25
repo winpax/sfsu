@@ -9,7 +9,7 @@
 
 > [!NOTE]
 > This is still under development. It currently provides faster alternatives to most, but not all, Scoop commands.
-> All breaking changes will only occur in v1.0 and with proper deprecation warnings.
+> All breaking changes will only occur in v2.0 and with proper deprecation warnings.
 
 Super fast replacements and additions to scoop commands written in Rust
 
