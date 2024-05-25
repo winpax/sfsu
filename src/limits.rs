@@ -94,33 +94,6 @@ impl Future for RateLimitWait {
         self: std::pin::Pin<&mut Self>,
         cx: &mut std::task::Context<'_>,
     ) -> std::task::Poll<Self::Output> {
-        #[cfg(feature = "fake_feature")]
-        {
-            if let Some(completed) = self.limiter.completed.lock().checked_sub(1) {
-                *self.limiter.completed.lock() = completed;
-                return Poll::Ready(());
-            }
-
-            *self.limiter.completed.lock() = self.limiter.rate;
-
-            let delta = self.limiter.now.lock().elapsed();
-            *self.limiter.now.lock() = Instant::now();
-
-            if let Some(remaining) = self.limiter.remaining.lock().checked_sub(delta) {
-                let waker = cx.waker().clone();
-                thread::spawn(move || {
-                    thread::sleep(remaining);
-                    waker.wake();
-                });
-
-                *self.limiter.remaining.lock() = remaining;
-                Poll::Pending
-            } else {
-                *self.limiter.remaining.lock() = self.limiter.reset;
-                Poll::Ready(())
-            }
-        }
-
         *self.waker.lock() = Some(cx.waker().clone());
 
         match self.limiter.try_wait() {
