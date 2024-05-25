@@ -7,7 +7,7 @@ publish = false
 version = "1.13.4"
 
 [workspace]
-members = ["crates/*"]
+members = ["macros"]
 package.authors = ["Juliette Cordor <professional@maybejules.com>"]
 package.homepage = "https://github.com/winpax/sfsu"
 package.license = "Apache-2.0"
@@ -92,7 +92,7 @@ rayon.workspace = true
 regex.workspace = true
 serde.workspace = true
 serde_json = { version = "1.0", features = ["preserve_order"] }
-sfsu-derive = { path = "./crates/derive" }
+sfsu-macros = { path = "./macros" }
 shadow-rs = "0.28"
 sprinkles-rs.workspace = true
 tokio = { version = "1.37", features = ["full"] }

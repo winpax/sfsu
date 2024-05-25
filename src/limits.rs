@@ -8,11 +8,6 @@ use std::{
 
 use parking_lot::Mutex;
 
-pub enum WaitResult {
-    Ready,
-    Pending(Duration),
-}
-
 #[derive(Debug, Clone)]
 pub struct RateLimiter {
     rate: u64,
@@ -33,11 +28,11 @@ impl RateLimiter {
         }
     }
 
-    pub fn try_wait(&self) -> WaitResult {
+    pub fn try_wait(&self) -> Result<(), Duration> {
         let mut completed = self.completed.lock();
         if let Some(new_completed) = completed.checked_sub(1) {
             *completed = new_completed;
-            return WaitResult::Ready;
+            return Ok(());
         }
 
         *completed = self.rate;
@@ -49,10 +44,10 @@ impl RateLimiter {
 
         if let Some(new_remaining) = remaining.checked_sub(delta) {
             *remaining = new_remaining;
-            WaitResult::Pending(new_remaining)
+            Err(new_remaining)
         } else {
             *remaining = self.reset;
-            WaitResult::Ready
+            Ok(())
         }
     }
 
@@ -94,38 +89,11 @@ impl Future for RateLimitWait {
         self: std::pin::Pin<&mut Self>,
         cx: &mut std::task::Context<'_>,
     ) -> std::task::Poll<Self::Output> {
-        #[cfg(feature = "fake_feature")]
-        {
-            if let Some(completed) = self.limiter.completed.lock().checked_sub(1) {
-                *self.limiter.completed.lock() = completed;
-                return Poll::Ready(());
-            }
-
-            *self.limiter.completed.lock() = self.limiter.rate;
-
-            let delta = self.limiter.now.lock().elapsed();
-            *self.limiter.now.lock() = Instant::now();
-
-            if let Some(remaining) = self.limiter.remaining.lock().checked_sub(delta) {
-                let waker = cx.waker().clone();
-                thread::spawn(move || {
-                    thread::sleep(remaining);
-                    waker.wake();
-                });
-
-                *self.limiter.remaining.lock() = remaining;
-                Poll::Pending
-            } else {
-                *self.limiter.remaining.lock() = self.limiter.reset;
-                Poll::Ready(())
-            }
-        }
-
         *self.waker.lock() = Some(cx.waker().clone());
 
         match self.limiter.try_wait() {
-            WaitResult::Ready => Poll::Ready(()),
-            WaitResult::Pending(_) => Poll::Pending,
+            Ok(()) => Poll::Ready(()),
+            Err(_) => Poll::Pending,
         }
     }
 }

@@ -4,7 +4,7 @@ use anyhow::Context;
 use clap::{Parser, Subcommand};
 use regex::Regex;
 use serde::Serialize;
-use sfsu_derive::Runnable;
+use sfsu_macros::Runnable;
 use sprinkles::{config, contexts::ScoopContext, wrappers::sizes::Size};
 use tokio::task::JoinSet;
 

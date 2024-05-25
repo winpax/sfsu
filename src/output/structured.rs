@@ -6,7 +6,7 @@ use itertools::Itertools;
 use serde::Serialize;
 use serde_json::{Map, Value};
 
-use sprinkles::{hacks::inline_const::inline_const, wrappers::header::Header};
+use sprinkles::wrappers::header::Header;
 
 use super::{consts::WALL, truncate::FixedLength};
 
@@ -120,7 +120,7 @@ impl Display for Structured {
                 .iter()
                 .map(|header| header.len())
                 .max()
-                .unwrap_or(inline_const!(usize "Updated".len()));
+                .unwrap_or(const { "Updated".len() });
 
             let mut v = vec![default_width];
             v.extend(headers.iter().map(|s| s.len()));
