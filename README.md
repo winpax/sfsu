@@ -8,8 +8,8 @@
 ![wakatime](https://wakatime.com/badge/user/69c39493-dba9-4b9d-8ae6-1a6a17e60cb4/project/ba7eaa48-0f34-4b20-95e5-4ba2e6184d39.svg)
 
 > [!NOTE]
-> This is still under development. It currently does not replace even close to all the scoop commands, and is missing a lot of functionality.
-> There is unlikely to be any breaking changes, so there is likely no harm using it as is.
+> This is still under development. It currently provides faster alternatives to most, but not all, Scoop commands.
+> All breaking changes will only occur in v1.0 and with proper deprecation warnings.
 
 Super fast replacements and additions to scoop commands written in Rust
 
