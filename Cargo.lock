@@ -3681,6 +3681,7 @@ dependencies = [
  "ratatui",
  "rayon",
  "regex",
+ "semver",
  "serde",
  "serde_json",
  "sfsu-macros",
@@ -3688,6 +3689,10 @@ dependencies = [
  "sprinkles-rs",
  "tokio",
  "toml_edit 0.22.13",
+ "which",
+ "windows",
+ "windows-version",
+ "winreg",
  "winres",
 ]
 

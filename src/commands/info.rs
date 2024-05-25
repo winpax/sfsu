@@ -9,7 +9,6 @@ use sprinkles::{
         reference::package,
         Manifest, MergeDefaults,
     },
-    semver,
     wrappers::{bool::NicerBool, time::NicerTime},
     Architecture,
 };
