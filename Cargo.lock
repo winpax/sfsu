@@ -3680,7 +3680,7 @@ dependencies = [
  "regex",
  "serde",
  "serde_json",
- "sfsu-derive",
+ "sfsu-macros",
  "shadow-rs",
  "sprinkles-rs",
  "tokio",
@@ -3689,7 +3689,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "sfsu-derive"
+name = "sfsu-macros"
 version = "0.1.0"
 dependencies = [
  "anyhow",

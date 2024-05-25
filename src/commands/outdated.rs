@@ -1,6 +1,6 @@
 use clap::{Parser, Subcommand};
 use serde_json::Map;
-use sfsu_derive::Runnable;
+use sfsu_macros::Runnable;
 use sprinkles::{config, contexts::ScoopContext};
 
 use super::{Command, CommandRunner, DeprecationMessage, DeprecationWarning};

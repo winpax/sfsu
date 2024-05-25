@@ -13,7 +13,7 @@ impl DummyStruct {
     }
 }
 
-#[derive(sfsu_derive::Runnable)]
+#[derive(sfsu_macros::Runnable)]
 enum MaybeIntoInner {
     Test1(DummyStruct),
     Test2(DummyStruct),

@@ -1,5 +1,5 @@
 use clap::{Parser, Subcommand};
-use sfsu_derive::{Hooks, Runnable};
+use sfsu_macros::{Hooks, Runnable};
 use sprinkles::{config, contexts::ScoopContext};
 
 use super::{Command, CommandRunner};
