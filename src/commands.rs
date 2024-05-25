@@ -22,7 +22,7 @@ pub mod virustotal;
 
 use clap::Subcommand;
 
-use sfsu_derive::{Hooks, Runnable};
+use sfsu_macros::{Hooks, Runnable};
 use sprinkles::{config, contexts::ScoopContext};
 
 use crate::{abandon, output::colours::eprintln_yellow};
