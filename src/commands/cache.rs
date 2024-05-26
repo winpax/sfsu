@@ -8,8 +8,8 @@ use sfsu_macros::Runnable;
 use sprinkles::{config, contexts::ScoopContext, wrappers::sizes::Size};
 use tokio::task::JoinSet;
 
-mod remove;
-mod show;
+pub mod remove;
+pub mod show;
 
 use crate::{abandon, commands::CommandRunner};
 
