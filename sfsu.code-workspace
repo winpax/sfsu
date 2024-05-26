@@ -1,17 +1,14 @@
 {
-	"folders": [
-		{
-			"path": "."
-		},
-		{
-			"path": "../sprinkles"
-		}
-	],
-	"settings": {
-		"rust-analyzer.showUnlinkedFileNotification": false,
-		"rust-analyzer.cargo.features": [
-			"beta",
-			"sprinkles/clap"
-		]
-	}
+  "folders": [
+    {
+      "path": "."
+    },
+    {
+      "path": "../sprinkles"
+    }
+  ],
+  "settings": {
+    "rust-analyzer.showUnlinkedFileNotification": false,
+    "rust-analyzer.cargo.features": "all"
+  }
 }

@@ -1,14 +1,14 @@
 use std::{fs::File, io::Read, sync::atomic::Ordering};
 
 use clap::Parser;
-use sprinkles::{config, contexts::ScoopContext, packages::reference};
+use sprinkles::{config, contexts::ScoopContext, packages::reference::package};
 
 use crate::{abandon, COLOR_ENABLED};
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
     #[clap(help = "The manifest to display")]
-    package: reference::package::Reference,
+    package: package::Reference,
 }
 
 impl super::Command for Args {

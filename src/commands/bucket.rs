@@ -7,7 +7,7 @@ pub mod unused;
 
 use clap::{Parser, Subcommand};
 
-use sfsu_derive::Runnable;
+use sfsu_macros::Runnable;
 use sprinkles::{config, contexts::ScoopContext};
 
 use super::{Command, CommandRunner};

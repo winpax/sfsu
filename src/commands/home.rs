@@ -1,12 +1,12 @@
 use clap::Parser;
-use sprinkles::{config, contexts::ScoopContext, packages::reference};
+use sprinkles::{config, contexts::ScoopContext, packages::reference::package};
 
 use crate::abandon;
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {
     #[clap(help = "The package to open the homepage for")]
-    package: reference::package::Reference,
+    package: package::Reference,
 }
 
 impl super::Command for Args {

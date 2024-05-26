@@ -3,20 +3,19 @@ description = "Stupid Fast Scoop Utils"
 edition = "2021"
 license = { workspace = true }
 name = "sfsu"
-publish.workspace = true
-version.workspace = true
+publish = false
+version = "1.13.4"
 
 [workspace]
-members = ["crates/*"]
+members = ["macros"]
 package.authors = ["Juliette Cordor <professional@maybejules.com>"]
 package.homepage = "https://github.com/winpax/sfsu"
 package.license = "Apache-2.0"
 package.publish = false
 package.repository = "https://github.com/winpax/sfsu"
-package.version = "1.13.4"
 
 [workspace.dependencies]
-chrono = { version = ">=0.4.38", features = [
+chrono = { version = "0.4", features = [
     "clock",
     "serde",
     "std",
@@ -25,15 +24,13 @@ console = { version = "0.15", features = ["windows-console-colors"] }
 futures = "0.3"
 git2 = "0.18"
 heck = "0.5"
-itertools = "0.12"
+itertools = "0.13"
 log = { version = "0.4", features = ["std"] }
 quork = "0.7"
 rayon = "1.10"
 regex = "1.10"
 serde = { version = "1.0", features = ["derive"] }
-sprinkles-rs = { version = "0.13", git = "https://github.com/winpax/sprinkles", branch = "uninstall", features = [
-    "clap",
-] }
+sprinkles-rs = { version = "0.14", features = ["clap"] }
 
 [[bench]]
 harness = false
@@ -80,8 +77,8 @@ clap = { version = "4.5", features = [
     "wrap_help",
 ] }
 console.workspace = true
-crossterm = "0.27.0"
-dialoguer = "0.11.0"
+crossterm = "0.27"
+dialoguer = "0.11"
 futures.workspace = true
 heck.workspace = true
 human-panic = "2.0"
@@ -90,16 +87,21 @@ log = { workspace = true }
 open = "5.1"
 parking_lot = "0.12"
 quork.workspace = true
-ratatui = { version = "0.26.2", features = ["macros"] }
+ratatui = { version = "0.26", features = ["macros"] }
 rayon.workspace = true
 regex.workspace = true
+semver = "1.0"
 serde.workspace = true
 serde_json = { version = "1.0", features = ["preserve_order"] }
-sfsu-derive = { path = "./crates/derive" }
-shadow-rs = "0.27"
+sfsu-macros = { path = "./macros" }
+shadow-rs = "0.28"
 sprinkles-rs.workspace = true
 tokio = { version = "1.37", features = ["full"] }
 vt3 = { git = "https://github.com/winpax/vt3.git", version = "0.8", package = "async_vt3" }
+which = "6.0"
+windows = { version = "0.56", features = ["Win32_Storage_FileSystem"] }
+windows-version = "0.1"
+winreg = "0.52"
 
 [dev-dependencies]
 chrono.workspace = true
@@ -107,10 +109,10 @@ criterion = { version = "0.5", features = ["async_tokio", "html_reports"] }
 git2 = { workspace = true }
 
 [build-dependencies]
-contribs = { git = "https://github.com/winpax/contribs.git", version = "0.1.0" }
-dotenv = "0.15.0"
+contribs = { git = "https://github.com/winpax/contribs.git", version = "0.1" }
+dotenv = "0.15"
 git2.workspace = true
-shadow-rs = "0.27"
+shadow-rs = "0.28"
 tokio = { version = "1.37", features = ["full"] }
-toml_edit = "0.22.12"
+toml_edit = "0.22"
 winres = "0.1"

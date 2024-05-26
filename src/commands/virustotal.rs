@@ -7,7 +7,7 @@ use sprinkles::{
     config,
     contexts::ScoopContext,
     hash::Hash,
-    packages::{reference::package::Reference, CreateManifest, Manifest},
+    packages::{reference::package, CreateManifest, Manifest},
     progress::{indicatif::ProgressBar, style, ProgressOptions},
     requests::USER_AGENT,
     Architecture,
@@ -93,7 +93,7 @@ fn extract_info(value: &serde_json::Value) -> anyhow::Result<(u64, u64)> {
 pub struct Args {
     // TODO: Use manifest reference and -a flag for scanning installed apps
     #[clap(help = "The apps to scan for viruses")]
-    apps: Vec<Reference>,
+    apps: Vec<package::Reference>,
 
     #[clap(
         short,

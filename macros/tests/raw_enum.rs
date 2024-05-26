@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
 use quork::traits::list::ListVariants;
-use sfsu_derive::Hooks;
+use sfsu_macros::Hooks;
 
 struct DummyStruct;
 

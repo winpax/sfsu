@@ -2,7 +2,7 @@ use clap::Parser;
 use sprinkles::{
     config,
     contexts::ScoopContext,
-    packages::reference::{self, package},
+    packages::reference::{manifest, package},
 };
 
 use crate::{
@@ -41,7 +41,7 @@ impl super::Command for Args {
             return Ok(());
         }
 
-        let output: Sections<reference::manifest::Reference> = manifests
+        let output: Sections<manifest::Reference> = manifests
             .into_iter()
             .filter_map(|manifest| {
                 Children::from(manifest.depends())

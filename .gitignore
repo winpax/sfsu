@@ -9,3 +9,6 @@ logs/
 *-export.json
 
 .env
+
+# Intellij IDEA configs
+.idea/

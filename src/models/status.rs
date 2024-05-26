@@ -9,7 +9,7 @@ use sprinkles::{
     config,
     contexts::ScoopContext,
     packages::{
-        reference::{self, manifest},
+        reference::{manifest, package},
         Manifest, Result,
     },
 };
@@ -25,7 +25,7 @@ pub struct Info {
     /// The available version
     pub available: String,
     /// The missing dependencies
-    pub missing_dependencies: Vec<reference::package::Reference>,
+    pub missing_dependencies: Vec<package::Reference>,
     /// Additional information
     pub info: Option<String>,
 }

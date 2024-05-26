@@ -9,6 +9,7 @@
 
 mod calm_panic;
 mod commands;
+mod diagnostics;
 mod errors;
 mod limits;
 mod logging;
