@@ -65,6 +65,8 @@ libgit2:{}"#,
 #[macro_use]
 extern crate log;
 
+// TODO: Add dry-run option for debugging
+
 /// Scoop utilities that can replace the slowest parts of Scoop, and run anywhere from 30-100 times faster
 #[derive(Debug, Parser)]
 #[clap(about, long_about, version, long_version = versions::SFSU_LONG_VERSION, author)]
@@ -102,6 +104,14 @@ struct Args {
     #[cfg(feature = "contexts")]
     #[clap(short, long, global = true, help = "Use the global Scoop context")]
     global: bool,
+
+    #[clap(
+        global = true,
+        short = 'y',
+        long,
+        help = "Assume \"yes\" as answer to prompts"
+    )]
+    assume_yes: bool,
 }
 
 pub(crate) static COLOR_ENABLED: AtomicBool = AtomicBool::new(true);

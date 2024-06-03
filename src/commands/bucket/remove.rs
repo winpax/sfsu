@@ -9,7 +9,7 @@ pub struct Args {
     #[clap(help = "The name of the bucket to delete")]
     name: String,
 
-    #[clap(short = 'y', long, help = "Assume \"yes\" as answer to prompts")]
+    #[clap(from_global)]
     assume_yes: bool,
 }
 
