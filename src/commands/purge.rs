@@ -15,13 +15,11 @@ pub struct Args {
 
 impl super::Command for Args {
     async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> anyhow::Result<()> {
-        let app = self.app.first_installed(ctx)?;
-        let persist_path = ctx.persist_path().join(unsafe { app.name() });
+        let app = self.app.first(ctx).unwrap();
+        let persist_path = ctx.persist_path().join(&app.name);
 
         if !persist_path.exists() {
-            println_yellow!("Persist folder does not exist for {}", unsafe {
-                app.name()
-            });
+            println_yellow!("Persist folder does not exist for {}", app.name);
             return Ok(());
         }
 
@@ -29,7 +27,7 @@ impl super::Command for Args {
             && !Confirm::new()
                 .with_prompt(format!(
                     "Are you sure you want to purge the persist folder for \"{}\"?",
-                    unsafe { app.name() }
+                    app.name
                 ))
                 .default(false)
                 .interact()?
