@@ -9,7 +9,6 @@ use sprinkles::{
         reference::package,
         Manifest, MergeDefaults,
     },
-    wrappers::{bool::NicerBool, time::NicerTime},
     Architecture,
 };
 
@@ -102,7 +101,7 @@ impl Args {
         let install_path = {
             let install_path = installed_apps.iter().find(|app| {
                 app.with_extension("").file_name()
-                    == Some(&std::ffi::OsString::from(&manifest.name))
+                    == Some(&std::ffi::OsString::from(unsafe { manifest.name() }))
             });
 
             install_path.cloned()
@@ -111,7 +110,7 @@ impl Args {
         let (updated_at, updated_by) = if self.disable_updated {
             (None, None)
         } else {
-            match manifest.last_updated_info(ctx, self.hide_emails) {
+            match manifest.last_updated_info(ctx) {
                 Ok(v) => v,
                 Err(_) => match install_path {
                     Some(ref install_path) => {

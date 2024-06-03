@@ -3667,6 +3667,7 @@ dependencies = [
  "contribs",
  "criterion",
  "crossterm",
+ "derive_more",
  "dialoguer",
  "dotenv",
  "futures",
@@ -3828,9 +3829,8 @@ dependencies = [
 
 [[package]]
 name = "sprinkles-rs"
-version = "0.14.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d4504a28730b3a28eb8c2573230eccdbbef2dd3c6f9a49539205f7a68194481e"
+version = "0.15.0"
+source = "git+https://github.com/winpax/sprinkles#9077b3f2cda402256329a8da11d1b2ce010154c8"
 dependencies = [
  "base64 0.22.1",
  "blake3",
@@ -3838,7 +3838,6 @@ dependencies = [
  "cfg-if",
  "chrono",
  "clap",
- "console",
  "const_format",
  "derive_more",
  "digest",
@@ -3854,7 +3853,6 @@ dependencies = [
  "itertools 0.13.0",
  "log",
  "md-5",
- "parking_lot",
  "phf",
  "phf_codegen",
  "quick-xml",
@@ -3879,7 +3877,6 @@ dependencies = [
  "urlencoding",
  "which",
  "windows",
- "windows-version",
  "winreg",
 ]
 
