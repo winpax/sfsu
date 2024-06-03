@@ -3823,7 +3823,7 @@ dependencies = [
 [[package]]
 name = "sprinkles-rs"
 version = "0.15.0"
-source = "git+https://github.com/winpax/sprinkles#225fe5093a5162d0be8e5d25066e20d4a92ec1f4"
+source = "git+https://github.com/winpax/sprinkles#d9ad6f2068f9000249e9aad8e92f9fcef53efb3a"
 dependencies = [
  "base64 0.22.1",
  "blake3",
