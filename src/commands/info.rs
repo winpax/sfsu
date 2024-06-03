@@ -119,15 +119,14 @@ impl Args {
                 Ok((updated_at, updated_by)) => (
                     updated_at
                         .map(|time| time.with_timezone(&chrono::Local))
-                        .map(NicerTime::from)
-                        .map(|time| time.to_string()),
-                    updated_by.map(|author| author.to_string()),
+                        .map(NicerTime::from),
+                    updated_by,
                 ),
                 Err(_) => match install_path {
                     Some(ref install_path) => {
                         let updated_at = install_path.metadata()?.modified()?;
 
-                        (Some(NicerTime::from(updated_at).to_string()), None)
+                        (Some(NicerTime::from(updated_at)), None)
                     }
                     _ => (None, None),
                 },
@@ -162,8 +161,19 @@ impl Args {
                 .unwrap_or_default(),
             installed: NicerBool::new(install_path.is_some()),
             shortcuts: manifest.install_config.shortcuts.map(Into::into),
-            updated_at,
-            updated_by,
+            updated_at: updated_at.map(|time| time.to_string()),
+            updated_by: updated_by.map(|name| {
+                {
+                    let display = name.display();
+
+                    if self.hide_emails {
+                        display
+                    } else {
+                        display.show_emails()
+                    }
+                }
+                .to_string()
+            }),
         };
 
         let value = serde_json::to_value(pkg_info)?;

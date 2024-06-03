@@ -45,18 +45,18 @@ impl Info {
         bucket: &Bucket,
     ) -> Result<Self> {
         let failed = {
-            let installed = ctx.app_installed(&unsafe { local_manifest.name() })?;
+            let installed = ctx.app_installed(unsafe { local_manifest.name() })?;
 
             let app_path = ctx
                 .apps_path()
-                .join(&unsafe { local_manifest.name() })
+                .join(unsafe { local_manifest.name() })
                 .join("current");
 
             !app_path.exists() && installed
         };
 
         debug!("Local manifest name: {}", unsafe { local_manifest.name() });
-        let remote_manifest = bucket.get_manifest(&unsafe { local_manifest.name() })?;
+        let remote_manifest = bucket.get_manifest(unsafe { local_manifest.name() })?;
 
         let install_manifest = local_manifest.install_manifest(ctx)?;
 

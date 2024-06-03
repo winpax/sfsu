@@ -1,3 +1,5 @@
+#![allow(clippy::module_name_repetitions)]
+
 pub mod author;
 pub mod bool;
 pub mod header;
