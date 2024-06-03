@@ -4,7 +4,8 @@ use std::fmt::Display;
 
 use itertools::Itertools;
 use serde_json::{Map, Value};
-use sprinkles::wrappers::header::Header;
+
+use crate::wrappers::header::Header;
 
 #[must_use = "VTable is lazy, and only takes effect when used in formatting"]
 /// A table of data

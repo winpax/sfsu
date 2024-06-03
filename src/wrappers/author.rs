@@ -21,7 +21,7 @@ pub struct Author {
 impl<'a> From<git2::Signature<'a>> for Author {
     fn from(signature: git2::Signature<'a>) -> Self {
         Self {
-            signature: Signature::Git2(signature),
+            signature: Signature::Git2(signature.to_owned()),
             show_emails: true,
         }
     }
@@ -30,7 +30,7 @@ impl<'a> From<git2::Signature<'a>> for Author {
 impl<'a> From<gix::actor::SignatureRef<'a>> for Author {
     fn from(signature: gix::actor::SignatureRef<'a>) -> Self {
         Self {
-            signature: Signature::Gitoxide(signature),
+            signature: Signature::Gitoxide(signature.into()),
             show_emails: true,
         }
     }

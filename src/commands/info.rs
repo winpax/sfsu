@@ -12,7 +12,12 @@ use sprinkles::{
     Architecture,
 };
 
-use crate::{abandon, models::info::Package, output::structured::vertical::VTable};
+use crate::{
+    abandon,
+    models::info::Package,
+    output::structured::vertical::VTable,
+    wrappers::{bool::NicerBool, time::NicerTime},
+};
 
 #[derive(Debug, Clone, Parser)]
 #[allow(clippy::struct_excessive_bools)]
@@ -111,7 +116,13 @@ impl Args {
             (None, None)
         } else {
             match manifest.last_updated_info(ctx) {
-                Ok(v) => v,
+                Ok((updated_at, updated_by)) => (
+                    updated_at
+                        .map(|time| time.with_timezone(&chrono::Local))
+                        .map(NicerTime::from)
+                        .map(|time| time.to_string()),
+                    updated_by.map(|author| author.to_string()),
+                ),
                 Err(_) => match install_path {
                     Some(ref install_path) => {
                         let updated_at = install_path.metadata()?.modified()?;
@@ -124,8 +135,8 @@ impl Args {
         };
 
         let pkg_info = Package {
-            name: manifest.name,
-            bucket: manifest.bucket,
+            name: unsafe { manifest.name() }.to_string(),
+            bucket: unsafe { manifest.bucket() }.to_string(),
             description: manifest.description,
             version: manifest.version.to_string(),
             website: manifest.homepage,
