@@ -211,8 +211,16 @@ impl Args {
                     match Info::from_manifests(ctx, &local_manifest, &bucket) {
                         Ok(info) => Ok(info),
                         Err(err) => {
-                            error!("Failed to get status for {}: {:?}", app.name, err);
-                            anyhow::bail!("Failed to get status for {}: {:?}", app.name, err)
+                            error!(
+                                "Failed to get status for {}: {:?}",
+                                unsafe { app.name() },
+                                err
+                            );
+                            anyhow::bail!(
+                                "Failed to get status for {}: {:?}",
+                                unsafe { app.name() },
+                                err
+                            )
                         }
                     }
                 } else {

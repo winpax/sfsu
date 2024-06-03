@@ -72,8 +72,8 @@ struct StrippedManifest {
 impl StrippedManifest {
     fn new(manifest: &Manifest, search_type: SearchType) -> Self {
         Self {
-            name: manifest.name.clone(),
-            bucket: manifest.bucket.clone(),
+            name: unsafe { manifest.name() }.to_string(),
+            bucket: unsafe { manifest.bucket() }.to_string(),
             search_type,
         }
     }

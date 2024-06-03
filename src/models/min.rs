@@ -7,10 +7,11 @@ use sprinkles::{
     config,
     contexts::ScoopContext,
     packages::{CreateManifest, InstallManifest, Manifest},
-    wrappers::time::NicerTime,
 };
 use std::path::Path;
 use std::time::UNIX_EPOCH;
+
+use crate::wrappers::time::NicerTime;
 
 #[derive(Debug, Serialize)]
 /// Minimal package info

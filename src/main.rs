@@ -15,6 +15,7 @@ mod limits;
 mod logging;
 mod models;
 mod output;
+pub mod wrappers;
 
 use std::{
     io::IsTerminal,

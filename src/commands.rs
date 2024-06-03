@@ -15,6 +15,7 @@ pub mod info;
 pub mod list;
 #[cfg(not(feature = "v2"))]
 pub mod outdated;
+pub mod purge;
 pub mod search;
 pub mod status;
 pub mod update;
@@ -152,6 +153,8 @@ pub enum Commands {
     #[no_hook]
     /// Show credits
     Credits(credits::Args),
+    /// Purge package's persist folder
+    Purge(purge::Args),
     #[no_hook]
     #[cfg(debug_assertions)]
     /// Debugging commands

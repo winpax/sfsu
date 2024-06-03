@@ -3,9 +3,9 @@ use chrono::FixedOffset;
 use clap::Parser;
 use rayon::prelude::*;
 use serde::Serialize;
-use sprinkles::{buckets::Bucket, config, contexts::ScoopContext, wrappers::time::NicerTime};
+use sprinkles::{buckets::Bucket, config, contexts::ScoopContext};
 
-use crate::output;
+use crate::{output, wrappers::time::NicerTime};
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args {

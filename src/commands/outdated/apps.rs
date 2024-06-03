@@ -39,7 +39,7 @@ impl Args {
                     // TODO: Add the option to check all buckets and find the highest version (will require semver to order versions)
                     let bucket = Bucket::from_name(ctx, bucket)?;
 
-                    let remote_manifest = bucket.get_manifest(&app.name)?;
+                    let remote_manifest = bucket.get_manifest(unsafe { app.name() })?;
 
                     if let Some(info) = Info::from_manifests(&local_manifest, &remote_manifest) {
                         Ok(info)

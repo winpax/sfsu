@@ -96,7 +96,7 @@ pub fn parse_output(
     // This may be a bit of a hack, but it works
 
     let match_output = MatchCriteria::matches(
-        &manifest.name,
+        unsafe { manifest.name() },
         if mode.match_binaries() {
             Some(manifest)
         } else {
@@ -116,10 +116,12 @@ pub fn parse_output(
         return None;
     }
 
-    let styled_package_name = if manifest.name == pattern.to_string() {
-        console::style(&manifest.name).bold().to_string()
+    let styled_package_name = if unsafe { manifest.name() } == pattern.to_string() {
+        console::style(unsafe { manifest.name() })
+            .bold()
+            .to_string()
     } else {
-        manifest.name.clone()
+        unsafe { manifest.name() }.to_string()
     };
 
     let installed_text = if is_installed && !installed_only {
@@ -221,7 +223,7 @@ impl super::Command for Args {
                                 parse_output(
                                     &manifest,
                                     ctx,
-                                    &manifest.bucket,
+                                    unsafe { manifest.bucket() },
                                     self.installed,
                                     &pattern,
                                     self.mode,

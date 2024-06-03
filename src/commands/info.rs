@@ -9,11 +9,15 @@ use sprinkles::{
         reference::package,
         Manifest, MergeDefaults,
     },
-    wrappers::{bool::NicerBool, time::NicerTime},
     Architecture,
 };
 
-use crate::{abandon, models::info::Package, output::structured::vertical::VTable};
+use crate::{
+    abandon,
+    models::info::Package,
+    output::structured::vertical::VTable,
+    wrappers::{bool::NicerBool, time::NicerTime},
+};
 
 #[derive(Debug, Clone, Parser)]
 #[allow(clippy::struct_excessive_bools)]
@@ -102,7 +106,7 @@ impl Args {
         let install_path = {
             let install_path = installed_apps.iter().find(|app| {
                 app.with_extension("").file_name()
-                    == Some(&std::ffi::OsString::from(&manifest.name))
+                    == Some(&std::ffi::OsString::from(unsafe { manifest.name() }))
             });
 
             install_path.cloned()
@@ -111,13 +115,18 @@ impl Args {
         let (updated_at, updated_by) = if self.disable_updated {
             (None, None)
         } else {
-            match manifest.last_updated_info(ctx, self.hide_emails) {
-                Ok(v) => v,
+            match manifest.last_updated_info(ctx) {
+                Ok((updated_at, updated_by)) => (
+                    updated_at
+                        .map(|time| time.with_timezone(&chrono::Local))
+                        .map(NicerTime::from),
+                    updated_by,
+                ),
                 Err(_) => match install_path {
                     Some(ref install_path) => {
                         let updated_at = install_path.metadata()?.modified()?;
 
-                        (Some(NicerTime::from(updated_at).to_string()), None)
+                        (Some(NicerTime::from(updated_at)), None)
                     }
                     _ => (None, None),
                 },
@@ -125,8 +134,8 @@ impl Args {
         };
 
         let pkg_info = Package {
-            name: manifest.name,
-            bucket: manifest.bucket,
+            name: unsafe { manifest.name() }.to_string(),
+            bucket: unsafe { manifest.bucket() }.to_string(),
             description: manifest.description,
             version: manifest.version.to_string(),
             website: manifest.homepage,
@@ -152,8 +161,19 @@ impl Args {
                 .unwrap_or_default(),
             installed: NicerBool::new(install_path.is_some()),
             shortcuts: manifest.install_config.shortcuts.map(Into::into),
-            updated_at,
-            updated_by,
+            updated_at: updated_at.map(|time| time.to_string()),
+            updated_by: updated_by.map(|name| {
+                {
+                    let display = name.display();
+
+                    if self.hide_emails {
+                        display
+                    } else {
+                        display.show_emails()
+                    }
+                }
+                .to_string()
+            }),
         };
 
         let value = serde_json::to_value(pkg_info)?;

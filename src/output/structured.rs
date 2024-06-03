@@ -6,7 +6,7 @@ use itertools::Itertools;
 use serde::Serialize;
 use serde_json::{Map, Value};
 
-use sprinkles::wrappers::header::Header;
+use crate::wrappers::header::Header;
 
 use super::{consts::WALL, truncate::FixedLength};
 
