@@ -10,7 +10,7 @@ version = "1.13.4"
 members = ["macros"]
 package.authors = ["Juliette Cordor <professional@maybejules.com>"]
 package.homepage = "https://github.com/winpax/sfsu"
-package.license = "Apache-2.0"
+package.license = "MIT OR Apache-2.0"
 package.publish = false
 package.repository = "https://github.com/winpax/sfsu"
 
