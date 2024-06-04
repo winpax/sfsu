@@ -1,3 +1,5 @@
+#![feature(const_trait_impl)]
+#![feature(effects)]
 #![warn(
     clippy::all,
     clippy::pedantic,
@@ -33,6 +35,9 @@ use sprinkles::contexts::Global;
 
 mod versions {
     #![allow(clippy::needless_raw_string_hashes)]
+
+    use konst::eq_str;
+
     include!(concat!(env!("OUT_DIR"), "/shadow.rs"));
 
     pub const SFSU_LONG_VERSION: &str = {
@@ -40,9 +45,19 @@ mod versions {
 
         const LIBGIT2_VERSION: &str = env!("LIBGIT2_VERSION");
 
+        const SPRINKLES_VERSION: &str = env!("SPRINKLES_VERSION");
+        const SPRINKLES_GIT_SOURCE: &str = env!("SPRINKLES_GIT_SOURCE");
+        const SPRINKLES_GIT_REV: &str = env!("SPRINKLES_GIT_REV");
+
+        const SPRINKLES_REV: &str = if eq_str(SPRINKLES_GIT_SOURCE, "true") {
+            formatcp!(" (git rev: {SPRINKLES_GIT_REV})")
+        } else {
+            " (crates.io published version)"
+        };
+
         formatcp!(
             r#"{}
-sprinkles {}
+sprinkles {}{}
 branch:{}
 tag:{}
 commit_hash:{}
@@ -50,7 +65,8 @@ build_time:{}
 build_env:{},{}
 libgit2:{}"#,
             PKG_VERSION,
-            sprinkles::__versions::VERSION,
+            SPRINKLES_VERSION,
+            SPRINKLES_REV,
             BRANCH,
             TAG,
             SHORT_COMMIT,
