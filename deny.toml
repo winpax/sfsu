@@ -92,6 +92,7 @@ allow = [
     "BSD-3-Clause",
     "MIT",
     "MIT-0",
+    "Zlib",
     #"Apache-2.0 WITH LLVM-exception",
 ] # List of explicitly allowed licenses
 # See https://spdx.org/licenses/ for list of possible licenses
@@ -107,8 +108,6 @@ exceptions = [
     # Each entry is the crate and version constraint, and its specific allow
     # list
     { allow = ["Unicode-DFS-2016"], crate = "unicode-ident" },
-    { allow = ["Zlib"], crate = "const_format" },
-    { allow = ["Zlib"], crate = "const_format_proc_macros" },
 ]
 
 # Some crates don't have (easily) machine readable licensing information,

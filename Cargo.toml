@@ -4,7 +4,7 @@ edition = "2021"
 license = { workspace = true }
 name = "sfsu"
 publish = false
-version = "1.13.4"
+version = "1.14.0"
 
 [workspace]
 members = ["macros"]
@@ -86,6 +86,7 @@ futures.workspace = true
 heck.workspace = true
 human-panic = "2.0"
 itertools.workspace = true
+konst = "0.3.9"
 log = { workspace = true }
 open = "5.1"
 parking_lot = "0.12"
