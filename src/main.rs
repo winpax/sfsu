@@ -56,24 +56,14 @@ mod versions {
         };
 
         formatcp!(
-            r#"{}
-sprinkles {}{}
-branch:{}
-tag:{}
-commit_hash:{}
-build_time:{}
-build_env:{},{}
-libgit2:{}"#,
-            PKG_VERSION,
-            SPRINKLES_VERSION,
-            SPRINKLES_REV,
-            BRANCH,
-            TAG,
-            SHORT_COMMIT,
-            BUILD_TIME,
-            RUST_VERSION,
-            RUST_CHANNEL,
-            LIBGIT2_VERSION
+            r#"{PKG_VERSION}
+sprinkles {SPRINKLES_VERSION}{SPRINKLES_REV}
+branch:{BRANCH}
+tag:{TAG}
+commit_hash:{SHORT_COMMIT}
+build_time:{BUILD_TIME}
+build_env:{RUST_VERSION},{RUST_CHANNEL}
+libgit2:{LIBGIT2_VERSION}"#
         )
     };
 }
