@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Renamed sfsu-derive to sfsu-macros
 - Updated sprinkles library
 - Use Rust nightly toolchain
+- Update Windows manifest with more information
 
 ### Removed
 
