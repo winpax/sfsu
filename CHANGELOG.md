@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - CI builds
+- Re-run build.rs if executable manifest changes
 
 For older version's changelogs, see the [releases](https://github.com/winpax/sfsu/releases) page.
 

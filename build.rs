@@ -201,6 +201,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut colours_file = std::fs::File::create(out_path.clone() + "/colours.rs")?;
     write_colours(&mut colours_file)?;
 
+    println!("cargo:rerun-if-changed=sfsu.exe.manifest");
     let mut res = winres::WindowsResource::new();
     res.set_manifest(WIN_MANIFEST);
 
