@@ -14,7 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `MinInfo` struct from sprinkles library
 - MIT license option in addition to Apache-2.0 license
 - More detailed sprinkles version in clap output
-- Added sprinkles contributors to credits command
+- Added sprinkles contributors to credits
+- Enable `contexts` feature by default
 
 ### Changed
 
