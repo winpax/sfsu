@@ -71,10 +71,11 @@ impl Logger {
     }
 
     pub fn cleanup_logs<C>(ctx: &impl ScoopContext<C>) -> anyhow::Result<()> {
+        let logging_dir = ctx.logging_dir()?;
+
+        // Cleanup legacy log paths
         let legacy_logs_dirs: &[PathBuf] =
             &[ctx.apps_path().join("sfsu").join("current").join("logs")];
-
-        let logging_dir = ctx.logging_dir()?;
 
         for legacy_dir in legacy_logs_dirs {
             if legacy_dir.exists() {
