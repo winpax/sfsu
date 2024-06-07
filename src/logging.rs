@@ -71,7 +71,30 @@ impl Logger {
     }
 
     pub fn cleanup_logs<C>(ctx: &impl ScoopContext<C>) -> anyhow::Result<()> {
+        let legacy_logs_dirs: &[PathBuf] =
+            &[ctx.apps_path().join("sfsu").join("current").join("logs")];
+
         let logging_dir = ctx.logging_dir()?;
+
+        for legacy_dir in legacy_logs_dirs {
+            if legacy_dir.exists() {
+                // Copy all files to the new location
+                for entry in std::fs::read_dir(legacy_dir)? {
+                    let entry = entry?;
+                    let path = entry.path();
+                    let name = path.file_name().unwrap().to_string_lossy();
+
+                    let new_path = logging_dir.join(name.as_ref());
+
+                    if !new_path.exists() {
+                        std::fs::rename(&path, &new_path)?;
+                    }
+                }
+
+                // Remove the old directory
+                std::fs::remove_dir_all(legacy_dir)?;
+            }
+        }
 
         let logs = std::fs::read_dir(logging_dir)?.collect::<Result<Vec<_>, _>>()?;
 

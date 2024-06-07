@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - More detailed sprinkles version in clap output
 - Added sprinkles contributors to credits
 - Enable `contexts` feature by default
+- Logs are now moved to the new logging directory if any are found in the old location
 
 ### Changed
 
