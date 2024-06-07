@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated sprinkles library
 - Use Rust nightly toolchain
 - Logs now go into `LocalAppData\sfsu\logs` instead of `<sfsu install folder>\logs`
+- Run debug build on push and only run release build on release
 
 ### Removed
 

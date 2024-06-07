@@ -96,8 +96,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: Swatinem/rust-cache@v2.7.3
-        # Disable cache for release builds
-        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+      - uses: extractions/setup-just@v2
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Debug build
+        run: cargo b --all --features beta
+
+  publish:
+    if: ${{ startsWith(github.ref, 'refs/tags/') }}
+    name: Publish
+    runs-on: windows-latest
+    needs: [cargo-deny, build, test, clippy, format]
+
+    steps:
+      - uses: actions/checkout@v4
       - uses: extractions/setup-just@v2
 
       - name: Install Rust
@@ -119,7 +133,6 @@ jobs:
 
       - name: Upload & Publish
         uses: softprops/action-gh-release@v2.0.4
-        if: ${{ startsWith(github.ref, 'refs/tags/') }}
         with:
           files: |
             release/*.exe
@@ -127,7 +140,6 @@ jobs:
 
       - name: VirusTotal Scan
         uses: crazy-max/ghaction-virustotal@v4
-        if: ${{ startsWith(github.ref, 'refs/tags/') }}
         with:
           update_release_body: true
           vt_api_key: ${{ secrets.VT_API_KEY }}
