@@ -36,6 +36,7 @@ jobs:
       security-events: write
     steps:
       - uses: actions/checkout@v4
+      - uses: Swatinem/rust-cache@v2.7.3
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -77,6 +78,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      - uses: Swatinem/rust-cache@v2.7.3
 
       - name: Install and setup Scoop
         uses: MinoruSekine/setup-scoop@v4
