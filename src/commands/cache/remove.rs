@@ -1,7 +1,7 @@
 use clap::Parser;
-use sprinkles::{config, contexts::ScoopContext, wrappers::sizes::Size};
+use sprinkles::{config, contexts::ScoopContext};
 
-use crate::{commands::Command, output::colours::eprintln_bright_yellow};
+use crate::{commands::Command, output::colours::eprintln_bright_yellow, wrappers::sizes::Size};
 
 use super::CacheEntry;
 

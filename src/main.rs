@@ -1,3 +1,5 @@
+#![feature(const_trait_impl)]
+#![feature(effects)]
 #![warn(
     clippy::all,
     clippy::pedantic,
@@ -15,6 +17,7 @@ mod limits;
 mod logging;
 mod models;
 mod output;
+pub mod wrappers;
 
 use std::{
     io::IsTerminal,
@@ -32,6 +35,9 @@ use sprinkles::contexts::Global;
 
 mod versions {
     #![allow(clippy::needless_raw_string_hashes)]
+
+    use konst::eq_str;
+
     include!(concat!(env!("OUT_DIR"), "/shadow.rs"));
 
     pub const SFSU_LONG_VERSION: &str = {
@@ -39,30 +45,33 @@ mod versions {
 
         const LIBGIT2_VERSION: &str = env!("LIBGIT2_VERSION");
 
+        const SPRINKLES_VERSION: &str = env!("SPRINKLES_VERSION");
+        const SPRINKLES_GIT_SOURCE: &str = env!("SPRINKLES_GIT_SOURCE");
+        const SPRINKLES_GIT_REV: &str = env!("SPRINKLES_GIT_REV");
+
+        const SPRINKLES_REV: &str = if eq_str(SPRINKLES_GIT_SOURCE, "true") {
+            formatcp!(" (git rev: {SPRINKLES_GIT_REV})")
+        } else {
+            " (crates.io published version)"
+        };
+
         formatcp!(
-            r#"{}
-sprinkles {}
-branch:{}
-tag:{}
-commit_hash:{}
-build_time:{}
-build_env:{},{}
-libgit2:{}"#,
-            PKG_VERSION,
-            sprinkles::__versions::VERSION,
-            BRANCH,
-            TAG,
-            SHORT_COMMIT,
-            BUILD_TIME,
-            RUST_VERSION,
-            RUST_CHANNEL,
-            LIBGIT2_VERSION
+            r#"{PKG_VERSION}
+sprinkles {SPRINKLES_VERSION}{SPRINKLES_REV}
+branch:{BRANCH}
+tag:{TAG}
+commit_hash:{SHORT_COMMIT}
+build_time:{BUILD_TIME}
+build_env:{RUST_VERSION},{RUST_CHANNEL}
+libgit2:{LIBGIT2_VERSION}"#
         )
     };
 }
 
 #[macro_use]
 extern crate log;
+
+// TODO: Add dry-run option for debugging
 
 /// Scoop utilities that can replace the slowest parts of Scoop, and run anywhere from 30-100 times faster
 #[derive(Debug, Parser)]
@@ -101,6 +110,14 @@ struct Args {
     #[cfg(feature = "contexts")]
     #[clap(short, long, global = true, help = "Use the global Scoop context")]
     global: bool,
+
+    #[clap(
+        global = true,
+        short = 'y',
+        long,
+        help = "Assume \"yes\" as answer to prompts"
+    )]
+    assume_yes: bool,
 }
 
 pub(crate) static COLOR_ENABLED: AtomicBool = AtomicBool::new(true);

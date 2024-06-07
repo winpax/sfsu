@@ -4,13 +4,13 @@ edition = "2021"
 license = { workspace = true }
 name = "sfsu"
 publish = false
-version = "1.13.4"
+version = "1.14.0"
 
 [workspace]
 members = ["macros"]
 package.authors = ["Juliette Cordor <professional@maybejules.com>"]
 package.homepage = "https://github.com/winpax/sfsu"
-package.license = "Apache-2.0"
+package.license = "MIT OR Apache-2.0"
 package.publish = false
 package.repository = "https://github.com/winpax/sfsu"
 
@@ -30,7 +30,9 @@ quork = "0.7"
 rayon = "1.10"
 regex = "1.10"
 serde = { version = "1.0", features = ["derive"] }
-sprinkles-rs = { version = "0.14", features = ["clap"] }
+sprinkles-rs = { version = "0.15", features = [
+    "clap",
+], git = "https://github.com/winpax/sprinkles" }
 
 [[bench]]
 harness = false
@@ -78,11 +80,13 @@ clap = { version = "4.5", features = [
 ] }
 console.workspace = true
 crossterm = "0.27"
+derive_more = "0.99.17"
 dialoguer = "0.11"
 futures.workspace = true
 heck.workspace = true
 human-panic = "2.0"
 itertools.workspace = true
+konst = "0.3.9"
 log = { workspace = true }
 open = "5.1"
 parking_lot = "0.12"

@@ -49,7 +49,8 @@ impl super::Command for Args {
                     .map(|children| {
                         Section::new(children).with_title(format!(
                             "Dependencies for '{}' in '{}'",
-                            manifest.name, manifest.bucket
+                            unsafe { manifest.name() },
+                            unsafe { manifest.bucket() }
                         ))
                     })
             })

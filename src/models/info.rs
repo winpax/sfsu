@@ -2,10 +2,9 @@
 
 use serde::Serialize;
 
-use sprinkles::{
-    packages::models::manifest::{AliasArray, PackageLicense},
-    wrappers::{bool::NicerBool, serialize::SerializeDisplay},
-};
+use sprinkles::packages::models::manifest::{AliasArray, PackageLicense};
+
+use crate::wrappers::{bool::NicerBool, serialize::SerializeDisplay};
 
 #[derive(Debug, Clone, Serialize)]
 /// Summary package information

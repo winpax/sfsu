@@ -5,13 +5,13 @@ use clap::{Parser, Subcommand};
 use regex::Regex;
 use serde::Serialize;
 use sfsu_macros::Runnable;
-use sprinkles::{config, contexts::ScoopContext, wrappers::sizes::Size};
+use sprinkles::{config, contexts::ScoopContext};
 use tokio::task::JoinSet;
 
 pub mod remove;
 pub mod show;
 
-use crate::{abandon, commands::CommandRunner};
+use crate::{abandon, commands::CommandRunner, wrappers::sizes::Size};
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq, PartialOrd, Ord)]
 struct CacheEntry {

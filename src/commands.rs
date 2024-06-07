@@ -15,6 +15,7 @@ pub mod info;
 pub mod list;
 #[cfg(not(feature = "v2"))]
 pub mod outdated;
+pub mod purge;
 pub mod search;
 pub mod status;
 pub mod uninstall;
@@ -159,6 +160,8 @@ pub enum Commands {
     #[cfg(feature = "contexts")]
     /// Uninstall an app
     Uninstall(uninstall::Args),
+    /// Purge package's persist folder
+    Purge(purge::Args),
     #[no_hook]
     #[cfg(debug_assertions)]
     /// Debugging commands
