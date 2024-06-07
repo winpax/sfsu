@@ -59,11 +59,11 @@ inherits = "dev"
 opt-level = 3
 
 [features]
-beta = ["contexts", "sprinkles-rs/beta"]
+beta = ["sprinkles-rs/beta"]
 contexts = []
-default = ["download"]
+default = ["download", "contexts"]
 download = ["sprinkles-rs/manifest-hashes"]
-# Breaking changes are locked behind this feature flag
+# Changes that fundamentally change the API are locked behind this feature flag
 v2 = ["sprinkles-rs/v1"]
 
 [dependencies]
