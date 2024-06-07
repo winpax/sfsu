@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `MinInfo` struct from sprinkles library
 - MIT license option in addition to Apache-2.0 license
 - More detailed sprinkles version in clap output
+- Added sprinkles contributors to credits command
 
 ### Changed
 
@@ -25,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 - `info-difftrees` feature flag
+- Bot contributions from contributors list
 
 ### Fixed
 
