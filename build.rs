@@ -67,12 +67,12 @@ pub use #eprintln;
 pub use #eprintln_bright;
 "#;
 
-fn get_contributors() -> Result<String, Box<dyn Error>> {
+fn get_contributors((owner, repo): (&str, &str)) -> Result<String, Box<dyn Error>> {
     // Try and load dotenv file
     _ = dotenv();
 
     if let Ok(api_key) = std::env::var("CONTRIBUTORS_TOKEN") {
-        let contributors = Contributors::new(api_key, "jewlexx".into(), "sfsu".into())?;
+        let contributors = Contributors::new(api_key, owner.into(), repo.into())?;
         let contributors =
             tokio::runtime::Runtime::new()?.block_on(async move { contributors.await })?;
 
@@ -81,7 +81,7 @@ fn get_contributors() -> Result<String, Box<dyn Error>> {
             .filter_map(|contrib| {
                 let name = contrib.name.as_ref().or(contrib.login.as_ref())?.clone();
 
-                if name == "renovate[bot]" || name == "jewlexx" {
+                if name.contains("[bot]") || name == "jewlexx" {
                     return None;
                 }
 
@@ -107,8 +107,7 @@ fn get_contributors() -> Result<String, Box<dyn Error>> {
     }
 }
 
-fn get_packages() -> String {
-    let doc = LOCKFILE.parse::<DocumentMut>().unwrap();
+fn get_packages(doc: &DocumentMut) -> String {
     let packages = doc.get("package").unwrap();
     let packages = packages.as_array_of_tables().unwrap();
 
@@ -127,34 +126,60 @@ fn get_packages() -> String {
     format!("pub const PACKAGES: [(&str, &str); {length}] = {items};")
 }
 
-fn get_sprinkles_version() {
-    let doc = LOCKFILE.parse::<DocumentMut>().unwrap();
-    let sprinkles = doc["package"]
-        .as_array_of_tables()
-        .unwrap()
-        .iter()
-        .find(|table| {
-            let pp = table["name"].as_str().unwrap();
-            pp == "sprinkles-rs"
-        })
-        .unwrap();
+#[derive(Debug, Copy, Clone)]
+struct SprinklesVersion<'a> {
+    version: &'a str,
+    source: &'a str,
+    git_rev: Option<&'a str>,
+}
 
-    let version = sprinkles.get("version").unwrap().as_str().unwrap();
-    let source = sprinkles.get("source").unwrap().as_str().unwrap();
+impl<'a> SprinklesVersion<'a> {
+    fn from_doc(doc: &'a DocumentMut) -> Self {
+        let sprinkles = doc["package"]
+            .as_array_of_tables()
+            .unwrap()
+            .iter()
+            .find(|table| {
+                let pp = table["name"].as_str().unwrap();
+                pp == "sprinkles-rs"
+            })
+            .unwrap();
 
-    let git_rev = if source.starts_with("git+") {
-        source.split('#').nth(1).unwrap()
-    } else {
-        ""
-    };
+        let version = sprinkles.get("version").unwrap().as_str().unwrap();
+        let source = sprinkles.get("source").unwrap().as_str().unwrap();
 
-    println!("cargo:rustc-env=SPRINKLES_VERSION={version}");
-    println!("cargo:rustc-env=SPRINKLES_SOURCE={source}");
-    println!(
-        "cargo:rustc-env=SPRINKLES_GIT_SOURCE={}",
-        source.starts_with("git+")
-    );
-    println!("cargo:rustc-env=SPRINKLES_GIT_REV={git_rev}");
+        let git_rev = if source.starts_with("git+") {
+            source.split('#').nth(1).unwrap()
+        } else {
+            ""
+        };
+
+        Self {
+            version,
+            source,
+            git_rev: if source.starts_with("git+") {
+                Some(git_rev)
+            } else {
+                None
+            },
+        }
+    }
+
+    fn print_variables(&self) {
+        let Self {
+            version,
+            source,
+            git_rev,
+        } = self;
+
+        println!("cargo:rustc-env=SPRINKLES_VERSION={version}");
+        println!("cargo:rustc-env=SPRINKLES_SOURCE={source}");
+        println!("cargo:rustc-env=SPRINKLES_GIT_SOURCE={}", git_rev.is_some());
+        println!(
+            "cargo:rustc-env=SPRINKLES_GIT_REV={}",
+            git_rev.unwrap_or_default()
+        );
+    }
 }
 
 fn write_colours(output_file: &mut impl Write) -> Result<(), Box<dyn Error>> {
@@ -177,16 +202,18 @@ fn write_colours(output_file: &mut impl Write) -> Result<(), Box<dyn Error>> {
 
 #[allow(unused_variables, unreachable_code)]
 fn main() -> Result<(), Box<dyn Error>> {
+    let lockfile = LOCKFILE.parse::<DocumentMut>().unwrap();
+
     println!("cargo:rerun-if-changed=Cargo.lock");
 
     let out_path = std::env::var("OUT_DIR")?;
 
-    get_sprinkles_version();
+    SprinklesVersion::from_doc(&lockfile).print_variables();
 
     shadow_rs::new()?;
 
     std::fs::write(out_path.clone() + "/contributors.rs", {
-        let contributors = get_contributors();
+        let contributors = get_contributors(("winpax", "sfsu"));
 
         match contributors {
             Ok(contributors) => contributors,
@@ -196,7 +223,20 @@ fn main() -> Result<(), Box<dyn Error>> {
             _ => "pub const CONTRIBUTORS: [(&str, &str); 0] = [];".to_string(),
         }
     })?;
-    std::fs::write(out_path.clone() + "/packages.rs", get_packages())?;
+
+    std::fs::write(out_path.clone() + "/sprinkles_contributors.rs", {
+        let contributors = get_contributors(("winpax", "sprinkles"));
+
+        match contributors {
+            Ok(contributors) => contributors,
+            Err(e) if std::env::var("IS_RELEASE").is_ok_and(|v| v == "true") => {
+                panic!("Getting contributors failed with error: {e}");
+            }
+            _ => "pub const CONTRIBUTORS: [(&str, &str); 0] = [];".to_string(),
+        }
+    })?;
+
+    std::fs::write(out_path.clone() + "/packages.rs", get_packages(&lockfile))?;
 
     let mut colours_file = std::fs::File::create(out_path.clone() + "/colours.rs")?;
     write_colours(&mut colours_file)?;

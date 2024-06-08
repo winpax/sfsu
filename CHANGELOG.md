@@ -14,6 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `MinInfo` struct from sprinkles library
 - MIT license option in addition to Apache-2.0 license
 - More detailed sprinkles version in clap output
+- Added sprinkles contributors to credits
+- Enable `contexts` feature by default
+- Logs are now moved to the new logging directory if any are found in the old location
 
 ### Changed
 
@@ -21,10 +24,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Renamed sfsu-derive to sfsu-macros
 - Updated sprinkles library
 - Use Rust nightly toolchain
+- Logs now go into `LocalAppData\sfsu\logs` instead of `<sfsu install folder>\logs`
+- Run debug build on push and only run release build on release
 
 ### Removed
 
 - `info-difftrees` feature flag
+- Bot contributions from contributors list
 
 ### Fixed
 

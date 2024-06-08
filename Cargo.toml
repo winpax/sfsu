@@ -30,7 +30,7 @@ quork = "0.7"
 rayon = "1.10"
 regex = "1.10"
 serde = { version = "1.0", features = ["derive"] }
-sprinkles-rs = { version = "0.15", features = [
+sprinkles-rs = { version = "0.16", features = [
     "clap",
 ], git = "https://github.com/winpax/sprinkles" }
 
@@ -59,11 +59,11 @@ inherits = "dev"
 opt-level = 3
 
 [features]
-beta = ["contexts", "sprinkles-rs/beta"]
+beta = ["sprinkles-rs/beta"]
 contexts = []
-default = ["download"]
+default = ["download", "contexts"]
 download = ["sprinkles-rs/manifest-hashes"]
-# Breaking changes are locked behind this feature flag
+# Changes that fundamentally change the API are locked behind this feature flag
 v2 = ["sprinkles-rs/v1"]
 
 [dependencies]
