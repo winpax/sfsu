@@ -1,10 +1,10 @@
-pub mod purge;
+pub mod cat;
 #[cfg(feature = "download")]
 pub mod download;
-pub mod info;
 pub mod home;
+pub mod info;
 pub mod list;
-pub mod cat;
+pub mod purge;
 
 use clap::{Parser, Subcommand};
 
