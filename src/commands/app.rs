@@ -3,7 +3,6 @@ pub mod purge;
 pub mod download;
 pub mod info;
 pub mod home;
-pub mod outdated;
 pub mod list;
 pub mod cat;
 
@@ -27,8 +26,6 @@ pub enum Commands {
     Info(info::Args),
     /// List all installed packages
     List(list::Args),
-    /// List outdated buckets and/or packages
-    Outdated(outdated::Args),
     /// Purge package's persist folder
     Purge(purge::Args),
 }
