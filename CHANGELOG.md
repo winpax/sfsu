@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added sprinkles contributors to credits
 - Enable `contexts` feature by default
 - Logs are now moved to the new logging directory if any are found in the old location
+- `app` command for managing apps
 
 ### Changed
 
@@ -27,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Logs now go into `LocalAppData\sfsu\logs` instead of `<sfsu install folder>\logs`
 - Run debug build on push and only run release build on release
 - Internal: Do not make `wrappers` module public
+- Moved `purge` command into `app` subcommand
 
 ### Removed
 
