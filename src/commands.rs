@@ -15,11 +15,11 @@ pub mod info;
 pub mod list;
 #[cfg(not(feature = "v2"))]
 pub mod outdated;
-pub mod purge;
 pub mod search;
 pub mod status;
 pub mod update;
 pub mod virustotal;
+pub mod app;
 
 use clap::Subcommand;
 
@@ -153,8 +153,8 @@ pub enum Commands {
     #[no_hook]
     /// Show credits
     Credits(credits::Args),
-    /// Purge package's persist folder
-    Purge(purge::Args),
+    /// Manages apps
+        App(app::Args),
     #[no_hook]
     #[cfg(debug_assertions)]
     /// Debugging commands
