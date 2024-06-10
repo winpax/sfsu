@@ -109,6 +109,7 @@ impl<T: Command> CommandRunner for T {}
 pub enum Commands {
     /// Search for a package
     Search(search::Args),
+    #[cfg(not(feature = "v2"))]
     /// List all installed packages
     List(list::Args),
     #[no_hook]
@@ -122,6 +123,7 @@ pub enum Commands {
     #[cfg(not(feature = "v2"))]
     /// Describe a package
     Describe(describe::Args),
+    #[cfg(not(feature = "v2"))]
     /// Display information about a package
     Info(info::Args),
     #[cfg(not(feature = "v2"))]
@@ -129,7 +131,7 @@ pub enum Commands {
     Outdated(outdated::Args),
     /// List the dependencies of a given package, in the order that they will be installed
     Depends(depends::Args),
-    #[cfg(feature = "download")]
+    #[cfg(all(feature = "download", not(feature = "v2")))]
     /// Download the specified app.
     Download(download::Args),
     /// Show status and check for new app versions
@@ -137,8 +139,10 @@ pub enum Commands {
     #[cfg_attr(not(feature = "v2"), no_hook)]
     /// Update Scoop and Scoop buckets
     Update(update::Args),
+    #[cfg(not(feature = "v2"))]
     /// Opens the app homepage
     Home(home::Args),
+    #[cfg(not(feature = "v2"))]
     /// Show content of specified manifest
     Cat(cat::Args),
     /// Exports installed apps, buckets (and optionally configs) in JSON format
