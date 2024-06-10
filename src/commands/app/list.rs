@@ -6,6 +6,7 @@ use sprinkles::{config, contexts::ScoopContext};
 use crate::{models::min::Info, output::structured::Structured};
 
 #[derive(Debug, Clone, Parser)]
+/// List all installed packages
 pub struct Args {
     #[cfg(not(feature = "v2"))]
     #[clap(

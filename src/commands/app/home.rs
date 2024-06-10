@@ -4,6 +4,7 @@ use sprinkles::{config, contexts::ScoopContext, packages::reference::package};
 use crate::abandon;
 
 #[derive(Debug, Clone, Parser)]
+/// Opens the app homepage
 pub struct Args {
     #[clap(help = "The package to open the homepage for")]
     package: package::Reference,

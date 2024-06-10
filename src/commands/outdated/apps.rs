@@ -6,6 +6,7 @@ use sprinkles::{buckets::Bucket, config, contexts::ScoopContext, packages::model
 use crate::{models::outdated::Info, output::structured::Structured};
 
 #[derive(Debug, Clone, Parser)]
+/// List outdated apps
 pub struct Args {
     #[clap(from_global)]
     pub(super) json: bool,

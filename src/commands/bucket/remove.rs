@@ -5,6 +5,7 @@ use sprinkles::{config, contexts::ScoopContext};
 use crate::{abandon, output::colours::yellow};
 
 #[derive(Debug, Clone, Parser)]
+/// Remove a bucket
 pub struct Args {
     #[clap(help = "The name of the bucket to delete")]
     name: String,

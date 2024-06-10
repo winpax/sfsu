@@ -8,11 +8,11 @@ mod save;
 
 #[derive(Debug, Hooks, Clone, Subcommand, Runnable)]
 pub enum Commands {
-    /// Save the current config
     Save(save::Args),
 }
 
 #[derive(Debug, Clone, Parser)]
+/// Debugging commands
 pub struct Args {
     #[command(subcommand)]
     command: Commands,

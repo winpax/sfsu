@@ -14,19 +14,13 @@ use super::{Command, CommandRunner};
 
 #[derive(Debug, Clone, Subcommand, Runnable)]
 pub enum Commands {
-    /// Add a bucket
     Add(add::Args),
     #[clap(alias = "rm")]
-    /// Remove a bucket
     Remove(remove::Args),
-    /// List all installed buckets
     List(list::Args),
-    /// List all known buckets
     Known(known::Args),
-    /// Find buckets that do not have any installed packages
     Unused(unused::Args),
     #[cfg(not(feature = "v2"))]
-    /// List outdated buckets
     Outdated(outdated::Args),
 }
 

@@ -10,6 +10,7 @@ use crate::{
 use super::CacheEntry;
 
 #[derive(Debug, Clone, Parser)]
+/// List cache entries
 pub struct Args {
     #[clap(from_global)]
     pub apps: Vec<String>,

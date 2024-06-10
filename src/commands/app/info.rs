@@ -22,6 +22,7 @@ use crate::{
 #[derive(Debug, Clone, Parser)]
 #[allow(clippy::struct_excessive_bools)]
 // TODO: Pass architecture
+/// Display information about a package
 pub struct Args {
     #[clap(help = "The package to get info from")]
     package: package::Reference,

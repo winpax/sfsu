@@ -30,6 +30,7 @@ enum Command {
 }
 
 #[derive(Debug, Clone, Parser)]
+/// Show status and check for new app versions
 pub struct Args {
     #[clap(from_global)]
     json: bool,

@@ -6,6 +6,7 @@ use sprinkles::{config, contexts::ScoopContext, packages::reference::package};
 use crate::{abandon, COLOR_ENABLED};
 
 #[derive(Debug, Clone, Parser)]
+/// Show content of specified manifest
 pub struct Args {
     #[clap(help = "The manifest to display")]
     package: package::Reference,

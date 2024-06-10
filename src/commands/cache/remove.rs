@@ -6,6 +6,7 @@ use crate::{commands::Command, output::colours::eprintln_bright_yellow, wrappers
 use super::CacheEntry;
 
 #[derive(Debug, Clone, Parser)]
+/// Remove cache entries
 pub struct Args {
     #[clap(from_global)]
     apps: Vec<String>,

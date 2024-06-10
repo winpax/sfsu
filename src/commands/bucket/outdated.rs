@@ -8,6 +8,7 @@ use crate::{
 };
 
 #[derive(Debug, Clone, Parser)]
+/// List outdated buckets
 pub struct Args {
     #[clap(from_global)]
     json: bool,

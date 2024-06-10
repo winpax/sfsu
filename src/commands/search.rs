@@ -158,6 +158,7 @@ pub fn parse_output(
 }
 
 #[derive(Debug, Clone, Parser)]
+/// Search for a package
 pub struct Args {
     #[clap(help = "The regex pattern to search for, using Rust Regex syntax")]
     pattern: String,

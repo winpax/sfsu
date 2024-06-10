@@ -10,6 +10,7 @@ struct KnownBucket {
 }
 
 #[derive(Debug, Clone, Parser)]
+/// List all known buckets
 pub struct Args {
     #[clap(from_global)]
     json: bool,

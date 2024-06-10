@@ -107,62 +107,41 @@ impl<T: Command> CommandRunner for T {}
 
 #[derive(Debug, Clone, Subcommand, Hooks, Runnable)]
 pub enum Commands {
-    /// Search for a package
     Search(search::Args),
     #[cfg(not(feature = "v2"))]
-    /// List all installed packages
     List(list::Args),
     #[no_hook]
-    /// Generate hooks for the given shell
     Hook(hook::Args),
     #[cfg(not(feature = "v2"))]
-    /// Find buckets that do not have any installed packages
     UnusedBuckets(bucket::unused::Args),
-    /// Manages buckets
     Bucket(bucket::Args),
     #[cfg(not(feature = "v2"))]
-    /// Describe a package
     Describe(describe::Args),
     #[cfg(not(feature = "v2"))]
-    /// Display information about a package
     Info(info::Args),
     #[cfg(not(feature = "v2"))]
-    /// List outdated buckets and/or packages
     Outdated(outdated::Args),
-    /// List the dependencies of a given package, in the order that they will be installed
     Depends(depends::Args),
     #[cfg(all(feature = "download", not(feature = "v2")))]
-    /// Download the specified app.
     Download(download::Args),
-    /// Show status and check for new app versions
     Status(status::Args),
     #[cfg_attr(not(feature = "v2"), no_hook)]
-    /// Update Scoop and Scoop buckets
     Update(update::Args),
     #[cfg(not(feature = "v2"))]
-    /// Opens the app homepage
     Home(home::Args),
     #[cfg(not(feature = "v2"))]
-    /// Show content of specified manifest
     Cat(cat::Args),
-    /// Exports installed apps, buckets (and optionally configs) in JSON format
     Export(export::Args),
-    /// Check for common issues
     Checkup(checkup::Args),
     #[cfg(feature = "download")]
-    /// Show or clear the download cache
     Cache(cache::Args),
     #[hook_name = "virustotal"]
     #[clap(alias = "virustotal")]
-    /// Scan a file with `VirusTotal`
     Scan(virustotal::Args),
     #[no_hook]
-    /// Show credits
     Credits(credits::Args),
-    /// Manages apps
     App(app::Args),
     #[no_hook]
     #[cfg(debug_assertions)]
-    /// Debugging commands
     Debug(debug::Args),
 }

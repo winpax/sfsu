@@ -13,7 +13,7 @@ use sprinkles::{
 use crate::{abandon, output::colours::eprintln_yellow};
 
 #[derive(Debug, Clone, Parser)]
-// TODO: Pass architecture
+/// Download the specified app.
 pub struct Args {
     #[clap(short, long, help = "Use the specified architecture, if the app supports it", default_value_t = Architecture::ARCH)]
     arch: Architecture,
