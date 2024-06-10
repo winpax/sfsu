@@ -148,8 +148,10 @@ pub enum Commands {
     #[cfg(feature = "download")]
     /// Show or clear the download cache
     Cache(cache::Args),
+    #[hook_name = "virustotal"]
+    #[clap(alias = "virustotal")]
     /// Scan a file with `VirusTotal`
-    Virustotal(virustotal::Args),
+    Scan(virustotal::Args),
     #[no_hook]
     /// Show credits
     Credits(credits::Args),
