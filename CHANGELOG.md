@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Run debug build on push and only run release build on release
 - Internal: Do not make `wrappers` module public
 - Moved `purge` command into `app` subcommand
+- Internal: allow dead code in signature impl (functions reserved for future use)
 
 ### Removed
 

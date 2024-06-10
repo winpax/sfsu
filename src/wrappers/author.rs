@@ -36,6 +36,7 @@ impl<'a> From<gix::actor::SignatureRef<'a>> for Author {
     }
 }
 
+#[allow(dead_code)]
 impl Author {
     /// Create a new author from the provided signature
     pub fn from_signature(signature: Signature) -> Self {
