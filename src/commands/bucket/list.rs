@@ -8,6 +8,7 @@ use sprinkles::{buckets::Bucket, config, contexts::ScoopContext};
 use crate::{output, wrappers::time::NicerTime};
 
 #[derive(Debug, Clone, Parser)]
+/// List all installed buckets
 pub struct Args {
     #[clap(from_global)]
     json: bool,

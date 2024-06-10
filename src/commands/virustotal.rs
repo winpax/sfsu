@@ -90,6 +90,7 @@ fn extract_info(value: &serde_json::Value) -> anyhow::Result<(u64, u64)> {
 }
 
 #[derive(Debug, Clone, Parser)]
+/// Scan a file with `VirusTotal`
 pub struct Args {
     // TODO: Use manifest reference and -a flag for scanning installed apps
     #[clap(help = "The apps to scan for viruses")]

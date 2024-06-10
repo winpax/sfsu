@@ -9,6 +9,7 @@ use crate::{
 };
 
 #[derive(Debug, Clone, Parser)]
+/// Find buckets that do not have any installed packages
 pub struct Args {
     #[clap(from_global)]
     json: bool,

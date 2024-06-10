@@ -95,14 +95,13 @@ impl CacheEntry {
 
 #[derive(Debug, Clone, Subcommand, Runnable)]
 enum Commands {
-    /// List cache entries
     Show(show::Args),
     #[clap(alias = "rm")]
-    /// Remove cache entries
     Remove(remove::Args),
 }
 
 #[derive(Debug, Clone, Parser)]
+/// Show or clear the download cache
 pub struct Args {
     #[clap(subcommand)]
     command: Option<Commands>,

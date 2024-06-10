@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added sprinkles contributors to credits
 - Enable `contexts` feature by default
 - Logs are now moved to the new logging directory if any are found in the old location
+- `app` command for managing apps
 
 ### Changed
 
@@ -26,6 +27,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Use Rust nightly toolchain
 - Logs now go into `LocalAppData\sfsu\logs` instead of `<sfsu install folder>\logs`
 - Run debug build on push and only run release build on release
+- Internal: Do not make `wrappers` module public
+- Moved `purge` command into `app` subcommand
+- Internal: allow dead code in `Signature` impl (functions reserved for future use)
+- Moved all app related commands into `app` subcommand, and added aliases in root command
+- Internal: move command docs to structs for modularity
 
 ### Removed
 

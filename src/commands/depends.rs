@@ -11,6 +11,7 @@ use crate::{
 };
 
 #[derive(Debug, Clone, Parser)]
+/// List the dependencies of a given package, in the order that they will be installed
 pub struct Args {
     #[clap(help = "The package to list dependencies for")]
     package: package::Reference,

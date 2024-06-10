@@ -5,18 +5,17 @@ use sprinkles::{config, contexts::ScoopContext};
 
 use super::{Command, CommandRunner, DeprecationMessage, DeprecationWarning};
 
-mod apps;
-mod buckets;
+pub mod apps;
+pub mod buckets;
 
 #[derive(Debug, Clone, Subcommand, Runnable)]
 pub enum Commands {
-    /// List outdated apps
     Apps(apps::Args),
-    /// List outdated buckets
     Buckets(buckets::Args),
 }
 
 #[derive(Debug, Clone, Parser)]
+/// List outdated buckets and/or packages
 pub struct Args {
     #[command(subcommand)]
     command: Option<Commands>,
