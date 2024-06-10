@@ -1,3 +1,4 @@
+pub mod app;
 pub mod bucket;
 pub mod cache;
 pub mod cat;
@@ -19,7 +20,6 @@ pub mod search;
 pub mod status;
 pub mod update;
 pub mod virustotal;
-pub mod app;
 
 use clap::Subcommand;
 
@@ -154,7 +154,7 @@ pub enum Commands {
     /// Show credits
     Credits(credits::Args),
     /// Manages apps
-        App(app::Args),
+    App(app::Args),
     #[no_hook]
     #[cfg(debug_assertions)]
     /// Debugging commands
