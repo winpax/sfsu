@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Internal: allow dead code in `Signature` impl (functions reserved for future use)
 - Moved all app related commands into `app` subcommand, and added aliases in root command
 - Internal: move command docs to structs for modularity
+- Use spinner for manifest gen
 
 ### Removed
 

@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use clap::Parser;
 
 use sprinkles::{
@@ -5,7 +7,7 @@ use sprinkles::{
     config,
     contexts::ScoopContext,
     packages::reference::package,
-    progress::indicatif::MultiProgress,
+    progress::indicatif::{MultiProgress, ProgressBar},
     requests::AsyncClient,
     Architecture,
 };
@@ -44,7 +46,9 @@ impl super::Command for Args {
 
         let mp = MultiProgress::new();
 
-        eprint!("Attempting to generate manifest(s)");
+        let pb = ProgressBar::new_spinner().with_message("Initializing download(s)");
+        pb.enable_steady_tick(Duration::from_millis(100));
+
         let downloaders: Vec<Downloader> =
             futures::future::try_join_all(self.packages.into_iter().map(|package| {
                 let mp = mp.clone();
@@ -79,7 +83,8 @@ impl super::Command for Args {
             .into_iter()
             .flatten()
             .collect();
-        eprintln!("\r📜 Generated manifest for any and all mismatched versions");
+
+        pb.finish_with_message("Generated manifests");
 
         let threads = downloaders
             .into_iter()
