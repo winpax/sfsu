@@ -22,7 +22,7 @@ chrono = { version = "0.4", features = [
 ], default-features = false }
 console = { version = "0.15", features = ["windows-console-colors"] }
 futures = "0.3"
-git2 = "0.18"
+git2 = "0.19"
 heck = "0.5"
 itertools = "0.13"
 log = { version = "0.4", features = ["std"] }
