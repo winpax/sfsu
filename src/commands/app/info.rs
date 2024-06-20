@@ -102,16 +102,6 @@ impl Args {
         manifest: Manifest,
         arch: Architecture,
     ) -> anyhow::Result<()> {
-        // TODO: Remove this and just create the pathbuf from the package name
-        // let install_path = {
-        //     let install_path = installed_apps.iter().find(|app| {
-        //         app.with_extension("").file_name()
-        //             == Some(&std::ffi::OsString::from(unsafe { manifest.name() }))
-        //     });
-
-        //     install_path.cloned()
-        // };
-
         let install_path = {
             let __install_path = ctx.apps_path().join(unsafe { manifest.name() });
 
