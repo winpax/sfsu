@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Minor performance improvements by removing `Cow` -> `String` conversion in `update` command
+- Minor performance improvements for `info` command
 
 ## [1.14.0] - 2024-06-12
 

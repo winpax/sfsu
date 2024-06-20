@@ -1,40 +1,44 @@
 //! Summary info for a package
 
+use chrono::Local;
 use serde::Serialize;
 
-use sprinkles::packages::models::manifest::{AliasArray, PackageLicense};
+use sprinkles::{
+    git::parity::SignatureDisplay,
+    packages::models::manifest::{AliasArray, PackageLicense},
+};
 
-use crate::wrappers::{bool::NicerBool, serialize::SerializeDisplay};
+use crate::wrappers::{bool::NicerBool, serialize::SerializeDisplay, time::NicerTime};
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Clone, Serialize)]
 /// Summary package information
-pub struct Package {
+pub struct Package<'manifest> {
     /// The name of the package
-    pub name: String,
+    pub name: &'manifest str,
     #[serde(skip_serializing_if = "Option::is_none")]
     /// The description of the package
-    pub description: Option<String>,
+    pub description: Option<&'manifest str>,
     /// The version of the package
-    pub version: String,
+    pub version: &'manifest str,
     /// The bucket the package is in
-    pub bucket: String,
+    pub bucket: &'manifest str,
     #[serde(skip_serializing_if = "Option::is_none")]
     /// The homepage of the package
-    pub website: Option<String>,
+    pub website: Option<&'manifest str>,
     #[serde(skip_serializing_if = "Option::is_none")]
     /// The license of the package
     pub license: Option<PackageLicense>,
     #[serde(skip_serializing_if = "Option::is_none")]
     /// The last time the package was updated
-    pub updated_at: Option<String>,
+    pub updated_at: Option<NicerTime<Local>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     /// The last time the package was updated by
-    pub updated_by: Option<String>,
+    pub updated_by: Option<SerializeDisplay<SignatureDisplay<'manifest>>>,
     /// Whether the package is installed
     pub installed: NicerBool,
     #[serde(skip_serializing_if = "Option::is_none")]
     /// The list of the package's binaries
-    pub binaries: Option<String>,
+    pub binaries: Option<&'manifest str>,
     /// The package's notes
     pub notes: String,
     #[serde(skip_serializing_if = "Option::is_none")]

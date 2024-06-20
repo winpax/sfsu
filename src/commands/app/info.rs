@@ -71,9 +71,7 @@ impl super::Command for Args {
             );
         }
 
-        let installed_apps = ctx.installed_apps()?;
-
-        if self.single {
+        let manifests: &[Manifest] = if self.single {
             let latest = manifests
                 .into_iter()
                 .max_by(|a_manifest, b_manifest| {
@@ -84,11 +82,13 @@ impl super::Command for Args {
                         .unwrap_or(std::cmp::Ordering::Equal)
                 }).expect("something went terribly wrong (no manifests found even though we just checked for manifests)");
 
-            self.print_manifest(ctx, latest, &installed_apps, Architecture::ARCH)?;
+            &[latest]
         } else {
-            for manifest in manifests {
-                self.print_manifest(ctx, manifest, &installed_apps, Architecture::ARCH)?;
-            }
+            &manifests
+        };
+
+        for manifest in manifests {
+            self.print_manifest(ctx, manifest, Architecture::ARCH)?;
         }
 
         Ok(())
@@ -99,18 +99,22 @@ impl Args {
     fn print_manifest(
         &self,
         ctx: &impl ScoopContext<config::Scoop>,
-        manifest: Manifest,
-        installed_apps: &[std::path::PathBuf],
+        manifest: &Manifest,
         arch: Architecture,
     ) -> anyhow::Result<()> {
-        // TODO: Remove this and just create the pathbuf from the package name
-        let install_path = {
-            let install_path = installed_apps.iter().find(|app| {
-                app.with_extension("").file_name()
-                    == Some(&std::ffi::OsString::from(unsafe { manifest.name() }))
-            });
+        // let install_path = {
+        //     let install_path = installed_apps.iter().find(|app| {
+        //         app.with_extension("").file_name()
+        //             == Some(&std::ffi::OsString::from(unsafe { manifest.name() }))
+        //     });
 
-            install_path.cloned()
+        //     install_path.cloned()
+        // };
+
+        let install_path = {
+            let path = ctx.apps_path().join(unsafe { manifest.name() });
+
+            (path.exists() && path.is_dir()).then_some(path)
         };
 
         let (updated_at, updated_by) = if self.disable_updated {
@@ -134,46 +138,47 @@ impl Args {
             }
         };
 
+        let binaries = manifest
+            .architecture
+            .merge_default(manifest.install_config.clone(), arch)
+            .bin
+            .map(|b| match b {
+                AliasArray::NestedArray(StringArray::Single(bin)) => bin.to_string(),
+                AliasArray::NestedArray(StringArray::Array(bins)) => bins.join(" | "),
+                AliasArray::AliasArray(bins) => bins
+                    .into_iter()
+                    .map(|bin_alias| match bin_alias {
+                        TOrArrayOfTs::Single(v) => v,
+                        TOrArrayOfTs::Array(mut array) => array.remove(0),
+                    })
+                    .join(" | "),
+            });
+
         let pkg_info = Package {
-            name: unsafe { manifest.name() }.to_string(),
-            bucket: unsafe { manifest.bucket() }.to_string(),
-            description: manifest.description,
-            version: manifest.version.to_string(),
-            website: manifest.homepage,
-            license: manifest.license,
-            binaries: manifest
-                .architecture
-                .merge_default(manifest.install_config.clone(), arch)
-                .bin
-                .map(|b| match b {
-                    AliasArray::NestedArray(StringArray::Single(bin)) => bin.to_string(),
-                    AliasArray::NestedArray(StringArray::Array(bins)) => bins.join(" | "),
-                    AliasArray::AliasArray(bins) => bins
-                        .into_iter()
-                        .map(|bin_alias| match bin_alias {
-                            TOrArrayOfTs::Single(v) => v,
-                            TOrArrayOfTs::Array(mut array) => array.remove(0),
-                        })
-                        .join(" | "),
-                }),
+            name: unsafe { manifest.name() },
+            bucket: unsafe { manifest.bucket() },
+            description: manifest.description.as_deref(),
+            version: manifest.version.as_str(),
+            website: manifest.homepage.as_deref(),
+            license: manifest.license.clone(),
+            binaries: binaries.as_deref(),
             notes: manifest
                 .notes
-                .map(|notes| notes.to_string())
+                .as_ref()
+                .map(std::string::ToString::to_string)
                 .unwrap_or_default(),
             installed: NicerBool::new(install_path.is_some()),
-            shortcuts: manifest.install_config.shortcuts.map(Into::into),
-            updated_at: updated_at.map(|time| time.to_string()),
-            updated_by: updated_by.map(|name| {
-                {
-                    let display = name.display();
+            shortcuts: manifest.install_config.shortcuts.clone().map(Into::into),
+            updated_at,
+            updated_by: updated_by.as_ref().map(|name| {
+                let display = name.display();
 
-                    if self.hide_emails {
-                        display
-                    } else {
-                        display.show_emails()
-                    }
+                if self.hide_emails {
+                    display
+                } else {
+                    display.show_emails()
                 }
-                .to_string()
+                .into()
             }),
         };
 
