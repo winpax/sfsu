@@ -71,9 +71,7 @@ impl super::Command for Args {
             );
         }
 
-        let installed_apps = ctx.installed_apps()?;
-
-        if self.single {
+        let manifests = if self.single {
             let latest = manifests
                 .into_iter()
                 .max_by(|a_manifest, b_manifest| {
@@ -84,11 +82,13 @@ impl super::Command for Args {
                         .unwrap_or(std::cmp::Ordering::Equal)
                 }).expect("something went terribly wrong (no manifests found even though we just checked for manifests)");
 
-            self.print_manifest(ctx, latest, &installed_apps, Architecture::ARCH)?;
+            vec![latest]
         } else {
-            for manifest in manifests {
-                self.print_manifest(ctx, manifest, &installed_apps, Architecture::ARCH)?;
-            }
+            manifests
+        };
+
+        for manifest in manifests {
+            self.print_manifest(ctx, manifest, Architecture::ARCH)?;
         }
 
         Ok(())
@@ -100,17 +100,22 @@ impl Args {
         &self,
         ctx: &impl ScoopContext<config::Scoop>,
         manifest: Manifest,
-        installed_apps: &[std::path::PathBuf],
         arch: Architecture,
     ) -> anyhow::Result<()> {
         // TODO: Remove this and just create the pathbuf from the package name
-        let install_path = {
-            let install_path = installed_apps.iter().find(|app| {
-                app.with_extension("").file_name()
-                    == Some(&std::ffi::OsString::from(unsafe { manifest.name() }))
-            });
+        // let install_path = {
+        //     let install_path = installed_apps.iter().find(|app| {
+        //         app.with_extension("").file_name()
+        //             == Some(&std::ffi::OsString::from(unsafe { manifest.name() }))
+        //     });
 
-            install_path.cloned()
+        //     install_path.cloned()
+        // };
+
+        let install_path = {
+            let __install_path = ctx.apps_path().join(unsafe { manifest.name() });
+
+            (__install_path.exists() && __install_path.is_dir()).then_some(__install_path)
         };
 
         let (updated_at, updated_by) = if self.disable_updated {
