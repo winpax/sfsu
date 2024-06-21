@@ -81,7 +81,7 @@ pub trait Command {
         false
     }
 
-    async fn runner(self, ctx: &impl ScoopContext<Config = config::Scoop>) -> anyhow::Result<()>;
+    async fn runner(self, ctx: &impl ScoopContext<Config = Config = config::Scoop>) -> anyhow::Result<()>;
 }
 
 pub trait CommandRunner: Command {

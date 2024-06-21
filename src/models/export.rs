@@ -66,8 +66,8 @@ impl Export {
     /// - The buckets could not be listed
     /// - The installed apps could not be listed
     /// - The buckets could not be converted
-    pub fn load(ctx: &impl ScoopContext) -> anyhow::Result<Self> {
-        let config = config::Scoop::load()?;
+    pub fn load(ctx: &impl ScoopContext<Config = config::Scoop>) -> anyhow::Result<Self> {
+        let config = ctx.config().clone();
         let buckets = SfsuBucket::list_all(ctx)?
             .into_iter()
             .map(Bucket::try_from)
