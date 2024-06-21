@@ -64,7 +64,7 @@ contexts = []
 default = ["download", "contexts"]
 download = ["sprinkles-rs/manifest-hashes"]
 # Changes that fundamentally change the API are locked behind this feature flag
-v2 = ["sprinkles-rs/v1"]
+v2 = []
 
 [dependencies]
 anyhow = "1.0"

@@ -6,7 +6,6 @@ use regex::Regex;
 
 use sprinkles::{
     buckets::Bucket,
-    config,
     contexts::ScoopContext,
     packages::{Manifest, MergeDefaults, SearchMode},
     Architecture,
@@ -84,7 +83,7 @@ impl Default for MatchCriteria {
 
 pub fn parse_output(
     manifest: &Manifest,
-    ctx: &impl ScoopContext<config::Scoop>,
+    ctx: &impl ScoopContext,
     bucket: impl AsRef<str>,
     installed_only: bool,
     pattern: &Regex,
@@ -184,7 +183,7 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
+    async fn runner(self, ctx: &impl ScoopContext) -> Result<(), anyhow::Error> {
         let (bucket, raw_pattern) =
             if let Some((bucket, raw_pattern)) = self.pattern.split_once('/') {
                 // Bucket flag overrides bucket/package syntax

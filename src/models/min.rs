@@ -4,7 +4,6 @@ use quork::traits::truthy::ContainsTruth;
 use rayon::prelude::*;
 use serde::Serialize;
 use sprinkles::{
-    config,
     contexts::ScoopContext,
     packages::{CreateManifest, InstallManifest, Manifest},
 };
@@ -36,7 +35,7 @@ impl Info {
     /// - File metadata errors
     /// - Invalid time
     pub fn list_installed(
-        ctx: &impl ScoopContext<config::Scoop>,
+        ctx: &impl ScoopContext,
         bucket: Option<&String>,
     ) -> anyhow::Result<Vec<Self>> {
         let apps = ctx.installed_apps()?;

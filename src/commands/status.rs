@@ -8,7 +8,6 @@ use serde_json::Value;
 
 use sprinkles::{
     buckets::Bucket,
-    config,
     contexts::ScoopContext,
     packages::models::install,
     progress::{indicatif::ProgressBar, style},
@@ -46,7 +45,7 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> anyhow::Result<()> {
+    async fn runner(self, ctx: &impl ScoopContext) -> anyhow::Result<()> {
         let value = Arc::new(Mutex::new(Value::default()));
 
         let pb = ProgressBar::new(3).with_style(style(None, None));
@@ -99,7 +98,7 @@ impl super::Command for Args {
 impl Args {
     async fn handle_scoop(
         &self,
-        ctx: &impl ScoopContext<config::Scoop>,
+        ctx: &impl ScoopContext,
         value: &Mutex<Value>,
         output: &mut dyn Write,
     ) -> anyhow::Result<()> {
@@ -126,7 +125,7 @@ impl Args {
 
     fn handle_buckets(
         &self,
-        ctx: &impl ScoopContext<config::Scoop>,
+        ctx: &impl ScoopContext,
         value: &Mutex<Value>,
         output: &mut dyn Write,
     ) -> anyhow::Result<()> {
@@ -193,7 +192,7 @@ impl Args {
 
     fn handle_packages(
         &self,
-        ctx: &impl ScoopContext<config::Scoop>,
+        ctx: &impl ScoopContext,
         value: &Mutex<Value>,
         output: &mut dyn Write,
     ) -> anyhow::Result<()> {

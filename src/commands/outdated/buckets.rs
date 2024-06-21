@@ -1,7 +1,7 @@
 use clap::Parser;
 use itertools::Itertools;
 use rayon::prelude::*;
-use sprinkles::{buckets::Bucket, config, contexts::ScoopContext};
+use sprinkles::{buckets::Bucket, contexts::ScoopContext};
 
 #[derive(Debug, Clone, Parser)]
 /// List outdated buckets
@@ -11,7 +11,7 @@ pub struct Args {
 }
 
 impl super::super::Command for Args {
-    async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
+    async fn runner(self, ctx: &impl ScoopContext) -> Result<(), anyhow::Error> {
         self.run_direct(ctx, true)?;
 
         Ok(())
@@ -31,7 +31,7 @@ impl Args {
 
     pub fn run_direct(
         self,
-        ctx: &impl ScoopContext<config::Scoop>,
+        ctx: &impl ScoopContext,
         is_subcommand: bool,
     ) -> Result<Option<Vec<String>>, anyhow::Error> {
         let outdated_buckets = Bucket::list_all(ctx)?

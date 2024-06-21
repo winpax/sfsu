@@ -1,7 +1,7 @@
 use clap::Parser;
 use rayon::prelude::*;
 use serde_json::Value;
-use sprinkles::{buckets::Bucket, config, contexts::ScoopContext, packages::models::install};
+use sprinkles::{buckets::Bucket, contexts::ScoopContext, packages::models::install};
 
 use crate::{models::outdated::Info, output::structured::Structured};
 
@@ -13,7 +13,7 @@ pub struct Args {
 }
 
 impl super::super::Command for Args {
-    async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
+    async fn runner(self, ctx: &impl ScoopContext) -> Result<(), anyhow::Error> {
         self.run_direct(ctx, true)?;
 
         Ok(())
@@ -27,7 +27,7 @@ impl Args {
     /// or with `is_subcommand` as false, when called directly, from the `sfsu outdated` command
     pub fn run_direct(
         self,
-        ctx: &impl ScoopContext<config::Scoop>,
+        ctx: &impl ScoopContext,
         is_subcommand: bool,
     ) -> Result<Option<Vec<Value>>, anyhow::Error> {
         let apps = install::Manifest::list_all_unchecked(ctx)?;

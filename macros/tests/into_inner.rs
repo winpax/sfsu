@@ -5,7 +5,7 @@ struct DummyStruct;
 impl DummyStruct {
     pub async fn run(
         self,
-        _: &impl sprinkles::contexts::ScoopContext<sprinkles::config::Scoop>,
+        _: &impl sprinkles::contexts::ScoopContext<Config = sprinkles::config::Scoop>,
     ) -> anyhow::Result<()> {
         println!("Hello, world!");
 

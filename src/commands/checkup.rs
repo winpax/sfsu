@@ -1,7 +1,7 @@
 use clap::Parser;
 
 use itertools::Itertools;
-use sprinkles::{config, contexts::ScoopContext};
+use sprinkles::contexts::ScoopContext;
 
 use crate::diagnostics::{Diagnostics, LongPathsStatus};
 
@@ -13,7 +13,7 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
+    async fn runner(self, ctx: &impl ScoopContext) -> Result<(), anyhow::Error> {
         let diagnostics = Diagnostics::collect(ctx)?;
 
         if self.json {

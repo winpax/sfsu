@@ -6,7 +6,6 @@ use serde::Serialize;
 
 use sprinkles::{
     buckets::Bucket,
-    config,
     contexts::ScoopContext,
     packages::{
         reference::{manifest, package},
@@ -40,7 +39,7 @@ impl Info {
     /// # Panics
     /// - Invalid package reference name
     pub fn from_manifests(
-        ctx: &impl ScoopContext<config::Scoop>,
+        ctx: &impl ScoopContext,
         local_manifest: &Manifest,
         bucket: &Bucket,
     ) -> Result<Self> {
