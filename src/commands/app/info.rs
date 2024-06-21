@@ -49,7 +49,7 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    async fn runner(mut self, ctx: &impl ScoopContext<config::Scoop>) -> anyhow::Result<()> {
+    async fn runner(mut self, ctx: &impl ScoopContext) -> anyhow::Result<()> {
         #[cfg(not(feature = "v2"))]
         if self.package.bucket().is_none() {
             if let Some(bucket) = &self.bucket {
@@ -98,7 +98,7 @@ impl super::Command for Args {
 impl Args {
     fn print_manifest(
         &self,
-        ctx: &impl ScoopContext<config::Scoop>,
+        ctx: &impl ScoopContext,
         manifest: Manifest,
         installed_apps: &[std::path::PathBuf],
         arch: Architecture,

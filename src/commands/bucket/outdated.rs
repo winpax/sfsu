@@ -20,7 +20,7 @@ impl commands::Command for Args {
         version: Some(2.0),
     });
 
-    async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> anyhow::Result<()> {
+    async fn runner(self, ctx: &impl ScoopContext) -> anyhow::Result<()> {
         let buckets = Bucket::list_all(ctx)?;
 
         let outdated_buckets = buckets

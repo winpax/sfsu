@@ -15,7 +15,7 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> anyhow::Result<()> {
+    async fn runner(self, ctx: &impl ScoopContext) -> anyhow::Result<()> {
         let app = self.app.first(ctx).unwrap();
         let persist_path = ctx.persist_path().join(unsafe { app.name() });
 

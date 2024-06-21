@@ -17,7 +17,7 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> anyhow::Result<()> {
+    async fn runner(self, ctx: &impl ScoopContext) -> anyhow::Result<()> {
         let known_buckets = ctx.known_buckets();
         let known_buckets = known_buckets
             .into_iter()

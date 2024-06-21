@@ -26,7 +26,7 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    async fn runner(mut self, ctx: &impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
+    async fn runner(mut self, ctx: &impl ScoopContext) -> Result<(), anyhow::Error> {
         if let Some(bucket) = self.bucket {
             self.package.set_bucket(bucket)?;
         }

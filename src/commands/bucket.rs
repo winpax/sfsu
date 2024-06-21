@@ -33,7 +33,10 @@ pub struct Args {
 
 impl super::Command for Args {
     #[inline]
-    async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
+    async fn runner(
+        self,
+        ctx: &impl ScoopContext<Config = config::Scoop>,
+    ) -> Result<(), anyhow::Error> {
         self.command.run(ctx).await
     }
 }

@@ -18,7 +18,7 @@ pub struct Logger {
 impl Logger {
     const LEVEL_FILTER: LevelFilter = LevelFilter::Trace;
 
-    pub async fn new<C>(ctx: &impl ScoopContext<C>, verbose: bool) -> Self {
+    pub async fn new(ctx: &impl ScoopContext, verbose: bool) -> Self {
         let file = async move {
             let logs_dir = ctx.logging_dir()?;
             let date = Local::now();
@@ -58,10 +58,7 @@ impl Logger {
         Self { file, verbose }
     }
 
-    pub async fn init<C>(
-        ctx: &impl ScoopContext<C>,
-        verbose: bool,
-    ) -> Result<(), log::SetLoggerError> {
+    pub async fn init(ctx: &impl ScoopContext, verbose: bool) -> Result<(), log::SetLoggerError> {
         log::set_boxed_logger(Box::new(Logger::new(ctx, verbose).await))?;
         log::set_max_level(Self::LEVEL_FILTER);
 
@@ -70,7 +67,7 @@ impl Logger {
         Ok(())
     }
 
-    pub fn cleanup_logs<C>(ctx: &impl ScoopContext<C>) -> anyhow::Result<()> {
+    pub fn cleanup_logs(ctx: &impl ScoopContext) -> anyhow::Result<()> {
         let logging_dir = ctx.logging_dir()?;
 
         // Cleanup legacy log paths

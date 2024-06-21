@@ -44,7 +44,7 @@ impl BucketInfo {
 }
 
 impl super::Command for Args {
-    async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> anyhow::Result<()> {
+    async fn runner(self, ctx: &impl ScoopContext) -> anyhow::Result<()> {
         let buckets = Bucket::list_all(ctx)?;
 
         let buckets = {

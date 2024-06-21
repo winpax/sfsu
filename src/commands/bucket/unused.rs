@@ -16,7 +16,7 @@ pub struct Args {
 }
 
 impl commands::Command for Args {
-    async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
+    async fn runner(self, ctx: &impl ScoopContext) -> Result<(), anyhow::Error> {
         // TODO: Refactor
         let used_buckets = InstallManifest::list_all_unchecked(ctx)?
             .par_iter()
