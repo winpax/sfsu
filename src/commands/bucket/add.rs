@@ -9,6 +9,7 @@ use sprinkles::{config, contexts::ScoopContext, progress::indicatif};
 use crate::{abandon, calm_panic::CalmUnwrap};
 
 #[derive(Debug, Clone, Parser)]
+/// Add a bucket
 pub struct Args {
     #[clap(help = "The name of the bucket to add")]
     name: String,

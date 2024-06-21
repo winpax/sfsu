@@ -17,6 +17,7 @@ use sprinkles::{
 use crate::output::sectioned::{Children, Section};
 
 #[derive(Debug, Clone, Parser)]
+/// Update Scoop and Scoop buckets
 pub struct Args {
     #[clap(short, long, help = "Show commit messages for each update")]
     changelog: bool,

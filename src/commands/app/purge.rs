@@ -5,6 +5,7 @@ use sprinkles::{config, contexts::ScoopContext, packages::reference::package};
 use crate::output::colours::{eprintln_yellow, yellow};
 
 #[derive(Debug, Clone, Parser)]
+/// Purge package's persist folder
 pub struct Args {
     #[clap(help = "The package to purge")]
     app: package::Reference,

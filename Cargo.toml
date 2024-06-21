@@ -64,7 +64,7 @@ contexts = []
 default = ["download", "contexts"]
 download = ["sprinkles-rs/manifest-hashes"]
 # Changes that fundamentally change the API are locked behind this feature flag
-v2 = ["sprinkles-rs/v1"]
+v2 = []
 
 [dependencies]
 anyhow = "1.0"
@@ -103,7 +103,7 @@ sprinkles-rs.workspace = true
 tokio = { version = "1.37", features = ["full"] }
 vt3 = { git = "https://github.com/winpax/vt3.git", version = "0.8", package = "async_vt3" }
 which = "6.0"
-windows = { version = "0.56", features = ["Win32_Storage_FileSystem"] }
+windows = { version = "0.57", features = ["Win32_Storage_FileSystem"] }
 windows-version = "0.1"
 winreg = "0.52"
 

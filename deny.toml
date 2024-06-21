@@ -93,6 +93,7 @@ allow = [
     "MIT",
     "MIT-0",
     "Zlib",
+    "Unicode-3.0",
     #"Apache-2.0 WITH LLVM-exception",
 ] # List of explicitly allowed licenses
 # See https://spdx.org/licenses/ for list of possible licenses

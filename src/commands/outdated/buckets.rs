@@ -4,6 +4,7 @@ use rayon::prelude::*;
 use sprinkles::{buckets::Bucket, config, contexts::ScoopContext};
 
 #[derive(Debug, Clone, Parser)]
+/// List outdated buckets
 pub struct Args {
     #[clap(from_global)]
     pub(super) json: bool,

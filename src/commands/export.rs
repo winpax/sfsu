@@ -5,6 +5,7 @@ use sprinkles::{config, contexts::ScoopContext};
 use crate::models::export::Export;
 
 #[derive(Debug, Clone, Parser)]
+/// Exports installed apps, buckets (and optionally configs) in JSON format
 pub struct Args {
     #[clap(short, long, help = "Export the scoop config as well")]
     config: bool,

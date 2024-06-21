@@ -11,6 +11,7 @@ use sprinkles::{
 use crate::output::colours::eprintln_red;
 
 #[derive(Debug, Clone, Parser)]
+/// Uninstall an app
 pub struct Args {
     /// The package(s) to uninstall
     packages: Vec<package::Reference>,

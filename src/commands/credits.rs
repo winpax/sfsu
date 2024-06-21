@@ -112,6 +112,7 @@ impl<T: Display> Display for Url<T> {
 }
 
 #[derive(Debug, Clone, Parser)]
+/// Show credits
 pub struct Args {
     #[clap(short, long, help = "Show packages")]
     packages: bool,

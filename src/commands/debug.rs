@@ -9,13 +9,13 @@ pub mod sizes;
 
 #[derive(Debug, Hooks, Clone, Subcommand, Runnable)]
 pub enum Commands {
-    /// Save the current config
     Save(save::Args),
     /// Show the size of each of the sfsu commands
     Sizes(sizes::Args),
 }
 
 #[derive(Debug, Clone, Parser)]
+/// Debugging commands
 pub struct Args {
     #[command(subcommand)]
     command: Commands,

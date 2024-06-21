@@ -6,6 +6,7 @@ use sprinkles::{config, contexts::ScoopContext};
 use crate::diagnostics::{Diagnostics, LongPathsStatus};
 
 #[derive(Debug, Clone, Parser)]
+/// Check for common issues
 pub struct Args {
     #[clap(from_global)]
     json: bool,
