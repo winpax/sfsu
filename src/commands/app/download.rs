@@ -33,7 +33,7 @@ pub struct Args {
 impl super::Command for Args {
     const BETA: bool = true;
 
-    async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
+    async fn runner(self, ctx: &impl ScoopContext) -> Result<(), anyhow::Error> {
         if self.packages.is_empty() {
             abandon!("No packages provided")
         }

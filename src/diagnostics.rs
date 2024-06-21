@@ -80,7 +80,7 @@ impl Diagnostics {
     /// - Unable to check main bucket
     /// - Unable to check windows developer status
     /// - Unable to check windows defender status
-    pub fn collect(ctx: &impl ScoopContext<config::Scoop>) -> Result<Self, Error> {
+    pub fn collect(ctx: &impl ScoopContext) -> Result<Self, Error> {
         let git_installed = Self::git_installed();
         debug!("Check git is installed");
         let main_bucket = Self::check_main_bucket(ctx)?;
@@ -123,9 +123,7 @@ impl Diagnostics {
     /// - Unable to read the registry
     /// - Unable to open the registry key
     /// - Unable to check if the key exists
-    pub fn check_windows_defender(
-        ctx: &impl ScoopContext<config::Scoop>,
-    ) -> windows::core::Result<bool> {
+    pub fn check_windows_defender(ctx: &impl ScoopContext) -> windows::core::Result<bool> {
         use winreg::{enums::HKEY_LOCAL_MACHINE, RegKey};
 
         let scoop_dir = ctx.path();
@@ -139,7 +137,7 @@ impl Diagnostics {
     ///
     /// # Errors
     /// - Unable to list buckets
-    pub fn check_main_bucket(ctx: &impl ScoopContext<config::Scoop>) -> Result<bool, Error> {
+    pub fn check_main_bucket(ctx: &impl ScoopContext) -> Result<bool, Error> {
         let buckets = Bucket::list_all(ctx)?;
 
         Ok(buckets.into_iter().any(|bucket| bucket.name() == "main"))
@@ -193,7 +191,7 @@ impl Diagnostics {
     /// - Unable to get the volume information
     /// - Unable to check the filesystem
     /// - Unable to get the root path
-    pub fn is_ntfs(ctx: &impl ScoopContext<config::Scoop>) -> windows::core::Result<bool> {
+    pub fn is_ntfs(ctx: &impl ScoopContext) -> windows::core::Result<bool> {
         use windows::{
             core::HSTRING,
             Win32::{Foundation::MAX_PATH, Storage::FileSystem::GetVolumeInformationW},

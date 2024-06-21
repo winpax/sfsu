@@ -13,7 +13,7 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
+    async fn runner(self, ctx: &impl ScoopContext) -> Result<(), anyhow::Error> {
         let manifests = self.package.list_manifest_paths(ctx);
 
         if manifests.is_empty() {

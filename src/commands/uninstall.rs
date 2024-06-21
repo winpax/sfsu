@@ -29,7 +29,7 @@ impl super::Command for Args {
         self.global
     }
 
-    async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> anyhow::Result<()> {
+    async fn runner(self, ctx: &impl ScoopContext) -> anyhow::Result<()> {
         let valid_packages = self.packages.into_iter().filter(|package| {
             if matches!(
                 package.manifest,

@@ -127,10 +127,17 @@ pub struct Args {
     json: bool,
 }
 
+fn vt_api_key(ctx: &impl ScoopContext<Config = config::Scoop>) -> Option<String> {
+    ctx.config().virustotal_api_key.clone()
+}
+
 impl super::Command for Args {
     const BETA: bool = true;
 
-    async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
+    async fn runner(
+        self,
+        ctx: &impl ScoopContext<Config = config::Scoop>,
+    ) -> Result<(), anyhow::Error> {
         let config = ctx.config();
         let api_key = config.virustotal_api_key.clone().calm_expect(
             "No virustotal api key found.\n  Get one at https://www.virustotal.com/gui/my-apikey and set with\n  scoop config virustotal_api_key <API key>",

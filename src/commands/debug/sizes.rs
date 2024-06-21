@@ -7,7 +7,7 @@ use crate::commands;
 pub struct Args;
 
 impl super::Command for Args {
-    async fn runner(self, _ctx: &impl ScoopContext<config::Scoop>) -> anyhow::Result<()> {
+    async fn runner(self, _ctx: &impl ScoopContext) -> anyhow::Result<()> {
         let bucket_args_size = std::mem::size_of::<commands::bucket::Args>();
         let bucket_add_size = std::mem::size_of::<commands::bucket::add::Args>();
         let bucket_list_size = std::mem::size_of::<commands::bucket::list::Args>();

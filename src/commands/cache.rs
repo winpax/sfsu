@@ -25,7 +25,7 @@ struct CacheEntry {
 
 impl CacheEntry {
     pub async fn match_paths(
-        ctx: &impl ScoopContext<config::Scoop>,
+        ctx: &impl ScoopContext,
         patterns: &[String],
     ) -> anyhow::Result<Vec<Self>> {
         let cache_path = ctx.cache_path();
@@ -118,7 +118,10 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
+    async fn runner(
+        self,
+        ctx: &impl ScoopContext<Config = config::Scoop>,
+    ) -> Result<(), anyhow::Error> {
         let command = self.command.unwrap_or(Commands::Show(show::Args {
             json: self.json,
             apps: self.apps,
