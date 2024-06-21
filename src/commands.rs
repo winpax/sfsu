@@ -74,14 +74,13 @@ impl std::fmt::Display for DeprecationWarning {
 // TODO: Run command could return `impl Display` and print that itself
 pub trait Command {
     const BETA: bool = false;
-    const NEEDS_ELEVATION: bool = false;
     const DEPRECATED: Option<DeprecationWarning> = None;
 
     fn needs_elevation(&self) -> bool {
         false
     }
 
-    async fn runner(self, ctx: &impl ScoopContext<Config = Config = config::Scoop>) -> anyhow::Result<()>;
+    async fn runner(self, ctx: &impl ScoopContext<Config = config::Scoop>) -> anyhow::Result<()>;
 }
 
 pub trait CommandRunner: Command {
