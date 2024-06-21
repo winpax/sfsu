@@ -1,7 +1,7 @@
 use clap::Parser;
 
 use rayon::prelude::*;
-use sprinkles::{buckets::Bucket, config, contexts::ScoopContext, packages::InstallManifest};
+use sprinkles::{buckets::Bucket, contexts::ScoopContext, packages::InstallManifest};
 
 use crate::{
     commands,

@@ -1,5 +1,5 @@
 use clap::Parser;
-use sprinkles::{config, contexts::ScoopContext};
+use sprinkles::contexts::ScoopContext;
 
 use crate::{
     commands::Command,

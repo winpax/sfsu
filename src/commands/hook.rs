@@ -1,6 +1,6 @@
 use clap::Parser;
 use quork::traits::list::ListVariants;
-use sprinkles::{config, contexts::ScoopContext, shell::Shell};
+use sprinkles::{contexts::ScoopContext, shell::Shell};
 
 use super::CommandsHooks;
 

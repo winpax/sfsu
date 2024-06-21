@@ -22,7 +22,7 @@ use ratatui::{
     Frame, Terminal,
 };
 use serde::Serialize;
-use sprinkles::{config, contexts::ScoopContext};
+use sprinkles::contexts::ScoopContext;
 
 mod contributors {
     include!(concat!(env!("OUT_DIR"), "/contributors.rs"));

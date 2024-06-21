@@ -3,7 +3,7 @@ use chrono::FixedOffset;
 use clap::Parser;
 use rayon::prelude::*;
 use serde::Serialize;
-use sprinkles::{buckets::Bucket, config, contexts::ScoopContext};
+use sprinkles::{buckets::Bucket, contexts::ScoopContext};
 
 use crate::{output, wrappers::time::NicerTime};
 

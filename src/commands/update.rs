@@ -5,7 +5,7 @@ use rayon::prelude::*;
 
 use sprinkles::{
     buckets::{self, Bucket},
-    config::{self, Scoop as ScoopConfig},
+    config::Scoop as ScoopConfig,
     contexts::ScoopContext,
     git::{self, Repo},
     progress::{

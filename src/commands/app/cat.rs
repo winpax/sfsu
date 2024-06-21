@@ -1,7 +1,7 @@
 use std::{fs::File, io::Read, sync::atomic::Ordering};
 
 use clap::Parser;
-use sprinkles::{config, contexts::ScoopContext, packages::reference::package};
+use sprinkles::{contexts::ScoopContext, packages::reference::package};
 
 use crate::{abandon, COLOR_ENABLED};
 

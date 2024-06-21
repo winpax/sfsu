@@ -8,7 +8,6 @@ use serde_json::Value;
 
 use sprinkles::{
     buckets::Bucket,
-    config,
     contexts::ScoopContext,
     packages::models::install,
     progress::{indicatif::ProgressBar, style},

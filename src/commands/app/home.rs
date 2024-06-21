@@ -1,5 +1,5 @@
 use clap::Parser;
-use sprinkles::{config, contexts::ScoopContext, packages::reference::package};
+use sprinkles::{contexts::ScoopContext, packages::reference::package};
 
 use crate::abandon;
 

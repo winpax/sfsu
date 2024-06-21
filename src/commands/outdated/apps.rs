@@ -1,7 +1,7 @@
 use clap::Parser;
 use rayon::prelude::*;
 use serde_json::Value;
-use sprinkles::{buckets::Bucket, config, contexts::ScoopContext, packages::models::install};
+use sprinkles::{buckets::Bucket, contexts::ScoopContext, packages::models::install};
 
 use crate::{models::outdated::Info, output::structured::Structured};
 

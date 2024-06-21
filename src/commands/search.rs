@@ -6,7 +6,6 @@ use regex::Regex;
 
 use sprinkles::{
     buckets::Bucket,
-    config,
     contexts::ScoopContext,
     packages::{Manifest, MergeDefaults, SearchMode},
     Architecture,

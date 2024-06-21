@@ -2,7 +2,6 @@ use clap::Parser;
 use itertools::Itertools;
 
 use sprinkles::{
-    config,
     contexts::ScoopContext,
     packages::{
         models::manifest::{AliasArray, StringArray, TOrArrayOfTs},
