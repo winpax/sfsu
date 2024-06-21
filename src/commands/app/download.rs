@@ -4,7 +4,6 @@ use clap::Parser;
 
 use sprinkles::{
     cache::{Downloader, Handle},
-    config,
     contexts::ScoopContext,
     packages::reference::package,
     progress::indicatif::{MultiProgress, ProgressBar},

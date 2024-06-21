@@ -2,7 +2,6 @@ use clap::Parser;
 use itertools::Itertools;
 use quork::traits::truthy::ContainsTruth;
 use sprinkles::{
-    config,
     contexts::ScoopContext,
     packages::reference::{manifest, package},
     Architecture,

@@ -1,6 +1,6 @@
 use clap::Parser;
 
-use sprinkles::{buckets::Bucket, config, contexts::ScoopContext, packages::Manifest};
+use sprinkles::{buckets::Bucket, contexts::ScoopContext, packages::Manifest};
 
 use crate::{
     commands::{DeprecationMessage, DeprecationWarning},

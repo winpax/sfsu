@@ -1,7 +1,7 @@
 use clap::Parser;
 use itertools::Itertools;
 use rayon::prelude::*;
-use sprinkles::{buckets::Bucket, config, contexts::ScoopContext};
+use sprinkles::{buckets::Bucket, contexts::ScoopContext};
 
 #[derive(Debug, Clone, Parser)]
 /// List outdated buckets

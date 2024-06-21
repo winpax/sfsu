@@ -5,7 +5,7 @@ use std::{ffi::OsString, os::windows::ffi::OsStringExt};
 use anyhow::Error;
 use itertools::Itertools;
 use serde::Serialize;
-use sprinkles::{buckets::Bucket, config, contexts::ScoopContext};
+use sprinkles::{buckets::Bucket, contexts::ScoopContext};
 
 #[derive(Debug, Copy, Clone, Serialize)]
 /// The status of long paths

@@ -1,6 +1,5 @@
 use clap::Parser;
 use sprinkles::{
-    config,
     contexts::ScoopContext,
     packages::reference::{manifest, package},
 };

@@ -6,7 +6,6 @@ use serde::Serialize;
 
 use sprinkles::{
     buckets::Bucket,
-    config,
     contexts::ScoopContext,
     packages::{
         reference::{manifest, package},

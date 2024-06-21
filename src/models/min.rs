@@ -4,7 +4,6 @@ use quork::traits::truthy::ContainsTruth;
 use rayon::prelude::*;
 use serde::Serialize;
 use sprinkles::{
-    config,
     contexts::ScoopContext,
     packages::{CreateManifest, InstallManifest, Manifest},
 };

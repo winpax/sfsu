@@ -1,6 +1,6 @@
 use clap::Parser;
 use dialoguer::Confirm;
-use sprinkles::{config, contexts::ScoopContext, packages::reference::package};
+use sprinkles::{contexts::ScoopContext, packages::reference::package};
 
 use crate::output::colours::{eprintln_yellow, yellow};
 

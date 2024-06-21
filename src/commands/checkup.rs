@@ -1,7 +1,7 @@
 use clap::Parser;
 
 use itertools::Itertools;
-use sprinkles::{config, contexts::ScoopContext};
+use sprinkles::contexts::ScoopContext;
 
 use crate::diagnostics::{Diagnostics, LongPathsStatus};
 
