@@ -127,10 +127,6 @@ pub struct Args {
     json: bool,
 }
 
-fn vt_api_key(ctx: &impl ScoopContext<Config = config::Scoop>) -> Option<String> {
-    ctx.config().virustotal_api_key.clone()
-}
-
 impl super::Command for Args {
     const BETA: bool = true;
 
