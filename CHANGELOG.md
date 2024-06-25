@@ -45,6 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - CI builds
 - Re-run build.rs if executable manifest changes
+- Remove redundant features of `bat` crate
 
 For older version's changelogs, see the [releases](https://github.com/winpax/sfsu/releases) page.
 
