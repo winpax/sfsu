@@ -4,6 +4,9 @@ set shell := ["pwsh.exe", "-NoProfile",  "-c"]
 setup:
     just pre-commit
 
+remove-pre-commit:
+    pre-commit uninstall
+
 pre-commit:
     pre-commit install
     pre-commit install --hook-type commit-msg
