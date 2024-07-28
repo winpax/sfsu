@@ -1,5 +1,3 @@
-#![feature(const_trait_impl)]
-#![feature(effects)]
 #![warn(
     clippy::all,
     clippy::pedantic,
