@@ -98,7 +98,7 @@ semver = "1.0"
 serde.workspace = true
 serde_json = { version = "1.0", features = ["preserve_order"] }
 sfsu-macros = { path = "./macros" }
-shadow-rs = "0.29"
+shadow-rs = "0.30"
 sprinkles-rs.workspace = true
 tokio = { version = "1.37", features = ["full"] }
 vt3 = { git = "https://github.com/winpax/vt3.git", version = "0.8", package = "async_vt3" }
@@ -115,7 +115,7 @@ criterion = { version = "0.5", features = ["async_tokio", "html_reports"] }
 contribs = { git = "https://github.com/winpax/contribs.git", version = "0.1" }
 dotenv = "0.15"
 git2.workspace = true
-shadow-rs = "0.29"
+shadow-rs = "0.30"
 tokio = { version = "1.37", features = ["full"] }
 toml_edit = "0.22"
 winres = "0.1"
