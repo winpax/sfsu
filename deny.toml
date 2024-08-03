@@ -71,6 +71,7 @@ feature-depth = 1
 # output a note when they are encountered.
 ignore = [
     { id = "RUSTSEC-2024-0320", reason = "Syntect does not wish to update yet (https://github.com/trishume/syntect/pull/526)" },
+    { id = "RUSTSEC-2021-0141", reason = "It doesn't seem to have any actual issues, and is only used in the build step" },
     #"RUSTSEC-0000-0000",
     #{ id = "RUSTSEC-0000-0000", reason = "you can specify a reason the advisory is ignored" },
     #"a-crate-that-is-yanked@0.1.1", # you can also ignore yanked crate versions if you wish
