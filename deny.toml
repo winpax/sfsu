@@ -94,7 +94,6 @@ allow = [
     "MIT",
     "MIT-0",
     "Zlib",
-    "Unicode-3.0",
     "MPL-2.0",
     "LGPL-3.0",
     #"Apache-2.0 WITH LLVM-exception",
@@ -236,7 +235,7 @@ allow-git = []
 
 [sources.allow-org]
 # 1 or more github.com organizations to allow git sources for
-# github = [""]
+github = ["winpax"]
 # 1 or more gitlab.com organizations to allow git sources for
 # gitlab = [""]
 # 1 or more bitbucket.org organizations to allow git sources for
