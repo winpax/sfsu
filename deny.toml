@@ -70,7 +70,7 @@ feature-depth = 1
 # A list of advisory IDs to ignore. Note that ignored advisories will still
 # output a note when they are encountered.
 ignore = [
-    { id = "RUSTSEC-2024-0320", reason = "Syntect does not wish to update yet (https://github.com/trishume/syntect/pull/526)" },
+    # { id = "RUSTSEC-2024-0320", reason = "Syntect does not wish to update yet (https://github.com/trishume/syntect/pull/526)" },
     { id = "RUSTSEC-2021-0141", reason = "It doesn't seem to have any actual issues, and is only used in the build step" },
     #"RUSTSEC-0000-0000",
     #{ id = "RUSTSEC-0000-0000", reason = "you can specify a reason the advisory is ignored" },
@@ -95,6 +95,8 @@ allow = [
     "MIT-0",
     "Zlib",
     "Unicode-3.0",
+    "MPL-2.0",
+    "LGPL-3.0",
     #"Apache-2.0 WITH LLVM-exception",
 ] # List of explicitly allowed licenses
 # See https://spdx.org/licenses/ for list of possible licenses
