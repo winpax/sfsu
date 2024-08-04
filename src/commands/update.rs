@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use anyhow::Context;
 use clap::Parser;
 use itertools::Itertools;
@@ -115,19 +117,19 @@ impl Args {
         Ok(changelog)
     }
 
-    fn update_buckets(
+    fn update_buckets<'a>(
         &self,
         ctx: &impl ScoopContext,
-        outdated_buckets: &[(Bucket, ProgressBar)],
-    ) -> anyhow::Result<Vec<(String, Vec<String>)>> {
+        outdated_buckets: &'a [(Bucket, ProgressBar)],
+    ) -> anyhow::Result<Vec<(Cow<'a, str>, Vec<String>)>> {
         let bucket_changelogs = outdated_buckets
             .par_iter()
-            .map(|(bucket, pb)| -> buckets::Result<(String, Vec<String>)> {
+            .map(|(bucket, pb)| -> buckets::Result<_> {
                 let repo = bucket.open_repo()?;
 
                 let changelog = self.update(ctx, &repo, pb)?;
 
-                Ok((bucket.name().to_string(), changelog.unwrap_or_default()))
+                Ok((bucket.name(), changelog.unwrap_or_default()))
             })
             .collect::<Result<Vec<_>, _>>()?;
 
