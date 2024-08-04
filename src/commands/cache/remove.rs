@@ -1,5 +1,5 @@
 use clap::Parser;
-use sprinkles::{config, contexts::ScoopContext};
+use sprinkles::contexts::ScoopContext;
 
 use crate::{commands::Command, output::colours::eprintln_bright_yellow, wrappers::sizes::Size};
 
@@ -13,7 +13,7 @@ pub struct Args {
 }
 
 impl Command for Args {
-    async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
+    async fn runner(self, ctx: &impl ScoopContext) -> Result<(), anyhow::Error> {
         let cache_entries = CacheEntry::match_paths(ctx, &self.apps).await?;
 
         let total_entires = cache_entries.len();

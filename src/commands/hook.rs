@@ -1,6 +1,6 @@
 use clap::Parser;
 use quork::traits::list::ListVariants;
-use sprinkles::{config, contexts::ScoopContext, shell::Shell};
+use sprinkles::{contexts::ScoopContext, shell::Shell};
 
 use super::CommandsHooks;
 
@@ -18,7 +18,7 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    async fn runner(self, _: &impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
+    async fn runner(self, _: &impl ScoopContext) -> Result<(), anyhow::Error> {
         let shell = self.shell;
         let shell_config = shell.config();
         let enabled_hooks: Vec<CommandsHooks> = {

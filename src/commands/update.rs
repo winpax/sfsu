@@ -7,7 +7,7 @@ use rayon::prelude::*;
 
 use sprinkles::{
     buckets::{self, Bucket},
-    config::{self, Scoop as ScoopConfig},
+    config::Scoop as ScoopConfig,
     contexts::ScoopContext,
     git::{self, Repo},
     progress::{
@@ -26,7 +26,7 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
+    async fn runner(self, ctx: &impl ScoopContext) -> Result<(), anyhow::Error> {
         let progress_style = style(Some(ProgressOptions::Hide), Some(Message::suffix()));
 
         let buckets = Bucket::list_all(ctx)?;
@@ -100,7 +100,7 @@ impl Args {
 
     fn update_scoop(
         &self,
-        ctx: &impl ScoopContext<config::Scoop>,
+        ctx: &impl ScoopContext,
         longest_bucket_name: usize,
         style: ProgressStyle,
     ) -> anyhow::Result<Option<Vec<String>>> {
@@ -119,7 +119,7 @@ impl Args {
 
     fn update_buckets<'a>(
         &self,
-        ctx: &impl ScoopContext<config::Scoop>,
+        ctx: &impl ScoopContext,
         outdated_buckets: &'a [(Bucket, ProgressBar)],
     ) -> anyhow::Result<Vec<(Cow<'a, str>, Vec<String>)>> {
         let bucket_changelogs = outdated_buckets
@@ -138,7 +138,7 @@ impl Args {
 
     fn update(
         &self,
-        ctx: &impl ScoopContext<config::Scoop>,
+        ctx: &impl ScoopContext,
         repo: &Repo,
         pb: &ProgressBar,
     ) -> git::Result<Option<Vec<String>>> {

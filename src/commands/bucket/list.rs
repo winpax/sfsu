@@ -3,7 +3,7 @@ use chrono::FixedOffset;
 use clap::Parser;
 use rayon::prelude::*;
 use serde::Serialize;
-use sprinkles::{buckets::Bucket, config, contexts::ScoopContext};
+use sprinkles::{buckets::Bucket, contexts::ScoopContext};
 
 use crate::{output, wrappers::time::NicerTime};
 
@@ -44,7 +44,7 @@ impl BucketInfo {
 }
 
 impl super::Command for Args {
-    async fn runner(self, ctx: &impl ScoopContext<config::Scoop>) -> anyhow::Result<()> {
+    async fn runner(self, ctx: &impl ScoopContext) -> anyhow::Result<()> {
         let buckets = Bucket::list_all(ctx)?;
 
         let buckets = {

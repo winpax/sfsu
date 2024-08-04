@@ -22,7 +22,7 @@ use ratatui::{
     Frame, Terminal,
 };
 use serde::Serialize;
-use sprinkles::{config, contexts::ScoopContext};
+use sprinkles::contexts::ScoopContext;
 
 mod contributors {
     include!(concat!(env!("OUT_DIR"), "/contributors.rs"));
@@ -122,7 +122,7 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    async fn runner(self, _: &impl ScoopContext<config::Scoop>) -> anyhow::Result<()> {
+    async fn runner(self, _: &impl ScoopContext) -> anyhow::Result<()> {
         if self.json {
             #[derive(Debug, Clone, Serialize)]
             struct JsonOutput<'a> {
