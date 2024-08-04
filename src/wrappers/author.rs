@@ -2,18 +2,14 @@
 
 use std::fmt::Display;
 
-use derive_more::Deref;
-
 use sprinkles::git::{
     implementations::{git2, gix},
     parity::Signature,
 };
 
-#[derive(Deref)]
 #[must_use]
 /// A wrapper around a git signature to display the author
 pub struct Author {
-    #[deref]
     signature: Signature,
     show_emails: bool,
 }
@@ -50,6 +46,10 @@ impl Author {
     pub fn with_show_emails(mut self, show_emails: bool) -> Self {
         self.show_emails = show_emails;
         self
+    }
+
+    pub fn signature(&self) -> &Signature {
+        &self.signature
     }
 }
 
