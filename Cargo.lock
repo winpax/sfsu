@@ -3358,9 +3358,9 @@ dependencies = [
 
 [[package]]
 name = "rgb"
-version = "0.8.45"
+version = "0.8.47"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ade4539f42266ded9e755c605bdddf546242b2c961b03b06a7375260788a0523"
+checksum = "e12bc8d2f72df26a5d3178022df33720fbede0d31d82c7291662eff89836994d"
 dependencies = [
  "bytemuck",
 ]
@@ -3845,7 +3845,7 @@ checksum = "6980e8d7511241f8acf4aebddbb1ff938df5eebe98691418c4468d0b72a96a67"
 [[package]]
 name = "sprinkles-rs"
 version = "0.16.0"
-source = "git+https://github.com/winpax/sprinkles#8c8528bb18669fb1929623fc10e9dba34f0ef147"
+source = "git+https://github.com/winpax/sprinkles#ea07a21692f75ce30b65814dbc71fbbe7770674e"
 dependencies = [
  "base64",
  "blake3",
