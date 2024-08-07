@@ -75,7 +75,7 @@ impl super::Command for Args {
             // Run the pre-uninstall script
             if let Some(ref pre_uninstall) = install_config.pre_uninstall {
                 let script_runner = pre_uninstall.save(ctx)?;
-                script_runner.run().await?;
+                script_runner.run()?;
             }
         }
 
