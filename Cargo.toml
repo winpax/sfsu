@@ -22,7 +22,7 @@ chrono = { version = "0.4", features = [
 ], default-features = false }
 console = { version = "0.15", features = ["windows-console-colors"] }
 futures = "0.3"
-git2 = "0.18"
+git2 = "0.19"
 heck = "0.5"
 itertools = "0.13"
 log = { version = "0.4", features = ["std"] }
@@ -68,7 +68,7 @@ v2 = []
 
 [dependencies]
 anyhow = "1.0"
-bat = "0.24"
+bat = { version = "0.24", default-features = false, features = ["regex-onig"] }
 cfg-if = "1.0"
 chrono.workspace = true
 clap = { version = "4.5", features = [
@@ -79,7 +79,7 @@ clap = { version = "4.5", features = [
     "wrap_help",
 ] }
 console.workspace = true
-crossterm = "0.27"
+crossterm = "0.28"
 derive_more = "0.99.17"
 dialoguer = "0.11"
 futures.workspace = true
@@ -91,32 +91,31 @@ log = { workspace = true }
 open = "5.1"
 parking_lot = "0.12"
 quork.workspace = true
-ratatui = { version = "0.26", features = ["macros"] }
+ratatui = { version = "0.28", features = ["macros"] }
 rayon.workspace = true
 regex.workspace = true
 semver = "1.0"
 serde.workspace = true
 serde_json = { version = "1.0", features = ["preserve_order"] }
-sfsu-macros = { path = "./macros" }
-shadow-rs = "0.28"
+sfsu-macros = { version = "0.1.0", path = "./macros" }
+shadow-rs = "0.31"
 sprinkles-rs.workspace = true
 tokio = { version = "1.37", features = ["full"] }
 vt3 = { git = "https://github.com/winpax/vt3.git", version = "0.8", package = "async_vt3" }
 which = "6.0"
-windows = { version = "0.57", features = ["Win32_Storage_FileSystem"] }
+windows = { version = "0.58", features = ["Win32_Storage_FileSystem"] }
 windows-version = "0.1"
 winreg = "0.52"
 
 [dev-dependencies]
 chrono.workspace = true
 criterion = { version = "0.5", features = ["async_tokio", "html_reports"] }
-git2 = { workspace = true }
 
 [build-dependencies]
 contribs = { git = "https://github.com/winpax/contribs.git", version = "0.1" }
 dotenv = "0.15"
 git2.workspace = true
-shadow-rs = "0.28"
+shadow-rs = "0.31"
 tokio = { version = "1.37", features = ["full"] }
 toml_edit = "0.22"
 winres = "0.1"
