@@ -80,7 +80,7 @@ clap = { version = "4.5", features = [
 ] }
 console.workspace = true
 crossterm = "0.28"
-derive_more = "0.99.17"
+derive_more = "1.0.0"
 dialoguer = "0.11"
 futures.workspace = true
 heck.workspace = true
