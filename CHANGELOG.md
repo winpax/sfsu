@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Minor performance improvements by removing `Cow` -> `String` conversion in `update` command
 - Internal: Remove `Deref` from `Author`
+- Updated dependencies
 
 ## [1.14.0] - 2024-06-12
 
