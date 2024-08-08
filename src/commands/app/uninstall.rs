@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use clap::Parser;
 use itertools::Itertools;
 use quork::traits::truthy::ContainsTruth;
@@ -65,7 +67,7 @@ impl super::Command for Args {
         for handle in packages_with_manifest {
             handle.unlink_current()?;
 
-            // let version_dir = handle.version_dir();
+            let version_dir = handle.version_dir();
             // let persist_dir = handle.persist_dir();
 
             let manifest = handle.local_manifest()?;
@@ -77,8 +79,42 @@ impl super::Command for Args {
                 let script_runner = pre_uninstall.save(ctx)?;
                 script_runner.run()?;
             }
+
+            if handle.running() {
+                eprintln_red!(
+                    "{} is running. Please stop it before uninstalling",
+                    unsafe { handle.name() }
+                );
+                continue;
+            }
+
+            if !check_for_permissions(&version_dir) {
+                eprintln_red!(
+                    "Access Denied: {}. Try again, or fix permissions on the directory",
+                    version_dir.display(),
+                );
+                continue;
+            }
+
+            // if let Some(ref uninstaller) = install_config.uninstaller {
+            //     let script_runner = uninstaller;
+            // }
         }
 
         todo!()
     }
+}
+
+fn check_for_permissions(path: impl AsRef<Path>) -> bool {
+    let path = path.as_ref();
+
+    let Ok(metadata) = path.metadata() else {
+        return false;
+    };
+
+    if metadata.permissions().readonly() {
+        return false;
+    }
+
+    true
 }
