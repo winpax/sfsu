@@ -4,7 +4,7 @@ use itertools::Itertools;
 use sprinkles::{
     contexts::ScoopContext,
     packages::{
-        models::manifest::{AliasArray, StringArray, TOrArrayOfTs},
+        models::manifest::{NestedArray, SingleOrArray, StringArray},
         reference::package,
         Manifest, MergeDefaults,
     },
@@ -140,13 +140,13 @@ impl Args {
                 .merge_default(manifest.install_config.clone(), arch)
                 .bin
                 .map(|b| match b {
-                    AliasArray::NestedArray(StringArray::Single(bin)) => bin.to_string(),
-                    AliasArray::NestedArray(StringArray::Array(bins)) => bins.join(" | "),
-                    AliasArray::AliasArray(bins) => bins
+                    NestedArray::NestedArray(StringArray::Single(bin)) => bin.to_string(),
+                    NestedArray::NestedArray(StringArray::Array(bins)) => bins.join(" | "),
+                    NestedArray::AliasArray(bins) => bins
                         .into_iter()
                         .map(|bin_alias| match bin_alias {
-                            TOrArrayOfTs::Single(v) => v,
-                            TOrArrayOfTs::Array(mut array) => array.remove(0),
+                            SingleOrArray::Single(v) => v,
+                            SingleOrArray::Array(mut array) => array.remove(0),
                         })
                         .join(" | "),
                 }),

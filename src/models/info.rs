@@ -2,7 +2,7 @@
 
 use serde::Serialize;
 
-use sprinkles::packages::models::manifest::{AliasArray, PackageLicense};
+use sprinkles::packages::models::manifest::{NestedArray, PackageLicense};
 
 use crate::wrappers::{bool::NicerBool, serialize::SerializeDisplay};
 
@@ -39,5 +39,5 @@ pub struct Package {
     pub notes: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     /// The package's shortcuts
-    pub shortcuts: Option<SerializeDisplay<AliasArray<String>>>,
+    pub shortcuts: Option<SerializeDisplay<NestedArray<String>>>,
 }
