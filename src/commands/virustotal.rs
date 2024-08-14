@@ -176,7 +176,7 @@ impl super::Command for Args {
                 } else {
                     manifest
                         .install_config(self.arch)
-                        .url
+                        .urls
                         .map(|url| url.map(SearchType::Url).to_vec())
                 };
 
