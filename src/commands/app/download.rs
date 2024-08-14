@@ -3,9 +3,9 @@ use std::time::Duration;
 use clap::Parser;
 
 use sprinkles::{
-    cache::{Downloader, Handle},
+    cache::{DownloadHandle, Handle},
     contexts::ScoopContext,
-    packages::reference::package,
+    packages::{downloading::Downloader, reference::package},
     progress::indicatif::{MultiProgress, ProgressBar},
     requests::AsyncClient,
     Architecture,
@@ -48,7 +48,7 @@ impl super::Command for Args {
         let pb = ProgressBar::new_spinner().with_message("Initializing download(s)");
         pb.enable_steady_tick(Duration::from_millis(100));
 
-        let downloaders: Vec<Downloader> =
+        let downloaders: Vec<DownloadHandle> =
             futures::future::try_join_all(self.packages.into_iter().map(|package| {
                 let mp = mp.clone();
                 async move {
@@ -62,7 +62,7 @@ impl super::Command for Args {
                     let downloaders = dl.into_iter().map(|dl| {
                         let mp = mp.clone();
                         async move {
-                            match Downloader::new::<AsyncClient>(dl, Some(&mp)).await {
+                            match DownloadHandle::new::<AsyncClient>(dl, Some(&mp)).await {
                                 Ok(dl) => anyhow::Ok(dl),
                                 Err(e) => match e {
                                     sprinkles::cache::Error::ErrorCode(status) => {
