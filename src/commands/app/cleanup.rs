@@ -46,7 +46,14 @@ impl super::Command for Args {
 
         let mp = MultiProgress::new();
 
-        let apps_pb = ProgressBar::new(handles.len() as u64).with_message("Cleaning up");
+        let pb_style = sprinkles::progress::style(
+            Some(sprinkles::progress::ProgressOptions::PosLen),
+            Some(sprinkles::progress::Message::suffix()),
+        );
+
+        let apps_pb = ProgressBar::new(handles.len() as u64)
+            .with_message("Cleaning up")
+            .with_style(pb_style.clone());
         mp.add(apps_pb.clone());
 
         for handle in handles {
@@ -63,25 +70,29 @@ impl super::Command for Args {
                 .parent()
                 .context("Missing parent directory. This likely means the app is not installed")?;
 
-            let versions = std::fs::read_dir(versions_parent)?.collect::<Result<Vec<_>, _>>()?;
+            let versions = std::fs::read_dir(versions_parent)?
+                .filter(|entry| match entry {
+                    Ok(entry) => {
+                        !(&dbg!(entry.path()) == dbg!(&current_version_dir)
+                            || entry.file_name() == "current")
+                    }
+                    Err(_) => true,
+                })
+                .collect::<Result<Vec<_>, _>>()?;
 
-            let pb =
-                ProgressBar::new(versions.len() as u64).with_message(format!("Cleaning up {name}"));
+            let pb = ProgressBar::new(versions.len() as u64)
+                .with_message(format!("Cleaning up {name}"))
+                .with_style(pb_style.clone());
 
             mp.add(pb.clone());
 
             for version_dir in versions {
-                if version_dir.path() == current_version_dir || version_dir.file_name() == "current"
-                {
-                    continue;
-                }
-
                 let version_dir = version_dir.path();
 
                 // TODO: Remove this before release
                 dbg!(&version_dir);
                 #[cfg(debug_assertions)]
-                std::thread::sleep(std::time::Duration::from_millis(100));
+                std::thread::sleep(std::time::Duration::from_millis(2000));
 
                 std::fs::remove_dir_all(version_dir)?;
 
