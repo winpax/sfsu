@@ -8,8 +8,8 @@ use sfsu_macros::Runnable;
 use sprinkles::{config, contexts::ScoopContext};
 use tokio::task::JoinSet;
 
+mod list;
 mod remove;
-mod show;
 
 use crate::{abandon, commands::CommandRunner, wrappers::sizes::Size};
 
@@ -95,7 +95,8 @@ impl CacheEntry {
 
 #[derive(Debug, Clone, Subcommand, Runnable)]
 enum Commands {
-    Show(show::Args),
+    #[clap(alias = "show", alias = "ls")]
+    List(list::Args),
     #[clap(alias = "rm")]
     Remove(remove::Args),
 }
@@ -122,7 +123,7 @@ impl super::Command for Args {
         self,
         ctx: &impl ScoopContext<Config = config::Scoop>,
     ) -> Result<(), anyhow::Error> {
-        let command = self.command.unwrap_or(Commands::Show(show::Args {
+        let command = self.command.unwrap_or(Commands::List(list::Args {
             json: self.json,
             apps: self.apps,
         }));

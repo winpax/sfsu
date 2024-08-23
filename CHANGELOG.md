@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Minor performance improvements by removing `Cow` -> `String` conversion in `update` command
 - Internal: Remove `Deref` from `Author`
 - Updated dependencies
+- Renamed `cache show` to `cache list` (alias to `show` added to avoid breaking change)
 
 ## [1.14.0] - 2024-06-12
 
