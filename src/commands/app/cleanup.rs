@@ -71,12 +71,10 @@ impl super::Command for Args {
                 .context("Missing parent directory. This likely means the app is not installed")?;
 
             let versions = std::fs::read_dir(versions_parent)?
-                .filter(|entry| match entry {
-                    Ok(entry) => {
-                        !(&dbg!(entry.path()) == dbg!(&current_version_dir)
-                            || entry.file_name() == "current")
-                    }
-                    Err(_) => true,
+                .filter(|entry| {
+                    !matches!(entry, Ok(entry) if entry.path() == current_version_dir
+                        || entry.file_name() == "current"
+                    )
                 })
                 .collect::<Result<Vec<_>, _>>()?;
 
