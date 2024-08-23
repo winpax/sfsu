@@ -8,11 +8,17 @@ use rayon::prelude::*;
 use sprinkles::{
     contexts::ScoopContext,
     handles::packages::PackageHandle,
-    packages::{reference::package, CreateManifest, Manifest},
+    packages::{
+        reference::{manifest, package},
+        CreateManifest, Manifest,
+    },
     progress::indicatif::{MultiProgress, ProgressBar},
 };
 
-use crate::output::colours::{eprintln_yellow, yellow};
+use crate::{
+    files::sizes::get_recursive_size,
+    output::colours::{eprintln_yellow, yellow},
+};
 
 #[derive(Debug, Clone, Parser)]
 /// Clean up apps by removing old versions
@@ -25,24 +31,33 @@ pub struct Args {
 
     #[clap(from_global)]
     assume_yes: bool,
+
+    // TODO: make this global and add support for more commands
+    #[clap(long, help = "Dry run. Do not modify anything on disk")]
+    dry_run: bool,
 }
 
 impl super::Command for Args {
+    // just shut the fuck up for now PLEASE
+    #[allow(clippy::too_many_lines)]
     async fn runner(self, ctx: &impl ScoopContext) -> anyhow::Result<()> {
-        let apps = if self.all {
-            #[allow(clippy::large_enum_variant)]
-            enum AppResult<'a> {
-                Ok(Manifest),
-                Err(&'a Path),
-            }
+        #[allow(clippy::large_enum_variant)]
+        enum AppResult<'a> {
+            Ok(Manifest),
+            Err(&'a Path),
+        }
 
+        let apps = if self.all {
             let installed_apps = ctx.installed_apps()?;
 
             let apps = installed_apps
                 .par_iter()
                 .map(
                     |path| match Manifest::from_path(path.join("current/manifest.json")) {
-                        Ok(manifest) => AppResult::Ok(manifest),
+                        Ok(manifest) => AppResult::Ok(
+                            manifest
+                                .with_name(path.file_name().unwrap().to_string_lossy().to_string()),
+                        ),
                         Err(_) => AppResult::Err(path.as_path()),
                     },
                 )
@@ -66,12 +81,33 @@ impl super::Command for Args {
             .await?
         };
 
+        let handles = {
+            let future_handles = apps.iter().map(|manifest| async move {
+                let reference = manifest::Reference::BucketNamePair {
+                    bucket: manifest.bucket_opt().unwrap().to_string(),
+                    name: manifest.name_opt().unwrap().to_string(),
+                };
+
+                let pakref: package::Reference = reference.into();
+
+                dbg!(pakref.name());
+
+                PackageHandle::from_manifest(ctx, manifest).await
+            });
+
+            future::join_all(future_handles)
+                .await
+                .into_iter()
+                .filter_map(std::result::Result::ok)
+                .collect::<Vec<_>>()
+        };
+
         if !self.assume_yes
             && !Confirm::new()
                 .with_prompt(
                     yellow!(
                         "This will remove old version dirs for {} apps. Are you sure?",
-                        apps.len(),
+                        handles.len(),
                     )
                     .to_string(),
                 )
@@ -80,14 +116,6 @@ impl super::Command for Args {
         {
             return Ok(());
         }
-
-        let handles = {
-            let future_handles = apps
-                .iter()
-                .map(|manifest| async move { PackageHandle::from_manifest(ctx, manifest).await });
-
-            future::try_join_all(future_handles).await?
-        };
 
         let mp = MultiProgress::new();
 
@@ -100,6 +128,10 @@ impl super::Command for Args {
             .with_message("Cleaning up")
             .with_style(pb_style.clone());
         mp.add(apps_pb.clone());
+
+        let mut total_removed: u64 = 0;
+
+        dbg!(handles.len());
 
         for handle in handles {
             let name = unsafe { handle.name() };
@@ -132,7 +164,13 @@ impl super::Command for Args {
             for version_dir in versions {
                 let version_dir = version_dir.path();
 
-                std::fs::remove_dir_all(version_dir)?;
+                let size = get_recursive_size(&version_dir)?;
+
+                total_removed += size;
+
+                if !self.dry_run {
+                    std::fs::remove_dir_all(version_dir)?;
+                }
 
                 pb.inc(1);
             }
@@ -141,6 +179,8 @@ impl super::Command for Args {
 
             apps_pb.inc(1);
         }
+
+        println!("Removed a total of {total_removed} bytes");
 
         Ok(())
     }

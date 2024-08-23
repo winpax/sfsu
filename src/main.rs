@@ -11,6 +11,7 @@ mod calm_panic;
 mod commands;
 mod diagnostics;
 mod errors;
+mod files;
 mod limits;
 mod logging;
 mod models;
