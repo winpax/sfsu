@@ -1,5 +1,6 @@
 use anyhow::Context;
 use clap::Parser;
+use dialoguer::Confirm;
 use futures::future;
 use rayon::prelude::*;
 use sprinkles::{
@@ -9,6 +10,8 @@ use sprinkles::{
     progress::indicatif::{MultiProgress, ProgressBar},
 };
 
+use crate::yellow;
+
 #[derive(Debug, Clone, Parser)]
 /// Clean up apps by removing old versions
 pub struct Args {
@@ -17,6 +20,9 @@ pub struct Args {
 
     #[clap(help = "The apps to cleanup")]
     apps: Vec<package::Reference>,
+
+    #[clap(from_global)]
+    assume_yes: bool,
 }
 
 impl super::Command for Args {
@@ -34,6 +40,21 @@ impl super::Command for Args {
             )
             .await?
         };
+
+        if !self.assume_yes
+            && !Confirm::new()
+                .with_prompt(
+                    yellow!(
+                        "This will remove old version dirs for {} apps. Are you sure?",
+                        apps.len(),
+                    )
+                    .to_string(),
+                )
+                .default(false)
+                .interact()?
+        {
+            return Ok(());
+        }
 
         let handles = {
             let future_handles = apps
