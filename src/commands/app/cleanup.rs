@@ -4,6 +4,7 @@ use futures::future;
 use rayon::prelude::*;
 use sprinkles::{
     contexts::ScoopContext,
+    git::implementations::gix::date::time::format,
     handles::packages::PackageHandle,
     packages::{reference::package, CreateManifest, Manifest},
     progress::indicatif::{MultiProgress, ProgressBar},
@@ -50,6 +51,11 @@ impl super::Command for Args {
 
         for handle in handles {
             let name = unsafe { handle.name() };
+
+            if handle.running() {
+                mp.println(format!("Skipping {name} because it is currently running"))?;
+                continue;
+            }
 
             let current_version_dir = handle.version_dir();
 
