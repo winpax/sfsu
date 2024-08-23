@@ -43,7 +43,7 @@ impl super::Command for Args {
                 .map(
                     |path| match Manifest::from_path(path.join("current/manifest.json")) {
                         Ok(manifest) => AppResult::Ok(manifest),
-                        Err(e) => AppResult::Err(path.as_path()),
+                        Err(_) => AppResult::Err(path.as_path()),
                     },
                 )
                 .collect::<Vec<_>>();
