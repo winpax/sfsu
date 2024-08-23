@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use anyhow::Context;
 use clap::Parser;
 use dialoguer::Confirm;
@@ -10,7 +12,7 @@ use sprinkles::{
     progress::indicatif::{MultiProgress, ProgressBar},
 };
 
-use crate::yellow;
+use crate::output::colours::{eprintln_yellow, yellow};
 
 #[derive(Debug, Clone, Parser)]
 /// Clean up apps by removing old versions
@@ -28,10 +30,33 @@ pub struct Args {
 impl super::Command for Args {
     async fn runner(self, ctx: &impl ScoopContext) -> anyhow::Result<()> {
         let apps = if self.all {
-            ctx.installed_apps()?
-                .into_par_iter()
-                .map(Manifest::from_path)
-                .collect::<Result<Vec<_>, _>>()?
+            #[allow(clippy::large_enum_variant)]
+            enum AppResult<'a> {
+                Ok(Manifest),
+                Err(&'a Path),
+            }
+
+            let installed_apps = ctx.installed_apps()?;
+
+            let apps = installed_apps
+                .par_iter()
+                .map(
+                    |path| match Manifest::from_path(path.join("current/manifest.json")) {
+                        Ok(manifest) => AppResult::Ok(manifest),
+                        Err(e) => AppResult::Err(path.as_path()),
+                    },
+                )
+                .collect::<Vec<_>>();
+
+            apps.into_iter()
+                .filter_map(|app| match app {
+                    AppResult::Ok(manifest) => Some(manifest),
+                    AppResult::Err(path) => {
+                        eprintln_yellow!("App installed at {} was invalid.", path.display());
+                        None
+                    }
+                })
+                .collect::<Vec<_>>()
         } else {
             future::try_join_all(
                 self.apps
