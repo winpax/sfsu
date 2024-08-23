@@ -87,11 +87,6 @@ impl super::Command for Args {
             for version_dir in versions {
                 let version_dir = version_dir.path();
 
-                // TODO: Remove this before release
-                dbg!(&version_dir);
-                #[cfg(debug_assertions)]
-                std::thread::sleep(std::time::Duration::from_millis(2000));
-
                 std::fs::remove_dir_all(version_dir)?;
 
                 pb.inc(1);
