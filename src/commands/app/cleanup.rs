@@ -1,3 +1,4 @@
+use anyhow::Context;
 use clap::Parser;
 use futures::future;
 use rayon::prelude::*;
@@ -50,7 +51,11 @@ impl super::Command for Args {
         for handle in handles {
             let name = unsafe { handle.name() };
 
-            let versions_parent = handle.version_dir();
+            let current_version_dir = handle.version_dir();
+
+            let versions_parent = current_version_dir
+                .parent()
+                .context("Missing parent directory. This likely means the app is not installed")?;
 
             let versions = std::fs::read_dir(versions_parent)?.collect::<Result<Vec<_>, _>>()?;
 
@@ -60,13 +65,17 @@ impl super::Command for Args {
             mp.add(pb.clone());
 
             for version_dir in versions {
-                if version_dir.path() == handle.version_dir()
-                    || version_dir.file_name() == "current"
+                if version_dir.path() == current_version_dir || version_dir.file_name() == "current"
                 {
                     continue;
                 }
 
                 let version_dir = version_dir.path();
+
+                // TODO: Remove this before release
+                dbg!(&version_dir);
+                #[cfg(debug_assertions)]
+                std::thread::sleep(std::time::Duration::from_millis(100));
 
                 std::fs::remove_dir_all(version_dir)?;
 
