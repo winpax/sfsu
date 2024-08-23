@@ -4,7 +4,6 @@ use futures::future;
 use rayon::prelude::*;
 use sprinkles::{
     contexts::ScoopContext,
-    git::implementations::gix::date::time::format,
     handles::packages::PackageHandle,
     packages::{reference::package, CreateManifest, Manifest},
     progress::indicatif::{MultiProgress, ProgressBar},
@@ -97,6 +96,6 @@ impl super::Command for Args {
             apps_pb.inc(1);
         }
 
-        todo!()
+        Ok(())
     }
 }
