@@ -1,4 +1,5 @@
 pub mod cat;
+pub mod cleanup;
 #[cfg(feature = "download")]
 pub mod download;
 pub mod home;
@@ -22,6 +23,7 @@ pub enum Commands {
     Info(info::Args),
     List(list::Args),
     Purge(purge::Args),
+    Cleanup(cleanup::Args),
 }
 
 #[derive(Debug, Clone, Parser)]

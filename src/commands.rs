@@ -3,6 +3,7 @@ pub mod bucket;
 pub mod cache;
 pub mod cat;
 pub mod checkup;
+pub mod cleanup;
 pub mod credits;
 pub mod debug;
 pub mod depends;
@@ -141,6 +142,7 @@ pub enum Commands {
     #[no_hook]
     Credits(credits::Args),
     App(app::Args),
+    Cleanup(cleanup::Args),
     #[no_hook]
     #[cfg(debug_assertions)]
     Debug(debug::Args),
