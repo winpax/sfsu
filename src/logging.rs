@@ -8,6 +8,7 @@ use sprinkles::contexts::ScoopContext;
 use crate::output::colours::{eprintln_red, eprintln_yellow};
 
 pub mod panics;
+pub mod threaded;
 
 pub struct Logger {
     file: Option<File>,

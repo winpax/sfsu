@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::{io::Write, path::Path};
 
 use anyhow::Context;
 use clap::Parser;
@@ -16,9 +16,22 @@ use sprinkles::{
 };
 
 use crate::{
-    files::sizes::get_recursive_size,
-    output::colours::{eprintln_yellow, yellow},
+    files::sizes::get_recursive_size, logging::threaded::THREADED_LOGGER, output::colours::yellow,
 };
+
+fn handle_path(path: &Path) -> Option<Manifest> {
+    if let Ok(manifest) = Manifest::from_path(path.join("current/manifest.json")) {
+        Some(manifest.with_name(path.file_name().unwrap().to_string_lossy().to_string()))
+    } else {
+        writeln!(
+            THREADED_LOGGER.lock(),
+            "{}",
+            yellow!("App installed at {} was invalid.", path.display())
+        )
+        .ok()?;
+        None
+    }
+}
 
 #[derive(Debug, Clone, Parser)]
 /// Clean up apps by removing old versions
@@ -38,44 +51,16 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    // just shut the fuck up for now PLEASE
-    #[allow(clippy::too_many_lines)]
     async fn runner(self, ctx: &impl ScoopContext) -> anyhow::Result<()> {
-        #[allow(clippy::large_enum_variant)]
-        enum AppResult<'a> {
-            Ok(Manifest),
-            Err(&'a Path),
-        }
-
         let apps = if self.all {
-            let installed_apps = ctx.installed_apps()?;
-
-            let apps = installed_apps
+            ctx.installed_apps()?
                 .par_iter()
-                .map(
-                    |path| match Manifest::from_path(path.join("current/manifest.json")) {
-                        Ok(manifest) => AppResult::Ok(
-                            manifest
-                                .with_name(path.file_name().unwrap().to_string_lossy().to_string()),
-                        ),
-                        Err(_) => AppResult::Err(path.as_path()),
-                    },
-                )
-                .collect::<Vec<_>>();
-
-            apps.into_iter()
-                .filter_map(|app| match app {
-                    AppResult::Ok(manifest) => Some(manifest),
-                    AppResult::Err(path) => {
-                        eprintln_yellow!("App installed at {} was invalid.", path.display());
-                        None
-                    }
-                })
+                .filter_map(|path| handle_path(path))
                 .collect::<Vec<_>>()
         } else {
             future::try_join_all(
                 self.apps
-                    .into_iter()
+                    .iter()
                     .map(|reference| async move { reference.manifest(ctx).await }),
             )
             .await?
@@ -83,14 +68,17 @@ impl super::Command for Args {
 
         let handles = {
             let future_handles = apps.iter().map(|manifest| async move {
-                let reference = manifest::Reference::BucketNamePair {
-                    bucket: manifest.bucket_opt().unwrap().to_string(),
-                    name: manifest.name_opt().unwrap().to_string(),
-                };
+                // TODO: Remove before release
+                {
+                    let reference = manifest::Reference::BucketNamePair {
+                        bucket: manifest.bucket_opt().unwrap().to_string(),
+                        name: manifest.name_opt().unwrap().to_string(),
+                    };
 
-                let pakref: package::Reference = reference.into();
+                    let pakref: package::Reference = reference.into();
 
-                dbg!(pakref.name());
+                    dbg!(pakref.name());
+                }
 
                 PackageHandle::from_manifest(ctx, manifest).await
             });
@@ -117,6 +105,14 @@ impl super::Command for Args {
             return Ok(());
         }
 
+        self.handle_apps(&handles)?;
+
+        Ok(())
+    }
+}
+
+impl Args {
+    fn handle_apps(&self, handles: &[PackageHandle<'_, impl ScoopContext>]) -> anyhow::Result<()> {
         let mp = MultiProgress::new();
 
         let pb_style = sprinkles::progress::style(
