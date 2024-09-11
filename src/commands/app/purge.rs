@@ -30,7 +30,8 @@ impl super::Command for Args {
             && !Confirm::new()
                 .with_prompt(
                     yellow!(
-                        "Are you sure you want to purge the persist folder for \"{}\" ({})?",
+                        "Are you sure you want to purge the persist folder for \"{}/{}\" ({})?",
+                        unsafe { app.bucket() },
                         unsafe { app.name() },
                         persist_path.display()
                     )
