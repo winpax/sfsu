@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- When passed no apps, the purge command will now offer to purge all uninstalled apps
+
 ### Changed
 
 - Minor performance improvements by removing `Cow` -> `String` conversion in `update` command

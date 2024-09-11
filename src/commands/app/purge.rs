@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use clap::Parser;
 use dialoguer::Confirm;
+use rayon::iter::IntoParallelIterator;
 use sprinkles::{
     contexts::ScoopContext,
     packages::reference::{manifest, package},
@@ -22,7 +23,18 @@ pub struct Args {
 
 impl super::Command for Args {
     async fn runner(self, ctx: &impl ScoopContext) -> anyhow::Result<()> {
-        let apps = self.apps.into_iter().map(|app| app.first(ctx).unwrap());
+        let purging_uninstalled = self.apps.is_empty();
+        let apps = if purging_uninstalled {
+            let references = list_uninstalled(ctx)?;
+            references
+                .into_iter()
+                .map(manifest::Reference::into_package_ref)
+                .collect()
+        } else {
+            self.apps
+        }
+        .into_iter()
+        .map(|reference| reference.first(ctx).unwrap());
 
         let mut app_paths = HashMap::new();
         for app in apps {
@@ -49,7 +61,11 @@ impl super::Command for Args {
             app_paths.insert(reference, (app, persist_path));
         }
 
-        eprintln!("Purging persist folders for the following apps");
+        if purging_uninstalled {
+            eprintln!("Purging persist folders for uninstalled apps:");
+        } else {
+            eprintln!("Purging persist folders for the following apps:");
+        }
         for (app, persist_path) in app_paths.values() {
             eprintln!(
                 "- {}/{} ({})",
@@ -112,4 +128,30 @@ impl super::Command for Args {
 
         Ok(())
     }
+}
+
+fn list_uninstalled(ctx: &impl ScoopContext) -> anyhow::Result<Vec<manifest::Reference>> {
+    let persist_path = ctx.persist_path();
+
+    let mut uninstalled = vec![];
+
+    for entry in std::fs::read_dir(persist_path)? {
+        let entry = entry?;
+        let path = entry.path();
+
+        if path.is_dir() {
+            let Some(app_name) = path
+                .file_name()
+                .map(|file_name| file_name.to_string_lossy())
+            else {
+                continue;
+            };
+
+            let reference = manifest::Reference::Name(app_name.to_string());
+
+            uninstalled.push(reference);
+        }
+    }
+
+    Ok(uninstalled)
 }
