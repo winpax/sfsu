@@ -3,7 +3,7 @@ use std::{str::FromStr, time::Duration};
 use criterion::{black_box, criterion_group, criterion_main, BatchSize, Criterion};
 
 use sprinkles::{
-    cache::{Downloader, Handle},
+    cache::{DownloadHandle, Handle},
     contexts::{ScoopContext, User},
     packages::reference::package,
     requests::{AsyncClient, Client},
@@ -11,7 +11,7 @@ use sprinkles::{
 };
 
 fn criterion_benchmark(c: &mut Criterion) {
-    let ctx = User::new();
+    let ctx = User::new().unwrap();
 
     let runtime = tokio::runtime::Builder::new_multi_thread()
         .enable_all()
@@ -97,7 +97,7 @@ fn criterion_benchmark(c: &mut Criterion) {
             },
             |dl| async {
                 let dl = dl.await;
-                black_box(Downloader::new::<AsyncClient>(dl, None).await.unwrap())
+                black_box(DownloadHandle::new::<AsyncClient>(dl, None).await.unwrap())
             },
             BatchSize::SmallInput,
         );
