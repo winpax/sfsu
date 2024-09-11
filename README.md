@@ -15,6 +15,14 @@ Super fast replacements and additions to scoop commands written in Rust
 
 Are looking for our underlying library that makes all of this possible (or do you want to make your own implementation of Scoop?), check out [sprinkles](https://github.com/winpax/sprinkles)
 
+## Reporting Issues
+
+Please, please, please check the [FAQs](https://github.com/winpax/FAQs), before you report an issue.
+
+If you have a question, please ask it on [the discussions page](https://github.com/winpax/sfsu/discussions).
+
+If you have a bug report, feature request, or other issue, then [open an issue](https://github.com/winpax/sfsu/issues/new/choose).
+
 ## Installation
 
 ```powershell
