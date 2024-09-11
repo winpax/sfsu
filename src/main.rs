@@ -128,7 +128,7 @@ impl TryFrom<&Args> for AnyContext {
         Ok(if args.global {
             AnyContext::Global(Global::new()?)
         } else {
-            AnyContext::User(User::new())
+            AnyContext::User(User::new()?)
         })
     }
 }
