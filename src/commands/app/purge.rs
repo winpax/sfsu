@@ -28,11 +28,7 @@ impl super::Command for Args {
     async fn runner(self, ctx: &impl ScoopContext) -> anyhow::Result<()> {
         let purging_uninstalled = self.apps.is_empty();
         let refs = if purging_uninstalled {
-            let references = list_uninstalled(ctx)?;
-            references
-                .into_iter()
-                .map(manifest::Reference::into_package_ref)
-                .collect()
+            list_uninstalled(ctx)?
         } else {
             self.apps
         };
@@ -44,6 +40,7 @@ impl super::Command for Args {
             for reference in missing_apps {
                 eprintln_yellow!("- {}", reference);
             }
+            eprintln!();
         }
 
         if apps.is_empty() {
@@ -172,7 +169,7 @@ impl Deref for AppPaths {
     }
 }
 
-fn list_uninstalled(ctx: &impl ScoopContext) -> anyhow::Result<Vec<manifest::Reference>> {
+fn list_uninstalled(ctx: &impl ScoopContext) -> anyhow::Result<Vec<package::Reference>> {
     let persist_path = ctx.persist_path();
 
     let mut uninstalled = vec![];
@@ -189,9 +186,11 @@ fn list_uninstalled(ctx: &impl ScoopContext) -> anyhow::Result<Vec<manifest::Ref
                 continue;
             };
 
-            let reference = manifest::Reference::Name(app_name.to_string());
+            let reference = manifest::Reference::Name(app_name.to_string()).into_package_ref();
 
-            uninstalled.push(reference);
+            if !reference.installed(ctx)? {
+                uninstalled.push(reference);
+            }
         }
     }
 
