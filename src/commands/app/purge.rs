@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, ops::Deref};
 
 use clap::Parser;
 use dialoguer::Confirm;
@@ -37,37 +37,21 @@ impl super::Command for Args {
             self.apps
         };
 
-        let (apps, _) = collect_references(ctx, refs);
+        let (apps, missing_apps) = collect_references(ctx, refs);
+
+        if !missing_apps.is_empty() {
+            eprintln_yellow!("Could not find the following apps:");
+            for reference in missing_apps {
+                eprintln_yellow!("- {}", reference);
+            }
+        }
 
         if apps.is_empty() {
             eprintln_yellow!("No apps found");
             return Ok(());
         }
 
-        let mut app_paths = HashMap::new();
-        for app in apps {
-            let reference = unsafe {
-                manifest::Reference::BucketNamePair {
-                    bucket: app.bucket().to_owned(),
-                    name: app.name().to_owned(),
-                }
-            };
-
-            let persist_path = ctx.persist_path().join(unsafe { app.name() });
-
-            if app_paths.contains_key(&reference) {
-                continue;
-            }
-
-            if !persist_path.exists() {
-                eprintln_yellow!("Persist folder does not exist for {}", unsafe {
-                    app.name()
-                });
-                continue;
-            }
-
-            app_paths.insert(reference, (app, persist_path));
-        }
+        let app_paths = AppPaths::new(ctx, apps);
 
         if purging_uninstalled {
             eprintln!("Purging persist folders for uninstalled apps:");
@@ -135,6 +119,52 @@ impl super::Command for Args {
         }
 
         Ok(())
+    }
+}
+
+struct AppPaths(HashMap<manifest::Reference, (Manifest, std::path::PathBuf)>);
+
+impl AppPaths {
+    fn new(ctx: &impl ScoopContext, apps: Vec<Manifest>) -> Self {
+        let app_paths = {
+            let mut app_paths = HashMap::new();
+
+            for app in apps {
+                let reference = unsafe {
+                    manifest::Reference::BucketNamePair {
+                        bucket: app.bucket().to_owned(),
+                        name: app.name().to_owned(),
+                    }
+                };
+
+                let persist_path = ctx.persist_path().join(unsafe { app.name() });
+
+                if app_paths.contains_key(&reference) {
+                    continue;
+                }
+
+                if !persist_path.exists() {
+                    eprintln_yellow!("Persist folder does not exist for {}", unsafe {
+                        app.name()
+                    });
+                    continue;
+                }
+
+                app_paths.insert(reference, (app, persist_path));
+            }
+
+            app_paths
+        };
+
+        Self(app_paths)
+    }
+}
+
+impl Deref for AppPaths {
+    type Target = HashMap<manifest::Reference, (Manifest, std::path::PathBuf)>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }
 
