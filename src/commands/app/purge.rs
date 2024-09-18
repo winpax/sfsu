@@ -53,11 +53,15 @@ impl super::Command for Args {
 
         let app_paths = AppPaths::new(ctx, apps);
 
-        if purging_uninstalled {
-            eprintln!("Purging persist folders for uninstalled apps:");
-        } else {
-            eprintln!("Purging persist folders for the following apps:");
-        }
+        eprintln!(
+            "Purging persist folders for {} {}:",
+            if purging_uninstalled {
+                "uninstalled"
+            } else {
+                "the following"
+            },
+            if app_paths.len() == 1 { "app" } else { "apps" }
+        );
         for (app, persist_path) in app_paths.values() {
             eprintln!(
                 "- {}/{} ({})",
