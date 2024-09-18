@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - When passed no apps, the purge command will now offer to purge all uninstalled apps
+- Purge command now has a dry run option
 
 ### Changed
 
