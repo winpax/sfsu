@@ -2,10 +2,13 @@ use std::collections::HashMap;
 
 use clap::Parser;
 use dialoguer::Confirm;
-use rayon::iter::IntoParallelIterator;
+use rayon::prelude::*;
 use sprinkles::{
     contexts::ScoopContext,
-    packages::reference::{manifest, package},
+    packages::{
+        reference::{manifest, package},
+        Manifest,
+    },
     progress::{indicatif::ProgressBar, style},
 };
 
@@ -24,7 +27,7 @@ pub struct Args {
 impl super::Command for Args {
     async fn runner(self, ctx: &impl ScoopContext) -> anyhow::Result<()> {
         let purging_uninstalled = self.apps.is_empty();
-        let apps = if purging_uninstalled {
+        let refs = if purging_uninstalled {
             let references = list_uninstalled(ctx)?;
             references
                 .into_iter()
@@ -32,9 +35,14 @@ impl super::Command for Args {
                 .collect()
         } else {
             self.apps
+        };
+
+        let (apps, _) = collect_references(ctx, refs);
+
+        if apps.is_empty() {
+            eprintln_yellow!("No apps found");
+            return Ok(());
         }
-        .into_iter()
-        .map(|reference| reference.first(ctx).unwrap());
 
         let mut app_paths = HashMap::new();
         for app in apps {
@@ -154,4 +162,57 @@ fn list_uninstalled(ctx: &impl ScoopContext) -> anyhow::Result<Vec<manifest::Ref
     }
 
     Ok(uninstalled)
+}
+
+fn collect_references(
+    ctx: &impl ScoopContext,
+    apps: Vec<package::Reference>,
+) -> (Vec<Manifest>, Vec<package::Reference>) {
+    // TODO: Find a more memory efficient way of handling this
+    #[allow(clippy::large_enum_variant)]
+    enum FindResult {
+        Ok(Manifest),
+        Err(package::Reference),
+    }
+
+    trait Split {
+        type A;
+        type B;
+
+        fn split(self) -> (Self::A, Self::B);
+    }
+
+    impl Split for Vec<FindResult> {
+        type A = Vec<Manifest>;
+        type B = Vec<package::Reference>;
+
+        fn split(self) -> (Self::A, Self::B) {
+            let mut found_apps = Vec::with_capacity(self.len());
+            let mut missing_apps =
+                Vec::with_capacity(self.len().checked_div(10).unwrap_or_default());
+
+            for result in self {
+                match result {
+                    FindResult::Ok(manifest) => found_apps.push(manifest),
+                    FindResult::Err(reference) => missing_apps.push(reference),
+                }
+            }
+
+            (found_apps, missing_apps)
+        }
+    }
+
+    let mut found_apps = vec![];
+
+    apps.into_par_iter()
+        .map(|reference| {
+            if let Some(x) = reference.first(ctx) {
+                FindResult::Ok(x)
+            } else {
+                FindResult::Err(reference)
+            }
+        })
+        .collect_into_vec(&mut found_apps);
+
+    found_apps.split()
 }
