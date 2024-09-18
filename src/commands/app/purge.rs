@@ -22,6 +22,13 @@ pub struct Args {
 
     #[clap(from_global)]
     assume_yes: bool,
+
+    #[clap(
+        short,
+        long,
+        help = "Print what would be done, but don't actually do anything"
+    )]
+    dry_run: bool,
 }
 
 impl super::Command for Args {
@@ -88,7 +95,7 @@ impl super::Command for Args {
             return Ok(());
         }
 
-        if !self.assume_yes && app_paths
+        if !purging_uninstalled && !self.assume_yes && app_paths
                 .values()
                 .any(|(app, _)| app.is_installed(ctx, None)) && !Confirm::new()
                 .with_prompt(
@@ -106,7 +113,9 @@ impl super::Command for Args {
 
             eprintln_yellow!("Purging persist folder for {}", unsafe { app.name() });
 
-            std::fs::remove_dir_all(path)?;
+            if !self.dry_run {
+                std::fs::remove_dir_all(path)?;
+            }
         } else {
             let pb = ProgressBar::new(app_paths.len() as u64).with_style(style(None, None));
 
@@ -115,7 +124,12 @@ impl super::Command for Args {
                     app.name()
                 }));
                 pb.inc(1);
-                std::fs::remove_dir_all(persist_path)?;
+
+                if self.dry_run {
+                    std::thread::sleep(std::time::Duration::from_millis(100));
+                } else {
+                    std::fs::remove_dir_all(persist_path)?;
+                }
             }
         }
 
