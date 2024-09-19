@@ -5,7 +5,7 @@ use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criteri
 use sprinkles::{contexts::User, packages::reference::package};
 
 fn criterion_benchmark(c: &mut Criterion) {
-    let ctx = User::new();
+    let ctx = User::new().unwrap();
 
     let runtime = tokio::runtime::Builder::new_multi_thread()
         .enable_all()

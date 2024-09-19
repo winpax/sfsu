@@ -7,11 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- When passed no apps, the purge command will now offer to purge all uninstalled apps
+- Purge command now has a dry run option
+
 ### Changed
 
 - Minor performance improvements by removing `Cow` -> `String` conversion in `update` command
 - Internal: Remove `Deref` from `Author`
 - Updated dependencies
+- Renamed `cache show` to `cache list` (alias to `show` added to avoid breaking change)
+- Purge confirmation now shows both bucket and app name
+- Purge command can now handle multiple apps
 
 ## [1.14.0] - 2024-06-12
 

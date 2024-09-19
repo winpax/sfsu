@@ -5,7 +5,7 @@ use regex::Regex;
 use sprinkles::{buckets::Bucket, contexts::User, packages::SearchMode};
 
 fn criterion_benchmark(c: &mut Criterion) {
-    let ctx = User::new();
+    let ctx = User::new().unwrap();
     // let all_buckets = Bucket::list_all().unwrap();
 
     let pattern = Regex::new("(?i)google").unwrap();
