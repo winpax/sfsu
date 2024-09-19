@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::{path::Path, process::Command};
 
 use clap::Parser;
 use itertools::Itertools;
@@ -6,7 +6,11 @@ use quork::traits::truthy::ContainsTruth;
 use sprinkles::{
     contexts::ScoopContext,
     handles::packages::PackageHandle,
-    packages::reference::{manifest, package},
+    packages::{
+        models::manifest::SingleOrArray,
+        reference::{manifest, package},
+    },
+    scripts::PowershellScript,
     Architecture,
 };
 
@@ -118,9 +122,25 @@ impl Args {
             return Ok(());
         }
 
-        // if let Some(ref uninstaller) = install_config.uninstaller {
-        //     let script_runner = uninstaller;
-        // }
+        if let Some(uninstaller) = install_config.uninstaller {
+            let args = uninstaller
+                .args
+                .clone()
+                .map(SingleOrArray::to_vec)
+                .unwrap_or_default();
+
+            let runner = if let Some(file) = uninstaller.file {
+                Some(UninstallHandler::File { file, args })
+            } else {
+                uninstaller
+                    .script
+                    .map(|script| UninstallHandler::Powershell { script, args })
+            };
+
+            if let Some(runner) = runner {
+                runner.run(ctx)?;
+            }
+        }
 
         todo!()
     }
@@ -138,4 +158,53 @@ fn check_for_permissions(path: impl AsRef<Path>) -> bool {
     }
 
     true
+}
+
+enum UninstallHandler {
+    File {
+        file: String,
+        args: Vec<String>,
+    },
+    Powershell {
+        script: PowershellScript,
+        args: Vec<String>,
+    },
+}
+
+impl UninstallHandler {
+    fn run(self, ctx: &impl ScoopContext) -> anyhow::Result<()> {
+        match self {
+            UninstallHandler::File { file, args } => {
+                let exit_status = Command::new(file)
+                    .current_dir(ctx.persist_path())
+                    .args(args)
+                    .spawn()?
+                    .wait_with_output()?;
+
+                match exit_status.status.code() {
+                    Some(0) => {}
+                    Some(code) => {
+                        return Err(anyhow::anyhow!(
+                            "uninstall.ps1 exited with code {}.\nOutput:\n{}",
+                            code,
+                            String::from_utf8_lossy(&exit_status.stdout)
+                        ))
+                    }
+                    None => {
+                        return Err(anyhow::anyhow!(
+                            "uninstall.ps1 exited without a status code.\nOutput:\n{}",
+                            String::from_utf8_lossy(&exit_status.stdout)
+                        ))
+                    }
+                }
+            }
+            UninstallHandler::Powershell { script, args } => {
+                let mut runner = script.save(ctx)?;
+                runner.set_args(args);
+                runner.run()?;
+            }
+        }
+
+        Ok(())
+    }
 }
