@@ -14,7 +14,7 @@ impl super::Command for Args {
         let bucket_remove_size = std::mem::size_of::<commands::bucket::remove::Args>();
         let bucket_unused_size = std::mem::size_of::<commands::bucket::unused::Args>();
         let cache_remove_size = std::mem::size_of::<commands::cache::remove::Args>();
-        let cache_show_size = std::mem::size_of::<commands::cache::show::Args>();
+        let cache_list_size = std::mem::size_of::<commands::cache::list::Args>();
         let credits_size = std::mem::size_of::<commands::credits::Args>();
         let debug_save_size = std::mem::size_of::<commands::debug::save::Args>();
         let debug_sizes = std::mem::size_of::<commands::debug::sizes::Args>();
@@ -37,7 +37,7 @@ impl super::Command for Args {
         println!(
             "Bucket: Args = {bucket_args_size}, Add = {bucket_add_size}, List = {bucket_list_size}, Remove = {bucket_remove_size}, Unused = {bucket_unused_size}"
         );
-        println!("Cache: Remove = {cache_remove_size}, Show = {cache_show_size}");
+        println!("Cache: Remove = {cache_remove_size}, List = {cache_list_size}");
         println!("Credits: Args = {credits_size}");
         println!("Debug: Save = {debug_save_size}, Sizes = {debug_sizes}");
         println!("Depends: Args = {depends_size}");
