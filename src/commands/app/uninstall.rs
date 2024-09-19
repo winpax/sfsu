@@ -5,6 +5,7 @@ use itertools::Itertools;
 use quork::traits::truthy::ContainsTruth;
 use sprinkles::{
     contexts::ScoopContext,
+    handles::packages::PackageHandle,
     packages::reference::{manifest, package},
     Architecture,
 };
@@ -23,6 +24,10 @@ pub struct Args {
 
     #[clap(from_global)]
     global: bool,
+
+    #[clap(short, long)]
+    /// Print what would be done, but don't actually do anything
+    dry_run: bool,
 }
 
 impl super::Command for Args {
@@ -65,41 +70,57 @@ impl super::Command for Args {
         };
 
         for handle in packages_with_manifest {
+            self.uninstall_handle(ctx, &handle)?;
+        }
+
+        todo!()
+    }
+}
+
+impl Args {
+    fn uninstall_handle<C: ScoopContext>(
+        &self,
+        ctx: &C,
+        handle: &PackageHandle<'_, C>,
+    ) -> anyhow::Result<()> {
+        if !self.dry_run {
             handle.unlink_current()?;
+        }
 
-            let version_dir = handle.version_dir();
-            // let persist_dir = handle.persist_dir();
+        let version_dir = handle.version_dir();
+        // let persist_dir = handle.persist_dir();
 
-            let manifest = handle.local_manifest()?;
+        let manifest = handle.local_manifest()?;
 
-            let install_config = manifest.install_config(Architecture::ARCH);
+        let install_config = manifest.install_config(Architecture::ARCH);
 
+        if self.dry_run {
             // Run the pre-uninstall script
             if let Some(ref pre_uninstall) = install_config.pre_uninstall {
                 let script_runner = pre_uninstall.save(ctx)?;
                 script_runner.run()?;
             }
-
-            if handle.running() {
-                eprintln_red!(
-                    "{} is running. Please stop it before uninstalling",
-                    unsafe { handle.name() }
-                );
-                continue;
-            }
-
-            if !check_for_permissions(&version_dir) {
-                eprintln_red!(
-                    "Access Denied: {}. Try again, or fix permissions on the directory",
-                    version_dir.display(),
-                );
-                continue;
-            }
-
-            // if let Some(ref uninstaller) = install_config.uninstaller {
-            //     let script_runner = uninstaller;
-            // }
         }
+
+        if handle.running() {
+            eprintln_red!(
+                "{} is running. Please stop it before uninstalling",
+                unsafe { handle.name() }
+            );
+            return Ok(());
+        }
+
+        if !check_for_permissions(&version_dir) {
+            eprintln_red!(
+                "Access Denied: {}. Try again, or fix permissions on the directory",
+                version_dir.display(),
+            );
+            return Ok(());
+        }
+
+        // if let Some(ref uninstaller) = install_config.uninstaller {
+        //     let script_runner = uninstaller;
+        // }
 
         todo!()
     }
