@@ -35,8 +35,8 @@ impl super::Command for Args {
         self.global
     }
 
-    async fn runner(self, ctx: &impl ScoopContext) -> anyhow::Result<()> {
-        let valid_packages = self.packages.into_iter().filter(|package| {
+    async fn runner(mut self, ctx: &impl ScoopContext) -> anyhow::Result<()> {
+        let valid_packages = std::mem::take(&mut self.packages).into_iter().filter(|package| {
             if matches!(
                 package.manifest,
                 manifest::Reference::BucketNamePair { .. } | manifest::Reference::Name(_)
