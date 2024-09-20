@@ -3795,7 +3795,7 @@ checksum = "6980e8d7511241f8acf4aebddbb1ff938df5eebe98691418c4468d0b72a96a67"
 [[package]]
 name = "sprinkles-rs"
 version = "0.16.0"
-source = "git+https://github.com/winpax/sprinkles#ab48a296015c4042a4f05e81da952d876e6896e6"
+source = "git+https://github.com/winpax/sprinkles#9a94cc1e20c8ae4d3745549fe141a9b4fe2571b6"
 dependencies = [
  "base64",
  "blake3",
