@@ -5,6 +5,7 @@ pub mod home;
 pub mod info;
 pub mod list;
 pub mod purge;
+pub mod uninstall;
 
 use clap::{Parser, Subcommand};
 
