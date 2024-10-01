@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `--verbose` flag help info changed to more accurately represent what it does
 - Updated information does not show up by default in `app info` command as gathering the updated info is very slow
   - The user must pass `--verbose` to see the updated information
+- Minor internal changes to `VTable` struct
 
 ## [1.14.0] - 2024-06-12
 
