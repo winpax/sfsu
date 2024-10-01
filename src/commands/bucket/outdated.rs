@@ -1,6 +1,6 @@
 use clap::Parser;
 use itertools::Itertools;
-use sprinkles::{buckets::Bucket, config, contexts::ScoopContext};
+use sprinkles::{buckets::Bucket, contexts::ScoopContext};
 
 use crate::{
     commands::{self, DeprecationMessage, DeprecationWarning},
@@ -8,6 +8,7 @@ use crate::{
 };
 
 #[derive(Debug, Clone, Parser)]
+/// List outdated buckets
 pub struct Args {
     #[clap(from_global)]
     json: bool,
@@ -19,8 +20,8 @@ impl commands::Command for Args {
         version: Some(2.0),
     });
 
-    async fn runner(self, ctx: impl ScoopContext<config::Scoop>) -> anyhow::Result<()> {
-        let buckets = Bucket::list_all(&ctx)?;
+    async fn runner(self, ctx: &impl ScoopContext) -> anyhow::Result<()> {
+        let buckets = Bucket::list_all(ctx)?;
 
         let outdated_buckets = buckets
             .into_iter()

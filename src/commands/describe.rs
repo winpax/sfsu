@@ -1,6 +1,6 @@
 use clap::Parser;
 
-use sprinkles::{buckets::Bucket, config, contexts::ScoopContext, packages::Manifest};
+use sprinkles::{buckets::Bucket, contexts::ScoopContext, packages::Manifest};
 
 use crate::{
     commands::{DeprecationMessage, DeprecationWarning},
@@ -8,6 +8,7 @@ use crate::{
 };
 
 #[derive(Debug, Clone, Parser)]
+/// Describe a package
 pub struct Args {
     #[clap(help = "The package to describe")]
     package: String,
@@ -22,8 +23,8 @@ impl super::Command for Args {
         version: Some(2.0),
     });
 
-    async fn runner(self, ctx: impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
-        let buckets = Bucket::one_or_all(&ctx, self.bucket)?;
+    async fn runner(self, ctx: &impl ScoopContext) -> Result<(), anyhow::Error> {
+        let buckets = Bucket::one_or_all(ctx, self.bucket)?;
 
         let manifests: Vec<(String, String, Manifest)> = buckets
             .iter()

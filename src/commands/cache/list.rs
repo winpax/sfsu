@@ -1,14 +1,16 @@
 use clap::Parser;
-use sprinkles::{config, contexts::ScoopContext, wrappers::sizes::Size};
+use sprinkles::contexts::ScoopContext;
 
 use crate::{
     commands::Command,
     output::{colours::eprintln_bright_yellow, structured::Structured},
+    wrappers::sizes::Size,
 };
 
 use super::CacheEntry;
 
 #[derive(Debug, Clone, Parser)]
+/// List cache entries
 pub struct Args {
     #[clap(from_global)]
     pub apps: Vec<String>,
@@ -18,8 +20,8 @@ pub struct Args {
 }
 
 impl Command for Args {
-    async fn runner(self, ctx: impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
-        let cache_entries = CacheEntry::match_paths(&ctx, &self.apps).await?;
+    async fn runner(self, ctx: &impl ScoopContext) -> Result<(), anyhow::Error> {
+        let cache_entries = CacheEntry::match_paths(ctx, &self.apps).await?;
 
         let total_size = cache_entries
             .iter()

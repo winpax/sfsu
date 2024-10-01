@@ -6,7 +6,7 @@ use itertools::Itertools;
 use serde::Serialize;
 use serde_json::{Map, Value};
 
-use sprinkles::{hacks::inline_const::inline_const, wrappers::header::Header};
+use crate::wrappers::header::Header;
 
 use super::{consts::WALL, truncate::FixedLength};
 
@@ -20,41 +20,6 @@ fn print_headers(
     max_length: Option<usize>,
     access_lengths: &[usize],
 ) -> std::fmt::Result {
-    #[cfg(feature = "v2")]
-    {
-        let header_lengths = headers
-            .iter()
-            .enumerate()
-            .map(|(i, header)| -> Result<usize, std::fmt::Error> {
-                let header_size = access_lengths[i];
-
-                let truncated = FixedLength::new(Header::new(header));
-                write!(
-                    f,
-                    "{:header_size$}{WALL}",
-                    console::style(&truncated).green().bright()
-                )?;
-
-                Ok(truncated.to_string().len())
-            })
-            .collect::<Result<Vec<_>, _>>()?;
-
-        writeln!(f)?;
-
-        for (i, length) in header_lengths.into_iter().enumerate() {
-            let header_size = access_lengths[i];
-
-            let underscores = "-".repeat(length);
-
-            write!(
-                f,
-                "{:header_size$}{WALL}",
-                console::style(underscores).green().bright()
-            )?;
-        }
-    }
-
-    #[cfg(not(feature = "v2"))]
     for (i, header) in headers.iter().enumerate() {
         let header_size = access_lengths[i];
 
@@ -116,7 +81,7 @@ impl Display for Structured {
                 .iter()
                 .map(|header| header.len())
                 .max()
-                .unwrap_or(inline_const!(usize "Updated".len()));
+                .unwrap_or(const { "Updated".len() });
 
             let mut v = vec![default_width];
             v.extend(headers.iter().map(|s| s.len()));

@@ -1,5 +1,5 @@
 use proc_macro2::TokenStream;
-use proc_macro_error::abort_call_site;
+use proc_macro_error2::abort_call_site;
 use quote::quote;
 use syn::DeriveInput;
 
@@ -21,7 +21,7 @@ pub fn into_inner(ast: DeriveInput) -> TokenStream {
 
     quote! {
         impl #input_name {
-            pub async fn run(self, ctx: impl sprinkles::contexts::ScoopContext<sprinkles::config::Scoop>) -> anyhow::Result<()> {
+            pub async fn run(self, ctx: &impl sprinkles::contexts::ScoopContext<Config = sprinkles::config::Scoop>) -> anyhow::Result<()> {
                 match self {
                     #(Self::#variants (a) => a.run(ctx).await,)*
                 }

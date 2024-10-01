@@ -3,11 +3,12 @@ use chrono::FixedOffset;
 use clap::Parser;
 use rayon::prelude::*;
 use serde::Serialize;
-use sprinkles::{buckets::Bucket, config, contexts::ScoopContext, wrappers::time::NicerTime};
+use sprinkles::{buckets::Bucket, contexts::ScoopContext};
 
-use crate::output;
+use crate::{output, wrappers::time::NicerTime};
 
 #[derive(Debug, Clone, Parser)]
+/// List all installed buckets
 pub struct Args {
     #[clap(from_global)]
     json: bool,
@@ -43,8 +44,8 @@ impl BucketInfo {
 }
 
 impl super::Command for Args {
-    async fn runner(self, ctx: impl ScoopContext<config::Scoop>) -> anyhow::Result<()> {
-        let buckets = Bucket::list_all(&ctx)?;
+    async fn runner(self, ctx: &impl ScoopContext) -> anyhow::Result<()> {
+        let buckets = Bucket::list_all(ctx)?;
 
         let buckets = {
             let mut buckets = buckets

@@ -6,7 +6,6 @@ use regex::Regex;
 
 use sprinkles::{
     buckets::Bucket,
-    config,
     contexts::ScoopContext,
     packages::{Manifest, MergeDefaults, SearchMode},
     Architecture,
@@ -84,7 +83,7 @@ impl Default for MatchCriteria {
 
 pub fn parse_output(
     manifest: &Manifest,
-    ctx: &impl ScoopContext<config::Scoop>,
+    ctx: &impl ScoopContext,
     bucket: impl AsRef<str>,
     installed_only: bool,
     pattern: &Regex,
@@ -96,7 +95,7 @@ pub fn parse_output(
     // This may be a bit of a hack, but it works
 
     let match_output = MatchCriteria::matches(
-        &manifest.name,
+        unsafe { manifest.name() },
         if mode.match_binaries() {
             Some(manifest)
         } else {
@@ -116,10 +115,12 @@ pub fn parse_output(
         return None;
     }
 
-    let styled_package_name = if manifest.name == pattern.to_string() {
-        console::style(&manifest.name).bold().to_string()
+    let styled_package_name = if unsafe { manifest.name() } == pattern.to_string() {
+        console::style(unsafe { manifest.name() })
+            .bold()
+            .to_string()
     } else {
-        manifest.name.clone()
+        unsafe { manifest.name() }.to_string()
     };
 
     let installed_text = if is_installed && !installed_only {
@@ -156,6 +157,7 @@ pub fn parse_output(
 }
 
 #[derive(Debug, Clone, Parser)]
+/// Search for a package
 pub struct Args {
     #[clap(help = "The regex pattern to search for, using Rust Regex syntax")]
     pattern: String,
@@ -181,7 +183,7 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    async fn runner(self, ctx: impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
+    async fn runner(self, ctx: &impl ScoopContext) -> Result<(), anyhow::Error> {
         let (bucket, raw_pattern) =
             if let Some((bucket, raw_pattern)) = self.pattern.split_once('/') {
                 // Bucket flag overrides bucket/package syntax
@@ -204,24 +206,24 @@ impl super::Command for Args {
         };
 
         let matching_buckets: Vec<Bucket> =
-            if let Some(Ok(bucket)) = bucket.map(|name| Bucket::from_name(&ctx, name)) {
+            if let Some(Ok(bucket)) = bucket.map(|name| Bucket::from_name(ctx, name)) {
                 vec![bucket]
             } else {
-                Bucket::list_all(&ctx)?
+                Bucket::list_all(ctx)?
             };
 
         let mut matches: Sections<_> = matching_buckets
             .par_iter()
             .filter_map(
-                |bucket| match bucket.matches(&ctx, self.installed, &pattern, self.mode) {
+                |bucket| match bucket.matches(ctx, self.installed, &pattern, self.mode) {
                     Ok(manifest) => {
                         let sections = manifest
                             .into_par_iter()
                             .filter_map(|manifest| {
                                 parse_output(
                                     &manifest,
-                                    &ctx,
-                                    &manifest.bucket,
+                                    ctx,
+                                    unsafe { manifest.bucket() },
                                     self.installed,
                                     &pattern,
                                     self.mode,

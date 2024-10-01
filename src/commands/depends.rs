@@ -1,8 +1,7 @@
 use clap::Parser;
 use sprinkles::{
-    config,
     contexts::ScoopContext,
-    packages::reference::{self, Package},
+    packages::reference::{manifest, package},
 };
 
 use crate::{
@@ -11,9 +10,10 @@ use crate::{
 };
 
 #[derive(Debug, Clone, Parser)]
+/// List the dependencies of a given package, in the order that they will be installed
 pub struct Args {
     #[clap(help = "The package to list dependencies for")]
-    package: Package,
+    package: package::Reference,
 
     #[clap(help = "The bucket of the given package")]
     bucket: Option<String>,
@@ -25,12 +25,12 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    async fn runner(mut self, ctx: impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
+    async fn runner(mut self, ctx: &impl ScoopContext) -> Result<(), anyhow::Error> {
         if let Some(bucket) = self.bucket {
             self.package.set_bucket(bucket)?;
         }
 
-        let manifests = self.package.list_manifests(&ctx).await?;
+        let manifests = self.package.list_manifests(ctx).await?;
 
         if manifests.is_empty() {
             abandon!("Could not find any packages matching: {}", self.package);
@@ -41,7 +41,7 @@ impl super::Command for Args {
             return Ok(());
         }
 
-        let output: Sections<reference::ManifestRef> = manifests
+        let output: Sections<manifest::Reference> = manifests
             .into_iter()
             .filter_map(|manifest| {
                 Children::from(manifest.depends())
@@ -49,7 +49,8 @@ impl super::Command for Args {
                     .map(|children| {
                         Section::new(children).with_title(format!(
                             "Dependencies for '{}' in '{}'",
-                            manifest.name, manifest.bucket
+                            unsafe { manifest.name() },
+                            unsafe { manifest.bucket() }
                         ))
                     })
             })

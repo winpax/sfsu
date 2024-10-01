@@ -26,7 +26,7 @@ impl Info {
             None
         } else {
             Some(Info {
-                name: remote.name.clone(),
+                name: unsafe { remote.name() }.to_string(),
                 current: local.version.to_string(),
                 available: remote.version.to_string(),
             })

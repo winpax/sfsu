@@ -1,6 +1,6 @@
 use proc_macro2::{Ident, Span, TokenStream};
 use proc_macro_crate::{crate_name, FoundCrate};
-use proc_macro_error::abort_call_site;
+use proc_macro_error2::abort_call_site;
 use quote::quote;
 use syn::DeriveInput;
 

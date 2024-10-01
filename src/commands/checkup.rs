@@ -1,21 +1,20 @@
 use clap::Parser;
 
 use itertools::Itertools;
-use sprinkles::{
-    config,
-    contexts::ScoopContext,
-    diagnostics::{Diagnostics, LongPathsStatus},
-};
+use sprinkles::contexts::ScoopContext;
+
+use crate::diagnostics::{Diagnostics, LongPathsStatus};
 
 #[derive(Debug, Clone, Parser)]
+/// Check for common issues
 pub struct Args {
     #[clap(from_global)]
     json: bool,
 }
 
 impl super::Command for Args {
-    async fn runner(self, ctx: impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
-        let diagnostics = Diagnostics::collect(&ctx)?;
+    async fn runner(self, ctx: &impl ScoopContext) -> Result<(), anyhow::Error> {
+        let diagnostics = Diagnostics::collect(ctx)?;
 
         if self.json {
             println!("{}", serde_json::to_string_pretty(&diagnostics)?);

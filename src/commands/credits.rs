@@ -22,10 +22,14 @@ use ratatui::{
     Frame, Terminal,
 };
 use serde::Serialize;
-use sprinkles::{config, contexts::ScoopContext};
+use sprinkles::contexts::ScoopContext;
 
 mod contributors {
     include!(concat!(env!("OUT_DIR"), "/contributors.rs"));
+
+    pub mod sprinkles {
+        include!(concat!(env!("OUT_DIR"), "/sprinkles_contributors.rs"));
+    }
 }
 
 mod packages {
@@ -41,6 +45,8 @@ mod titles {
         ", created by Juliette Cordor 🚀"
     );
     pub const CONTRIBUTORS: &str = "💖 Many thanks to all our incredible contributors 💖";
+    pub const SFSU_CONTRIBUTORS: &str = "🛹 In sfsu 🛹";
+    pub const SPRINKLES_CONTRIBUTORS: &str = "🍨 And in sprinkles 🍨";
     pub const PACKAGES: &str = formatcp!(
         "📦 And all the incredible {} crates we use 📦",
         super::packages::PACKAGES.len()
@@ -106,6 +112,7 @@ impl<T: Display> Display for Url<T> {
 }
 
 #[derive(Debug, Clone, Parser)]
+/// Show credits
 pub struct Args {
     #[clap(short, long, help = "Show packages")]
     packages: bool,
@@ -115,11 +122,12 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    async fn runner(self, _: impl ScoopContext<config::Scoop>) -> anyhow::Result<()> {
+    async fn runner(self, _: &impl ScoopContext) -> anyhow::Result<()> {
         if self.json {
             #[derive(Debug, Clone, Serialize)]
             struct JsonOutput<'a> {
                 contributors: Vec<Contributor<'a>>,
+                sprinkles_contributors: Vec<Contributor<'a>>,
 
                 #[serde(skip_serializing_if = "Vec::is_empty")]
                 packages: Vec<Package<'a>>,
@@ -142,6 +150,11 @@ impl super::Command for Args {
                 .map(|(name, url)| Contributor { name, url })
                 .collect_vec();
 
+            let sprinkles_contributors = contributors::sprinkles::CONTRIBUTORS
+                .into_iter()
+                .map(|(name, url)| Contributor { name, url })
+                .collect_vec();
+
             let packages = if self.packages {
                 packages::PACKAGES
                     .into_iter()
@@ -153,6 +166,7 @@ impl super::Command for Args {
 
             let output = JsonOutput {
                 contributors,
+                sprinkles_contributors,
                 packages,
             };
 
@@ -165,9 +179,21 @@ impl super::Command for Args {
             println!("{}", titles::TITLE);
             println!();
             println!("{}", titles::CONTRIBUTORS);
+
+            println!();
+            println!("{}", titles::SFSU_CONTRIBUTORS);
             println!();
 
             for (name, url) in contributors::CONTRIBUTORS {
+                let url = Url::new(name, url.to_string());
+                println!("{url}");
+            }
+
+            println!();
+            println!("{}", titles::SPRINKLES_CONTRIBUTORS);
+            println!();
+
+            for (name, url) in contributors::sprinkles::CONTRIBUTORS {
                 let url = Url::new(name, url.to_string());
                 println!("{url}");
             }
@@ -208,8 +234,25 @@ impl Args {
             Text::raw(""),
         ]);
 
+        items.extend(vec![
+            Text::styled(titles::SFSU_CONTRIBUTORS, TITLE_STYLE),
+            Text::raw(""),
+        ]);
+
         items.extend(
             contributors::CONTRIBUTORS
+                .into_iter()
+                .map(|(name, url)| Text::from(format!("{name} ({url})"))),
+        );
+
+        items.extend(vec![
+            Text::raw(""),
+            Text::styled(titles::SPRINKLES_CONTRIBUTORS, TITLE_STYLE),
+            Text::raw(""),
+        ]);
+
+        items.extend(
+            contributors::sprinkles::CONTRIBUTORS
                 .into_iter()
                 .map(|(name, url)| Text::from(format!("{name} ({url})"))),
         );

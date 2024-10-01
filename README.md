@@ -8,10 +8,20 @@
 ![wakatime](https://wakatime.com/badge/user/69c39493-dba9-4b9d-8ae6-1a6a17e60cb4/project/ba7eaa48-0f34-4b20-95e5-4ba2e6184d39.svg)
 
 > [!NOTE]
-> This is still under development. It currently does not replace even close to all the scoop commands, and is missing a lot of functionality.
-> There is unlikely to be any breaking changes, so there is likely no harm using it as is.
+> This is still under development. It currently provides faster alternatives to most, but not all, Scoop commands.
+> All breaking changes will only occur in v2.0 and with proper deprecation warnings.
 
 Super fast replacements and additions to scoop commands written in Rust
+
+Are looking for our underlying library that makes all of this possible (or do you want to make your own implementation of Scoop?), check out [sprinkles](https://github.com/winpax/sprinkles)
+
+## Reporting Issues
+
+Please, please, please check the [FAQs](https://github.com/winpax/FAQs), before you report an issue.
+
+If you have a question, please ask it on [the discussions page](https://github.com/winpax/sfsu/discussions).
+
+If you have a bug report, feature request, or other issue, then [open an issue](https://github.com/winpax/sfsu/issues/new/choose).
 
 ## Installation
 

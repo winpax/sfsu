@@ -9,3 +9,9 @@ logs/
 *-export.json
 
 .env
+
+# Intellij IDEA configs
+.idea/
+
+# Profiling information
+flamegraph.svg

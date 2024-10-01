@@ -8,7 +8,6 @@ use serde_json::Value;
 
 use sprinkles::{
     buckets::Bucket,
-    config,
     contexts::ScoopContext,
     packages::models::install,
     progress::{indicatif::ProgressBar, style},
@@ -30,6 +29,7 @@ enum Command {
 }
 
 #[derive(Debug, Clone, Parser)]
+/// Show status and check for new app versions
 pub struct Args {
     #[clap(from_global)]
     json: bool,
@@ -45,7 +45,7 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    async fn runner(self, ctx: impl ScoopContext<config::Scoop>) -> anyhow::Result<()> {
+    async fn runner(self, ctx: &impl ScoopContext) -> anyhow::Result<()> {
         let value = Arc::new(Mutex::new(Value::default()));
 
         let pb = ProgressBar::new(3).with_style(style(None, None));
@@ -63,7 +63,6 @@ impl super::Command for Args {
             let this = self.clone();
             let pb = pb.clone();
             let value = value.clone();
-            let ctx = &ctx;
             async move {
                 let mut output = String::new();
 
@@ -99,7 +98,7 @@ impl super::Command for Args {
 impl Args {
     async fn handle_scoop(
         &self,
-        ctx: &impl ScoopContext<config::Scoop>,
+        ctx: &impl ScoopContext,
         value: &Mutex<Value>,
         output: &mut dyn Write,
     ) -> anyhow::Result<()> {
@@ -126,7 +125,7 @@ impl Args {
 
     fn handle_buckets(
         &self,
-        ctx: &impl ScoopContext<config::Scoop>,
+        ctx: &impl ScoopContext,
         value: &Mutex<Value>,
         output: &mut dyn Write,
     ) -> anyhow::Result<()> {
@@ -193,7 +192,7 @@ impl Args {
 
     fn handle_packages(
         &self,
-        ctx: &impl ScoopContext<config::Scoop>,
+        ctx: &impl ScoopContext,
         value: &Mutex<Value>,
         output: &mut dyn Write,
     ) -> anyhow::Result<()> {
@@ -212,8 +211,16 @@ impl Args {
                     match Info::from_manifests(ctx, &local_manifest, &bucket) {
                         Ok(info) => Ok(info),
                         Err(err) => {
-                            error!("Failed to get status for {}: {:?}", app.name, err);
-                            anyhow::bail!("Failed to get status for {}: {:?}", app.name, err)
+                            error!(
+                                "Failed to get status for {}: {:?}",
+                                unsafe { app.name() },
+                                err
+                            );
+                            anyhow::bail!(
+                                "Failed to get status for {}: {:?}",
+                                unsafe { app.name() },
+                                err
+                            )
                         }
                     }
                 } else {

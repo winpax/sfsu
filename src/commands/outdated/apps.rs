@@ -1,19 +1,20 @@
 use clap::Parser;
 use rayon::prelude::*;
 use serde_json::Value;
-use sprinkles::{buckets::Bucket, config, contexts::ScoopContext, packages::models::install};
+use sprinkles::{buckets::Bucket, contexts::ScoopContext, packages::models::install};
 
 use crate::{models::outdated::Info, output::structured::Structured};
 
 #[derive(Debug, Clone, Parser)]
+/// List outdated apps
 pub struct Args {
     #[clap(from_global)]
     pub(super) json: bool,
 }
 
 impl super::super::Command for Args {
-    async fn runner(self, ctx: impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
-        self.run_direct(&ctx, true)?;
+    async fn runner(self, ctx: &impl ScoopContext) -> Result<(), anyhow::Error> {
+        self.run_direct(ctx, true)?;
 
         Ok(())
     }
@@ -26,7 +27,7 @@ impl Args {
     /// or with `is_subcommand` as false, when called directly, from the `sfsu outdated` command
     pub fn run_direct(
         self,
-        ctx: &impl ScoopContext<config::Scoop>,
+        ctx: &impl ScoopContext,
         is_subcommand: bool,
     ) -> Result<Option<Vec<Value>>, anyhow::Error> {
         let apps = install::Manifest::list_all_unchecked(ctx)?;
@@ -39,7 +40,7 @@ impl Args {
                     // TODO: Add the option to check all buckets and find the highest version (will require semver to order versions)
                     let bucket = Bucket::from_name(ctx, bucket)?;
 
-                    let remote_manifest = bucket.get_manifest(&app.name)?;
+                    let remote_manifest = bucket.get_manifest(unsafe { app.name() })?;
 
                     if let Some(info) = Info::from_manifests(&local_manifest, &remote_manifest) {
                         Ok(info)

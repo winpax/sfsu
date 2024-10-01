@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use anyhow::Context;
 use clap::Parser;
 use itertools::Itertools;
@@ -5,7 +7,7 @@ use rayon::prelude::*;
 
 use sprinkles::{
     buckets::{self, Bucket},
-    config::{self, Scoop as ScoopConfig},
+    config::Scoop as ScoopConfig,
     contexts::ScoopContext,
     git::{self, Repo},
     progress::{
@@ -17,16 +19,17 @@ use sprinkles::{
 use crate::output::sectioned::{Children, Section};
 
 #[derive(Debug, Clone, Parser)]
+/// Update Scoop and Scoop buckets
 pub struct Args {
     #[clap(short, long, help = "Show commit messages for each update")]
     changelog: bool,
 }
 
 impl super::Command for Args {
-    async fn runner(self, ctx: impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
+    async fn runner(self, ctx: &impl ScoopContext) -> Result<(), anyhow::Error> {
         let progress_style = style(Some(ProgressOptions::Hide), Some(Message::suffix()));
 
-        let buckets = Bucket::list_all(&ctx)?;
+        let buckets = Bucket::list_all(ctx)?;
 
         let longest_bucket_name = buckets
             .iter()
@@ -38,7 +41,7 @@ impl super::Command for Args {
         _ = ctx.outdated().await?;
 
         let scoop_changelog =
-            self.update_scoop(&ctx, longest_bucket_name, progress_style.clone())?;
+            self.update_scoop(ctx, longest_bucket_name, progress_style.clone())?;
 
         let mp = MultiProgress::new();
 
@@ -59,7 +62,7 @@ impl super::Command for Args {
             })
             .collect_vec();
 
-        let bucket_changelogs = self.update_buckets(&ctx, &outdated_buckets)?;
+        let bucket_changelogs = self.update_buckets(ctx, &outdated_buckets)?;
 
         let mut scoop_config = ScoopConfig::load()?;
         scoop_config.update_last_update_time();
@@ -97,7 +100,7 @@ impl Args {
 
     fn update_scoop(
         &self,
-        ctx: &impl ScoopContext<config::Scoop>,
+        ctx: &impl ScoopContext,
         longest_bucket_name: usize,
         style: ProgressStyle,
     ) -> anyhow::Result<Option<Vec<String>>> {
@@ -114,19 +117,19 @@ impl Args {
         Ok(changelog)
     }
 
-    fn update_buckets(
+    fn update_buckets<'a>(
         &self,
-        ctx: &impl ScoopContext<config::Scoop>,
-        outdated_buckets: &[(Bucket, ProgressBar)],
-    ) -> anyhow::Result<Vec<(String, Vec<String>)>> {
+        ctx: &impl ScoopContext,
+        outdated_buckets: &'a [(Bucket, ProgressBar)],
+    ) -> anyhow::Result<Vec<(Cow<'a, str>, Vec<String>)>> {
         let bucket_changelogs = outdated_buckets
             .par_iter()
-            .map(|(bucket, pb)| -> buckets::Result<(String, Vec<String>)> {
+            .map(|(bucket, pb)| -> buckets::Result<_> {
                 let repo = bucket.open_repo()?;
 
                 let changelog = self.update(ctx, &repo, pb)?;
 
-                Ok((bucket.name().to_string(), changelog.unwrap_or_default()))
+                Ok((bucket.name(), changelog.unwrap_or_default()))
             })
             .collect::<Result<Vec<_>, _>>()?;
 
@@ -135,7 +138,7 @@ impl Args {
 
     fn update(
         &self,
-        ctx: &impl ScoopContext<config::Scoop>,
+        ctx: &impl ScoopContext,
         repo: &Repo,
         pb: &ProgressBar,
     ) -> git::Result<Option<Vec<String>>> {

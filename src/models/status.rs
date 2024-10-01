@@ -6,10 +6,9 @@ use serde::Serialize;
 
 use sprinkles::{
     buckets::Bucket,
-    config,
     contexts::ScoopContext,
     packages::{
-        reference::{self, ManifestRef},
+        reference::{manifest, package},
         Manifest, Result,
     },
 };
@@ -25,7 +24,7 @@ pub struct Info {
     /// The available version
     pub available: String,
     /// The missing dependencies
-    pub missing_dependencies: Vec<reference::Package>,
+    pub missing_dependencies: Vec<package::Reference>,
     /// Additional information
     pub info: Option<String>,
 }
@@ -40,20 +39,23 @@ impl Info {
     /// # Panics
     /// - Invalid package reference name
     pub fn from_manifests(
-        ctx: &impl ScoopContext<config::Scoop>,
+        ctx: &impl ScoopContext,
         local_manifest: &Manifest,
         bucket: &Bucket,
     ) -> Result<Self> {
         let failed = {
-            let installed = ctx.app_installed(&local_manifest.name)?;
+            let installed = ctx.app_installed(unsafe { local_manifest.name() })?;
 
-            let app_path = ctx.apps_path().join(&local_manifest.name).join("current");
+            let app_path = ctx
+                .apps_path()
+                .join(unsafe { local_manifest.name() })
+                .join("current");
 
             !app_path.exists() && installed
         };
 
-        debug!("Local manifest name: {}", local_manifest.name);
-        let remote_manifest = bucket.get_manifest(&local_manifest.name)?;
+        debug!("Local manifest name: {}", unsafe { local_manifest.name() });
+        let remote_manifest = bucket.get_manifest(unsafe { local_manifest.name() })?;
 
         let install_manifest = local_manifest.install_manifest(ctx)?;
 
@@ -62,7 +64,7 @@ impl Info {
         let missing_dependencies = local_manifest
             .depends()
             .into_iter()
-            .map(ManifestRef::into_package_ref)
+            .map(manifest::Reference::into_package_ref)
             .filter(|reference| {
                 debug!(
                     "Checking if {} is installed.",
@@ -82,7 +84,7 @@ impl Info {
         }
 
         Ok(Info {
-            name: remote_manifest.name.clone(),
+            name: unsafe { remote_manifest.name() }.to_string(),
             current: local_manifest.version.to_string(),
             available: remote_manifest.version.to_string(),
             missing_dependencies,

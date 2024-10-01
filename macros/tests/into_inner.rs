@@ -5,7 +5,7 @@ struct DummyStruct;
 impl DummyStruct {
     pub async fn run(
         self,
-        _: impl sprinkles::contexts::ScoopContext<sprinkles::config::Scoop>,
+        _: &impl sprinkles::contexts::ScoopContext<Config = sprinkles::config::Scoop>,
     ) -> anyhow::Result<()> {
         println!("Hello, world!");
 
@@ -13,7 +13,7 @@ impl DummyStruct {
     }
 }
 
-#[derive(sfsu_derive::Runnable)]
+#[derive(sfsu_macros::Runnable)]
 enum MaybeIntoInner {
     Test1(DummyStruct),
     Test2(DummyStruct),

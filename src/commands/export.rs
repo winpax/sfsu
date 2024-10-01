@@ -5,15 +5,16 @@ use sprinkles::{config, contexts::ScoopContext};
 use crate::models::export::Export;
 
 #[derive(Debug, Clone, Parser)]
+/// Exports installed apps, buckets (and optionally configs) in JSON format
 pub struct Args {
     #[clap(short, long, help = "Export the scoop config as well")]
     config: bool,
 }
 
 impl super::Command for Args {
-    async fn runner(self, ctx: impl ScoopContext<config::Scoop>) -> anyhow::Result<()> {
+    async fn runner(self, ctx: &impl ScoopContext<Config = config::Scoop>) -> anyhow::Result<()> {
         let export = {
-            let mut export = Export::load(&ctx)?;
+            let mut export = Export::load(ctx)?;
 
             if !self.config {
                 export.config = None;

@@ -1,7 +1,7 @@
 use clap::Parser;
 use itertools::Itertools;
 use serde::Serialize;
-use sprinkles::{config, contexts::ScoopContext};
+use sprinkles::contexts::ScoopContext;
 
 #[derive(Debug, Clone, Serialize)]
 struct KnownBucket {
@@ -10,13 +10,14 @@ struct KnownBucket {
 }
 
 #[derive(Debug, Clone, Parser)]
+/// List all known buckets
 pub struct Args {
     #[clap(from_global)]
     json: bool,
 }
 
 impl super::Command for Args {
-    async fn runner(self, ctx: impl ScoopContext<config::Scoop>) -> anyhow::Result<()> {
+    async fn runner(self, ctx: &impl ScoopContext) -> anyhow::Result<()> {
         let known_buckets = ctx.known_buckets();
         let known_buckets = known_buckets
             .into_iter()

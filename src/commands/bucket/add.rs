@@ -4,11 +4,12 @@ use tokio::process::Command;
 
 use anyhow::Context;
 use clap::Parser;
-use sprinkles::{config, contexts::ScoopContext, progress::indicatif};
+use sprinkles::{contexts::ScoopContext, progress::indicatif};
 
 use crate::{abandon, calm_panic::CalmUnwrap};
 
 #[derive(Debug, Clone, Parser)]
+/// Add a bucket
 pub struct Args {
     #[clap(help = "The name of the bucket to add")]
     name: String,
@@ -21,7 +22,7 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    async fn runner(self, ctx: impl ScoopContext<config::Scoop>) -> anyhow::Result<()> {
+    async fn runner(self, ctx: &impl ScoopContext) -> anyhow::Result<()> {
         let repo_url = self
             .repo
             .clone()

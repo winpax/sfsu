@@ -1,7 +1,7 @@
 use clap::Parser;
 
 use rayon::prelude::*;
-use sprinkles::{buckets::Bucket, config, contexts::ScoopContext, packages::InstallManifest};
+use sprinkles::{buckets::Bucket, contexts::ScoopContext, packages::InstallManifest};
 
 use crate::{
     commands,
@@ -9,20 +9,21 @@ use crate::{
 };
 
 #[derive(Debug, Clone, Parser)]
+/// Find buckets that do not have any installed packages
 pub struct Args {
     #[clap(from_global)]
     json: bool,
 }
 
 impl commands::Command for Args {
-    async fn runner(self, ctx: impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
+    async fn runner(self, ctx: &impl ScoopContext) -> Result<(), anyhow::Error> {
         // TODO: Refactor
-        let used_buckets = InstallManifest::list_all_unchecked(&ctx)?
+        let used_buckets = InstallManifest::list_all_unchecked(ctx)?
             .par_iter()
             .filter_map(|entry| entry.bucket.clone())
             .collect::<Vec<_>>();
 
-        let unused_buckets = Bucket::list_all(&ctx)?
+        let unused_buckets = Bucket::list_all(ctx)?
             .par_iter()
             .filter_map(|bucket| {
                 if used_buckets.contains(&bucket.name().to_string()) {

@@ -4,14 +4,14 @@ use anyhow::Context;
 use clap::{Parser, Subcommand};
 use regex::Regex;
 use serde::Serialize;
-use sfsu_derive::Runnable;
-use sprinkles::{config, contexts::ScoopContext, wrappers::sizes::Size};
+use sfsu_macros::Runnable;
+use sprinkles::{config, contexts::ScoopContext};
 use tokio::task::JoinSet;
 
+mod list;
 mod remove;
-mod show;
 
-use crate::{abandon, commands::CommandRunner};
+use crate::{abandon, commands::CommandRunner, wrappers::sizes::Size};
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq, PartialOrd, Ord)]
 struct CacheEntry {
@@ -25,7 +25,7 @@ struct CacheEntry {
 
 impl CacheEntry {
     pub async fn match_paths(
-        ctx: &impl ScoopContext<config::Scoop>,
+        ctx: &impl ScoopContext,
         patterns: &[String],
     ) -> anyhow::Result<Vec<Self>> {
         let cache_path = ctx.cache_path();
@@ -95,14 +95,14 @@ impl CacheEntry {
 
 #[derive(Debug, Clone, Subcommand, Runnable)]
 enum Commands {
-    /// List cache entries
-    Show(show::Args),
+    #[clap(alias = "show", alias = "ls")]
+    List(list::Args),
     #[clap(alias = "rm")]
-    /// Remove cache entries
     Remove(remove::Args),
 }
 
 #[derive(Debug, Clone, Parser)]
+/// Show or clear the download cache
 pub struct Args {
     #[clap(subcommand)]
     command: Option<Commands>,
@@ -119,8 +119,11 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    async fn runner(self, ctx: impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
-        let command = self.command.unwrap_or(Commands::Show(show::Args {
+    async fn runner(
+        self,
+        ctx: &impl ScoopContext<Config = config::Scoop>,
+    ) -> Result<(), anyhow::Error> {
+        let command = self.command.unwrap_or(Commands::List(list::Args {
             json: self.json,
             apps: self.apps,
         }));

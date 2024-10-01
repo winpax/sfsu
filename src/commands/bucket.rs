@@ -7,26 +7,20 @@ pub mod unused;
 
 use clap::{Parser, Subcommand};
 
-use sfsu_derive::Runnable;
+use sfsu_macros::Runnable;
 use sprinkles::{config, contexts::ScoopContext};
 
 use super::{Command, CommandRunner};
 
 #[derive(Debug, Clone, Subcommand, Runnable)]
 pub enum Commands {
-    /// Add a bucket
     Add(add::Args),
     #[clap(alias = "rm")]
-    /// Remove a bucket
     Remove(remove::Args),
-    /// List all installed buckets
     List(list::Args),
-    /// List all known buckets
     Known(known::Args),
-    /// Find buckets that do not have any installed packages
     Unused(unused::Args),
     #[cfg(not(feature = "v2"))]
-    /// List outdated buckets
     Outdated(outdated::Args),
 }
 
@@ -39,7 +33,10 @@ pub struct Args {
 
 impl super::Command for Args {
     #[inline]
-    async fn runner(self, ctx: impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
+    async fn runner(
+        self,
+        ctx: &impl ScoopContext<Config = config::Scoop>,
+    ) -> Result<(), anyhow::Error> {
         self.command.run(ctx).await
     }
 }

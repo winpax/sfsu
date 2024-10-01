@@ -24,23 +24,40 @@ env:
 jobs:
   cargo-deny:
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
-      - uses: EmbarkStudios/cargo-deny-action@v1
+      - uses: EmbarkStudios/cargo-deny-action@v2
 
   clippy:
     name: Clippy
     runs-on: windows-latest
+    permissions:
+      contents: read
+      security-events: write
     steps:
       - uses: actions/checkout@v4
+      - uses: Swatinem/rust-cache@v2.7.3
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy
 
-      - name: Run Clippy
-        run: cargo clippy --features beta
+      - name: Install required crates
+        run: cargo install clippy-sarif sarif-fmt
+
+      - name: Run rust-clippy
+        run: cargo clippy
+          --all-features
+          --message-format=json | clippy-sarif | tee rust-clippy-results.sarif | sarif-fmt
+        continue-on-error: true
+
+      - name: Upload analysis results to GitHub
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: rust-clippy-results.sarif
+          wait-for-processing: true
 
   format:
     name: Formatting
@@ -62,6 +79,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      - uses: Swatinem/rust-cache@v2.7.3
 
       - name: Install and setup Scoop
         uses: MinoruSekine/setup-scoop@v4
@@ -81,8 +99,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: Swatinem/rust-cache@v2.7.3
-        # Disable cache for release builds
-        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+      - uses: extractions/setup-just@v2
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Debug build
+        run: cargo b --all --features beta
+
+  publish:
+    if: ${{ startsWith(github.ref, 'refs/tags/') }}
+    name: Publish
+    runs-on: windows-latest
+    needs: [cargo-deny, build, test, clippy, format]
+
+    steps:
+      - uses: actions/checkout@v4
       - uses: extractions/setup-just@v2
 
       - name: Install Rust
@@ -97,14 +129,13 @@ jobs:
         run: just beta-release-all
 
       - name: Upload a Build Artifact
-        uses: actions/upload-artifact@v4.3.3
+        uses: actions/upload-artifact@v4.4.0
         with:
           name: package.zip
           path: release/*
 
       - name: Upload & Publish
         uses: softprops/action-gh-release@v2.0.4
-        if: ${{ startsWith(github.ref, 'refs/tags/') }}
         with:
           files: |
             release/*.exe
@@ -112,7 +143,6 @@ jobs:
 
       - name: VirusTotal Scan
         uses: crazy-max/ghaction-virustotal@v4
-        if: ${{ startsWith(github.ref, 'refs/tags/') }}
         with:
           update_release_body: true
           vt_api_key: ${{ secrets.VT_API_KEY }}

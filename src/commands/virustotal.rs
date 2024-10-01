@@ -7,7 +7,7 @@ use sprinkles::{
     config,
     contexts::ScoopContext,
     hash::Hash,
-    packages::{reference::Package, CreateManifest, Manifest},
+    packages::{reference::package, CreateManifest, Manifest},
     progress::{indicatif::ProgressBar, style, ProgressOptions},
     requests::USER_AGENT,
     Architecture,
@@ -72,8 +72,8 @@ struct StrippedManifest {
 impl StrippedManifest {
     fn new(manifest: &Manifest, search_type: SearchType) -> Self {
         Self {
-            name: manifest.name.clone(),
-            bucket: manifest.bucket.clone(),
+            name: unsafe { manifest.name() }.to_string(),
+            bucket: unsafe { manifest.bucket() }.to_string(),
             search_type,
         }
     }
@@ -90,10 +90,11 @@ fn extract_info(value: &serde_json::Value) -> anyhow::Result<(u64, u64)> {
 }
 
 #[derive(Debug, Clone, Parser)]
+/// Scan a file with `VirusTotal`
 pub struct Args {
     // TODO: Use manifest reference and -a flag for scanning installed apps
     #[clap(help = "The apps to scan for viruses")]
-    apps: Vec<Package>,
+    apps: Vec<package::Reference>,
 
     #[clap(
         short,
@@ -129,8 +130,10 @@ pub struct Args {
 impl super::Command for Args {
     const BETA: bool = true;
 
-    async fn runner(self, ctx: impl ScoopContext<config::Scoop>) -> Result<(), anyhow::Error> {
-        let ctx = ctx;
+    async fn runner(
+        self,
+        ctx: &impl ScoopContext<Config = config::Scoop>,
+    ) -> Result<(), anyhow::Error> {
         let config = ctx.config();
         let api_key = config.virustotal_api_key.clone().calm_expect(
             "No virustotal api key found.\n  Get one at https://www.virustotal.com/gui/my-apikey and set with\n  scoop config virustotal_api_key <API key>",
@@ -148,10 +151,10 @@ impl super::Command for Args {
                 .map(|path| Manifest::from_path(path))
                 .collect::<Result<_, _>>()?
         } else {
-            let manifests = self.apps.iter().map(|reference| {
-                let ctx = &ctx;
-                async move { reference.list_manifests(ctx).await }
-            });
+            let manifests = self
+                .apps
+                .iter()
+                .map(|reference| async move { reference.list_manifests(ctx).await });
 
             futures::future::try_join_all(manifests)
                 .await?
@@ -173,7 +176,7 @@ impl super::Command for Args {
                 } else {
                     manifest
                         .install_config(self.arch)
-                        .url
+                        .urls
                         .map(|url| url.map(SearchType::Url).to_vec())
                 };
 

@@ -1,20 +1,21 @@
 use clap::Parser;
 use dialoguer::Confirm;
-use sprinkles::{config, contexts::ScoopContext};
+use sprinkles::contexts::ScoopContext;
 
 use crate::{abandon, output::colours::yellow};
 
 #[derive(Debug, Clone, Parser)]
+/// Remove a bucket
 pub struct Args {
     #[clap(help = "The name of the bucket to delete")]
     name: String,
 
-    #[clap(short = 'y', long, help = "Assume \"yes\" as answer to prompts")]
+    #[clap(from_global)]
     assume_yes: bool,
 }
 
 impl super::Command for Args {
-    async fn runner(self, ctx: impl ScoopContext<config::Scoop>) -> anyhow::Result<()> {
+    async fn runner(self, ctx: &impl ScoopContext) -> anyhow::Result<()> {
         let path = ctx.buckets_path().join(&self.name);
 
         if !path.exists() {

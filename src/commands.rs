@@ -1,3 +1,4 @@
+pub mod app;
 pub mod bucket;
 pub mod cache;
 pub mod cat;
@@ -13,7 +14,6 @@ pub mod home;
 pub mod hook;
 pub mod info;
 pub mod list;
-pub mod manage_config;
 #[cfg(not(feature = "v2"))]
 pub mod outdated;
 pub mod search;
@@ -23,7 +23,7 @@ pub mod virustotal;
 
 use clap::Subcommand;
 
-use sfsu_derive::{Hooks, Runnable};
+use sfsu_macros::{Hooks, Runnable};
 use sprinkles::{config, contexts::ScoopContext};
 
 use crate::{abandon, output::colours::eprintln_yellow};
@@ -77,11 +77,11 @@ pub trait Command {
 
     const DEPRECATED: Option<DeprecationWarning> = None;
 
-    async fn runner(self, ctx: impl ScoopContext<config::Scoop>) -> anyhow::Result<()>;
+    async fn runner(self, ctx: &impl ScoopContext<Config = config::Scoop>) -> anyhow::Result<()>;
 }
 
 pub trait CommandRunner: Command {
-    async fn run(self, ctx: impl ScoopContext<config::Scoop>) -> anyhow::Result<()>
+    async fn run(self, ctx: &impl ScoopContext<Config = config::Scoop>) -> anyhow::Result<()>
     where
         Self: Sized,
     {
@@ -107,57 +107,41 @@ impl<T: Command> CommandRunner for T {}
 
 #[derive(Debug, Clone, Subcommand, Hooks, Runnable)]
 pub enum Commands {
-    /// Search for a package
     Search(search::Args),
-    /// List all installed packages
+    #[cfg(not(feature = "v2"))]
     List(list::Args),
     #[no_hook]
-    /// Generate hooks for the given shell
     Hook(hook::Args),
     #[cfg(not(feature = "v2"))]
-    /// Find buckets that do not have any installed packages
     UnusedBuckets(bucket::unused::Args),
-    /// Commands to manage buckets
     Bucket(bucket::Args),
     #[cfg(not(feature = "v2"))]
-    /// Describe a package
     Describe(describe::Args),
-    /// Display information about a package
+    #[cfg(not(feature = "v2"))]
     Info(info::Args),
     #[cfg(not(feature = "v2"))]
-    /// List outdated buckets and/or packages
     Outdated(outdated::Args),
-    /// List the dependencies of a given package, in the order that they will be installed
     Depends(depends::Args),
-    #[cfg(feature = "download")]
-    /// Download the specified app.
+    #[cfg(all(feature = "download", not(feature = "v2")))]
     Download(download::Args),
-    /// Show status and check for new app versions
     Status(status::Args),
     #[cfg_attr(not(feature = "v2"), no_hook)]
-    /// Update Scoop and Scoop buckets
     Update(update::Args),
-    /// Opens the app homepage
+    #[cfg(not(feature = "v2"))]
     Home(home::Args),
-    /// Show content of specified manifest
+    #[cfg(not(feature = "v2"))]
     Cat(cat::Args),
-    /// Exports installed apps, buckets (and optionally configs) in JSON format
     Export(export::Args),
-    /// Check for common issues
     Checkup(checkup::Args),
     #[cfg(feature = "download")]
-    /// Show or clear the download cache
     Cache(cache::Args),
-    /// Scan a file with `VirusTotal`
-    Virustotal(virustotal::Args),
+    #[hook_name = "virustotal"]
+    #[clap(alias = "virustotal")]
+    Scan(virustotal::Args),
     #[no_hook]
-    /// Show credits
     Credits(credits::Args),
-    #[cfg(feature = "v2")]
-    /// Get or set configuration values
-    Config(manage_config::Args),
+    App(app::Args),
     #[no_hook]
     #[cfg(debug_assertions)]
-    /// Debugging commands
     Debug(debug::Args),
 }
