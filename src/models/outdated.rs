@@ -17,7 +17,6 @@ pub struct Info {
 
 impl Info {
     #[must_use]
-    #[allow(dead_code)]
     /// Get the outdated info from a local and remote manifest combo
     ///
     /// Returns [`None`] if they have the same version
