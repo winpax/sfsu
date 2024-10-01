@@ -20,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Renamed `cache show` to `cache list` (alias to `show` added to avoid breaking change)
 - Purge confirmation now shows both bucket and app name
 - Purge command can now handle multiple apps
+- Renamed `--verbose` to `--debug`
+- `--verbose` flag help info changed to more accurately represent what it does
 
 ## [1.14.0] - 2024-06-12
 
