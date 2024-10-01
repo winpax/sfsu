@@ -3622,7 +3622,6 @@ dependencies = [
  "ratatui",
  "rayon",
  "regex",
- "scopeguard",
  "semver",
  "serde",
  "serde_json",
