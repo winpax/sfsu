@@ -1,18 +1,22 @@
 pub mod app;
 pub mod bucket;
 pub mod cache;
+#[cfg(not(feature = "v2"))]
 pub mod cat;
 pub mod checkup;
 pub mod credits;
 pub mod debug;
 pub mod depends;
 pub mod describe;
-#[cfg(feature = "download")]
+#[cfg(all(feature = "download", not(feature = "v2")))]
 pub mod download;
 pub mod export;
+#[cfg(not(feature = "v2"))]
 pub mod home;
 pub mod hook;
+#[cfg(not(feature = "v2"))]
 pub mod info;
+#[cfg(not(feature = "v2"))]
 pub mod list;
 #[cfg(not(feature = "v2"))]
 pub mod outdated;
