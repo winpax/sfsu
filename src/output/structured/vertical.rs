@@ -33,6 +33,8 @@ impl VTable {
         }
     }
 
+    // This will eventually be used
+    #[allow(dead_code)]
     pub fn snake_case_headers(&mut self) {
         self.format_headers = false;
     }
