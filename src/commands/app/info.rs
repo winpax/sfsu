@@ -43,8 +43,8 @@ pub struct Args {
     #[clap(from_global)]
     json: bool,
 
-    #[clap(long, help = "Disable updated info")]
-    disable_updated: bool,
+    #[clap(from_global)]
+    verbose: bool,
 }
 
 impl super::Command for Args {
@@ -107,9 +107,7 @@ impl Args {
             (__install_path.exists() && __install_path.is_dir()).then_some(__install_path)
         };
 
-        let (updated_at, updated_by) = if self.disable_updated {
-            (None, None)
-        } else {
+        let (updated_at, updated_by) = if self.verbose {
             match manifest.last_updated_info(ctx) {
                 Ok((updated_at, updated_by)) => (
                     updated_at
@@ -126,6 +124,8 @@ impl Args {
                     _ => (None, None),
                 },
             }
+        } else {
+            (None, None)
         };
 
         let pkg_info = Package {
