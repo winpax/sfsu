@@ -93,7 +93,10 @@ jobs:
         run: cargo test --all --features beta
 
   build:
-    name: Build
+    strategy:
+      matrix:
+        arch: [x86_64, i686, aarch64]
+    name: Build for ${{ matrix.arch }}
     runs-on: windows-latest
 
     steps:
@@ -105,7 +108,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Debug build
-        run: cargo b --all --features beta
+        run: cargo b --all --features beta --target ${{ matrix.arch }}-pc-windows-msvc
 
   publish:
     if: ${{ startsWith(github.ref, 'refs/tags/') }}
