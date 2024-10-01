@@ -63,7 +63,7 @@ impl std::fmt::Display for DeprecationWarning {
         std::fmt::Display::fmt(&self.message, f)?;
 
         if let Some(version) = self.version {
-            write!(f, "Will be removed in v{version}. ")?;
+            write!(f, ". Will be removed in v{version}. ")?;
         }
 
         Ok(())

@@ -216,11 +216,7 @@ impl Args {
                                 unsafe { app.name() },
                                 err
                             );
-                            anyhow::bail!(
-                                "Failed to get status for {}: {:?}",
-                                unsafe { app.name() },
-                                err
-                            )
+                            Err(err)?
                         }
                     }
                 } else {
