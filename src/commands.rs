@@ -107,30 +107,38 @@ impl<T: Command> CommandRunner for T {}
 
 #[derive(Debug, Clone, Subcommand, Hooks, Runnable)]
 pub enum Commands {
-    Search(search::Args),
+    App(app::Args),
     #[cfg(not(feature = "v2"))]
-    List(list::Args),
+    #[command_name = "app cat"]
+    Cat(app::cat::Args),
+    #[cfg(all(feature = "download", not(feature = "v2")))]
+    #[command_name = "app download"]
+    Download(app::download::Args),
+    #[cfg(not(feature = "v2"))]
+    #[command_name = "app home"]
+    Home(app::home::Args),
+    #[cfg(not(feature = "v2"))]
+    #[command_name = "app info"]
+    Info(app::info::Args),
+    #[cfg(not(feature = "v2"))]
+    #[command_name = "app list"]
+    List(app::list::Args),
+
     #[no_hook]
     Hook(hook::Args),
+
+    Search(search::Args),
     #[cfg(not(feature = "v2"))]
     UnusedBuckets(bucket::unused::Args),
     Bucket(bucket::Args),
     #[cfg(not(feature = "v2"))]
     Describe(describe::Args),
     #[cfg(not(feature = "v2"))]
-    Info(info::Args),
-    #[cfg(not(feature = "v2"))]
     Outdated(outdated::Args),
     Depends(depends::Args),
-    #[cfg(all(feature = "download", not(feature = "v2")))]
-    Download(download::Args),
     Status(status::Args),
     #[cfg_attr(not(feature = "v2"), no_hook)]
     Update(update::Args),
-    #[cfg(not(feature = "v2"))]
-    Home(home::Args),
-    #[cfg(not(feature = "v2"))]
-    Cat(cat::Args),
     Export(export::Args),
     Checkup(checkup::Args),
     #[cfg(feature = "download")]
@@ -140,7 +148,6 @@ pub enum Commands {
     Scan(virustotal::Args),
     #[no_hook]
     Credits(credits::Args),
-    App(app::Args),
     #[no_hook]
     #[cfg(debug_assertions)]
     Debug(debug::Args),
