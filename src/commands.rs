@@ -1,25 +1,25 @@
-pub mod app;
-pub mod bucket;
-pub mod cache;
-pub mod cat;
-pub mod checkup;
-pub mod credits;
-pub mod debug;
-pub mod depends;
-pub mod describe;
+mod app;
+mod bucket;
+mod cache;
+mod cat;
+mod checkup;
+mod credits;
+mod debug;
+mod depends;
+mod describe;
 #[cfg(feature = "download")]
-pub mod download;
-pub mod export;
-pub mod home;
-pub mod hook;
-pub mod info;
-pub mod list;
+mod download;
+mod export;
+mod home;
+mod hook;
+mod info;
+mod list;
 #[cfg(not(feature = "v2"))]
-pub mod outdated;
-pub mod search;
-pub mod status;
-pub mod update;
-pub mod virustotal;
+mod outdated;
+mod search;
+mod status;
+mod update;
+mod virustotal;
 
 use clap::Subcommand;
 
