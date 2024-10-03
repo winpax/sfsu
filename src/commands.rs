@@ -1,19 +1,13 @@
 mod app;
 mod bucket;
 mod cache;
-mod cat;
 mod checkup;
 mod credits;
 mod debug;
 mod depends;
 mod describe;
-#[cfg(feature = "download")]
-mod download;
 mod export;
-mod home;
 mod hook;
-mod info;
-mod list;
 #[cfg(not(feature = "v2"))]
 mod outdated;
 mod search;
