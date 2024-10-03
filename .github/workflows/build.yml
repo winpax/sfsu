@@ -102,6 +102,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: Swatinem/rust-cache@v2.7.3
+        with:
+          key: build-${{ matrix.arch }}
       - uses: extractions/setup-just@v2
 
       - name: Install Rust
