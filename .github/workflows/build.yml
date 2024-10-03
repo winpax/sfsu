@@ -49,7 +49,7 @@ jobs:
 
       - name: Run rust-clippy
         run: cargo clippy
-          --all-features
+          --features=beta
           --message-format=json | clippy-sarif | tee rust-clippy-results.sarif | sarif-fmt
         continue-on-error: true
 

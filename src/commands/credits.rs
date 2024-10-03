@@ -359,7 +359,7 @@ impl Args {
                     .title_bottom(footer)
                     .borders(Borders::ALL),
             ),
-            frame.size(),
+            frame.area(),
         );
 
         false
