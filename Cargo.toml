@@ -87,7 +87,7 @@ regex = "1.10"
 semver = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0", features = ["preserve_order"] }
-shadow-rs = "0.38"
+shadow-rs = "1.0"
 sprinkles-rs = { version = "0.21", features = ["clap"] }
 tokio = { version = "1.37", features = ["full"] }
 vt3 = "0.7"
@@ -104,7 +104,7 @@ url = "2.5.4"
 contribs = { git = "https://github.com/winpax/contribs.git", version = "0.1" }
 dotenv = "0.15"
 git2 = "0.20"
-shadow-rs = "0.38"
+shadow-rs = "1.0"
 tokio = { version = "1.37", features = ["full"] }
 toml_edit = "0.22"
 winres = "0.1"
