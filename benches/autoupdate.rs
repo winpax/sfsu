@@ -30,7 +30,7 @@ fn criterion_benchmark(c: &mut Criterion) {
                     ctx.clone(),
                 )
             },
-            |(package, ctx)| async move { black_box(package.manifest(&ctx).await.unwrap()) },
+            async move |(package, ctx)| black_box(package.manifest(&ctx).await.unwrap()),
             BatchSize::SmallInput,
         );
     });
@@ -45,14 +45,14 @@ fn criterion_benchmark(c: &mut Criterion) {
 
     c.bench_function("open handle", |b| {
         b.to_async(&runtime).iter_batched(
-            || async {
+            async || {
                 package::Reference::from_str("extras/sfsu")
                     .unwrap()
                     .manifest(&ctx)
                     .await
                     .unwrap()
             },
-            |manifest| async {
+            async |manifest| {
                 Handle::open_manifest(ctx.cache_path(), &manifest.await, Architecture::ARCH)
                     .unwrap()
             },
@@ -72,7 +72,7 @@ fn criterion_benchmark(c: &mut Criterion) {
                     ctx.clone(),
                 )
             },
-            |(mut package, ctx)| async move {
+            async move |(mut package, ctx)| {
                 black_box(&mut package).set_version("1.10.2".to_string());
                 black_box(package.manifest(&ctx).await.unwrap());
             },
@@ -82,7 +82,7 @@ fn criterion_benchmark(c: &mut Criterion) {
 
     slow.bench_function("create downloader", |b| {
         b.to_async(&runtime).iter_batched(
-            || async {
+            async || {
                 Handle::open_manifest(
                     ctx.cache_path(),
                     &package::Reference::from_str("extras/sfsu")
@@ -95,7 +95,7 @@ fn criterion_benchmark(c: &mut Criterion) {
                 .unwrap()
                 .remove(0)
             },
-            |dl| async {
+            async |dl| {
                 let dl = dl.await;
                 black_box(
                     DownloadHandle::new::<AsyncClient>(dl, None, None)
