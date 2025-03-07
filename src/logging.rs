@@ -20,7 +20,7 @@ impl Logger {
     const LEVEL_FILTER: LevelFilter = LevelFilter::Trace;
 
     pub async fn new(ctx: &impl ScoopContext, verbose: bool) -> Self {
-        let file = async move {
+        async fn get_file(ctx: &impl ScoopContext) -> Result<File, anyhow::Error> {
             let logs_dir = if cfg!(debug_assertions) {
                 let dir = std::env::current_dir().unwrap().join("logs");
                 if !dir.exists() {
@@ -32,7 +32,7 @@ impl Logger {
                 ctx.logging_dir()?
             };
             let date = Local::now();
-            let log_file = async {
+            let log_file = async || {
                 let mut i = 0;
                 loop {
                     i += 1;
@@ -45,23 +45,21 @@ impl Logger {
                     }
                 }
             };
-            let timeout = async {
+            let timeout = async || {
                 use std::time::Duration;
                 use tokio::time;
 
                 time::sleep(Duration::from_secs(5)).await;
             };
             let log_file = tokio::select! {
-                res = log_file => anyhow::Ok(res),
-                () = timeout => anyhow::bail!("Timeout creating new log"),
+                res = log_file() => anyhow::Ok(res),
+                () = timeout() => anyhow::bail!("Timeout creating new log"),
             }??;
 
             anyhow::Ok(log_file)
         }
-        .await
-        .ok();
 
-        Self::from_file(file, verbose)
+        Self::from_file(get_file(ctx).await.ok(), verbose)
     }
 
     pub fn from_file(file: Option<File>, verbose: bool) -> Self {
