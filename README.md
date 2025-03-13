@@ -8,6 +8,9 @@
 ![wakatime](https://wakatime.com/badge/user/69c39493-dba9-4b9d-8ae6-1a6a17e60cb4/project/ba7eaa48-0f34-4b20-95e5-4ba2e6184d39.svg)
 
 > [!NOTE]
+> [LOOKING FOR MAINTAINERS](https://github.com/orgs/winpax/discussions/958). If you are interested please get in touch.
+
+> [!NOTE]
 > This is still under development. It currently provides faster alternatives to most, but not all, Scoop commands.
 > All breaking changes will only occur in v2.0 and with proper deprecation warnings.
 
