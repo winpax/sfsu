@@ -91,7 +91,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2.7.5
         with:
           key: build-${{ matrix.arch }}
-      - uses: extractions/setup-just@v2
+      - uses: extractions/setup-just@v3
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -107,7 +107,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4.2.2
-      - uses: extractions/setup-just@v2
+      - uses: extractions/setup-just@v3
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
