@@ -62,14 +62,14 @@ clap = { version = "4.5", features = [
     "wrap_help",
 ] }
 console = { version = "0.15", features = ["windows-console-colors"] }
-crossterm = "0.28"
+crossterm = "0.29"
 derive_more = { version = "2.0", features = ["deref_mut", "deref", "as_ref"] }
 dialoguer = "0.11"
 futures = "0.3"
 hashbrown = "0.15.2"
 heck = "0.5"
 human-panic = "2.0"
-indexmap = { version = "2.7.1", features = ["rayon"] }
+indexmap = { version = "2.9", features = ["rayon"] }
 itertools = "0.14"
 konst = "0.3"
 log = { version = "0.4", features = ["std"] }
@@ -92,7 +92,7 @@ sprinkles-rs = { version = "0.21", features = ["clap"] }
 tokio = { version = "1.37", features = ["full"] }
 vt3 = "0.7"
 which = "7.0"
-windows = { version = "0.60", features = ["Win32_Storage_FileSystem"] }
+windows = { version = "0.61", features = ["Win32_Storage_FileSystem"] }
 windows-version = "0.1"
 winreg = "0.55"
 
