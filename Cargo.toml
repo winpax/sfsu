@@ -79,7 +79,7 @@ prodash = { version = "29.0", features = [
     "render-line",
     "render-line-crossterm",
 ] }
-quork = "0.8"
+quork = { version = "0.9", default-features = false, features = ["root"] }
 rand = "0.9"
 ratatui = { version = "0.29", features = ["macros"] }
 rayon = "1.10"
