@@ -69,7 +69,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2.7.8
 
       - name: Install and setup Scoop
-        uses: MinoruSekine/setup-scoop@v4.0.1
+        uses: winpax/scoop-setup@v1.0.0
         with:
           buckets: extras java
 
