@@ -61,7 +61,7 @@ clap = { version = "4.5", features = [
     "unicode",
     "wrap_help",
 ] }
-console = { version = "0.15", features = ["windows-console-colors"] }
+console = { version = "0.16", features = ["windows-console-colors"] }
 crossterm = "0.29"
 derive_more = { version = "2.0", features = ["deref_mut", "deref", "as_ref"] }
 dialoguer = "0.11"
