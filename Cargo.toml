@@ -97,7 +97,7 @@ windows-version = "0.1"
 winreg = "0.55"
 
 [dev-dependencies]
-criterion = { version = "0.5", features = ["async_tokio", "html_reports"] }
+criterion = { version = "0.7", features = ["async_tokio", "html_reports"] }
 url = "2.5.4"
 
 [build-dependencies]
