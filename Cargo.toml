@@ -61,21 +61,21 @@ clap = { version = "4.5", features = [
     "unicode",
     "wrap_help",
 ] }
-console = { version = "0.15", features = ["windows-console-colors"] }
+console = { version = "0.16", features = ["windows-console-colors"] }
 crossterm = "0.29"
 derive_more = { version = "2.0", features = ["deref_mut", "deref", "as_ref"] }
 dialoguer = "0.11"
 futures = "0.3"
-hashbrown = "0.15.2"
+hashbrown = "0.15"
 heck = "0.5"
 human-panic = "2.0"
-indexmap = { version = "2.9", features = ["rayon"] }
+indexmap = { version = "2.10", features = ["rayon"] }
 itertools = "0.14"
 konst = "0.3"
 log = { version = "0.4", features = ["std"] }
 open = "5.1"
 parking_lot = "0.12"
-prodash = { version = "29.0", features = [
+prodash = { version = "30.0", features = [
     "render-line",
     "render-line-crossterm",
 ] }
@@ -88,16 +88,16 @@ semver = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0", features = ["preserve_order"] }
 shadow-rs = "1.0"
-sprinkles-rs = { version = "0.21", features = ["clap"] }
+sprinkles-rs = { version = "0.22", features = ["clap"] }
 tokio = { version = "1.37", features = ["full"] }
 vt3 = "0.7"
-which = "7.0"
+which = "8.0"
 windows = { version = "0.61", features = ["Win32_Storage_FileSystem"] }
 windows-version = "0.1"
 winreg = "0.55"
 
 [dev-dependencies]
-criterion = { version = "0.5", features = ["async_tokio", "html_reports"] }
+criterion = { version = "0.7", features = ["async_tokio", "html_reports"] }
 url = "2.5.4"
 
 [build-dependencies]
@@ -106,5 +106,5 @@ dotenv = "0.15"
 git2 = "0.20"
 shadow-rs = "1.0"
 tokio = { version = "1.37", features = ["full"] }
-toml_edit = "0.22"
+toml_edit = "0.23"
 winres = "0.1"
