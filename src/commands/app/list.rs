@@ -63,7 +63,17 @@ impl SortBy {
     }
 
     fn sort_source(a: &Info, b: &Info) -> std::cmp::Ordering {
-        // TODO: Unknown source should sort first
+        const UNKNOWN_SOURCE: &str = "Unknown";
+
+        // Force sort unknown sources to the start
+        if a.source == UNKNOWN_SOURCE {
+            return std::cmp::Ordering::Less;
+        }
+
+        if b.source == UNKNOWN_SOURCE {
+            return std::cmp::Ordering::Greater;
+        }
+
         a.source.cmp(&b.source)
     }
 
