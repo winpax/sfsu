@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `app list` now sorts using unstable sorting
   (this may result in inconsistent results between invocations, and in comparison to scoop,
   in cases where there are two apps with equal sorting fields)
+- `app list` now sorts `Unknown` source first
+- `app list` now uses the `semver` crate for proper semantic version sorting
 
 ## [1.16.0] - 2025-19-01
 

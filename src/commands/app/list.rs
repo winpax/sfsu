@@ -58,8 +58,14 @@ impl SortBy {
     }
 
     fn sort_version(a: &Info, b: &Info) -> std::cmp::Ordering {
-        // TODO: Proper semantic version sorting
-        a.version.cmp(&b.version)
+        if let Ok(parsed_a) = a.version.parse::<semver::Version>()
+            && let Ok(parsed_b) = b.version.parse::<semver::Version>()
+        {
+            parsed_a.cmp(&parsed_b)
+        } else {
+            // Fallback to string comparison if parsing fails
+            a.version.cmp(&b.version)
+        }
     }
 
     fn sort_source(a: &Info, b: &Info) -> std::cmp::Ordering {
