@@ -40,9 +40,7 @@ impl SortBy {
     pub fn sort(self, a: &Info, b: &Info, descending: bool) -> std::cmp::Ordering {
         let ordering = match self {
             SortBy::Name => Self::sort_name(a, b),
-            // TODO: Proper semantic version sorting
             SortBy::Version => Self::sort_version(a, b),
-            // TODO: Unknown source should sort first
             SortBy::Source => Self::sort_source(a, b),
             SortBy::Updated => Self::sort_updated(a, b),
             SortBy::Notes => Self::sort_notes(a, b),
@@ -60,10 +58,12 @@ impl SortBy {
     }
 
     fn sort_version(a: &Info, b: &Info) -> std::cmp::Ordering {
+        // TODO: Proper semantic version sorting
         a.version.cmp(&b.version)
     }
 
     fn sort_source(a: &Info, b: &Info) -> std::cmp::Ordering {
+        // TODO: Unknown source should sort first
         a.source.cmp(&b.source)
     }
 
