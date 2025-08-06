@@ -16,6 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Major refactor of `Structured` output struct
   - This includes an updated design for the output string
 - Updated dependencies
+- `app list` now sorts item in ascending order in line with scoop
+- `app list` now sorts case-insensitive
+- `app list` now sorts using unstable sorting
+  (this may result in inconsistent results between invocations, and in comparison to scoop,
+  in cases where there are two apps with equal sorting fields)
 
 ## [1.16.0] - 2025-19-01
 

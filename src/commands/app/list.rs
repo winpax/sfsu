@@ -36,21 +36,51 @@ pub enum SortBy {
     Notes,
 }
 
+impl SortBy {
+    pub fn sort(self, a: &Info, b: &Info, descending: bool) -> std::cmp::Ordering {
+        let ordering = match self {
+            SortBy::Name => Self::sort_name(a, b),
+            // TODO: Proper semantic version sorting
+            SortBy::Version => Self::sort_version(a, b),
+            // TODO: Unknown source should sort first
+            SortBy::Source => Self::sort_source(a, b),
+            SortBy::Updated => Self::sort_updated(a, b),
+            SortBy::Notes => Self::sort_notes(a, b),
+        };
+
+        if descending {
+            ordering
+        } else {
+            ordering.reverse()
+        }
+    }
+
+    fn sort_name(a: &Info, b: &Info) -> std::cmp::Ordering {
+        a.name.to_lowercase().cmp(&b.name.to_lowercase())
+    }
+
+    fn sort_version(a: &Info, b: &Info) -> std::cmp::Ordering {
+        a.version.cmp(&b.version)
+    }
+
+    fn sort_source(a: &Info, b: &Info) -> std::cmp::Ordering {
+        a.source.cmp(&b.source)
+    }
+
+    fn sort_updated(a: &Info, b: &Info) -> std::cmp::Ordering {
+        a.updated.cmp(&b.updated)
+    }
+
+    fn sort_notes(a: &Info, b: &Info) -> std::cmp::Ordering {
+        a.notes.cmp(&b.notes)
+    }
+}
+
 impl super::Command for Args {
     async fn runner(self, ctx: &impl ScoopContext) -> Result<(), anyhow::Error> {
         let mut outputs = Info::list_installed(ctx, self.bucket.as_ref())?;
 
-        outputs.par_sort_by(|a, b| match self.sort_by {
-            SortBy::Name => a.name.cmp(&b.name),
-            SortBy::Version => a.version.cmp(&b.version),
-            SortBy::Source => a.source.cmp(&b.source),
-            SortBy::Updated => a.updated.cmp(&b.updated),
-            SortBy::Notes => a.notes.cmp(&b.notes),
-        });
-
-        if self.descending {
-            outputs.reverse();
-        }
+        outputs.par_sort_unstable_by(|a, b| self.sort_by.sort(a, b, self.descending));
 
         if self.json {
             let output_json = serde_json::to_string_pretty(&outputs)?;
