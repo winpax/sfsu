@@ -7,14 +7,14 @@
 [![Scoop Version (winpax bucket)](https://img.shields.io/scoop/v/sfsu?bucket=https%3A%2F%2Fgithub.com%2Fwinpax%2Fbucket)](https://github.com/winpax/bucket)
 ![wakatime](https://wakatime.com/badge/user/69c39493-dba9-4b9d-8ae6-1a6a17e60cb4/project/ba7eaa48-0f34-4b20-95e5-4ba2e6184d39.svg)
 
-> [!NOTE]
+<!-- > [!NOTE]
 > [LOOKING FOR MAINTAINERS](https://github.com/orgs/winpax/discussions/958). If you are interested please get in touch.
-> 
+>
 > I largely do not use Windows anymore, and it's hard for me to justify booting Windows to work on this.
 > I will continue to update it for any bug fixes or updates needed to maintain parity and compatibility with Scoop,
 > however most of my time will be devoted to other projects for the forseeable future.
 > [hok](https://github.com/chawyehsu/hok) is another project attempting a simlar feat which you may be interested in
-> if this no longer provides what you need.
+> if this no longer provides what you need. -->
 
 > [!NOTE]
 > This is still under development. It currently provides faster alternatives to most, but not all, Scoop commands.
