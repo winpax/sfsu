@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.17.1]
+
+### Fixed
+
+- Reverse ordering for `sfsu status` command.
+
+## [1.17.0]
+
 ### Added
 
 - Added `app cleanup` command for removing old versions and cache entries
@@ -134,7 +142,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For older version's changelogs, see the [releases](https://github.com/winpax/sfsu/releases) page.
 
-[Unreleased]: https://github.com/winpax/sfsu/compare/v1.16.0...HEAD
+[Unreleased]: https://github.com/winpax/sfsu/compare/v1.17.1...HEAD
+[1.17.1]: https://github.com/winpax/sfsu/releases/tag/v1.17.1
+[1.17.0]: https://github.com/winpax/sfsu/releases/tag/v1.17.0
 [1.16.0]: https://github.com/winpax/sfsu/releases/tag/v1.16.0
 [1.15.1]: https://github.com/winpax/sfsu/releases/tag/v1.15.1
 [1.15.0]: https://github.com/winpax/sfsu/releases/tag/v1.15.0
