@@ -27,14 +27,14 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-      - uses: actions/checkout@v4.3.0
+      - uses: actions/checkout@v5.0.0
       - uses: EmbarkStudios/cargo-deny-action@v2.0.11
 
   clippy:
     name: Clippy
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4.3.0
+      - uses: actions/checkout@v5.0.0
       - uses: Swatinem/rust-cache@v2.8.0
 
       - name: Install Rust
@@ -50,7 +50,7 @@ jobs:
     name: Formatting
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4.3.0
+      - uses: actions/checkout@v5.0.0
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -65,7 +65,7 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v4.3.0
+      - uses: actions/checkout@v5.0.0
       - uses: Swatinem/rust-cache@v2.8.0
 
       - name: Install and setup Scoop
@@ -87,7 +87,7 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v4.3.0
+      - uses: actions/checkout@v5.0.0
       - uses: Swatinem/rust-cache@v2.8.0
         with:
           key: build-${{ matrix.arch }}
@@ -106,7 +106,7 @@ jobs:
     needs: [build, test, clippy, format]
 
     steps:
-      - uses: actions/checkout@v4.3.0
+      - uses: actions/checkout@v5.0.0
       - uses: extractions/setup-just@v3
 
       - name: Install Rust
