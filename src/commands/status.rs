@@ -252,7 +252,7 @@ impl Args {
         if invalid_apps.is_empty() {
             writeln!(output, "All packages are okay and up to date.")?;
         } else {
-            invalid_apps.par_sort_by(|a, b| a.name.cmp(&b.name));
+            invalid_apps.par_sort_by(|prev, curr| curr.name.cmp(&prev.name));
 
             let values = invalid_apps
                 .par_iter()
