@@ -1,4 +1,6 @@
-use criterion::{BatchSize, Criterion, black_box, criterion_group, criterion_main};
+use std::hint::black_box;
+
+use criterion::{BatchSize, Criterion, criterion_group, criterion_main};
 
 fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("parse url", |b| {

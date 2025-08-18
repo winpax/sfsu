@@ -40,7 +40,10 @@ use sprinkles::{
 use sprinkles::contexts::Global;
 use validations::Validate;
 
-shadow_rs::shadow!(shadow);
+mod shadow {
+    #![allow(clippy::large_const_arrays)]
+    include!(concat!(env!("OUT_DIR"), "/shadow.rs"));
+}
 
 mod versions {
     pub const SFSU_LONG_VERSION: &str = include_str!(concat!(env!("OUT_DIR"), "/long_version.txt"));

@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `bucket update` command no longer attempts to update Scoop
+- `update` command no longer discourages use
+
 ## [1.17.1]
 
 ### Fixed

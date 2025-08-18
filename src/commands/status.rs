@@ -70,7 +70,7 @@ impl super::Command for Args {
                     Command::Scoop => this.handle_scoop(ctx, &value, &mut output).await?,
                     Command::Buckets => this.handle_buckets(ctx, &value, &mut output)?,
                     Command::Apps => this.handle_packages(ctx, &value, &mut output)?,
-                };
+                }
 
                 pb.inc(1);
 

@@ -45,7 +45,7 @@ impl commands::Command for Args {
                 let unused =
                     Section::new(unused_buckets).with_title("The following buckets are unused:");
                 println!("{unused}");
-            };
+            }
         }
 
         Ok(())

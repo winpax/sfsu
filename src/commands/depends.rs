@@ -34,7 +34,7 @@ impl super::Command for Args {
 
         if manifests.is_empty() {
             abandon!("Could not find any packages matching: {}", self.package);
-        };
+        }
 
         if self.json {
             println!("{}", serde_json::to_string(&manifests)?);

@@ -289,24 +289,24 @@ impl Args {
     }
 
     fn handle_events(draw_timer: Option<&Timer>) -> anyhow::Result<bool> {
-        if event::poll(Duration::from_millis(50))? {
-            if let Event::Key(key) = event::read()? {
-                if key.kind == event::KeyEventKind::Press && key.code == KeyCode::Char('q') {
-                    return Ok(true);
+        if event::poll(Duration::from_millis(50))?
+            && let Event::Key(key) = event::read()?
+        {
+            if key.kind == event::KeyEventKind::Press && key.code == KeyCode::Char('q') {
+                return Ok(true);
+            }
+
+            if key.code == KeyCode::Down {
+                if key.kind == event::KeyEventKind::Press
+                    && let Some(draw_timer) = draw_timer
+                {
+                    draw_timer.set_timeout(Duration::from_millis(16));
                 }
 
-                if key.code == KeyCode::Down {
-                    if key.kind == event::KeyEventKind::Press {
-                        if let Some(draw_timer) = draw_timer {
-                            draw_timer.set_timeout(Duration::from_millis(16));
-                        }
-                    }
-
-                    if key.kind == event::KeyEventKind::Release {
-                        if let Some(draw_timer) = draw_timer {
-                            draw_timer.set_timeout(Duration::from_millis(743));
-                        }
-                    }
+                if key.kind == event::KeyEventKind::Release
+                    && let Some(draw_timer) = draw_timer
+                {
+                    draw_timer.set_timeout(Duration::from_millis(743));
                 }
             }
         }
@@ -319,10 +319,10 @@ impl Args {
         title: &str,
         items: &mut VecDeque<Text<'_>>,
     ) -> bool {
-        if let Some(timer) = timer {
-            if timer.tick() {
-                items.pop_front();
-            }
+        if let Some(timer) = timer
+            && timer.tick()
+        {
+            items.pop_front();
         }
 
         let mut footer = "Press Q to exit".to_string();

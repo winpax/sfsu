@@ -50,10 +50,10 @@ pub struct Args {
 impl super::Command for Args {
     async fn runner(mut self, ctx: &impl ScoopContext) -> anyhow::Result<()> {
         #[cfg(not(feature = "v2"))]
-        if self.package.bucket().is_none() {
-            if let Some(bucket) = &self.bucket {
-                self.package.set_bucket(bucket.clone())?;
-            }
+        if self.package.bucket().is_none()
+            && let Some(bucket) = &self.bucket
+        {
+            self.package.set_bucket(bucket.clone())?;
         }
 
         let manifests = self.package.list_manifests(ctx).await?;
