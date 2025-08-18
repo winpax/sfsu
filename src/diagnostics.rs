@@ -228,7 +228,7 @@ impl Diagnostics {
             )?;
         }
 
-        debug!("Filesystem: {:?}", OsString::from_wide(&fs_name));
+        debug!("Filesystem: {}", OsString::from_wide(&fs_name).display());
 
         Ok(fs_name.starts_with(&"NTFS".encode_utf16().collect_vec()))
     }

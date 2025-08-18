@@ -1,4 +1,6 @@
-use criterion::{BatchSize, Criterion, black_box, criterion_group, criterion_main};
+use std::hint::black_box;
+
+use criterion::{BatchSize, Criterion, criterion_group, criterion_main};
 
 use rayon::prelude::*;
 use regex::Regex;
@@ -19,10 +21,9 @@ fn criterion_benchmark(c: &mut Criterion) {
             black_box(Bucket::list_all(&ctx).unwrap())
                 .par_iter()
                 .filter_map(|bucket| {
-                    match bucket.matches(&ctx, false, &pattern, black_box(SearchMode::Name)) {
-                        Ok(section) => Some(section),
-                        _ => None,
-                    }
+                    bucket
+                        .matches(&ctx, false, &pattern, black_box(SearchMode::Name))
+                        .ok()
                 })
                 .collect::<Vec<_>>();
         })

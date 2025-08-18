@@ -43,10 +43,10 @@ impl Info {
         apps.par_iter()
             .map(Self::from_path)
             .filter(|package| {
-                if let Ok(pkg) = package {
-                    if let Some(bucket) = bucket {
-                        return &pkg.source == bucket;
-                    }
+                if let Ok(pkg) = package
+                    && let Some(bucket) = bucket
+                {
+                    return &pkg.source == bucket;
                 }
                 // Keep errors so that the following line will return the error
                 true

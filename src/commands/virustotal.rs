@@ -251,10 +251,10 @@ impl Args {
         detected: u64,
         total: u64,
     ) -> std::fmt::Result {
-        if let Some(filter) = self.filter {
-            if file_status <= filter {
-                return Ok(());
-            }
+        if let Some(filter) = self.filter
+            && file_status <= filter
+        {
+            return Ok(());
         }
 
         let mut info = format!("{}/{}: {detected}/{total}", manifest.bucket, manifest.name,);
@@ -272,7 +272,7 @@ impl Args {
             Status::Malicious => eprintln_red!("{info}"),
             Status::Suspicious => eprintln_yellow!("{info}"),
             Status::Undetected => eprintln_green!("{info}"),
-        };
+        }
 
         Ok(())
     }
