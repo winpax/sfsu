@@ -27,7 +27,22 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    async fn runner(self, ctx: &impl ScoopContext) -> Result<(), anyhow::Error> {
+    async fn runner(
+        self,
+        ctx: &impl ScoopContext<Config = sprinkles::config::Scoop>,
+    ) -> anyhow::Result<()> {
+        self.runner_internal(ctx, false).await
+    }
+}
+
+impl Args {
+    const FINISH_MESSAGE: &'static str = "✅";
+
+    pub async fn runner_internal(
+        self,
+        ctx: &impl ScoopContext,
+        update_scoop: bool,
+    ) -> Result<(), anyhow::Error> {
         let progress_style = style(Some(ProgressOptions::Hide), Some(Message::suffix()));
 
         let buckets = Bucket::list_all(ctx)?;
@@ -41,8 +56,15 @@ impl super::Command for Args {
         // Force checkout to the config's branch
         _ = ctx.outdated().await?;
 
-        let scoop_changelog =
-            self.update_scoop(ctx, longest_bucket_name, progress_style.clone())?;
+        // Only update scoop if `update_scoop` flag is set
+        let scoop_changelog = update_scoop
+            .then(|| {
+                self.update_scoop(ctx, longest_bucket_name, progress_style.clone())
+                    // Flip Result<Option<T>> into Option<Result<T>>
+                    .transpose()
+            })
+            // Flatten Option within Option into single Option<Result<T>>
+            .flatten();
 
         let mp = MultiProgress::new();
 
@@ -73,10 +95,10 @@ impl super::Command for Args {
             println!();
             if let Some(scoop_changelog) = scoop_changelog {
                 let scoop_changelog =
-                    Section::new(Children::from(scoop_changelog)).with_title("Scoop changes:");
+                    Section::new(Children::from(scoop_changelog?)).with_title("Scoop changes:");
 
                 print!("{scoop_changelog}");
-            };
+            }
 
             for bucket_changelog in bucket_changelogs {
                 let (name, changelog) = bucket_changelog;
@@ -94,10 +116,6 @@ impl super::Command for Args {
 
         Ok(())
     }
-}
-
-impl Args {
-    const FINISH_MESSAGE: &'static str = "✅";
 
     fn update_scoop(
         &self,
