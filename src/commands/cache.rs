@@ -44,7 +44,7 @@ impl CacheEntry {
                 if glob {
                     PatternMatcher::parse_glob(pattern).ok()
                 } else {
-                    PatternMatcher::parse_regex_with(Some("^"), pattern, Some("#")).ok()
+                    PatternMatcher::parse_regex(pattern).ok()
                 }
             })
             .collect::<Vec<_>>();
@@ -78,6 +78,7 @@ impl CacheEntry {
                 let size = Size::new(metadata.file_size());
 
                 if let Some((name, version, url)) = get_known_info(&file_name) {
+                    debug!("Known cache entry");
                     let cache_entry = CacheEntry::Known {
                         file_path: entry.path(),
                         name,
@@ -88,6 +89,7 @@ impl CacheEntry {
 
                     anyhow::Ok(cache_entry)
                 } else {
+                    debug!("Unknown cache entry");
                     anyhow::Ok(CacheEntry::Loose {
                         file_path: entry.path(),
                         size,
