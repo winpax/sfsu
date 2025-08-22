@@ -22,18 +22,25 @@ impl Command for Args {
         let total_entires = cache_entries.len();
         let total_size = cache_entries
             .iter()
-            .fold(Size::new(0), |acc, entry| acc + entry.size);
+            .fold(Size::new(0), |acc, entry| acc + entry.size());
 
         let cache_results =
             futures::future::try_join_all(cache_entries.into_iter().map(|entry| async move {
-                tokio::fs::remove_file(&entry.file_path).await?;
+                tokio::fs::remove_file(&entry.file_path()).await?;
 
                 Ok::<_, std::io::Error>(entry)
             }))
             .await?;
 
         for entry in cache_results {
-            eprintln!("Removed: {}", entry.url);
+            let removed_name = match entry {
+                CacheEntry::Known { url, .. } => url,
+                CacheEntry::Loose { file_path, .. } => file_path
+                    .file_name()
+                    .map_or("Unknown".to_string(), |name| name.display().to_string()),
+            };
+
+            eprintln!("Removed: {removed_name}");
         }
 
         eprintln_bright_yellow!("Deleted {total_entires} files, {total_size}");

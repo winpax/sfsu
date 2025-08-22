@@ -1,6 +1,8 @@
-use std::{os::windows::fs::MetadataExt, path::PathBuf};
+use std::{
+    os::windows::fs::MetadataExt,
+    path::{Path, PathBuf},
+};
 
-use anyhow::Context;
 use clap::{Parser, Subcommand};
 use serde::Serialize;
 use sprinkles::{config, contexts::ScoopContext};
@@ -14,13 +16,18 @@ use crate::{abandon, commands::CommandRunner, matching::PatternMatcher, wrappers
 use super::Runnable;
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq, PartialOrd, Ord)]
-struct CacheEntry {
+#[serde(untagged)]
+enum CacheEntry {
+    Known {
+        #[serde(skip)]
+        file_path: PathBuf,
+        name: String,
+        version: String,
+        size: Size,
+        url: String,
+    },
     #[serde(skip)]
-    file_path: PathBuf,
-    name: String,
-    version: String,
-    size: Size,
-    url: String,
+    Loose { file_path: PathBuf, size: Size },
 }
 
 impl CacheEntry {
@@ -56,26 +63,36 @@ impl CacheEntry {
             let file_name = file_name.to_string();
 
             set.spawn(async move {
+                fn get_known_info(file_name: &str) -> Option<(String, String, String)> {
+                    let mut parts = file_name.split('#');
+
+                    let name = parts.next()?;
+                    let version = parts.next()?;
+                    let url = parts.next()?;
+
+                    Some((name.to_string(), version.to_string(), url.to_string()))
+                }
+
                 let metadata = entry.metadata().await?;
 
-                let mut parts = file_name.split('#');
-
-                let name = parts.next().context("No name")?;
-                let version = parts.next().context("No version")?;
-                let url = parts.next().context("No url")?;
-
-                #[allow(clippy::cast_precision_loss)]
                 let size = Size::new(metadata.file_size());
 
-                let cache_entry = CacheEntry {
-                    file_path: entry.path(),
-                    name: name.to_string(),
-                    version: version.to_string(),
-                    url: url.to_string(),
-                    size,
-                };
+                if let Some((name, version, url)) = get_known_info(&file_name) {
+                    let cache_entry = CacheEntry::Known {
+                        file_path: entry.path(),
+                        name,
+                        version,
+                        url,
+                        size,
+                    };
 
-                anyhow::Ok(cache_entry)
+                    anyhow::Ok(cache_entry)
+                } else {
+                    anyhow::Ok(CacheEntry::Loose {
+                        file_path: entry.path(),
+                        size,
+                    })
+                }
             });
         }
 
@@ -97,6 +114,18 @@ impl CacheEntry {
         cache_entries.sort();
 
         Ok(cache_entries)
+    }
+
+    pub fn file_path(&self) -> &Path {
+        match self {
+            CacheEntry::Known { file_path, .. } | CacheEntry::Loose { file_path, .. } => file_path,
+        }
+    }
+
+    pub fn size(&self) -> Size {
+        match self {
+            CacheEntry::Known { size, .. } | CacheEntry::Loose { size, .. } => *size,
+        }
     }
 }
 

@@ -28,7 +28,7 @@ impl Command for Args {
 
         let total_size = cache_entries
             .iter()
-            .fold(Size::new(0), |acc, entry| acc + entry.size);
+            .fold(Size::new(0), |acc, entry| acc + entry.size());
 
         eprintln_bright_yellow!("Total: {} files, {total_size}", cache_entries.len());
 
