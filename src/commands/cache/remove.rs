@@ -8,7 +8,10 @@ use super::CacheEntry;
 #[derive(Debug, Clone, Parser)]
 /// Remove cache entries
 pub struct Args {
-    #[clap(from_global)]
+    #[clap(
+        global = true,
+        help = "Regex pattern(s) for apps to remove cache entries for"
+    )]
     apps: Vec<String>,
 
     #[clap(from_global)]
@@ -17,6 +20,11 @@ pub struct Args {
 
 impl Command for Args {
     async fn runner(self, ctx: &impl ScoopContext) -> Result<(), anyhow::Error> {
+        if self.apps.is_empty() {
+            eprintln_bright_yellow!("No apps specified.");
+            return Ok(());
+        }
+
         let cache_entries = CacheEntry::match_paths(ctx, &self.apps, self.glob).await?;
 
         let total_entires = cache_entries.len();

@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `bucket update` command no longer attempts to update Scoop
 - `update` command no longer discourages use
+- cache commands not including non-package archive files
+- cache commands not including all files by default due to regex error
+- `cache rm` would by default remove all cache entries due to reused arguments from list
 
 ## [1.17.1]
 
