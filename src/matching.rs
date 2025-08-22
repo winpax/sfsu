@@ -105,9 +105,9 @@ impl FromStr for PatternMatcher {
     type Err = anyhow::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if let Ok(glob) = Self::parse_glob(pattern) {
+        if let Ok(glob) = Self::parse_glob(s) {
             Ok(glob)
-        } else if let Ok(regex) = Self::parse_regex(pattern) {
+        } else if let Ok(regex) = Self::parse_regex(s) {
             Ok(regex)
         } else {
             Err(anyhow::anyhow!("Invalid pattern"))
