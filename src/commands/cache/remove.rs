@@ -10,11 +10,14 @@ use super::CacheEntry;
 pub struct Args {
     #[clap(from_global)]
     apps: Vec<String>,
+
+    #[clap(from_global)]
+    glob: bool,
 }
 
 impl Command for Args {
     async fn runner(self, ctx: &impl ScoopContext) -> Result<(), anyhow::Error> {
-        let cache_entries = CacheEntry::match_paths(ctx, &self.apps).await?;
+        let cache_entries = CacheEntry::match_paths(ctx, &self.apps, self.glob).await?;
 
         let total_entires = cache_entries.len();
         let total_size = cache_entries

@@ -66,6 +66,7 @@ crossterm = "0.29"
 derive_more = { version = "2.0", features = ["deref_mut", "deref", "as_ref"] }
 dialoguer = "0.11"
 futures = "0.3"
+glob = "0.3.3"
 hashbrown = "0.15"
 heck = "0.5"
 human-panic = "2.0"
@@ -89,6 +90,7 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0", features = ["preserve_order"] }
 shadow-rs = "1.2"
 sprinkles-rs = { version = "0.22", features = ["clap"] }
+thiserror = "2.0.16"
 tokio = { version = "1.47", features = ["full"] }
 vt3 = "0.7"
 which = "8.0"

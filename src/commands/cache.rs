@@ -2,7 +2,6 @@ use std::{os::windows::fs::MetadataExt, path::PathBuf};
 
 use anyhow::Context;
 use clap::{Parser, Subcommand};
-use regex::Regex;
 use serde::Serialize;
 use sprinkles::{config, contexts::ScoopContext};
 use tokio::task::JoinSet;
@@ -10,7 +9,7 @@ use tokio::task::JoinSet;
 mod list;
 mod remove;
 
-use crate::{abandon, commands::CommandRunner, wrappers::sizes::Size};
+use crate::{abandon, commands::CommandRunner, matching::PatternMatcher, wrappers::sizes::Size};
 
 use super::Runnable;
 
@@ -28,12 +27,19 @@ impl CacheEntry {
     pub async fn match_paths(
         ctx: &impl ScoopContext,
         patterns: &[String],
+        glob: bool,
     ) -> anyhow::Result<Vec<Self>> {
         let cache_path = ctx.cache_path();
 
         let patterns = patterns
             .iter()
-            .filter_map(|pattern| Regex::new(&format!("^{pattern}#")).ok())
+            .filter_map(|pattern| {
+                if glob {
+                    PatternMatcher::parse_glob(pattern).ok()
+                } else {
+                    PatternMatcher::parse_regex_with(Some("^"), pattern, Some("#")).ok()
+                }
+            })
             .collect::<Vec<_>>();
 
         let mut set = JoinSet::new();
@@ -43,7 +49,7 @@ impl CacheEntry {
             let file_name = entry.file_name();
             let file_name = file_name.to_string_lossy();
 
-            if !patterns.iter().any(|pattern| pattern.is_match(&file_name)) {
+            if !patterns.iter().any(|pattern| pattern.test(&file_name)) {
                 continue;
             }
 
@@ -122,10 +128,17 @@ pub struct Args {
 
     #[clap(
         global = true,
-        help = "Glob pattern(s) for apps to show cache entries for",
+        help = "Regex pattern(s) for apps to show cache entries for",
         default_value = ".*?"
     )]
     apps: Vec<String>,
+
+    #[clap(
+        global = true,
+        long,
+        help = "Use glob pattern matching rather than regex"
+    )]
+    glob: bool,
 
     #[clap(from_global)]
     json: bool,
@@ -139,6 +152,7 @@ impl super::Command for Args {
         let command = self.command.unwrap_or(Commands::List(list::Args {
             json: self.json,
             apps: self.apps,
+            glob: self.glob,
         }));
 
         command.run(ctx).await

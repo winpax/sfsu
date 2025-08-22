@@ -16,6 +16,7 @@ pub mod float;
 mod handlers;
 mod limits;
 mod logging;
+mod matching;
 mod models;
 mod output;
 mod progress;
