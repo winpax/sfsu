@@ -1,8 +1,9 @@
-use std::{os::windows::fs::MetadataExt, path::PathBuf};
+use std::{
+    os::windows::fs::MetadataExt,
+    path::{Path, PathBuf},
+};
 
-use anyhow::Context;
 use clap::{Parser, Subcommand};
-use regex::Regex;
 use serde::Serialize;
 use sprinkles::{config, contexts::ScoopContext};
 use tokio::task::JoinSet;
@@ -10,30 +11,42 @@ use tokio::task::JoinSet;
 mod list;
 mod remove;
 
-use crate::{abandon, commands::CommandRunner, wrappers::sizes::Size};
+use crate::{abandon, commands::CommandRunner, matching::PatternMatcher, wrappers::sizes::Size};
 
 use super::Runnable;
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq, PartialOrd, Ord)]
-struct CacheEntry {
+#[serde(untagged)]
+enum CacheEntry {
+    Known {
+        #[serde(skip)]
+        file_path: PathBuf,
+        name: String,
+        version: String,
+        size: Size,
+        url: String,
+    },
     #[serde(skip)]
-    file_path: PathBuf,
-    name: String,
-    version: String,
-    size: Size,
-    url: String,
+    Loose { file_path: PathBuf, size: Size },
 }
 
 impl CacheEntry {
     pub async fn match_paths(
         ctx: &impl ScoopContext,
         patterns: &[String],
+        glob: bool,
     ) -> anyhow::Result<Vec<Self>> {
         let cache_path = ctx.cache_path();
 
         let patterns = patterns
             .iter()
-            .filter_map(|pattern| Regex::new(&format!("^{pattern}#")).ok())
+            .filter_map(|pattern| {
+                if glob {
+                    PatternMatcher::parse_glob(pattern).ok()
+                } else {
+                    PatternMatcher::parse_regex(pattern).ok()
+                }
+            })
             .collect::<Vec<_>>();
 
         let mut set = JoinSet::new();
@@ -43,33 +56,45 @@ impl CacheEntry {
             let file_name = entry.file_name();
             let file_name = file_name.to_string_lossy();
 
-            if !patterns.iter().any(|pattern| pattern.is_match(&file_name)) {
+            if !patterns.iter().any(|pattern| pattern.test(&file_name)) {
                 continue;
             }
 
             let file_name = file_name.to_string();
 
             set.spawn(async move {
+                fn get_known_info(file_name: &str) -> Option<(String, String, String)> {
+                    let mut parts = file_name.split('#');
+
+                    let name = parts.next()?;
+                    let version = parts.next()?;
+                    let url = parts.next()?;
+
+                    Some((name.to_string(), version.to_string(), url.to_string()))
+                }
+
                 let metadata = entry.metadata().await?;
 
-                let mut parts = file_name.split('#');
-
-                let name = parts.next().context("No name")?;
-                let version = parts.next().context("No version")?;
-                let url = parts.next().context("No url")?;
-
-                #[allow(clippy::cast_precision_loss)]
                 let size = Size::new(metadata.file_size());
 
-                let cache_entry = CacheEntry {
-                    file_path: entry.path(),
-                    name: name.to_string(),
-                    version: version.to_string(),
-                    url: url.to_string(),
-                    size,
-                };
+                if let Some((name, version, url)) = get_known_info(&file_name) {
+                    debug!("Known cache entry");
+                    let cache_entry = CacheEntry::Known {
+                        file_path: entry.path(),
+                        name,
+                        version,
+                        url,
+                        size,
+                    };
 
-                anyhow::Ok(cache_entry)
+                    anyhow::Ok(cache_entry)
+                } else {
+                    debug!("Unknown cache entry");
+                    anyhow::Ok(CacheEntry::Loose {
+                        file_path: entry.path(),
+                        size,
+                    })
+                }
             });
         }
 
@@ -91,6 +116,18 @@ impl CacheEntry {
         cache_entries.sort();
 
         Ok(cache_entries)
+    }
+
+    pub fn file_path(&self) -> &Path {
+        match self {
+            CacheEntry::Known { file_path, .. } | CacheEntry::Loose { file_path, .. } => file_path,
+        }
+    }
+
+    pub fn size(&self) -> Size {
+        match self {
+            CacheEntry::Known { size, .. } | CacheEntry::Loose { size, .. } => *size,
+        }
     }
 }
 
@@ -122,10 +159,17 @@ pub struct Args {
 
     #[clap(
         global = true,
-        help = "Glob pattern(s) for apps to show cache entries for",
+        help = "Regex pattern(s) for apps to show cache entries for",
         default_value = ".*?"
     )]
     apps: Vec<String>,
+
+    #[clap(
+        global = true,
+        long,
+        help = "Use glob pattern matching rather than regex"
+    )]
+    glob: bool,
 
     #[clap(from_global)]
     json: bool,
@@ -139,6 +183,7 @@ impl super::Command for Args {
         let command = self.command.unwrap_or(Commands::List(list::Args {
             json: self.json,
             apps: self.apps,
+            glob: self.glob,
         }));
 
         command.run(ctx).await

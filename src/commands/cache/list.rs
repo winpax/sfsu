@@ -13,19 +13,22 @@ use super::CacheEntry;
 /// List cache entries
 pub struct Args {
     #[clap(from_global)]
-    pub apps: Vec<String>,
+    pub(super) apps: Vec<String>,
 
     #[clap(from_global)]
-    pub json: bool,
+    pub(super) glob: bool,
+
+    #[clap(from_global)]
+    pub(super) json: bool,
 }
 
 impl Command for Args {
     async fn runner(self, ctx: &impl ScoopContext) -> Result<(), anyhow::Error> {
-        let cache_entries = CacheEntry::match_paths(ctx, &self.apps).await?;
+        let cache_entries = CacheEntry::match_paths(ctx, &self.apps, self.glob).await?;
 
         let total_size = cache_entries
             .iter()
-            .fold(Size::new(0), |acc, entry| acc + entry.size);
+            .fold(Size::new(0), |acc, entry| acc + entry.size());
 
         eprintln_bright_yellow!("Total: {} files, {total_size}", cache_entries.len());
 
