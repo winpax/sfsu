@@ -20,6 +20,7 @@ mod matching;
 mod models;
 mod output;
 mod progress;
+mod searching;
 mod validations;
 mod wrappers;
 
