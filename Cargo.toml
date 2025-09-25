@@ -94,7 +94,7 @@ thiserror = "2.0.16"
 tokio = { version = "1.47", features = ["full"] }
 vt3 = "0.7"
 which = "8.0"
-windows = { version = "0.61", features = ["Win32_Storage_FileSystem"] }
+windows = { version = "0.62", features = ["Win32_Storage_FileSystem"] }
 windows-version = "0.1"
 winreg = "0.55"
 
