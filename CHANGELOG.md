@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fixed reverse alphabetical sorting in `cache`, `bucket list` and `outdated` commands
 - updated `cache list` columns to align with new Scoop cache file names
 - fixed `cache list` bug that would error when showing loose cache entries
+- update rust version to `1.91`
 
 ## [1.17.1]
 
