@@ -1,4 +1,5 @@
 use clap::Parser;
+use itertools::Itertools;
 use sprinkles::contexts::ScoopContext;
 
 use crate::{
@@ -34,6 +35,31 @@ impl Command for Args {
 
         let values = cache_entries
             .into_iter()
+            .map(|entry| match entry {
+                CacheEntry::Known {
+                    name,
+                    version,
+                    size,
+                    hash: url,
+                    ..
+                } => DisplayCacheEntry {
+                    name,
+                    version,
+                    size,
+                    url,
+                },
+                CacheEntry::Loose { file_path, size } => DisplayCacheEntry {
+                    name: file_path
+                        .file_name()
+                        .and_then(|n| n.to_str())
+                        .unwrap_or("unknown")
+                        .to_string(),
+                    version: "N/A".to_string(),
+                    size,
+                    url: "N/A".to_string(),
+                },
+            })
+            .sorted_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()).reverse())
             .map(serde_json::to_value)
             .collect::<Result<Vec<_>, _>>()?;
 
@@ -44,4 +70,12 @@ impl Command for Args {
 
         Ok(())
     }
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+struct DisplayCacheEntry {
+    name: String,
+    version: String,
+    size: Size,
+    url: String,
 }

@@ -14,6 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - cache commands not including non-package archive files
 - cache commands not including all files by default due to regex error
 - `cache rm` would by default remove all cache entries due to reused arguments from list
+- fixed reverse alphabetical sorting in `cache`, `bucket list` and `outdated` commands
+- updated `cache list` columns to align with new Scoop cache file names
+- fixed `cache list` bug that would error when showing loose cache entries
 
 ## [1.17.1]
 

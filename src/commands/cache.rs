@@ -24,7 +24,7 @@ enum CacheEntry {
         name: String,
         version: String,
         size: Size,
-        url: String,
+        hash: String,
     },
     #[serde(skip)]
     Loose { file_path: PathBuf, size: Size },
@@ -68,22 +68,22 @@ impl CacheEntry {
 
                     let name = parts.next()?;
                     let version = parts.next()?;
-                    let url = parts.next()?;
+                    let hash = parts.next()?;
 
-                    Some((name.to_string(), version.to_string(), url.to_string()))
+                    Some((name.to_string(), version.to_string(), hash.to_string()))
                 }
 
                 let metadata = entry.metadata().await?;
 
                 let size = Size::new(metadata.file_size());
 
-                if let Some((name, version, url)) = get_known_info(&file_name) {
+                if let Some((name, version, hash)) = get_known_info(&file_name) {
                     debug!("Known cache entry");
                     let cache_entry = CacheEntry::Known {
                         file_path: entry.path(),
                         name,
                         version,
-                        url,
+                        hash,
                         size,
                     };
 

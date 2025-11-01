@@ -53,7 +53,7 @@ impl super::Command for Args {
                 .map(BucketInfo::collect)
                 .collect::<Result<Vec<_>, _>>()?;
 
-            buckets.sort_by(|a, b| a.name.cmp(&b.name));
+            buckets.sort_by(|a, b| a.name.cmp(&b.name).reverse());
 
             buckets
         };

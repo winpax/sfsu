@@ -56,7 +56,7 @@ impl Args {
             println!("No outdated packages.");
         } else {
             outdated.dedup();
-            outdated.par_sort_by(|a, b| a.name.cmp(&b.name));
+            outdated.par_sort_by(|a, b| a.name.cmp(&b.name).reverse());
 
             let values = outdated
                 .par_iter()

@@ -42,7 +42,7 @@ impl Command for Args {
 
         for entry in cache_results {
             let removed_name = match entry {
-                CacheEntry::Known { url, .. } => url,
+                CacheEntry::Known { hash: url, .. } => url,
                 CacheEntry::Loose { file_path, .. } => file_path
                     .file_name()
                     .map_or("Unknown".to_string(), |name| name.display().to_string()),
