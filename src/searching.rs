@@ -3,7 +3,6 @@ use sprinkles::{
     Architecture,
     contexts::ScoopContext,
     packages::{Manifest, MergeDefaults, SearchMode},
-    version::Version,
 };
 
 #[derive(Debug, Clone)]
@@ -66,10 +65,83 @@ impl MatchCriteria {
 
         self
     }
+
+    pub fn matched_name(&self) -> bool {
+        self.name
+    }
+
+    pub fn matched_bins(&self) -> &[String] {
+        &self.bins
+    }
 }
 
 impl Default for MatchCriteria {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+#[derive(Debug, Clone, getset::Getters, getset::CopyGetters)]
+pub struct MatchedManifest {
+    #[getset(get = "pub")]
+    manifest: Manifest,
+    #[getset(get_copy = "pub")]
+    installed: bool,
+    #[getset(get_copy = "pub")]
+    name_matched: bool,
+    #[getset(get = "pub")]
+    bins: Vec<String>,
+    #[getset(get_copy = "pub")]
+    exact_match: bool,
+}
+
+impl MatchedManifest {
+    pub fn new(
+        ctx: &impl ScoopContext,
+        manifest: Manifest,
+        pattern: &Regex,
+        mode: SearchMode,
+        arch: Architecture,
+    ) -> MatchedManifest {
+        // TODO: Better display of output
+        let bucket = unsafe { manifest.bucket() };
+
+        let match_output = MatchCriteria::matches(
+            unsafe { manifest.name() },
+            pattern,
+            // Function to list binaries from a manifest
+            // Passed as a closure to avoid this parsing if bin matching isn't required
+            || {
+                manifest
+                    .architecture
+                    .merge_default(manifest.install_config.clone(), arch)
+                    .bin
+                    .map(|b| b.to_vec())
+                    .unwrap_or_default()
+            },
+            mode,
+        );
+
+        let installed = manifest.is_installed(ctx, Some(bucket));
+        let exact_match = unsafe { manifest.name() } == pattern.to_string();
+
+        MatchedManifest {
+            manifest,
+            installed,
+            name_matched: match_output.matched_name(),
+            bins: match_output.matched_bins().to_vec(),
+            exact_match,
+        }
+    }
+
+    pub fn should_match(&self, installed_only: bool) -> bool {
+        if !self.installed && installed_only {
+            return false;
+        }
+        if !self.name_matched && self.bins.is_empty() {
+            return false;
+        }
+
+        true
     }
 }

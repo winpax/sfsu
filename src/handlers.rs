@@ -68,7 +68,7 @@ impl<'c, C: ?Sized> AppsDecider<'c, C> {
 
         let Some(choice_index) = dialoguer::Select::new()
             .with_prompt(prompt)
-            .items(&[&choices[0].0, &choices[1].0])
+            .items([&choices[0].0, &choices[1].0])
             .default(1)
             .interact_opt()
             .map_err(|dialoguer::Error::IO(error)| error)?

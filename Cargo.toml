@@ -66,6 +66,7 @@ crossterm = "0.29"
 derive_more = { version = "2.0", features = ["deref_mut", "deref", "as_ref"] }
 dialoguer = "0.12"
 futures = "0.3"
+getset = "0.1.6"
 glob = "0.3.3"
 hashbrown = "0.16"
 heck = "0.5"
