@@ -24,7 +24,7 @@ env:
 
 jobs:
   cargo-deny:
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     continue-on-error: true
     steps:
       - uses: actions/checkout@v5.0.0
@@ -32,7 +32,7 @@ jobs:
 
   clippy:
     name: Clippy
-    runs-on: windows-latest
+    runs-on: blacksmith-4vcpu-windows-2025
     steps:
       - uses: actions/checkout@v5.0.0
       - uses: Swatinem/rust-cache@v2.8.0
@@ -48,7 +48,7 @@ jobs:
 
   format:
     name: Formatting
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     steps:
       - uses: actions/checkout@v5.0.0
 
@@ -62,7 +62,7 @@ jobs:
 
   test:
     name: Test
-    runs-on: windows-latest
+    runs-on: blacksmith-4vcpu-windows-2025
 
     steps:
       - uses: actions/checkout@v5.0.0
@@ -84,6 +84,7 @@ jobs:
       matrix:
         arch: [x86_64, i686, aarch64]
     name: Build for ${{ matrix.arch }}
+    # blacksmith seems to have unique issues compiling the arm version
     runs-on: windows-latest
 
     steps:
@@ -102,7 +103,7 @@ jobs:
   publish:
     if: ${{ startsWith(github.ref, 'refs/tags/') }}
     name: Publish
-    runs-on: windows-latest
+    runs-on: blacksmith-4vcpu-windows-2025
     needs: [build, test, clippy, format]
 
     steps:
