@@ -84,7 +84,8 @@ jobs:
       matrix:
         arch: [x86_64, i686, aarch64]
     name: Build for ${{ matrix.arch }}
-    runs-on: blacksmith-4vcpu-windows-2025
+    # blacksmith seems to have unique issues compiling the arm version
+    runs-on: windows-latest
 
     steps:
       - uses: actions/checkout@v5.0.0
