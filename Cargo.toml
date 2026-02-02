@@ -76,7 +76,7 @@ konst = "0.4"
 log = { version = "0.4", features = ["std"] }
 open = "5.1"
 parking_lot = "0.12"
-prodash = { version = "30.0", features = [
+prodash = { version = "31.0", features = [
     "render-line",
     "render-line-crossterm",
 ] }
