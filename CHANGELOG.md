@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.17.3]
+
+### Changed
+
+- Update sprinkles library to 0.23.0
+
+## [1.17.2]
+
 ### Fixed
 
 - `bucket update` command no longer attempts to update Scoop
@@ -154,7 +162,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For older version's changelogs, see the [releases](https://github.com/winpax/sfsu/releases) page.
 
-[Unreleased]: https://github.com/winpax/sfsu/compare/v1.17.1...HEAD
+[Unreleased]: https://github.com/winpax/sfsu/compare/v1.17.2...HEAD
+[1.17.3]: https://github.com/winpax/sfsu/releases/tag/v1.17.3
+[1.17.2]: https://github.com/winpax/sfsu/releases/tag/v1.17.2
 [1.17.1]: https://github.com/winpax/sfsu/releases/tag/v1.17.1
 [1.17.0]: https://github.com/winpax/sfsu/releases/tag/v1.17.0
 [1.16.0]: https://github.com/winpax/sfsu/releases/tag/v1.16.0
