@@ -1,5 +1,5 @@
 [package]
-authors = ["Juliette Cordor <professional@maybejules.com>"]
+authors = ["Juliette Cordor <me@cordor.dev>"]
 description = "Stupid Fast Scoop Utils"
 edition = "2024"
 license = "MIT OR Apache-2.0"
