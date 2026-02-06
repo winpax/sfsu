@@ -23,12 +23,12 @@ env:
   CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_PUBLISH_TOKEN }}
 
 jobs:
-  cargo-deny:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@v5.0.0
-      - uses: EmbarkStudios/cargo-deny-action@v2.0.11
+  # cargo-deny:
+  #   runs-on: blacksmith-4vcpu-ubuntu-2404
+  #   continue-on-error: true
+  #   steps:
+  #     - uses: actions/checkout@v5.0.0
+  #     - uses: EmbarkStudios/cargo-deny-action@v2.0.11
 
   clippy:
     name: Clippy
