@@ -60,10 +60,6 @@ parking_lot = ["tokio/parking_lot"]
 rayon = ["dep:rayon", "blake3/rayon", "indicatif/rayon"]
 unstable_linux = []
 
-[[bench]]
-harness = false
-name = "hashing"
-
 [dependencies]
 base64 = { version = "0.22", optional = true }
 blake3 = "1.8"
