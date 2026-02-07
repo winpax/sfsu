@@ -90,6 +90,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: Swatinem/rust-cache@v2
+        if: ${{ matrix.arch == 'aarch64' }}
         with:
           key: build-${{ matrix.arch }}
       - uses: extractions/setup-just@v3
