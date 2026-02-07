@@ -1,9 +1,9 @@
+use crate::{buckets::Bucket, contexts::ScoopContext};
 use anyhow::Context;
 use chrono::FixedOffset;
 use clap::Parser;
 use rayon::prelude::*;
 use serde::Serialize;
-use crate::{buckets::Bucket, contexts::ScoopContext};
 
 use crate::{output, wrappers::time::NicerTime};
 

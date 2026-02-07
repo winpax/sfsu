@@ -1,5 +1,5 @@
-use clap::Parser;
 use crate::{config, contexts::ScoopContext};
+use clap::Parser;
 
 #[derive(Debug, Clone, Parser)]
 /// Save the current config

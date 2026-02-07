@@ -1,7 +1,7 @@
+use crate::{buckets::Bucket, contexts::ScoopContext, packages::models::install};
 use clap::Parser;
 use rayon::prelude::*;
 use serde_json::Value;
-use crate::{buckets::Bucket, contexts::ScoopContext, packages::models::install};
 
 use crate::{models::outdated::Info, output::structured::Structured};
 

@@ -1,7 +1,7 @@
 use clap::Parser;
 
-use itertools::Itertools;
 use crate::contexts::ScoopContext;
+use itertools::Itertools;
 
 use crate::diagnostics::{Diagnostics, LongPathsStatus};
 

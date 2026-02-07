@@ -1,5 +1,5 @@
-use clap::Parser;
 use crate::{contexts::ScoopContext, packages::reference::package};
+use clap::Parser;
 
 use crate::abandon;
 

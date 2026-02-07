@@ -1,7 +1,7 @@
 use clap::Parser;
 
-use rayon::prelude::*;
 use crate::{buckets::Bucket, contexts::ScoopContext, packages::InstallManifest};
+use rayon::prelude::*;
 
 use crate::{
     commands,

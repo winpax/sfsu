@@ -169,10 +169,11 @@ impl Process {
             for pe32 in process_iterator {
                 if let Self::ExactExe(path) = &self
                     && let Some(file_name) = path.file_name()
-                        && get_compare_string(&pe32.szExeFile) == file_name.to_string_lossy() {
-                            proc_running = true;
-                            break;
-                        }
+                    && get_compare_string(&pe32.szExeFile) == file_name.to_string_lossy()
+                {
+                    proc_running = true;
+                    break;
+                }
 
                 // This can sometimes return an error, but we don't care about it (it usually means the process is irrevelant)
                 let compare = unsafe { match_process_path(&pe32, path) }.unwrap_or_default();

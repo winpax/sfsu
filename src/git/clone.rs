@@ -29,7 +29,6 @@ use gix::{
     open::Options as OpenOptions,
 };
 
-
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 /// Clone error

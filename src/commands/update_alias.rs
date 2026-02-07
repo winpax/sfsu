@@ -1,5 +1,5 @@
-use clap::Parser;
 use crate::{config, contexts::ScoopContext};
+use clap::Parser;
 
 use crate::output::colours::eprintln_yellow;
 

@@ -3,9 +3,9 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use crate::{config, contexts::ScoopContext};
 use clap::{Parser, Subcommand};
 use serde::Serialize;
-use crate::{config, contexts::ScoopContext};
 use tokio::task::JoinSet;
 
 mod list;

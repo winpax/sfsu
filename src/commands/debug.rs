@@ -1,5 +1,5 @@
-use clap::{Parser, Subcommand};
 use crate::{config, contexts::ScoopContext};
+use clap::{Parser, Subcommand};
 
 use super::{Command, CommandRunner, Runnable};
 

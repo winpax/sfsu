@@ -1,8 +1,5 @@
 use std::{path::Path, str::FromStr, time::Duration};
 
-use clap::Parser;
-use futures::{StreamExt, TryFutureExt, stream::FuturesUnordered};
-use itertools::Itertools;
 use crate::{
     contexts::ScoopContext,
     packages::reference::{manifest, package},
@@ -13,6 +10,9 @@ use crate::{
     },
     version::Version,
 };
+use clap::Parser;
+use futures::{StreamExt, TryFutureExt, stream::FuturesUnordered};
+use itertools::Itertools;
 
 use crate::{
     abandon,

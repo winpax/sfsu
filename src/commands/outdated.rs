@@ -1,6 +1,6 @@
+use crate::{config, contexts::ScoopContext};
 use clap::{Parser, Subcommand};
 use serde_json::Map;
-use crate::{config, contexts::ScoopContext};
 
 use super::{Command, CommandRunner, DeprecationMessage, DeprecationWarning, Runnable};
 
