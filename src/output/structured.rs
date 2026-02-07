@@ -93,7 +93,7 @@ impl Display for Structured {
                         } else {
                             let mut values = Values::new();
                             values.push(v);
-                            base.insert(k.to_string(), values);
+                            base.insert(k.clone(), values);
                         }
                     }
 
@@ -126,7 +126,7 @@ impl Display for Structured {
                     let percent = ((*len) as f64) / total;
                     let columns = (percent * term_columns).floor() as usize;
 
-                    acc.entry((*header).to_string()).or_insert(columns);
+                    acc.entry((*header).clone()).or_insert(columns);
                     acc
                 })
         };
@@ -157,7 +157,7 @@ impl Display for Structured {
                     Value::Null => String::new(),
                     Value::Bool(bool) => bool.to_string(),
                     Value::Number(number) => number.to_string(),
-                    Value::String(string) => string.to_string(),
+                    Value::String(string) => string.clone(),
                     Value::Array(array) => array
                         .iter()
                         .map(|v| v.as_str().unwrap_or("<object>"))

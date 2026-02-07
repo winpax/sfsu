@@ -140,7 +140,7 @@ impl Args {
                 .merge_default(manifest.install_config.clone(), arch)
                 .bin
                 .map(|b| match b {
-                    NestedArray::NestedArray(StringArray::Single(bin)) => bin.to_string(),
+                    NestedArray::NestedArray(StringArray::Single(bin)) => bin.clone(),
                     NestedArray::NestedArray(StringArray::Array(bins)) => bins.join(" | "),
                     NestedArray::AliasArray(bins) => bins
                         .into_iter()

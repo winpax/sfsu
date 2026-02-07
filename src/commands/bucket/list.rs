@@ -36,7 +36,7 @@ impl BucketInfo {
 
         Ok(Self {
             name: bucket.name().to_string(),
-            source: bucket.source()?.to_string(),
+            source: bucket.source()?.clone(),
             updated: updated_time.into(),
             manifests,
         })
