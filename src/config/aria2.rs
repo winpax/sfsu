@@ -7,7 +7,7 @@ use super::Skip;
 
 #[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[allow(clippy::struct_excessive_bools)]
+#[allow(clippy::struct_excessive_bools, clippy::struct_field_names)]
 /// Scoop's Aria2 configuration
 pub struct Config {
     #[serde(default, skip_serializing_if = "Skip::skip")]

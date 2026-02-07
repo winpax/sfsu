@@ -25,9 +25,9 @@ pub enum Error {
     #[error("Invalid url provided in manifest: {0}")]
     InvalidUrl(#[from] url::ParseError),
     #[error("Could not open the package handle: {0}")]
-    HandleError(#[from] crate::handles::packages::Error),
+    Handle(#[from] crate::handles::packages::Error),
     #[error("Could not run the powershell script: {0}")]
-    PowershellError(#[from] super::Error),
+    Powershell(#[from] super::Error),
     #[error("Could not invoke the uninstaller: {0}")]
     IO(#[from] std::io::Error),
     #[error("Uninstaller exited with code {0}")]
@@ -135,7 +135,7 @@ impl<'a, 'c, C: ScoopContext> Runner<'a, 'c, C> {
             .args
             .clone()
             .map(|args| args.into_substituted(&substitutions, false))
-            .map(SingleOrArray::to_vec)
+            .map(SingleOrArray::into_vec)
             .unwrap_or_default()
     }
 

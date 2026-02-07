@@ -19,11 +19,11 @@ use super::version::VersionHandle;
 /// Package handle errors
 pub enum Error {
     #[error("Package reference error: {0}")]
-    ReferenceError(#[from] reference::Error),
+    Reference(#[from] reference::Error),
     #[error("Package manifest error: {0}")]
-    PackagesError(#[from] crate::packages::Error),
+    Packages(#[from] crate::packages::Error),
     #[error("Linking/unlinking current failed: {0}")]
-    IOError(#[from] std::io::Error),
+    IO(#[from] std::io::Error),
     #[error("Version handle error: {0}")]
     VersionHandle(#[from] super::version::Error),
     #[error("Unsupported manifest reference. The manifest must be a local file")]

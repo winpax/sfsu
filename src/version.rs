@@ -1,6 +1,5 @@
 //! Version helpers
 
-
 use std::{
     borrow::Cow,
     fmt::{Display, Formatter},

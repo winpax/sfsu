@@ -85,7 +85,7 @@ impl super::Command for Args {
                             {
                                 Ok(dl) => anyhow::Ok(dl),
                                 Err(e) => match e {
-                                    crate::cache::Error::ErrorCode(status) => {
+                                    crate::cache::Error::Status(status) => {
                                         abandon!("Found {status} error while downloading")
                                     }
                                     _ => Err(e.into()),

@@ -142,7 +142,7 @@ impl super::ScoopContext for User {
         let scoop_repo = self.open_repo().expect("scoop repo")?;
 
         let current_branch = scoop_repo.current_branch()?;
-        let scoop_config_branch = config.scoop_branch.name();
+        let scoop_config_branch = config.branch.name();
 
         if current_branch != scoop_config_branch {
             scoop_repo.checkout(scoop_config_branch)?;

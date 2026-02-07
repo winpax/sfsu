@@ -30,7 +30,7 @@ pub enum Error {
     #[error("Opening and interacting with Scoop repo: {0}")]
     Git(#[from] git::Error),
     #[error("Error joining task: {0}")]
-    JoinError(#[from] tokio::task::JoinError),
+    Join(#[from] tokio::task::JoinError),
     #[error("Error reading known buckets: {0}")]
     SerdeJson(#[from] serde_json::Error),
 
@@ -48,6 +48,7 @@ impl Error {
 /// A result type for contexts
 pub type Result<T, E = Error> = std::result::Result<T, E>;
 
+#[allow(unused)]
 #[derive(Debug, Copy, Clone)]
 /// An empty config struct for when your implementation does not have a config
 pub struct EmptyConfig;

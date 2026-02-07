@@ -11,7 +11,6 @@ use futures::{Stream, StreamExt, TryStreamExt};
 use indicatif::{MultiProgress, ProgressBar};
 use reqwest::{Response, StatusCode};
 
-use crate::packages::downloading::Downloader;
 use crate::{
     Architecture,
     hash::{Hash, HashType, url_ext::UrlExt},
@@ -20,6 +19,7 @@ use crate::{
     requests::ClientLike,
     version::Version,
 };
+use crate::{cache, packages::downloading::Downloader};
 
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
@@ -30,7 +30,7 @@ pub enum Error {
     #[error("Failed to write to file: {0}")]
     IO(#[from] std::io::Error),
     #[error("HTTP Error: {0}")]
-    ErrorCode(StatusCode),
+    Status(StatusCode),
     #[error("Missing download url in manifest")]
     MissingDownloadUrl,
     #[error("Non-utf8 file name")]
@@ -54,6 +54,7 @@ impl<'a> CacheFile<'a> {
         Self { name, version, url }
     }
 
+    #[allow(unused)]
     #[must_use]
     #[deprecated]
     /// Get the cache file name using the legacy format
@@ -188,25 +189,23 @@ pub struct Handle {
 
 impl Handle {
     /// Construct a new cache handle
-    ///
-    /// # Errors
-    /// - If the file cannot be created
     pub fn new(
         cache_path: impl AsRef<Path>,
         file_name: impl Into<PathBuf>,
         hash_type: HashType,
         url: String,
         actual_hash: Hash,
-    ) -> Result<Self, Error> {
+    ) -> cache::Handle {
         let file_name = file_name.into();
         let cache_path = cache_path.as_ref().join(&file_name);
-        Ok(Self {
+
+        Self {
             url,
             file_name,
             cache_path,
             hash_type,
             actual_hash,
-        })
+        }
     }
 
     /// Open a manifest and return a cache handle
@@ -230,12 +229,12 @@ impl Handle {
         let hashes = manifest
             .install_config(arch)
             .hash
-            .map(SingleOrArray::to_vec)
+            .map(SingleOrArray::into_vec)
             // .map(|hash| hash.map(Hash::hash_type).to_vec())
             .unwrap_or_default()
             .into_iter();
 
-        download_urls
+        Ok(download_urls
             .zip(hashes)
             .map(|(url, hash)| {
                 let file_name = CacheFile::new(name, version, &url).filename();
@@ -248,7 +247,7 @@ impl Handle {
                     hash,
                 )
             })
-            .collect()
+            .collect())
     }
 
     /// Create a new downloader
@@ -289,7 +288,7 @@ impl DownloadHandle {
         let resp = T::new().client().get(&cache.url).send().await?;
 
         if !resp.status().is_success() {
-            return Err(Error::ErrorCode(resp.status()));
+            return Err(Error::Status(resp.status()));
         }
 
         debug!("Status Code: {}", resp.status());

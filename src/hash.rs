@@ -63,13 +63,13 @@ pub fn encode_hex(bytes: &[u8]) -> String {
 /// Hash errors
 pub enum Error {
     #[error("Text error: {0}")]
-    TextError(#[from] text::Error),
+    Text(#[from] text::Error),
     #[error("Json error: {0}")]
-    JsonError(#[from] json::Error),
+    Json(#[from] json::Error),
     #[error("RDF error: {0}")]
-    RDFError(#[from] formats::rdf::RDFError),
+    RDF(#[from] formats::rdf::RDFError),
     #[error("XML error: {0}")]
-    XMLError(#[from] formats::xml::XMLError),
+    XML(#[from] formats::xml::XMLError),
     #[error("Error parsing json: {0}")]
     SerdeJson(#[from] serde_json::Error),
     #[error("Failed to parse url: {0}")]
@@ -103,7 +103,7 @@ pub enum Error {
     #[error("Sourceforge regex failed to match")]
     MissingSourceforgeCaptures,
     #[error("HTTP error: {0}")]
-    ErrorStatus(StatusCode),
+    Status(StatusCode),
     #[error("Could not find a download url in the manifest for hash computation")]
     MissingDownloadUrl,
     #[error("Could not parse hex string as bytes")]
@@ -111,7 +111,7 @@ pub enum Error {
     #[error("Could not convert chunk to utf8 string")]
     DecodingHexUtf8(#[from] std::str::Utf8Error),
     #[error("Interacting with cache failed: {0}")]
-    CacheError(#[from] cache::Error),
+    Cache(#[from] cache::Error),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -412,7 +412,7 @@ impl Hash {
             .urls
             .clone()
             .ok_or(Error::UrlNotFound)?
-            .to_vec()
+            .into_vec()
             .into_iter()
             .map(|urls| Url::parse(&urls).map_err(Error::InvalidUrl))
             .collect::<Result<Vec<_>, _>>()?;

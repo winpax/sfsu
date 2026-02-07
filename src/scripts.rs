@@ -33,7 +33,7 @@ pub enum Error {
     #[error("Could not find powershell in path")]
     FindPowershell(#[from] which::Error),
     #[error("Running script: {0}")]
-    IOError(#[from] std::io::Error),
+    IO(#[from] std::io::Error),
 }
 
 /// A Powershell script runner result

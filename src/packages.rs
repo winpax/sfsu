@@ -165,13 +165,13 @@ pub enum Error {
     #[error("Could not parse manifest \"{0}\". Failed with error: {1}")]
     ParsingManifest(String, serde_json::Error),
     #[error("Interacting with buckets: {0}")]
-    BucketError(#[from] buckets::Error),
+    Bucket(#[from] buckets::Error),
     #[error("Interacting with git2: {0}")]
-    RepoError(#[from] git::Error),
+    Repo(#[from] git::Error),
     #[error("git2 internal error: {0}")]
-    Git2Error(#[from] git2::Error),
+    Git2(#[from] git2::Error),
     #[error("System Time: {0}")]
-    TimeError(#[from] SystemTimeError),
+    Time(#[from] SystemTimeError),
     #[error("Could not find executable in path: {0}")]
     MissingInPath(#[from] which::Error),
     #[error("Gitoxide error: {0}")]
@@ -192,7 +192,7 @@ pub enum Error {
     MissingLocalManifest,
     #[cfg(feature = "manifest-hashes")]
     #[error("Could not get hash for app: {0}")]
-    HashError(#[from] hash::Error),
+    Hash(#[from] hash::Error),
     #[error("Manifest does not have `autoupdate` field")]
     MissingAutoUpdate,
     #[error("Manifest architecture section does not have `autoupdate` field")]
@@ -438,7 +438,7 @@ impl Manifest {
         let urls = self.install_config(arch).urls?;
 
         Some(
-            urls.to_vec()
+            urls.into_vec()
                 .into_iter()
                 .map(DownloadUrl::from_string)
                 .collect(),
@@ -460,7 +460,7 @@ impl Manifest {
     pub fn depends(&self) -> Vec<reference::manifest::Reference> {
         self.depends
             .clone()
-            .map(manifest::SingleOrArray::to_vec)
+            .map(manifest::SingleOrArray::into_vec)
             .unwrap_or_default()
     }
 
@@ -574,7 +574,7 @@ impl Manifest {
 
             let new_urls = autoupdate_urls
                 .clone()
-                .to_vec()
+                .into_vec()
                 .into_iter()
                 .map(|url| url.into_substituted(&submap, false));
 

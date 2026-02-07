@@ -46,7 +46,7 @@ impl DownloadUrl {
 
     #[must_use]
     /// Get the cache path for the download URL
-    pub fn into_cache_path(&self) -> PathBuf {
+    pub fn to_cache_path(&self) -> PathBuf {
         self.into()
     }
 

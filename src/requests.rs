@@ -59,6 +59,7 @@ impl Client {
         Self::create()
     }
 
+    #[allow(unused)]
     #[must_use]
     pub fn blocking() -> BlockingClient {
         Self::create()

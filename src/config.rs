@@ -36,19 +36,19 @@ pub struct Scoop {
     /// The 'current' version alias will not be used. Shims and shortcuts will point to specific version instead
     pub no_junction: bool,
 
-    #[serde(default, skip_serializing_if = "Skip::skip")]
+    #[serde(default, skip_serializing_if = "Skip::skip", rename = "scoop_repo")]
     /// Git repository containing the scoop adaptor's source code
     ///
     /// This configuration is useful for custom forks of scoop, or a scoop replacement
-    pub scoop_repo: repo::ScoopRepo,
+    pub repo: repo::ScoopRepo,
 
-    #[serde(default, skip_serializing_if = "Skip::skip")]
+    #[serde(default, skip_serializing_if = "Skip::skip", rename = "scoop_branch")]
     /// Allow to use different branch than master
     ///
     /// Could be used for testing specific functionalities before released into all users
     ///
     /// If you want to receive updates earlier to test new functionalities use develop (see: <https://github.com/ScoopInstaller/Scoop/issues/2939>)
-    pub scoop_branch: branch::ScoopBranch,
+    pub branch: branch::ScoopBranch,
 
     /// By default, we will use the proxy settings from Internet Options, but with anonymous authentication.
     ///
@@ -205,27 +205,12 @@ impl Scoop {
         Ok(())
     }
 
+    #[allow(unused)]
     /// Make the config strict
     ///
     /// This will remove all fields that are not in the config struct
     pub fn make_strict(&mut self) {
         self.other = Map::new();
-    }
-
-    /// Convert the config to a JSON object
-    ///
-    /// # Errors
-    /// - The config could not be converted to a JSON object
-    pub fn to_object(&self) -> serde_json::Result<Value> {
-        serde_json::to_value(self)
-    }
-
-    /// Convert the JSON object to [`Scoop`] config
-    ///
-    /// # Errors
-    /// - The JSON object could not be deserialized to a [`Scoop`] config
-    pub fn from_object(object: Value) -> serde_json::Result<Self> {
-        serde_json::from_value(object)
     }
 }
 

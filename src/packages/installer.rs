@@ -60,7 +60,7 @@ impl<'ctx, C: ScoopContext> InstallerHost<'ctx, C> {
     /// - If the installer could not be run
     pub fn run(self) -> Result<Output> {
         let runner = self.runner;
-        let args = self.installer.args.clone().map(SingleOrArray::to_vec);
+        let args = self.installer.args.clone().map(SingleOrArray::into_vec);
 
         let output = match runner {
             InstallerRunner::File(file) => {

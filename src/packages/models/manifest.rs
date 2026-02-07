@@ -322,7 +322,7 @@ pub struct HashExtraction {
     pub regex: Option<String>,
     #[deprecated(note = "hash type is determined automatically")]
     #[serde(rename = "type")]
-    pub hash_extraction_type: Option<Type>,
+    pub extraction_type: Option<Type>,
     pub url: Option<String>,
     pub xpath: Option<String>,
 }
@@ -391,9 +391,11 @@ impl<T> NestedArray<T> {
         match self {
             NestedArray::NestedArray(SingleOrArray::Single(v)) => vec![v.to_owned()],
             NestedArray::NestedArray(SingleOrArray::Array(v)) => v.to_owned(),
-            NestedArray::AliasArray(v) => {
-                v.iter().cloned().flat_map(SingleOrArray::to_vec).collect()
-            }
+            NestedArray::AliasArray(v) => v
+                .iter()
+                .cloned()
+                .flat_map(SingleOrArray::into_vec)
+                .collect(),
         }
     }
 }
@@ -443,7 +445,7 @@ impl<T> SingleOrArray<T> {
         }
     }
 
-    pub fn to_vec(self) -> Vec<T> {
+    pub fn into_vec(self) -> Vec<T> {
         match self {
             SingleOrArray::Single(t) => vec![t],
             SingleOrArray::Array(array) => array,
@@ -474,7 +476,7 @@ impl<T> SingleOrArray<T> {
         }
     }
 
-    pub fn to_option(self) -> Option<Self> {
+    pub fn into_option(self) -> Option<Self> {
         match self {
             SingleOrArray::Single(_) => Some(self),
             SingleOrArray::Array(array) => {
