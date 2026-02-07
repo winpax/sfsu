@@ -1,0 +1,79 @@
+name: Build & Test
+
+on:
+  pull_request:
+    branches:
+      - "trunk"
+
+  push:
+    branches:
+      - "trunk"
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+  IS_RELEASE: ${{ startsWith(github.ref, 'refs/tags/') }}
+
+jobs:
+  # cargo-deny:
+  #   runs-on: blacksmith-4vcpu-ubuntu-2404
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: EmbarkStudios/cargo-deny-action@v2
+
+  format:
+    name: Formatting
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+
+      - name: Check Formatting
+        run: cargo fmt --all --check
+
+  test:
+    name: Test
+    runs-on: blacksmith-4vcpu-windows-2025
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          lfs: true
+      - uses: Swatinem/rust-cache@v2.8.0
+
+      - name: Install and setup Scoop
+        uses: winpax/scoop-setup@v1.0.0
+        with:
+          buckets: extras java
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build and Test
+        run: cargo test --features beta
+
+  build:
+    strategy:
+      matrix:
+        architecture: [i686, x86_64, aarch64]
+    name: Build
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v6
+      - uses: Swatinem/rust-cache@v2.8.0
+        # Disable cache for release builds
+        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+      - uses: extractions/setup-just@v3
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build
+        run: cargo build --all-features --target ${{ matrix.architecture }}-pc-windows-msvc

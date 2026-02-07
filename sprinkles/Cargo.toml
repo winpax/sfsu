@@ -1,0 +1,159 @@
+[package]
+authors = ["Juliette Cordor <me@cordor.dev>"]
+categories = ["api-bindings", "command-line-utilities", "config"]
+description = "A Rust based abstraction layer for Scoop"
+edition = "2024"
+homepage = "https://github.com/winpax/sprinkles"
+include = [
+    "src/**/*",
+    "build.rs",
+    "Cargo.toml",
+    "LICENSE-APACHE",
+    "LICENSE-MIT",
+    "README.md",
+    "benches/**/*",
+    "tests/**/*",
+]
+keywords = ["api", "scoop", "windows", "package", "manager"]
+license = "MIT OR Apache-2.0"
+name = "sprinkles-rs"
+repository = "https://github.com/winpax/sprinkles"
+rust-version = "1.88"
+version = "0.23.0"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+name = "sprinkles"
+
+[package.metadata.docs.rs]
+default-target = "x86_64-unknown-linux-gnu"
+features = [
+    "beta",
+    "git2/vendored-libgit2",
+    "gix/blocking-http-transport-reqwest-native-tls",
+    "reqwest/native-tls-vendored",
+    "git2/vendored-openssl",
+    "manifest-hashes",
+]
+rustc-args = ["--cfg", "docsrs", "--cfg", "reqwest_unstable"]
+
+[features]
+beta = []
+default = ["manifest-hashes", "rayon", "unstable_linux"]
+manifest-hashes = [
+    "base64",
+    "digest",
+    "quick-xml",
+    "serde_json_path",
+    "sha1",
+    "sha2",
+    "sxd-document",
+    "sxd-xpath",
+    "tokio",
+    "tokio-util",
+    "url",
+    "urlencoding",
+    "tokio/fs",
+]
+parking_lot = ["tokio/parking_lot"]
+rayon = ["dep:rayon", "blake3/rayon", "indicatif/rayon"]
+unstable_linux = []
+
+[[bench]]
+harness = false
+name = "hashing"
+
+[dependencies]
+base64 = { version = "0.22", optional = true }
+blake3 = "1.8"
+bytes = "1.10"
+cfg-if = "1.0"
+chrono = { version = "0.4", features = [
+    "clock",
+    "serde",
+    "std",
+], default-features = false }
+clap = { version = "4.5", optional = true }
+const_format = "0.2"
+derive_more = { version = "2.0", features = ["deref", "deref_mut"] }
+digest = { version = "0.10", features = ["std"], optional = true }
+dirs = "6.0"
+dunce = "1.0"
+futures = "0.3"
+gix = { version = "0.78", features = [
+    "blocking-http-transport-reqwest",
+    "blocking-network-client",
+    "worktree-mutation",
+] }
+gix-object = "0.55"
+indicatif = { version = "0.18", features = ["improved_unicode", "tokio"] }
+itertools = "0.14"
+log = "0.4"
+md-5 = "0.10"
+phf = { version = "0.13", default-features = false }
+quick-xml = { version = "0.39", optional = true, features = ["serialize"] }
+quork = { version = "0.9", default-features = false, features = [
+    "traits",
+    "macros",
+] }
+rayon = { version = "1.10", optional = true }
+regex = "1.10"
+semver = { version = "1.0", features = ["serde"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = { version = "1.0", features = ["preserve_order"] }
+serde_json_path = { version = "0.7", optional = true }
+serde_with = "3.8"
+sha1 = { version = "0.10", optional = true }
+sha2 = { version = "0.10", optional = true }
+strum = { version = "0.27", features = ["derive"] }
+sxd-document = { version = "0.3", optional = true }
+sxd-xpath = { version = "0.4", optional = true }
+thiserror = "2.0"
+tokio = { version = "1.44", features = ["process"], optional = true }
+tokio-util = { version = "0.7", features = ["codec"], optional = true }
+url = { version = "2.5", features = ["serde"], optional = true }
+urlencoding = { version = "2.1", optional = true }
+which = "8.0"
+
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.62", features = [
+    "Win32_Storage_FileSystem",
+    "Win32_UI_Shell",
+    "Win32_System_Diagnostics",
+    "Win32_System_Diagnostics_ToolHelp",
+] }
+winreg = "0.55"
+
+[target.'cfg(not(docsrs))'.dependencies]
+git2 = "0.20"
+reqwest = { version = "0.13", features = [
+    "blocking",
+    "brotli",
+    "deflate",
+    "gzip",
+    "stream",
+] }
+
+[target.'cfg(docsrs)'.dependencies]
+git2 = { version = "0.20", default-features = false }
+reqwest = { version = "0.13", default-features = false }
+
+[dev-dependencies]
+anyhow = "1.0"
+async-std = { version = "1.13", features = ["attributes"] }
+criterion = { version = "0.8", features = ["html_reports", "async_tokio"] }
+rayon = "1.10"
+rstest = "0.26"
+tokio = { version = "1.37", features = [
+    "rt",
+    "rt-multi-thread",
+    "macros",
+    "process",
+] }
+
+[build-dependencies]
+heck = "0.5"
+phf_codegen = "0.13"
+reqwest = { version = "0.13", features = ["blocking", "json"] }
+serde_json = "1.0"

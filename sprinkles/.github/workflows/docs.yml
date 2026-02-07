@@ -1,0 +1,54 @@
+name: Deploy Rust docs to GitHub Pages branch
+
+on:
+  push:
+    branches: ["trunk"]
+
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  id-token: write
+
+# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
+# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: blacksmith-4vcpu-windows-2025
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - uses: Swatinem/rust-cache@v2.8.0
+
+      - name: Generate docs
+        run: cargo doc --all-features --no-deps
+
+      - name: Generate pages adapter
+        run: echo '<meta http-equiv="refresh" content="0; url=sprinkles">' > target/doc/index.html
+
+      - name: Checkout gh-pages
+        uses: actions/checkout@v6
+        with:
+          ref: gh-pages
+          path: gh-pages
+
+      - name: Copy docs to gh-pages
+        shell: pwsh
+        run: |
+          Copy-Item -Path "./target/doc/*" -Destination "${{ github.workspace }}/gh-pages" -Recurse -Force
+
+      - name: Disable jekyll processing
+        run: New-Item "${{ github.workspace }}/gh-pages/.nojekyll" -Force -ItemType File
+
+      - name: Commit and push
+        run: |
+          cd ${{ github.workspace }}/gh-pages
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add .
+          git commit -m "Deploy to GitHub Pages"
+          git push origin gh-pages
