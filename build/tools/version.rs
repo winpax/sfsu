@@ -6,6 +6,7 @@ use super::lock::Lockfile;
 pub struct SprinklesVersion<'a> {
     version: &'a str,
     git_rev: Option<&'a str>,
+    source: &'a str,
 }
 
 impl<'a> SprinklesVersion<'a> {
@@ -13,13 +14,17 @@ impl<'a> SprinklesVersion<'a> {
         let sprinkles = doc.get_package("sprinkles-rs").unwrap();
 
         let version = sprinkles.get("version").unwrap().as_str().unwrap();
-        let source = sprinkles.get("source").unwrap().as_str().unwrap();
+        let source = sprinkles
+            .get("source")
+            .and_then(|v| v.as_str())
+            .unwrap_or("local");
 
         Self {
             version,
             git_rev: source
                 .starts_with("git+")
                 .then(|| source.split('#').nth(1).unwrap()),
+            source,
         }
     }
 
@@ -28,6 +33,8 @@ impl<'a> SprinklesVersion<'a> {
 
         let sprinkles_rev = if let Some(git_rev) = self.git_rev() {
             format!(" (git rev: {})", git_rev)
+        } else if self.source == "local" {
+            " (local)".to_string()
         } else {
             " (crates.io published version)".to_string()
         };
