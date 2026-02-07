@@ -31,6 +31,7 @@ mod cache;
 mod config;
 mod contexts;
 mod env;
+mod hash;
 mod proxy;
 mod requests;
 mod shell;
@@ -237,3 +238,34 @@ async fn main() -> anyhow::Result<()> {
 
 //     Ok(unsafe { owner_name.to_string().expect("valid utf8 name") })
 // }
+
+#[cfg(test)]
+mod tests {
+    use itertools::Itertools;
+
+    use crate::{
+        contexts::{ScoopContext, User},
+        packages::{self, CreateManifest, InstallManifest},
+    };
+
+    #[test]
+    fn test_list_install_manifests() {
+        let ctx = User::new().unwrap();
+        let app_paths = ctx.installed_apps().unwrap();
+
+        app_paths
+            .into_iter()
+            .filter_map(|path| {
+                let path = path.join("current/install.json");
+                let result = InstallManifest::from_path(path);
+
+                match result {
+                    Ok(v) => Some(v),
+                    // These are really the only errors we care about
+                    Err(packages::Error::ParsingManifest(name, err)) => panic!("{name}: {err}"),
+                    Err(_) => None,
+                }
+            })
+            .collect_vec();
+    }
+}
