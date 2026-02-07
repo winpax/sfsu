@@ -26,10 +26,16 @@ mod wrappers;
 // The following were ported from sprinkles
 // This is here for my own reference
 mod arch;
+mod buckets;
+mod cache;
 mod config;
 mod contexts;
 mod env;
+mod proxy;
+mod requests;
+mod shell;
 mod system;
+mod version;
 
 use std::{
     io::IsTerminal,
