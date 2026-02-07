@@ -44,9 +44,9 @@ impl Iterator for ModuleIterator {
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.first {
-            unsafe { Module32FirstW(self.h_module_snap, &mut self.me32) }.ok()?;
+            unsafe { Module32FirstW(self.h_module_snap, &raw mut self.me32) }.ok()?;
         } else {
-            unsafe { Module32NextW(self.h_module_snap, &mut self.me32) }.ok()?;
+            unsafe { Module32NextW(self.h_module_snap, &raw mut self.me32) }.ok()?;
         }
 
         self.first = false;
@@ -90,9 +90,9 @@ impl Iterator for ProcessIterator {
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.first {
-            unsafe { Process32FirstW(self.h_process_snap, &mut self.pe32) }.ok()?;
+            unsafe { Process32FirstW(self.h_process_snap, &raw mut self.pe32) }.ok()?;
         } else {
-            unsafe { Process32NextW(self.h_process_snap, &mut self.pe32) }.ok()?;
+            unsafe { Process32NextW(self.h_process_snap, &raw mut self.pe32) }.ok()?;
         }
 
         self.first = false;
@@ -167,14 +167,12 @@ impl Process {
             let process_iterator = ProcessIterator::new(h_process_snap);
 
             for pe32 in process_iterator {
-                if let Self::ExactExe(path) = &self {
-                    if let Some(file_name) = path.file_name() {
-                        if get_compare_string(&pe32.szExeFile) == file_name.to_string_lossy() {
+                if let Self::ExactExe(path) = &self
+                    && let Some(file_name) = path.file_name()
+                        && get_compare_string(&pe32.szExeFile) == file_name.to_string_lossy() {
                             proc_running = true;
                             break;
                         }
-                    }
-                }
 
                 // This can sometimes return an error, but we don't care about it (it usually means the process is irrevelant)
                 let compare = unsafe { match_process_path(&pe32, path) }.unwrap_or_default();

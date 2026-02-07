@@ -29,7 +29,6 @@ use gix::{
     open::Options as OpenOptions,
 };
 
-pub use gix::progress;
 
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
