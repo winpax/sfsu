@@ -31,8 +31,6 @@ use serde::{Deserialize, Serialize};
 pub mod buckets;
 #[cfg(feature = "manifest-hashes")]
 pub mod cache;
-pub mod config;
-pub mod contexts;
 pub mod git;
 pub mod handles;
 #[cfg(feature = "manifest-hashes")]

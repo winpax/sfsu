@@ -12,7 +12,7 @@ mod calm_panic;
 mod commands;
 mod diagnostics;
 mod errors;
-pub mod float;
+mod float;
 mod handlers;
 mod limits;
 mod logging;
@@ -25,6 +25,8 @@ mod wrappers;
 
 // The following were ported from sprinkles
 // This is here for my own reference
+mod config;
+mod contexts;
 mod env;
 mod system;
 
