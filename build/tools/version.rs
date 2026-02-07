@@ -1,7 +1,5 @@
 use shadow_rs::Shadow;
 
-use super::lock::Lockfile;
-
 #[derive(Debug, Copy, Clone)]
 pub struct SprinklesVersion<'a> {
     version: &'a str,
@@ -10,21 +8,11 @@ pub struct SprinklesVersion<'a> {
 }
 
 impl<'a> SprinklesVersion<'a> {
-    pub fn from_doc(doc: &'a Lockfile) -> Self {
-        let sprinkles = doc.get_package("sprinkles-rs").unwrap();
-
-        let version = sprinkles.get("version").unwrap().as_str().unwrap();
-        let source = sprinkles
-            .get("source")
-            .and_then(|v| v.as_str())
-            .unwrap_or("local");
-
+    pub const fn new() -> Self {
         Self {
-            version,
-            git_rev: source
-                .starts_with("git+")
-                .then(|| source.split('#').nth(1).unwrap()),
-            source,
+            version: "local",
+            git_rev: None,
+            source: "local",
         }
     }
 

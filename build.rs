@@ -68,8 +68,10 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     std::fs::write(
         out_dir.join("long_version.txt"),
-        SprinklesVersion::from_doc(&lockfile).long_version(&shadow),
+        SprinklesVersion::new().long_version(&shadow),
     )?;
+
+    build::buckets::save_known_buckets()?;
 
     Ok(())
 }
