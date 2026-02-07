@@ -23,11 +23,8 @@ macro_rules! windows_only {
     };
 }
 
-pub mod git;
 pub mod handles;
 pub mod packages;
-pub mod progress;
-pub mod scripts;
 
 #[macro_use]
 extern crate log;
