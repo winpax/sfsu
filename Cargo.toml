@@ -10,22 +10,6 @@ version = "1.17.3"
 
 [[bench]]
 harness = false
-name = "searching"
-
-[[bench]]
-harness = false
-name = "ref-matching"
-
-[[bench]]
-harness = false
-name = "serde"
-
-[[bench]]
-harness = false
-name = "autoupdate"
-
-[[bench]]
-harness = false
 name = "url_parsing"
 
 [[bench]]
