@@ -50,6 +50,12 @@ download = []
 v2 = []
 
 [dependencies]
+windows = { version = "0.62", features = [
+        "Win32_Storage_FileSystem",
+    "Win32_UI_Shell",
+    "Win32_System_Diagnostics",
+    "Win32_System_Diagnostics_ToolHelp",
+]] }
 anyhow = "1.0"
 bat = { version = "0.26", default-features = false, features = ["regex-onig"] }
 cfg-if = "1.0"
@@ -70,6 +76,7 @@ crossterm = "0.29"
 derive_more = { version = "2.0", features = ["deref_mut", "deref", "as_ref"] }
 dialoguer = "0.12"
 futures = "0.3"
+git2 = "0.20"
 glob = "0.3.3"
 hashbrown = "0.16"
 heck = "0.5"
@@ -89,6 +96,13 @@ rand = "0.9"
 ratatui = { version = "0.30", features = ["macros"] }
 rayon = "1.10"
 regex = "1.12"
+reqwest = { version = "0.13", features = [
+    "blocking",
+    "brotli",
+    "deflate",
+    "gzip",
+    "stream",
+] }
 semver = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0", features = ["preserve_order"] }
@@ -97,13 +111,21 @@ thiserror = "2.0"
 tokio = { version = "1.47", features = ["full"] }
 vt3 = "0.7"
 which = "8.0"
-windows = { version = "0.62", features = ["Win32_Storage_FileSystem"] }
 windows-version = "0.1"
 winreg = "0.55"
 
 [dev-dependencies]
+anyhow = "1.0"
 criterion = { version = "0.8", features = ["async_tokio", "html_reports"] }
-url = "2.5.4"
+rayon = "1.10"
+rstest = "0.26"
+tokio = { version = "1.37", features = [
+    "rt",
+    "rt-multi-thread",
+    "macros",
+    "process",
+] }
+url = "2.5"
 
 [build-dependencies]
 contribs = { git = "https://github.com/winpax/contribs.git", version = "0.1" }
