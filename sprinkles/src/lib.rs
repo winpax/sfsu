@@ -45,9 +45,6 @@ pub mod scripts;
 pub mod shell;
 pub mod version;
 
-mod env;
-mod system;
-
 #[macro_use]
 extern crate log;
 
