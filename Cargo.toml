@@ -76,11 +76,6 @@ chrono = { version = "0.4", features = [
     "serde",
     "std",
 ], default-features = false }
-chrono = { version = "0.4", features = [
-    "clock",
-    "serde",
-    "std",
-], default-features = false }
 clap = { version = "4.5", features = [
     "derive",
     "env",
@@ -88,17 +83,14 @@ clap = { version = "4.5", features = [
     "unicode",
     "wrap_help",
 ] }
-clap = { version = "4.5", optional = true }
 console = { version = "0.16", features = ["windows-console-colors"] }
 const_format = "0.2"
 crossterm = "0.29"
 derive_more = { version = "2.0", features = ["deref_mut", "deref", "as_ref"] }
-derive_more = { version = "2.0", features = ["deref", "deref_mut"] }
 dialoguer = "0.12"
 digest = { version = "0.10", features = ["std"], optional = true }
 dirs = "6.0"
 dunce = "1.0"
-futures = "0.3"
 futures = "0.3"
 git2 = "0.20"
 gix = { version = "0.78", features = [
@@ -118,10 +110,8 @@ indicatif = { version = "0.18", features = [
     "rayon",
 ] }
 itertools = "0.14"
-itertools = "0.14"
 konst = "0.4"
 log = { version = "0.4", features = ["std"] }
-log = "0.4"
 md-5 = "0.10"
 open = "5.1"
 parking_lot = "0.12"
@@ -131,16 +121,15 @@ prodash = { version = "31", features = [
     "render-line-crossterm",
 ] }
 quick-xml = { version = "0.39", optional = true, features = ["serialize"] }
-quork = { version = "0.9", default-features = false, features = ["root"] }
 quork = { version = "0.9", default-features = false, features = [
     "traits",
     "macros",
+    "root",
 ] }
 rand = "0.9"
 ratatui = { version = "0.30", features = ["macros"] }
 rayon = "1.10"
 regex = "1.12"
-regex = "1.10"
 reqwest = { version = "0.13", features = [
     "blocking",
     "brotli",
@@ -148,11 +137,8 @@ reqwest = { version = "0.13", features = [
     "gzip",
     "stream",
 ] }
-semver = "1.0"
 semver = { version = "1.0", features = ["serde"] }
 serde = { version = "1.0", features = ["derive"] }
-serde = { version = "1.0", features = ["derive"] }
-serde_json = { version = "1.0", features = ["preserve_order"] }
 serde_json = { version = "1.0", features = ["preserve_order"] }
 serde_json_path = { version = "0.7", optional = true }
 serde_with = "3.8"
@@ -163,13 +149,11 @@ strum = { version = "0.27", features = ["derive"] }
 sxd-document = { version = "0.3", optional = true }
 sxd-xpath = { version = "0.4", optional = true }
 thiserror = "2.0"
-thiserror = "2.0"
 tokio = { version = "1.47", features = ["full", "process", "parking_lot"] }
 tokio-util = { version = "0.7", features = ["codec"], optional = true }
 url = { version = "2.5", features = ["serde"], optional = true }
 urlencoding = { version = "2.1", optional = true }
 vt3 = "0.7"
-which = "8.0"
 which = "8.0"
 windows = { version = "0.62", features = [
     "Win32_Storage_FileSystem",
