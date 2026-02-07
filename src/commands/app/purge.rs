@@ -3,7 +3,7 @@ use std::{collections::HashMap, ops::Deref};
 use clap::Parser;
 use dialoguer::Confirm;
 use rayon::prelude::*;
-use sprinkles::{
+use crate::{
     contexts::ScoopContext,
     packages::{
         Manifest,

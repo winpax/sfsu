@@ -1,4 +1,4 @@
-use sprinkles::packages::{CreateManifest, models::manifest::Manifest};
+use crate::packages::{CreateManifest, models::manifest::Manifest};
 
 #[test]
 fn test_empty_hash_is_none() {

@@ -61,7 +61,7 @@ pub struct EmptyConfig;
 ///
 /// # Example
 /// ```
-/// # use sprinkles::contexts::{ScoopContext, User};
+/// # use crate::contexts::{ScoopContext, User};
 /// let context = User::new().unwrap();
 /// let scoop_path = context.path();
 /// ```
@@ -180,33 +180,25 @@ pub trait ScoopContext: Clone + Send + Sync + 'static {
 
     /// List all scoop apps and return their paths, except for the context's app
     fn installed_apps(&self) -> std::io::Result<Vec<PathBuf>> {
-        #[cfg(feature = "rayon")]
         use rayon::prelude::*;
 
         let apps_path = self.apps_path();
 
         let read = apps_path.read_dir()?;
 
-        Ok({
-            cfg_if::cfg_if! {
-                if #[cfg(feature = "rayon")] {
-                    read.par_bridge()
-                } else {
-                    read
-                }
-            }
-        }
-        .filter_map(|package| {
-            let path = package.expect("valid path").path();
+        Ok(read
+            .par_bridge()
+            .filter_map(|package| {
+                let path = package.expect("valid path").path();
 
-            // We cannot search the scoop app as it is built in and hence doesn't contain any manifest
-            if path.file_name() == Some(OsStr::new(Self::APP_NAME)) {
-                None
-            } else {
-                Some(path)
-            }
-        })
-        .collect())
+                // We cannot search the scoop app as it is built in and hence doesn't contain any manifest
+                if path.file_name() == Some(OsStr::new(Self::APP_NAME)) {
+                    None
+                } else {
+                    Some(path)
+                }
+            })
+            .collect())
     }
 
     /// Checks if the app is installed by its name

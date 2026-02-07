@@ -8,7 +8,6 @@ use chrono::{DateTime, FixedOffset};
 use gix::{
     object::tree::diff::Action, revision::walk::Sorting, traverse::commit::simple::CommitTimeOrder,
 };
-#[cfg(feature = "rayon")]
 use rayon::prelude::*;
 use regex::Regex;
 use serde::Deserialize;
@@ -224,7 +223,6 @@ pub enum SearchMode {
     Both,
 }
 
-#[cfg(feature = "clap")]
 impl clap::ValueEnum for SearchMode {
     fn value_variants<'a>() -> &'a [Self] {
         &[Self::Name, Self::Binary, Self::Both]
@@ -387,17 +385,10 @@ impl InstallManifest {
     /// - Reading directories fails
     pub fn list_all(ctx: &impl ScoopContext) -> Result<Vec<Self>> {
         let installed_apps = ctx.installed_apps()?;
-        {
-            cfg_if::cfg_if! {
-                if #[cfg(feature = "rayon")] {
-                    installed_apps.par_iter()
-                } else {
-                    installed_apps.iter()
-                }
-            }
-        }
-        .map(|path| Self::from_path(path.join("current/install.json")))
-        .collect::<Result<Vec<_>>>()
+        installed_apps
+            .par_iter()
+            .map(|path| Self::from_path(path.join("current/install.json")))
+            .collect::<Result<Vec<_>>>()
     }
 
     /// List all install manifests, ignoring errors
@@ -407,22 +398,15 @@ impl InstallManifest {
     pub fn list_all_unchecked(ctx: &impl ScoopContext) -> Result<Vec<Self>> {
         let installed_apps = ctx.installed_apps()?;
 
-        Ok({
-            cfg_if::cfg_if! {
-                if #[cfg(feature = "rayon")] {
-                    installed_apps.par_iter()
-                } else {
-                    installed_apps.iter()
-                }
-            }
-        }
-        .filter_map(
-            |path| match Self::from_path(path.join("current/install.json")) {
-                Ok(v) => Some(v.with_name(path)),
-                Err(_) => None,
-            },
-        )
-        .collect::<Vec<_>>())
+        Ok(installed_apps
+            .par_iter()
+            .filter_map(
+                |path| match Self::from_path(path.join("current/install.json")) {
+                    Ok(v) => Some(v.with_name(path)),
+                    Err(_) => None,
+                },
+            )
+            .collect::<Vec<_>>())
     }
 }
 
@@ -535,27 +519,20 @@ impl Manifest {
     pub fn list_installed(ctx: &impl ScoopContext) -> Result<Vec<Result<Self>>> {
         let installed_apps = ctx.installed_apps()?;
 
-        Ok({
-            cfg_if::cfg_if! {
-                if #[cfg(feature = "rayon")] {
-                    installed_apps.par_iter()
-                } else {
-                    installed_apps.iter()
-                }
-            }
-        }
-        .map(|path| {
-            Self::from_path(path.join("current/manifest.json")).and_then(|mut manifest| {
-                manifest.set_name(
-                    path.file_name()
-                        .map(|f| f.to_string_lossy().to_string())
-                        .ok_or(Error::MissingFileName)?,
-                );
+        Ok(installed_apps
+            .par_iter()
+            .map(|path| {
+                Self::from_path(path.join("current/manifest.json")).and_then(|mut manifest| {
+                    manifest.set_name(
+                        path.file_name()
+                            .map(|f| f.to_string_lossy().to_string())
+                            .ok_or(Error::MissingFileName)?,
+                    );
 
-                Ok(manifest)
+                    Ok(manifest)
+                })
             })
-        })
-        .collect::<Vec<_>>())
+            .collect::<Vec<_>>())
     }
 
     #[must_use]

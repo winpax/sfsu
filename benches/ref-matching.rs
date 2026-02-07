@@ -2,7 +2,7 @@ use std::{hint::black_box, str::FromStr};
 
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
 
-use sprinkles::{contexts::User, packages::reference::package};
+use crate::{contexts::User, packages::reference::package};
 
 fn criterion_benchmark(c: &mut Criterion) {
     let ctx = User::new().unwrap();

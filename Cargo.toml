@@ -55,7 +55,6 @@ manifest-hashes = [
     "sha2",
     "sxd-document",
     "sxd-xpath",
-    "tokio",
     "tokio-util",
     "url",
     "urlencoding",

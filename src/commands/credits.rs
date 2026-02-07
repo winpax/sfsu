@@ -5,6 +5,7 @@ use std::{
     time::{Duration, Instant},
 };
 
+use crate::contexts::ScoopContext;
 use clap::Parser;
 use crossterm::{
     ExecutableCommand,
@@ -22,7 +23,6 @@ use ratatui::{
     widgets::{Block, Borders, List},
 };
 use serde::Serialize;
-use sprinkles::contexts::ScoopContext;
 
 use crate::shadow;
 

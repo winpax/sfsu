@@ -1,7 +1,7 @@
 use clap::Parser;
 use itertools::Itertools;
 
-use sprinkles::{
+use crate::{
     Architecture,
     contexts::ScoopContext,
     packages::{

@@ -1,7 +1,7 @@
 use clap::Parser;
 
 use itertools::Itertools;
-use sprinkles::contexts::ScoopContext;
+use crate::contexts::ScoopContext;
 
 use crate::diagnostics::{Diagnostics, LongPathsStatus};
 
@@ -39,7 +39,7 @@ impl super::Command for Args {
         }
 
         // I've disabled this because it's highly insecure to disable Windows Defender for Scoop
-        // if !sprinkles::is_elevated()? {
+        // if !crate::is_elevated()? {
         //     println!("❓ Windows Defender status could not be checked");
         //     println!("\tRun this command as admin to check Windows Defender status");
         // } else if diagnostics.windows_defender {

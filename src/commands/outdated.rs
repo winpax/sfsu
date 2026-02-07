@@ -1,6 +1,6 @@
 use clap::{Parser, Subcommand};
 use serde_json::Map;
-use sprinkles::{config, contexts::ScoopContext};
+use crate::{config, contexts::ScoopContext};
 
 use super::{Command, CommandRunner, DeprecationMessage, DeprecationWarning, Runnable};
 
@@ -16,7 +16,7 @@ pub enum Commands {
 impl Runnable for Commands {
     async fn run(
         self,
-        ctx: &impl sprinkles::contexts::ScoopContext<Config = sprinkles::config::Scoop>,
+        ctx: &impl crate::contexts::ScoopContext<Config = crate::config::Scoop>,
     ) -> anyhow::Result<()> {
         match self {
             Commands::Apps(args) => args.run(ctx).await,

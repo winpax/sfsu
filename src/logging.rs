@@ -4,9 +4,11 @@ use anyhow::Context;
 use chrono::Local;
 use log::{Level, LevelFilter};
 use rayon::iter::{ParallelBridge, ParallelIterator};
-use sprinkles::contexts::ScoopContext;
 
-use crate::output::colours::{eprintln_red, eprintln_yellow};
+use crate::{
+    contexts::ScoopContext,
+    output::colours::{eprintln_red, eprintln_yellow},
+};
 
 pub mod panics;
 

@@ -31,7 +31,7 @@ If you have a bug report, feature request, or other issue, then [open an issue](
 If you want a more in depth example of how to use the library, check out the [sfsu](https://github.com/winpax/sfsu) project.
 
 ```rust
-use sprinkles::contexts::{User, ScoopContext};
+use crate::contexts::{User, ScoopContext};
 
 let ctx = User::new().unwrap();
 

@@ -2,7 +2,7 @@ use std::{hint::black_box, str::FromStr, time::Duration};
 
 use criterion::{BatchSize, Criterion, criterion_group, criterion_main};
 
-use sprinkles::{
+use crate::{
     Architecture,
     cache::{DownloadHandle, Handle},
     contexts::{ScoopContext, User},

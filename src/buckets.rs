@@ -264,7 +264,6 @@ impl Bucket {
     where
         &'a C: Send + Sync,
     {
-        #[cfg(feature = "rayon")]
         use rayon::prelude::*;
 
         // Ignore loose files in the buckets dir
@@ -274,30 +273,23 @@ impl Bucket {
 
         let bucket_contents = self.list_package_names()?;
 
-        let matches = {
-            cfg_if::cfg_if! {
-                if #[cfg(feature = "rayon")] {
-                    bucket_contents.par_iter()
-                } else {
-                    bucket_contents.iter()
-                }
-            }
-        }
-        .filter_map(|manifest_name| {
-            // Ignore non-matching manifests
-            if search_mode.eager_name_matches(manifest_name, search_regex) {
-                let manifest = self.get_manifest(manifest_name).ok()?;
+        let matches = bucket_contents
+            .par_iter()
+            .filter_map(|manifest_name| {
+                // Ignore non-matching manifests
+                if search_mode.eager_name_matches(manifest_name, search_regex) {
+                    let manifest = self.get_manifest(manifest_name).ok()?;
 
-                if !installed_only || manifest.is_installed(ctx, Some(&self.name())) {
-                    Some(manifest)
+                    if !installed_only || manifest.is_installed(ctx, Some(&self.name())) {
+                        Some(manifest)
+                    } else {
+                        None
+                    }
                 } else {
                     None
                 }
-            } else {
-                None
-            }
-        })
-        .collect::<Vec<_>>();
+            })
+            .collect::<Vec<_>>();
 
         Ok(matches)
     }
@@ -308,22 +300,14 @@ impl Bucket {
     /// Invalid install manifest
     /// Reading directories fails
     pub fn used(ctx: &impl ScoopContext) -> packages::Result<HashSet<String>> {
-        #[cfg(feature = "rayon")]
         use rayon::prelude::*;
 
         let manifests = InstallManifest::list_all(ctx)?;
 
-        Ok({
-            cfg_if::cfg_if! {
-                if #[cfg(feature = "rayon")] {
-                    manifests.par_iter()
-                } else {
-                    manifests.iter()
-                }
-            }
-        }
-        .filter_map(|entry| entry.bucket.clone())
-        .collect())
+        Ok(manifests
+            .par_iter()
+            .filter_map(|entry| entry.bucket.clone())
+            .collect())
     }
 
     // TODO: Check if calling this for every single bucket is slow

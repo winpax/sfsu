@@ -1,5 +1,5 @@
 use clap::Parser;
-use sprinkles::contexts::ScoopContext;
+use crate::contexts::ScoopContext;
 
 use crate::abandon;
 
@@ -42,7 +42,7 @@ impl super::Command for Args {
 
         let clone_progress = root.add_child_with_id("Cloning repository", *b"REPO");
 
-        sprinkles::git::clone::clone(&repo_url, dest_path, clone_progress)?;
+        crate::git::clone::clone(&repo_url, dest_path, clone_progress)?;
 
         handle.await?;
 

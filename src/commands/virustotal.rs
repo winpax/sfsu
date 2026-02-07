@@ -3,7 +3,7 @@ use std::time::Duration;
 use anyhow::Context;
 use clap::{Parser, ValueEnum};
 use rayon::prelude::*;
-use sprinkles::{
+use crate::{
     Architecture, config,
     contexts::ScoopContext,
     hash::Hash,

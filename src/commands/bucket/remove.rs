@@ -1,6 +1,6 @@
 use clap::Parser;
 use dialoguer::Confirm;
-use sprinkles::contexts::ScoopContext;
+use crate::contexts::ScoopContext;
 
 use crate::{abandon, output::colours::yellow};
 

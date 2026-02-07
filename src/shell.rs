@@ -14,7 +14,6 @@ pub enum Shell {
     Nu,
 }
 
-#[cfg(feature = "clap")]
 impl clap::ValueEnum for Shell {
     fn value_variants<'a>() -> &'a [Self] {
         &[Self::Powershell, Self::Bash, Self::Zsh, Self::Nu]

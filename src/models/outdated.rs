@@ -2,7 +2,7 @@
 
 use serde::Serialize;
 
-use sprinkles::packages::Manifest;
+use crate::packages::Manifest;
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq, Hash)]
 /// The outdated info

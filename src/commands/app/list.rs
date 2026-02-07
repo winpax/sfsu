@@ -1,7 +1,7 @@
 use clap::{Parser, ValueEnum};
 use rayon::prelude::*;
 
-use sprinkles::contexts::ScoopContext;
+use crate::contexts::ScoopContext;
 
 use crate::{models::min::Info, output::structured::Structured};
 

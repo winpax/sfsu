@@ -6,7 +6,7 @@ use rayon::prelude::*;
 use clap::Parser;
 use regex::Regex;
 
-use sprinkles::{
+use crate::{
     Architecture,
     buckets::Bucket,
     contexts::ScoopContext,

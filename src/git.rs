@@ -23,13 +23,6 @@ pub mod options;
 pub mod parity;
 mod pull;
 
-pub mod implementations {
-    //! Re-exports of the different Git implementations used
-
-    pub use git2;
-    pub use gix;
-}
-
 /// Get the path to the git executable
 ///
 /// This is just an alias for [`which::which`]

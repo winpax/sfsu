@@ -1,3 +1,10 @@
+use std::{fmt, str::FromStr};
+
+use quork::macros::ListVariants;
+use serde::{Deserialize, Serialize};
+
+use crate::contexts::Error;
+
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, ListVariants)]
 /// Supported architectures
 pub enum Architecture {

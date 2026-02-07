@@ -4,7 +4,7 @@
 //!
 //! # Example
 //! ```no_run
-//! # use sprinkles::{scripts::PowershellScript, contexts::{User, ScoopContext}};
+//! # use crate::{scripts::PowershellScript, contexts::{User, ScoopContext}};
 //!
 //! let script = PowershellScript::new("Write-Host 'Hello, world!'");
 //! # let ctx = User::new().unwrap();

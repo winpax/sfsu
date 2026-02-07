@@ -104,7 +104,7 @@ impl ShimHandle {
     /// # Examples
     /// ```no_run
     /// # use std::path::PathBuf;
-    /// # use sprinkles::handles::shim::{ShimHandle, DeleteFlags};
+    /// # use crate::handles::shim::{ShimHandle, DeleteFlags};
     /// # let shim = ShimHandle::new(PathBuf::from("executable.exe"), PathBuf::from("shim.exe"));
     /// shim.delete(DeleteFlags::EXECUTABLE | DeleteFlags::SHIM);
     /// ```

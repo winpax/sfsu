@@ -3,7 +3,7 @@ use chrono::{DateTime, Local};
 use quork::traits::truthy::ContainsTruth;
 use rayon::prelude::*;
 use serde::Serialize;
-use sprinkles::{
+use crate::{
     contexts::ScoopContext,
     packages::{CreateManifest, InstallManifest, Manifest},
 };

@@ -19,7 +19,6 @@ mod logging;
 mod matching;
 mod models;
 mod output;
-mod progress;
 mod validations;
 mod wrappers;
 
@@ -31,7 +30,6 @@ mod cache;
 mod config;
 mod contexts;
 mod env;
-mod git;
 mod git;
 mod handles;
 mod hash;
@@ -51,16 +49,14 @@ use std::{
 
 use clap::Parser;
 
+use arch::Architecture;
 use commands::{Commands, Runnable};
+use contexts::{AnyContext, ScoopContext, User};
 use logging::Logger;
-use sprinkles::{
-    Architecture,
-    contexts::{AnyContext, ScoopContext, User},
-};
+use validations::Validate;
 
 #[cfg(feature = "contexts")]
-use sprinkles::contexts::Global;
-use validations::Validate;
+use contexts::Global;
 
 mod shadow {
     #![allow(clippy::large_const_arrays)]

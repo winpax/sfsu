@@ -2,9 +2,9 @@ use std::hint::black_box;
 
 use criterion::{BatchSize, Criterion, criterion_group, criterion_main};
 
+use crate::{buckets::Bucket, contexts::User, packages::SearchMode};
 use rayon::prelude::*;
 use regex::Regex;
-use sprinkles::{buckets::Bucket, contexts::User, packages::SearchMode};
 
 fn criterion_benchmark(c: &mut Criterion) {
     let ctx = User::new().unwrap();

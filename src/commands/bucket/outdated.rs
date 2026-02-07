@@ -1,6 +1,6 @@
 use clap::Parser;
 use itertools::Itertools;
-use sprinkles::{buckets::Bucket, contexts::ScoopContext};
+use crate::{buckets::Bucket, contexts::ScoopContext};
 
 use crate::{
     commands::{self, DeprecationMessage, DeprecationWarning},
