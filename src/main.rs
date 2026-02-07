@@ -25,6 +25,7 @@ mod wrappers;
 
 // The following were ported from sprinkles
 // This is here for my own reference
+mod arch;
 mod config;
 mod contexts;
 mod env;
