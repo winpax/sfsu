@@ -1,7 +1,7 @@
+use crate::contexts::ScoopContext;
 use clap::Parser;
 use itertools::Itertools;
 use serde::Serialize;
-use sprinkles::contexts::ScoopContext;
 
 #[derive(Debug, Clone, Serialize)]
 struct KnownBucket {

@@ -4,7 +4,7 @@ use itertools::Itertools as _;
 use quork::traits::truthy::ContainsTruth;
 use serde::Serialize;
 
-use sprinkles::{
+use crate::{
     buckets::Bucket,
     contexts::ScoopContext,
     packages::{

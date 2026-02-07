@@ -1,25 +1,18 @@
 use shadow_rs::Shadow;
 
-use super::lock::Lockfile;
-
 #[derive(Debug, Copy, Clone)]
 pub struct SprinklesVersion<'a> {
     version: &'a str,
     git_rev: Option<&'a str>,
+    source: &'a str,
 }
 
 impl<'a> SprinklesVersion<'a> {
-    pub fn from_doc(doc: &'a Lockfile) -> Self {
-        let sprinkles = doc.get_package("sprinkles-rs").unwrap();
-
-        let version = sprinkles.get("version").unwrap().as_str().unwrap();
-        let source = sprinkles.get("source").unwrap().as_str().unwrap();
-
+    pub const fn new() -> Self {
         Self {
-            version,
-            git_rev: source
-                .starts_with("git+")
-                .then(|| source.split('#').nth(1).unwrap()),
+            version: "local",
+            git_rev: None,
+            source: "local",
         }
     }
 
@@ -28,6 +21,8 @@ impl<'a> SprinklesVersion<'a> {
 
         let sprinkles_rev = if let Some(git_rev) = self.git_rev() {
             format!(" (git rev: {})", git_rev)
+        } else if self.source == "local" {
+            " (local)".to_string()
         } else {
             " (crates.io published version)".to_string()
         };

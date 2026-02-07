@@ -1,8 +1,9 @@
 use std::{borrow::Cow, rc::Rc};
 
-use sprinkles::packages::reference::package;
-
-use crate::output::colours::{bright_red, green, yellow};
+use crate::{
+    output::colours::{bright_red, green, yellow},
+    packages::reference::package,
+};
 
 type ListAppsResult = anyhow::Result<Option<Vec<package::Reference>>>;
 

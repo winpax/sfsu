@@ -1,12 +1,12 @@
+use crate::{
+    contexts::ScoopContext,
+    packages::{CreateManifest, InstallManifest, Manifest},
+};
 use anyhow::Context;
 use chrono::{DateTime, Local};
 use quork::traits::truthy::ContainsTruth;
 use rayon::prelude::*;
 use serde::Serialize;
-use sprinkles::{
-    contexts::ScoopContext,
-    packages::{CreateManifest, InstallManifest, Manifest},
-};
 use std::path::Path;
 use std::time::UNIX_EPOCH;
 

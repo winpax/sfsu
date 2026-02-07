@@ -1,9 +1,6 @@
 use std::{collections::HashMap, ops::Deref};
 
-use clap::Parser;
-use dialoguer::Confirm;
-use rayon::prelude::*;
-use sprinkles::{
+use crate::{
     contexts::ScoopContext,
     packages::{
         Manifest,
@@ -11,6 +8,9 @@ use sprinkles::{
     },
     progress::{indicatif::ProgressBar, style},
 };
+use clap::Parser;
+use dialoguer::Confirm;
+use rayon::prelude::*;
 
 use crate::output::colours::{eprintln_yellow, yellow};
 

@@ -7,7 +7,7 @@ use clap::Parser;
 use itertools::Itertools;
 use rayon::prelude::*;
 
-use sprinkles::{
+use crate::{
     buckets::{self, Bucket},
     config::Scoop as ScoopConfig,
     contexts::ScoopContext,
@@ -31,7 +31,7 @@ pub struct Args {
 impl super::Command for Args {
     async fn runner(
         self,
-        ctx: &impl ScoopContext<Config = sprinkles::config::Scoop>,
+        ctx: &impl ScoopContext<Config = crate::config::Scoop>,
     ) -> anyhow::Result<()> {
         self.runner_internal(ctx, false).await
     }
@@ -181,9 +181,7 @@ impl Args {
         Ok(Some(changelog))
     }
 
-    fn gen_stats_callback(
-        pb: &ProgressBar,
-    ) -> impl Fn(sprinkles::git::implementations::git2::Progress<'_>, bool) -> bool + '_ {
+    fn gen_stats_callback(pb: &ProgressBar) -> impl Fn(git2::Progress<'_>, bool) -> bool + '_ {
         |stats, thin| {
             if thin {
                 pb.set_position(stats.indexed_objects() as u64);

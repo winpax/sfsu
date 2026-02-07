@@ -12,16 +12,35 @@ mod calm_panic;
 mod commands;
 mod diagnostics;
 mod errors;
-pub mod float;
+mod float;
 mod handlers;
 mod limits;
 mod logging;
 mod matching;
 mod models;
 mod output;
-mod progress;
 mod validations;
 mod wrappers;
+
+// The following were ported from sprinkles
+// This is here for my own reference
+mod arch;
+mod buckets;
+mod cache;
+mod config;
+mod contexts;
+mod env;
+mod git;
+mod handles;
+mod hash;
+mod packages;
+mod progress;
+mod proxy;
+mod requests;
+mod scripts;
+mod shell;
+mod system;
+mod version;
 
 use std::{
     io::IsTerminal,
@@ -30,16 +49,14 @@ use std::{
 
 use clap::Parser;
 
+use arch::Architecture;
 use commands::{Commands, Runnable};
+use contexts::{AnyContext, ScoopContext, User};
 use logging::Logger;
-use sprinkles::{
-    Architecture,
-    contexts::{AnyContext, ScoopContext, User},
-};
+use validations::Validate;
 
 #[cfg(feature = "contexts")]
-use sprinkles::contexts::Global;
-use validations::Validate;
+use contexts::Global;
 
 mod shadow {
     #![allow(clippy::large_const_arrays)]
@@ -223,3 +240,34 @@ async fn main() -> anyhow::Result<()> {
 
 //     Ok(unsafe { owner_name.to_string().expect("valid utf8 name") })
 // }
+
+#[cfg(test)]
+mod tests {
+    use itertools::Itertools;
+
+    use crate::{
+        contexts::{ScoopContext, User},
+        packages::{self, CreateManifest, InstallManifest},
+    };
+
+    #[test]
+    fn test_list_install_manifests() {
+        let ctx = User::new().unwrap();
+        let app_paths = ctx.installed_apps().unwrap();
+
+        app_paths
+            .into_iter()
+            .filter_map(|path| {
+                let path = path.join("current/install.json");
+                let result = InstallManifest::from_path(path);
+
+                match result {
+                    Ok(v) => Some(v),
+                    // These are really the only errors we care about
+                    Err(packages::Error::ParsingManifest(name, err)) => panic!("{name}: {err}"),
+                    Err(_) => None,
+                }
+            })
+            .collect_vec();
+    }
+}

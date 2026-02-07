@@ -1,0 +1,2 @@
+* text=auto
+tests/fixtures/* filter=lfs diff=lfs merge=lfs -text

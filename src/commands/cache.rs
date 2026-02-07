@@ -3,9 +3,9 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use crate::{config, contexts::ScoopContext};
 use clap::{Parser, Subcommand};
 use serde::Serialize;
-use sprinkles::{config, contexts::ScoopContext};
 use tokio::task::JoinSet;
 
 mod list;
@@ -142,7 +142,7 @@ enum Commands {
 impl Runnable for Commands {
     async fn run(
         self,
-        ctx: &impl sprinkles::contexts::ScoopContext<Config = sprinkles::config::Scoop>,
+        ctx: &impl crate::contexts::ScoopContext<Config = crate::config::Scoop>,
     ) -> anyhow::Result<()> {
         match self {
             Commands::List(args) => args.run(ctx).await,

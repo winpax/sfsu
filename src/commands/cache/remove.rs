@@ -1,5 +1,5 @@
+use crate::contexts::ScoopContext;
 use clap::Parser;
-use sprinkles::contexts::ScoopContext;
 
 use crate::{commands::Command, output::colours::eprintln_bright_yellow, wrappers::sizes::Size};
 

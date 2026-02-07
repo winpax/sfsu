@@ -6,7 +6,7 @@ use quork::prelude::*;
 use rayon::prelude::*;
 use serde_json::Value;
 
-use sprinkles::{
+use crate::{
     buckets::Bucket,
     contexts::ScoopContext,
     packages::models::install,

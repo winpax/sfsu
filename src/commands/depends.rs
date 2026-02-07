@@ -1,8 +1,8 @@
-use clap::Parser;
-use sprinkles::{
+use crate::{
     contexts::ScoopContext,
     packages::reference::{manifest, package},
 };
+use clap::Parser;
 
 use crate::{
     abandon,

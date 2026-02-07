@@ -1,6 +1,6 @@
+use crate::contexts::ScoopContext;
 use clap::Parser;
 use itertools::Itertools;
-use sprinkles::contexts::ScoopContext;
 
 use crate::{
     commands::Command,
