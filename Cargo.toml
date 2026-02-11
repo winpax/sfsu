@@ -81,7 +81,7 @@ gix = { version = "0.78", features = [
     "blocking-network-client",
     "worktree-mutation",
 ] }
-gix-object = "0.55"
+gix-object = "0.56"
 glob = "0.3.3"
 hashbrown = "0.16"
 heck = "0.5"
