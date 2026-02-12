@@ -109,7 +109,7 @@ quork = { version = "0.9", default-features = false, features = [
     "macros",
     "root",
 ] }
-rand = "0.9"
+rand = "0.10"
 ratatui = { version = "0.30", features = ["macros"] }
 rayon = "1.10"
 regex = "1.12"
