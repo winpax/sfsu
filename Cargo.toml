@@ -76,12 +76,12 @@ dirs = "6.0"
 dunce = "1.0"
 futures = "0.3"
 git2 = "0.20"
-gix = { version = "0.78", features = [
+gix = { version = "0.79", features = [
     "blocking-http-transport-reqwest",
     "blocking-network-client",
     "worktree-mutation",
 ] }
-gix-object = "0.55"
+gix-object = "0.56"
 glob = "0.3.3"
 hashbrown = "0.16"
 heck = "0.5"
