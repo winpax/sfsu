@@ -43,7 +43,7 @@ pub enum Error {
     GitParent,
     #[error("Git error: {0}")]
     Git2(#[from] git2::Error),
-    #[error("Gitoxide error: {0}")]
+    #[error("{0}")]
     Gitoxide(Box<errors::GitoxideError>),
     #[error("No remote named {0}")]
     MissingRemote(String),
