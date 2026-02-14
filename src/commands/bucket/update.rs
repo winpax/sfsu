@@ -169,9 +169,9 @@ impl Args {
         }
 
         let changelog = if self.changelog {
-            repo.pull_with_changelog(ctx, Some(&Self::gen_stats_callback(pb)))?
+            repo.pull_with_changelog()?
         } else {
-            repo.pull(ctx, Some(&Self::gen_stats_callback(pb)))?;
+            repo.pull()?;
 
             vec![]
         };
@@ -181,22 +181,22 @@ impl Args {
         Ok(Some(changelog))
     }
 
-    fn gen_stats_callback(pb: &ProgressBar) -> impl Fn(git2::Progress<'_>, bool) -> bool + '_ {
-        |stats, thin| {
-            if thin {
-                pb.set_position(stats.indexed_objects() as u64);
-                pb.set_length(stats.total_objects() as u64);
-            } else if stats.received_objects() == stats.total_objects() {
-                pb.set_position(stats.indexed_deltas() as u64);
-                pb.set_length(stats.total_deltas() as u64);
-                pb.set_message("Resolving deltas");
-            } else if stats.total_objects() > 0 {
-                pb.set_position(stats.received_objects() as u64);
-                pb.set_length(stats.total_objects() as u64);
-                pb.set_message("Receiving objects");
-            }
+    // fn gen_stats_callback(pb: &ProgressBar) -> impl Fn(git2::Progress<'_>, bool) -> bool + '_ {
+    //     |stats, thin| {
+    //         if thin {
+    //             pb.set_position(stats.indexed_objects() as u64);
+    //             pb.set_length(stats.total_objects() as u64);
+    //         } else if stats.received_objects() == stats.total_objects() {
+    //             pb.set_position(stats.indexed_deltas() as u64);
+    //             pb.set_length(stats.total_deltas() as u64);
+    //             pb.set_message("Resolving deltas");
+    //         } else if stats.total_objects() > 0 {
+    //             pb.set_position(stats.received_objects() as u64);
+    //             pb.set_length(stats.total_objects() as u64);
+    //             pb.set_message("Receiving objects");
+    //         }
 
-            true
-        }
-    }
+    //         true
+    //     }
+    // }
 }

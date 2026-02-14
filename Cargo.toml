@@ -76,6 +76,7 @@ dirs = "6.0"
 dunce = "1.0"
 futures = "0.3"
 git2 = "0.20"
+gitoxide-core = { version = "0.53.0", features = ["blocking-client"] }
 gix = { version = "0.79", features = [
     "blocking-http-transport-reqwest",
     "blocking-network-client",

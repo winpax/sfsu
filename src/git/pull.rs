@@ -19,11 +19,19 @@
  */
 
 use git2::Repository;
+use gix::{
+    progress,
+    remote::{self, fetch::Shallow},
+};
 
-use crate::contexts::ScoopContext;
+use crate::{
+    contexts::ScoopContext,
+    git::{self, errors::GitoxideError},
+};
 
 pub type ProgressCallback<'a> = &'a dyn Fn(git2::Progress<'_>, bool) -> bool;
 
+#[allow(unused)]
 fn do_fetch<'a>(
     ctx: &impl ScoopContext,
     repo: &'a git2::Repository,
@@ -48,6 +56,19 @@ fn do_fetch<'a>(
 
     let fetch_head = repo.find_reference("FETCH_HEAD")?;
     repo.reference_to_annotated_commit(&fetch_head)
+}
+
+fn gix_do_fetch<'a>(
+    remote: &'a mut gix::Remote<'_>,
+) -> Result<remote::fetch::Outcome, GitoxideError> {
+    let outcome = remote
+        .connect(remote::Direction::Fetch)?
+        .prepare_fetch(progress::Discard, remote::ref_map::Options::default())?
+        .with_write_packed_refs_only(true)
+        .with_shallow(Shallow::NoChange)
+        .receive(progress::Discard, &gix::interrupt::IS_INTERRUPTED)?;
+
+    Ok(outcome)
 }
 
 fn fast_forward(
@@ -160,16 +181,20 @@ fn do_merge<'a>(
 /// # Errors
 /// - git2 errors
 pub fn pull(
-    ctx: &impl ScoopContext,
     repo: &super::Repo,
     remote: Option<&str>,
     branch: Option<&str>,
-    stats_cb: Option<ProgressCallback<'_>>,
 ) -> Result<(), crate::git::Error> {
     let remote_name = remote.unwrap_or("origin");
     let remote_branch = branch.unwrap_or("master");
-    let mut remote = repo.git2().find_remote(remote_name)?;
-    do_fetch(ctx, repo.git2(), &[remote_branch], &mut remote, stats_cb)?;
+    let mut remote = repo
+        .gitoxide()
+        .find_remote(remote_name)
+        .map_err(git::errors::GitoxideError::FindRemote)
+        .map_err(Box::new)
+        .map_err(git::Error::Gitoxide)?;
+
+    gix_do_fetch(&mut remote)?;
 
     let oid = {
         let commit = repo.latest_remote_commit()?;

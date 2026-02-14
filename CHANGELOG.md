@@ -7,11 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.17.3]
+## [1.17.4]
 
 ### Changed
 
 - Update sprinkles library to 0.23.0
+- Use gitoxide for fetching during bucket update
 
 ## [1.17.2]
 
