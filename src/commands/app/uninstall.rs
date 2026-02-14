@@ -1,14 +1,14 @@
 use std::path::Path;
 
-use clap::Parser;
-use itertools::Itertools;
-use quork::traits::truthy::ContainsTruth;
-use sprinkles::{
+use crate::{
     Architecture,
     contexts::ScoopContext,
     handles::packages::PackageHandle,
     packages::reference::{manifest, package},
 };
+use clap::Parser;
+use itertools::Itertools;
+use quork::traits::truthy::ContainsTruth;
 
 use crate::output::colours::eprintln_red;
 

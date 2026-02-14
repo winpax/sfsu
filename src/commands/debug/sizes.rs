@@ -1,7 +1,7 @@
 use clap::Parser;
-use sprinkles::contexts::ScoopContext;
 
 use crate::commands;
+use crate::contexts::ScoopContext;
 
 #[derive(Debug, Clone, Parser)]
 pub struct Args;

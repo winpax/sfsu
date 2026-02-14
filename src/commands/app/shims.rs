@@ -1,6 +1,6 @@
+use crate::{Architecture, contexts::ScoopContext, packages::reference::package};
 use clap::Parser;
 use itertools::Itertools;
-use sprinkles::{Architecture, contexts::ScoopContext, packages::reference::package};
 
 #[derive(Debug, Clone, Parser)]
 /// List the apps shims
