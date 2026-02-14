@@ -44,7 +44,7 @@ pub enum Error {
     #[error("Git error: {0}")]
     Git2(#[from] git2::Error),
     #[error("{0}")]
-    Gitoxide(Box<errors::GitoxideError>),
+    Gitoxide(Box<errors::GixError>),
     #[error("No remote named {0}")]
     MissingRemote(String),
     #[error("Missing head in remote")]

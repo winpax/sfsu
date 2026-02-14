@@ -3,10 +3,8 @@
 use gix::{date, diff, head, object, open, reference, refspec, remote, revision, traverse};
 
 #[derive(Debug, thiserror::Error)]
-#[allow(missing_docs)]
-/// A collection of gitoxide errors
-#[error("Gitoxide error: {0}")]
-pub enum GitoxideError {
+#[error("{0}")]
+pub enum GixErrorInner {
     Open(#[from] open::Error),
     Traverse(#[from] traverse::commit::simple::Error),
     RevWalk(#[from] revision::walk::Error),
@@ -30,9 +28,22 @@ pub enum GitoxideError {
     FindRemote(#[from] remote::find::existing::Error),
 }
 
+#[derive(Debug, thiserror::Error)]
+#[error("Gitoxide Error: {0}")]
+pub struct GixError(Box<GixErrorInner>);
+
+impl<T> From<T> for GixError
+where
+    GixErrorInner: From<T>,
+{
+    fn from(value: T) -> Self {
+        Self(Box::new(GixErrorInner::from(value)))
+    }
+}
+
 impl<T> From<T> for super::Error
 where
-    GitoxideError: From<T>,
+    GixError: From<T>,
 {
     fn from(value: T) -> Self {
         Self::Gitoxide(Box::new(value.into()))

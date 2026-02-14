@@ -26,7 +26,7 @@ use gix::{
 
 use crate::{
     contexts::ScoopContext,
-    git::{self, errors::GitoxideError},
+    git::{self, errors::GixError},
 };
 
 pub type ProgressCallback<'a> = &'a dyn Fn(git2::Progress<'_>, bool) -> bool;
@@ -61,7 +61,7 @@ fn do_fetch<'a>(
 fn gix_do_fetch(
     remote: &mut gix::Remote<'_>,
     ref_specs: &[&str],
-) -> Result<remote::fetch::Outcome, GitoxideError> {
+) -> Result<remote::fetch::Outcome, GixError> {
     remote.replace_refspecs(ref_specs, remote::Direction::Fetch)?;
 
     let outcome = remote
@@ -193,7 +193,7 @@ pub fn pull(
     let mut remote = repo
         .gitoxide()
         .find_remote(remote_name)
-        .map_err(git::errors::GitoxideError::from)
+        .map_err(git::errors::GixError::from)
         .map_err(git::Error::from)?;
 
     gix_do_fetch(&mut remote, &[remote_branch])?;
