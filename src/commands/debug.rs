@@ -1,5 +1,5 @@
+use crate::{config, contexts::ScoopContext};
 use clap::{Parser, Subcommand};
-use sprinkles::{config, contexts::ScoopContext};
 
 use super::{Command, CommandRunner, Runnable};
 
@@ -16,7 +16,7 @@ pub enum Commands {
 impl Runnable for Commands {
     async fn run(
         self,
-        ctx: &impl sprinkles::contexts::ScoopContext<Config = sprinkles::config::Scoop>,
+        ctx: &impl crate::contexts::ScoopContext<Config = crate::config::Scoop>,
     ) -> anyhow::Result<()> {
         match self {
             Commands::Save(args) => args.run(ctx).await,

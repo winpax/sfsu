@@ -1,0 +1,396 @@
+<?xml version="1.0"?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:digest="http://www.wizards-toolkit.org/digest/1.0/">
+  <digest:Content rdf:about="ImageMagick-i386-pc-solaris2.11.tar.gz">
+    <digest:timestamp>2024-09-02T10:59:43-04:00</digest:timestamp>
+    <digest:modify-date>2018-09-23T10:54:38-04:00</digest:modify-date>
+    <digest:create-date>2018-09-23T10:54:38-04:00</digest:create-date>
+    <digest:extent>13199634</digest:extent>
+    <digest:sha256>ed3ec2340dd84c7b4015fcd773ac32ab80b5c268aff234225c23ba7a6a98f326</digest:sha256>
+  </digest:Content>
+  <digest:Content rdf:about="ImageMagick-i686-pc-cygwin.tar.gz">
+    <digest:timestamp>2024-09-02T10:59:43-04:00</digest:timestamp>
+    <digest:modify-date>2018-09-23T10:54:38-04:00</digest:modify-date>
+    <digest:create-date>2018-09-23T10:54:38-04:00</digest:create-date>
+    <digest:extent>10801037</digest:extent>
+    <digest:sha256>2eb106e7eda2b2c8300a19eebbe8258ece5624305a2e6248da98cfbb9cccbd62</digest:sha256>
+  </digest:Content>
+  <digest:Content rdf:about="ImageMagick-i686-pc-mingw32.tar.gz">
+    <digest:timestamp>2024-09-02T10:59:43-04:00</digest:timestamp>
+    <digest:modify-date>2018-09-23T10:54:38-04:00</digest:modify-date>
+    <digest:create-date>2018-09-23T10:54:38-04:00</digest:create-date>
+    <digest:extent>12059507</digest:extent>
+    <digest:sha256>643d365645d3202ee54271c279b625efe8f69ceacf2a2a48c2c3fe5c918b9353</digest:sha256>
+  </digest:Content>
+  <digest:Content rdf:about="ImageMagick-sparc-sun-solaris2.10.tar.gz">
+    <digest:timestamp>2024-09-02T10:59:43-04:00</digest:timestamp>
+    <digest:modify-date>2018-09-23T10:54:39-04:00</digest:modify-date>
+    <digest:create-date>2018-09-23T10:54:39-04:00</digest:create-date>
+    <digest:extent>10812786</digest:extent>
+    <digest:sha256>f590361ffcfea4af7bb215936f5c0b0a7e96dbcd2ed39f9b299d01eb5707b09f</digest:sha256>
+  </digest:Content>
+  <digest:Content rdf:about="ImageMagick-x86_64-apple-darwin20.1.0.tar.gz">
+    <digest:timestamp>2024-09-02T10:59:43-04:00</digest:timestamp>
+    <digest:modify-date>2020-11-23T08:30:13-05:00</digest:modify-date>
+    <digest:create-date>2020-11-23T08:30:13-05:00</digest:create-date>
+    <digest:extent>13266740</digest:extent>
+    <digest:sha256>7b2f8c7fa29192cabe33126853b1c6ddf416bbb7bcccc01d9583ed2ebac06838</digest:sha256>
+  </digest:Content>
+  <digest:Content rdf:about="ImageMagick-x86_64-pc-linux-gnu.tar.gz">
+    <digest:timestamp>2024-09-02T10:59:44-04:00</digest:timestamp>
+    <digest:modify-date>2022-05-15T09:18:49-04:00</digest:modify-date>
+    <digest:create-date>2022-05-15T09:18:49-04:00</digest:create-date>
+    <digest:extent>13536458</digest:extent>
+    <digest:sha256>41de2832fed3e852b9eb6a057316e1648df35b94a48d2152a47a5b870540e55e</digest:sha256>
+  </digest:Content>
+  <digest:Content rdf:about="ImageMagick-x86_64-unknown-cygwin.tar.gz">
+    <digest:timestamp>2024-09-02T10:59:44-04:00</digest:timestamp>
+    <digest:modify-date>2018-09-23T10:54:39-04:00</digest:modify-date>
+    <digest:create-date>2018-09-23T10:54:39-04:00</digest:create-date>
+    <digest:extent>13430807</digest:extent>
+    <digest:sha256>570f88aae9ca48bcc6dd42f07d362f56739233addf2eac3f9e379bfb5a6e9012</digest:sha256>
+  </digest:Content>
+  <digest:Content rdf:about="ImageMagick-6.9.13-16-portable-Q16-HDRI-x64.zip">
+    <digest:timestamp>2024-09-02T10:59:44-04:00</digest:timestamp>
+    <digest:modify-date>2024-09-01T21:25:07-04:00</digest:modify-date>
+    <digest:create-date>2024-09-01T21:25:07-04:00</digest:create-date>
+    <digest:extent>64905455</digest:extent>
+    <digest:sha256>0a5d98631c027ec6e017c61d1e273e0e7c30156b466161f72af37e31ce86b122</digest:sha256>
+  </digest:Content>
+  <digest:Content rdf:about="ImageMagick-6.9.13-16-portable-Q16-HDRI-x86.zip">
+    <digest:timestamp>2024-09-02T10:59:45-04:00</digest:timestamp>
+    <digest:modify-date>2024-09-01T21:25:11-04:00</digest:modify-date>
+    <digest:create-date>2024-09-01T21:25:11-04:00</digest:create-date>
+    <digest:extent>56910764</digest:extent>
+    <digest:sha256>c04c22e519d07f2ec0a2733e9452f33d66ff67cd9310ed53902bb74f4a0ff667</digest:sha256>
+  </digest:Content>
+  <digest:Content rdf:about="ImageMagick-6.9.13-16-portable-Q16-x64.zip">
+    <digest:timestamp>2024-09-02T10:59:45-04:00</digest:timestamp>
+    <digest:modify-date>2024-09-01T21:25:16-04:00</digest:modify-date>
+    <digest:create-date>2024-09-01T21:25:16-04:00</digest:create-date>
+    <digest:extent>64813187</digest:extent>
+    <digest:sha256>b6f5c33a790d93622a068ed6546aba0647b767cc066cd17523f55d1ea584a0db</digest:sha256>
+  </digest:Content>
+  <digest:Content rdf:about="ImageMagick-6.9.13-16-portable-Q16-x86.zip">
+    <digest:timestamp>2024-09-02T10:59:46-04:00</digest:timestamp>
+    <digest:modify-date>2024-09-01T21:25:20-04:00</digest:modify-date>
+    <digest:create-date>2024-09-01T21:25:20-04:00</digest:create-date>
+    <digest:extent>56859295</digest:extent>
+    <digest:sha256>3f8b632757784cfcb95ca07f66db01f91861bc3dc3373d1a243d3018ab6e93a2</digest:sha256>
+  </digest:Content>
+  <digest:Content rdf:about="ImageMagick-6.9.13-16-portable-Q8-x64.zip">
+    <digest:timestamp>2024-09-02T10:59:47-04:00</digest:timestamp>
+    <digest:modify-date>2024-09-01T21:25:25-04:00</digest:modify-date>
+    <digest:create-date>2024-09-01T21:25:25-04:00</digest:create-date>
+    <digest:extent>64707117</digest:extent>
+    <digest:sha256>d959b11f312a107c9ba7d066839af464891d253f955481634b92f775d610c785</digest:sha256>
+  </digest:Content>
+  <digest:Content rdf:about="ImageMagick-6.9.13-16-portable-Q8-x86.zip">
+    <digest:timestamp>2024-09-02T10:59:47-04:00</digest:timestamp>
+    <digest:modify-date>2024-09-01T21:25:29-04:00</digest:modify-date>
+    <digest:create-date>2024-09-01T21:25:29-04:00</digest:create-date>
+    <digest:extent>56799548</digest:extent>
+    <digest:sha256>8905d5f6a16bb089524f05a693af032aa0d2c383b79134030c5c7ef7ecb8234b</digest:sha256>
+  </digest:Content>
+  <digest:Content rdf:about="ImageMagick-7.1.1-38-portable-Q16-arm64.zip">
+    <digest:timestamp>2024-09-02T10:59:48-04:00</digest:timestamp>
+    <digest:modify-date>2024-09-01T21:24:02-04:00</digest:modify-date>
+    <digest:create-date>2024-09-01T21:24:02-04:00</digest:create-date>
+    <digest:extent>70880457</digest:extent>
+    <digest:sha256>a0ca86a020c50bf0797e364cce83389f825cd375cc59f53cb87c576afa5d551e</digest:sha256>
+  </digest:Content>
+  <digest:Content rdf:about="ImageMagick-7.1.1-38-portable-Q16-HDRI-arm64.zip">
+    <digest:timestamp>2024-09-02T10:59:49-04:00</digest:timestamp>
+    <digest:modify-date>2024-09-01T21:24:08-04:00</digest:modify-date>
+    <digest:create-date>2024-09-01T21:24:08-04:00</digest:create-date>
+    <digest:extent>70943045</digest:extent>
+    <digest:sha256>7634137dbed0ada3030aaa0536409129f3190cef44c3f1f7111c4fcf1d088c37</digest:sha256>
+  </digest:Content>
+  <digest:Content rdf:about="ImageMagick-7.1.1-38-portable-Q16-HDRI-x64.zip">
+    <digest:timestamp>2024-09-02T10:59:49-04:00</digest:timestamp>
+    <digest:modify-date>2024-09-01T21:24:14-04:00</digest:modify-date>
+    <digest:create-date>2024-09-01T21:24:14-04:00</digest:create-date>
+    <digest:extent>81202136</digest:extent>
+    <digest:sha256>c74a39a6799560ae4b7bab13b430f27d7fce7d6614686a991d42cf770aed5795</digest:sha256>
+  </digest:Content>
+  <digest:Content rdf:about="ImageMagick-7.1.1-38-portable-Q16-HDRI-x86.zip">
+    <digest:timestamp>2024-09-02T10:59:50-04:00</digest:timestamp>
+    <digest:modify-date>2024-09-01T21:24:19-04:00</digest:modify-date>
+    <digest:create-date>2024-09-01T21:24:19-04:00</digest:create-date>
+    <digest:extent>70987352</digest:extent>
+    <digest:sha256>c3f1844e1cd47f0c38ff20165ef07d9fc43753bd39c55aaeb2c4038e5064db5c</digest:sha256>
+  </digest:Content>
+  <digest:Content rdf:about="ImageMagick-7.1.1-38-portable-Q16-x64.zip">
+    <digest:timestamp>2024-09-02T10:59:51-04:00</digest:timestamp>
+    <digest:modify-date>2024-09-01T21:24:26-04:00</digest:modify-date>
+    <digest:create-date>2024-09-01T21:24:26-04:00</digest:create-date>
+    <digest:extent>81147859</digest:extent>
+    <digest:sha256>abce02fb5b40cf2dde311c94c7955f54093a3a72c8364f76554e7f34d89bb728</digest:sha256>
+  </digest:Content>
+  <digest:Content rdf:about="ImageMagick-7.1.1-38-portable-Q16-x86.zip">
+    <digest:timestamp>2024-09-02T10:59:52-04:00</digest:timestamp>
+    <digest:modify-date>2024-09-01T21:24:31-04:00</digest:modify-date>
+    <digest:create-date>2024-09-01T21:24:31-04:00</digest:create-date>
+    <digest:extent>70891154</digest:extent>
+    <digest:sha256>cd7b86f56c68450ef1eb1990a8845447413c8a7aff9ee1f74bb8b0729d996e51</digest:sha256>
+  </digest:Content>
+  <digest:Content rdf:about="ImageMagick-7.1.1-38-portable-Q8-arm64.zip">
+    <digest:timestamp>2024-09-02T10:59:52-04:00</digest:timestamp>
+    <digest:modify-date>2024-09-01T21:24:36-04:00</digest:modify-date>
+    <digest:create-date>2024-09-01T21:24:36-04:00</digest:create-date>
+    <digest:extent>70824882</digest:extent>
+    <digest:sha256>8aff254164162d8794208b3e2b23e27df7875d8291d60ab0057b6b5d4ef7b348</digest:sha256>
+  </digest:Content>
+  <digest:Content rdf:about="ImageMagick-7.1.1-38-portable-Q8-x64.zip">
+    <digest:timestamp>2024-09-02T10:59:53-04:00</digest:timestamp>
+    <digest:modify-date>2024-09-01T21:24:43-04:00</digest:modify-date>
+    <digest:create-date>2024-09-01T21:24:43-04:00</digest:create-date>
+    <digest:extent>81003595</digest:extent>
+    <digest:sha256>dd3e187a1258a431461cc7e9a50a3a7b5f99d0442cc052b7610b6e6f463c778c</digest:sha256>
+  </digest:Content>
+  <digest:Content rdf:about="ImageMagick-7.1.1-38-portable-Q8-x86.zip">
+    <digest:timestamp>2024-09-02T10:59:54-04:00</digest:timestamp>
+    <digest:modify-date>2024-09-01T21:24:48-04:00</digest:modify-date>
+    <digest:create-date>2024-09-01T21:24:48-04:00</digest:create-date>
+    <digest:extent>70844203</digest:extent>
+    <digest:sha256>fd51ff798f273ddb306c01ac4ef2d2f5cdf97ff1431a508cc76b3ba41d43e809</digest:sha256>
+  </digest:Content>
+  <digest:Content rdf:about="ImageMagick6-Windows.7z">
+    <digest:timestamp>2024-09-02T10:59:59-04:00</digest:timestamp>
+    <digest:modify-date>2024-09-01T21:23:30-04:00</digest:modify-date>
+    <digest:create-date>2024-09-01T21:23:30-04:00</digest:create-date>
+    <digest:extent>503443377</digest:extent>
+    <digest:sha256>14ceea0d5061fb2cc68fddee36f57950181a49227b7df67cfcdf5eb1fe6f3ec9</digest:sha256>
+  </digest:Content>
+  <digest:Content rdf:about="ImageMagick-6.9.13-16-Q16-HDRI-x64-dll.exe">
+    <digest:timestamp>2024-09-02T10:59:59-04:00</digest:timestamp>
+    <digest:modify-date>2024-09-01T21:23:56-04:00</digest:modify-date>
+    <digest:create-date>2024-09-01T21:23:56-04:00</digest:create-date>
+    <digest:extent>20966552</digest:extent>
+    <digest:sha256>e17fa42537fbb64176cccde32ad5969d906b8f0197db13d2aca1cca304633ceb</digest:sha256>
+  </digest:Content>
+  <digest:Content rdf:about="ImageMagick-6.9.13-16-Q16-HDRI-x64-static.exe">
+    <digest:timestamp>2024-09-02T10:59:59-04:00</digest:timestamp>
+    <digest:modify-date>2024-09-01T21:23:44-04:00</digest:modify-date>
+    <digest:create-date>2024-09-01T21:23:44-04:00</digest:create-date>
+    <digest:extent>56330024</digest:extent>
+    <digest:sha256>1e1b06e5e07dfacf05d15cbdeda9ebe85cfc15c2b106c770b178c2176e02e704</digest:sha256>
+  </digest:Content>
+  <digest:Content rdf:about="ImageMagick-6.9.13-16-Q16-HDRI-x86-dll.exe">
+    <digest:timestamp>2024-09-02T10:59:59-04:00</digest:timestamp>
+    <digest:modify-date>2024-09-01T21:23:56-04:00</digest:modify-date>
+    <digest:create-date>2024-09-01T21:23:56-04:00</digest:create-date>
+    <digest:extent>19611264</digest:extent>
+    <digest:sha256>ff2c7545d37aec1d5811187c83bf4014d5a9014e914618f5d7bbafca3a82cbe1</digest:sha256>
+  </digest:Content>
+  <digest:Content rdf:about="ImageMagick-6.9.13-16-Q16-HDRI-x86-static.exe">
+    <digest:timestamp>2024-09-02T11:00:00-04:00</digest:timestamp>
+    <digest:modify-date>2024-09-01T21:23:50-04:00</digest:modify-date>
+    <digest:create-date>2024-09-01T21:23:50-04:00</digest:create-date>
+    <digest:extent>50113200</digest:extent>
+    <digest:sha256>90eae870588a188179f89e4896efac79c652a0684927e12f10a1fddbefb9b199</digest:sha256>
+  </digest:Content>
+  <digest:Content rdf:about="ImageMagick-6.9.13-16-Q16-x64-dll.exe">
+    <digest:timestamp>2024-09-02T11:00:00-04:00</digest:timestamp>
+    <digest:modify-date>2024-09-01T21:23:54-04:00</digest:modify-date>
+    <digest:create-date>2024-09-01T21:23:54-04:00</digest:create-date>
+    <digest:extent>20948360</digest:extent>
+    <digest:sha256>73d7f4c2dc62480afd332f1af9f4509e28f55782941cdc22c56d4c4556d0122f</digest:sha256>
+  </digest:Content>
+  <digest:Content rdf:about="ImageMagick-6.9.13-16-Q16-x64-static.exe">
+    <digest:timestamp>2024-09-02T11:00:01-04:00</digest:timestamp>
+    <digest:modify-date>2024-09-01T21:23:53-04:00</digest:modify-date>
+    <digest:create-date>2024-09-01T21:23:53-04:00</digest:create-date>
+    <digest:extent>56263904</digest:extent>
+    <digest:sha256>ba262c6edf4e1c103992ef404d7162b430a17c6134f6d3f220cd963fc8371ad1</digest:sha256>
+  </digest:Content>
+  <digest:Content rdf:about="ImageMagick-6.9.13-16-Q16-x86-dll.exe">
+    <digest:timestamp>2024-09-02T11:00:01-04:00</digest:timestamp>
+    <digest:modify-date>2024-09-01T21:23:57-04:00</digest:modify-date>
+    <digest:create-date>2024-09-01T21:23:57-04:00</digest:create-date>
+    <digest:extent>19611152</digest:extent>
+    <digest:sha256>4eb74c64f1fc843be15c0063eb1d9d5eb1c1ea1ffbbee94cd358873d4e4551c7</digest:sha256>
+  </digest:Content>
+  <digest:Content rdf:about="ImageMagick-6.9.13-16-Q16-x86-static.exe">
+    <digest:timestamp>2024-09-02T11:00:01-04:00</digest:timestamp>
+    <digest:modify-date>2024-09-01T21:23:48-04:00</digest:modify-date>
+    <digest:create-date>2024-09-01T21:23:48-04:00</digest:create-date>
+    <digest:extent>50106928</digest:extent>
+    <digest:sha256>bce0d1057f4c5769be69eb41fb011fdd6524d049184d507bbcc8c5365b2aaad8</digest:sha256>
+  </digest:Content>
+  <digest:Content rdf:about="ImageMagick-6.9.13-16-Q8-x64-dll.exe">
+    <digest:timestamp>2024-09-02T11:00:02-04:00</digest:timestamp>
+    <digest:modify-date>2024-09-01T21:23:54-04:00</digest:modify-date>
+    <digest:create-date>2024-09-01T21:23:54-04:00</digest:create-date>
+    <digest:extent>20947448</digest:extent>
+    <digest:sha256>0a05628fc665daecc1d3d2682cab8c5917efb0d2a7b889bccb64ed5174e06ab9</digest:sha256>
+  </digest:Content>
+  <digest:Content rdf:about="ImageMagick-6.9.13-16-Q8-x64-static.exe">
+    <digest:timestamp>2024-09-02T11:00:02-04:00</digest:timestamp>
+    <digest:modify-date>2024-09-01T21:23:52-04:00</digest:modify-date>
+    <digest:create-date>2024-09-01T21:23:52-04:00</digest:create-date>
+    <digest:extent>56190688</digest:extent>
+    <digest:sha256>fe9a2faae5d6af2d5e69eb7da6588804b6f52c94d06b2229b9dd6418b3a50ab7</digest:sha256>
+  </digest:Content>
+  <digest:Content rdf:about="ImageMagick-6.9.13-16-Q8-x86-dll.exe">
+    <digest:timestamp>2024-09-02T11:00:02-04:00</digest:timestamp>
+    <digest:modify-date>2024-09-01T21:23:55-04:00</digest:modify-date>
+    <digest:create-date>2024-09-01T21:23:55-04:00</digest:create-date>
+    <digest:extent>19596952</digest:extent>
+    <digest:sha256>4a32c6ef8106f2160818fc25dba1ca2ef482b30a3ce470d0adc37ba154769933</digest:sha256>
+  </digest:Content>
+  <digest:Content rdf:about="ImageMagick-6.9.13-16-Q8-x86-static.exe">
+    <digest:timestamp>2024-09-02T11:00:03-04:00</digest:timestamp>
+    <digest:modify-date>2024-09-01T21:23:49-04:00</digest:modify-date>
+    <digest:create-date>2024-09-01T21:23:49-04:00</digest:create-date>
+    <digest:extent>50062360</digest:extent>
+    <digest:sha256>ac9351ce7fc4c47bfc9534af962debd8f152148b49cb5381de55aaf6c7c02062</digest:sha256>
+  </digest:Content>
+  <digest:Content rdf:about="ImageMagick-7.1.1-38-Q16-arm64-dll.exe">
+    <digest:timestamp>2024-09-02T11:00:03-04:00</digest:timestamp>
+    <digest:modify-date>2024-09-01T21:23:16-04:00</digest:modify-date>
+    <digest:create-date>2024-09-01T21:23:16-04:00</digest:create-date>
+    <digest:extent>22167840</digest:extent>
+    <digest:sha256>88b9cf047822d4eeb6a7be1e73ce1212a2e5d6edc6df37447704d2c82587027d</digest:sha256>
+  </digest:Content>
+  <digest:Content rdf:about="ImageMagick-7.1.1-38-Q16-arm64-static.exe">
+    <digest:timestamp>2024-09-02T11:00:03-04:00</digest:timestamp>
+    <digest:modify-date>2024-09-01T21:23:10-04:00</digest:modify-date>
+    <digest:create-date>2024-09-01T21:23:10-04:00</digest:create-date>
+    <digest:extent>17886008</digest:extent>
+    <digest:sha256>4904680cce948a5e7d5176051d087ab60c12f64be672b211904d3859e73441c3</digest:sha256>
+  </digest:Content>
+  <digest:Content rdf:about="ImageMagick-7.1.1-38-Q16-HDRI-arm64-dll.exe">
+    <digest:timestamp>2024-09-02T11:00:03-04:00</digest:timestamp>
+    <digest:modify-date>2024-09-01T21:23:13-04:00</digest:modify-date>
+    <digest:create-date>2024-09-01T21:23:13-04:00</digest:create-date>
+    <digest:extent>22156640</digest:extent>
+    <digest:sha256>7bd19780ab7192ec75420c166ab0b9662112b6222240d930d9d1a000d64af0d5</digest:sha256>
+  </digest:Content>
+  <digest:Content rdf:about="ImageMagick-7.1.1-38-Q16-HDRI-arm64-static.exe">
+    <digest:timestamp>2024-09-02T11:00:04-04:00</digest:timestamp>
+    <digest:modify-date>2024-09-01T21:23:12-04:00</digest:modify-date>
+    <digest:create-date>2024-09-01T21:23:12-04:00</digest:create-date>
+    <digest:extent>17889464</digest:extent>
+    <digest:sha256>71a6c2ebf624b7f124d66255703c8164f22b8566f85688de812f2d6281c18b6a</digest:sha256>
+  </digest:Content>
+  <digest:Content rdf:about="ImageMagick-7.1.1-38-Q16-HDRI-x64-dll.exe">
+    <digest:timestamp>2024-09-02T11:00:04-04:00</digest:timestamp>
+    <digest:modify-date>2024-09-01T21:23:18-04:00</digest:modify-date>
+    <digest:create-date>2024-09-01T21:23:18-04:00</digest:create-date>
+    <digest:extent>23056840</digest:extent>
+    <digest:sha256>f821b6cf6bdfa89a5bbbdcd83d730557792bc8c4dc710d56f052982176d9e10f</digest:sha256>
+  </digest:Content>
+  <digest:Content rdf:about="ImageMagick-7.1.1-38-Q16-HDRI-x64-static.exe">
+    <digest:timestamp>2024-09-02T11:00:04-04:00</digest:timestamp>
+    <digest:modify-date>2024-09-01T21:23:11-04:00</digest:modify-date>
+    <digest:create-date>2024-09-01T21:23:11-04:00</digest:create-date>
+    <digest:extent>18020136</digest:extent>
+    <digest:sha256>036b35e6c6c2363346b5cadb091e4d0568d60d7d5e23c097d8b31c33e733f311</digest:sha256>
+  </digest:Content>
+  <digest:Content rdf:about="ImageMagick-7.1.1-38-Q16-HDRI-x86-dll.exe">
+    <digest:timestamp>2024-09-02T11:00:04-04:00</digest:timestamp>
+    <digest:modify-date>2024-09-01T21:23:14-04:00</digest:modify-date>
+    <digest:create-date>2024-09-01T21:23:14-04:00</digest:create-date>
+    <digest:extent>21511864</digest:extent>
+    <digest:sha256>e6e972772970f71c4e332984b5d8200ff7c9b1557e3f92592dc3160b22c872c1</digest:sha256>
+  </digest:Content>
+  <digest:Content rdf:about="ImageMagick-7.1.1-38-Q16-HDRI-x86-static.exe">
+    <digest:timestamp>2024-09-02T11:00:04-04:00</digest:timestamp>
+    <digest:modify-date>2024-09-01T21:22:59-04:00</digest:modify-date>
+    <digest:create-date>2024-09-01T21:22:59-04:00</digest:create-date>
+    <digest:extent>16776168</digest:extent>
+    <digest:sha256>5624684597ba5c9f0cf4a0df85d4ac19a2f1bf2f4b652dfdc327768c893e66e3</digest:sha256>
+  </digest:Content>
+  <digest:Content rdf:about="ImageMagick-7.1.1-38-Q16-x64-dll.exe">
+    <digest:timestamp>2024-09-02T11:00:05-04:00</digest:timestamp>
+    <digest:modify-date>2024-09-01T21:23:18-04:00</digest:modify-date>
+    <digest:create-date>2024-09-01T21:23:18-04:00</digest:create-date>
+    <digest:extent>23052896</digest:extent>
+    <digest:sha256>c818c683fbe8aa438e686fc6956f37fea102cb7d6f3e06f17e7ec90e4eb83ef2</digest:sha256>
+  </digest:Content>
+  <digest:Content rdf:about="ImageMagick-7.1.1-38-Q16-x64-static.exe">
+    <digest:timestamp>2024-09-02T11:00:05-04:00</digest:timestamp>
+    <digest:modify-date>2024-09-01T21:23:10-04:00</digest:modify-date>
+    <digest:create-date>2024-09-01T21:23:10-04:00</digest:create-date>
+    <digest:extent>18013608</digest:extent>
+    <digest:sha256>ab8409c6a547d2db84030d41c9d0936ff12bdf476c571b6d1a57ec331d910067</digest:sha256>
+  </digest:Content>
+  <digest:Content rdf:about="ImageMagick-7.1.1-38-Q16-x86-dll.exe">
+    <digest:timestamp>2024-09-02T11:00:05-04:00</digest:timestamp>
+    <digest:modify-date>2024-09-01T21:23:15-04:00</digest:modify-date>
+    <digest:create-date>2024-09-01T21:23:15-04:00</digest:create-date>
+    <digest:extent>21505272</digest:extent>
+    <digest:sha256>103dcfb87893cc1b937538f9ebb116b708dcff6cb1f3b5aa00d097dea0dd29d6</digest:sha256>
+  </digest:Content>
+  <digest:Content rdf:about="ImageMagick-7.1.1-38-Q16-x86-static.exe">
+    <digest:timestamp>2024-09-02T11:00:05-04:00</digest:timestamp>
+    <digest:modify-date>2024-09-01T21:23:03-04:00</digest:modify-date>
+    <digest:create-date>2024-09-01T21:23:03-04:00</digest:create-date>
+    <digest:extent>16785464</digest:extent>
+    <digest:sha256>a34684ba4f80fab04096f51ec1911f4228bad626330fc4a5a688048879c01cc7</digest:sha256>
+  </digest:Content>
+  <digest:Content rdf:about="ImageMagick-7.1.1-38-Q8-arm64-dll.exe">
+    <digest:timestamp>2024-09-02T11:00:05-04:00</digest:timestamp>
+    <digest:modify-date>2024-09-01T21:23:14-04:00</digest:modify-date>
+    <digest:create-date>2024-09-01T21:23:14-04:00</digest:create-date>
+    <digest:extent>22150816</digest:extent>
+    <digest:sha256>38293c914fa13b80c55ed8dfdcf224cb7b1659b137b2dcfd8abd883e244e65de</digest:sha256>
+  </digest:Content>
+  <digest:Content rdf:about="ImageMagick-7.1.1-38-Q8-arm64-static.exe">
+    <digest:timestamp>2024-09-02T11:00:06-04:00</digest:timestamp>
+    <digest:modify-date>2024-09-01T21:23:06-04:00</digest:modify-date>
+    <digest:create-date>2024-09-01T21:23:06-04:00</digest:create-date>
+    <digest:extent>17881880</digest:extent>
+    <digest:sha256>017a53b812c4fbfb830d35e5179a3b137eedb92ca4a615ec7b3e1440c6bdf266</digest:sha256>
+  </digest:Content>
+  <digest:Content rdf:about="ImageMagick-7.1.1-38-Q8-x64-dll.exe">
+    <digest:timestamp>2024-09-02T11:00:06-04:00</digest:timestamp>
+    <digest:modify-date>2024-09-01T21:23:15-04:00</digest:modify-date>
+    <digest:create-date>2024-09-01T21:23:15-04:00</digest:create-date>
+    <digest:extent>23035648</digest:extent>
+    <digest:sha256>9c909b928873dda8f36afdd49a63b29fb06501f3faf6612167979ace6f8665e7</digest:sha256>
+  </digest:Content>
+  <digest:Content rdf:about="ImageMagick-7.1.1-38-Q8-x64-static.exe">
+    <digest:timestamp>2024-09-02T11:00:06-04:00</digest:timestamp>
+    <digest:modify-date>2024-09-01T21:23:12-04:00</digest:modify-date>
+    <digest:create-date>2024-09-01T21:23:12-04:00</digest:create-date>
+    <digest:extent>18004584</digest:extent>
+    <digest:sha256>a0bc7c63979e13be30ca8790bbecf89ebb57321ed1d3665139aaf520409c7e17</digest:sha256>
+  </digest:Content>
+  <digest:Content rdf:about="ImageMagick-7.1.1-38-Q8-x86-dll.exe">
+    <digest:timestamp>2024-09-02T11:00:06-04:00</digest:timestamp>
+    <digest:modify-date>2024-09-01T21:23:17-04:00</digest:modify-date>
+    <digest:create-date>2024-09-01T21:23:17-04:00</digest:create-date>
+    <digest:extent>21494568</digest:extent>
+    <digest:sha256>5d4b400ccceb9db37019c2f3407f8f8756052340a04592dcfe2012b39c1c2a1a</digest:sha256>
+  </digest:Content>
+  <digest:Content rdf:about="ImageMagick-7.1.1-38-Q8-x86-static.exe">
+    <digest:timestamp>2024-09-02T11:00:06-04:00</digest:timestamp>
+    <digest:modify-date>2024-09-01T21:22:59-04:00</digest:modify-date>
+    <digest:create-date>2024-09-01T21:22:59-04:00</digest:create-date>
+    <digest:extent>16774296</digest:extent>
+    <digest:sha256>63b47154f7e89af328b0fd925a63ff8f9dffe6877d971a12f5faca0b40cc68d3</digest:sha256>
+  </digest:Content>
+  <digest:Content rdf:about="ImageMagick-i686-pc-windows.exe">
+    <digest:timestamp>2024-09-02T11:00:06-04:00</digest:timestamp>
+    <digest:modify-date>2024-09-01T21:23:15-04:00</digest:modify-date>
+    <digest:create-date>2024-09-01T21:23:15-04:00</digest:create-date>
+    <digest:extent>21505272</digest:extent>
+    <digest:sha256>103dcfb87893cc1b937538f9ebb116b708dcff6cb1f3b5aa00d097dea0dd29d6</digest:sha256>
+  </digest:Content>
+  <digest:Content rdf:about="ImageMagick-x86_64-pc-windows.exe">
+    <digest:timestamp>2024-09-02T11:00:07-04:00</digest:timestamp>
+    <digest:modify-date>2024-09-01T21:23:18-04:00</digest:modify-date>
+    <digest:create-date>2024-09-01T21:23:18-04:00</digest:create-date>
+    <digest:extent>23052896</digest:extent>
+    <digest:sha256>c818c683fbe8aa438e686fc6956f37fea102cb7d6f3e06f17e7ec90e4eb83ef2</digest:sha256>
+  </digest:Content>
+  <digest:Content rdf:about="magick">
+    <digest:timestamp>2024-09-02T11:00:07-04:00</digest:timestamp>
+    <digest:modify-date>2024-09-02T10:59:07-04:00</digest:modify-date>
+    <digest:create-date>2024-09-02T10:59:07-04:00</digest:create-date>
+    <digest:extent>29598912</digest:extent>
+    <digest:sha256>7559f9f7ad1760a1afd5d106abe61da1f76e993f58ab96fdced85cb48b8f23f4</digest:sha256>
+  </digest:Content>
+</rdf:RDF>

@@ -1,0 +1,43 @@
+[package]
+authors = ["Juliette Cordor <me@cordor.dev>"]
+categories = ["api-bindings", "command-line-utilities", "config"]
+description = "A Rust based abstraction layer for Scoop"
+edition = "2024"
+homepage = "https://github.com/winpax/sprinkles"
+include = [
+    "src/**/*",
+    "build.rs",
+    "Cargo.toml",
+    "LICENSE-APACHE",
+    "LICENSE-MIT",
+    "README.md",
+    "benches/**/*",
+    "tests/**/*",
+]
+keywords = ["api", "scoop", "windows", "package", "manager"]
+license = "MIT OR Apache-2.0"
+name = "sprinkles-rs"
+repository = "https://github.com/winpax/sprinkles"
+rust-version = "1.88"
+version = "0.23.0"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+name = "sprinkles"
+
+[package.metadata.docs.rs]
+default-target = "x86_64-unknown-linux-gnu"
+features = [
+    "beta",
+    "git2/vendored-libgit2",
+    "gix/blocking-http-transport-reqwest-native-tls",
+    "reqwest/native-tls-vendored",
+    "git2/vendored-openssl",
+    "manifest-hashes",
+]
+rustc-args = ["--cfg", "docsrs", "--cfg", "reqwest_unstable"]
+
+[features]
+beta = []
+default = ["manifest-hashes", "rayon", "unstable_linux"]

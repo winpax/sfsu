@@ -1,7 +1,7 @@
+use crate::{buckets::Bucket, contexts::ScoopContext, packages::models::install};
 use clap::Parser;
 use rayon::prelude::*;
 use serde_json::Value;
-use sprinkles::{buckets::Bucket, contexts::ScoopContext, packages::models::install};
 
 use crate::{models::outdated::Info, output::structured::Structured};
 
@@ -56,7 +56,7 @@ impl Args {
             println!("No outdated packages.");
         } else {
             outdated.dedup();
-            outdated.par_sort_by(|a, b| a.name.cmp(&b.name));
+            outdated.par_sort_by(|a, b| a.name.cmp(&b.name).reverse());
 
             let values = outdated
                 .par_iter()

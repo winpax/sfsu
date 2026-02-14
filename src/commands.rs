@@ -19,9 +19,7 @@ mod virustotal;
 
 use clap::Subcommand;
 
-use sprinkles::{config, contexts::ScoopContext};
-
-use crate::{abandon, output::colours::eprintln_yellow};
+use crate::{abandon, config, contexts::ScoopContext, output::colours::eprintln_yellow};
 
 #[derive(Debug, Clone, Copy)]
 pub struct DeprecationWarning {
@@ -69,10 +67,7 @@ pub trait Runnable
 where
     Self: Sized,
 {
-    async fn run(
-        self,
-        ctx: &impl sprinkles::contexts::ScoopContext<Config = sprinkles::config::Scoop>,
-    ) -> anyhow::Result<()>;
+    async fn run(self, ctx: &impl ScoopContext<Config = config::Scoop>) -> anyhow::Result<()>;
 }
 
 // TODO: Run command could return `impl Display` and print that itself
@@ -163,10 +158,7 @@ pub enum Commands {
 }
 
 impl Runnable for Commands {
-    async fn run(
-        self,
-        ctx: &impl sprinkles::contexts::ScoopContext<Config = sprinkles::config::Scoop>,
-    ) -> anyhow::Result<()> {
+    async fn run(self, ctx: &impl ScoopContext<Config = config::Scoop>) -> anyhow::Result<()> {
         match self {
             Commands::App(args) => args.run(ctx).await,
             #[cfg(not(feature = "v2"))]

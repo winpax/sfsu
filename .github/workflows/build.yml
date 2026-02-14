@@ -23,19 +23,19 @@ env:
   CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_PUBLISH_TOKEN }}
 
 jobs:
-  cargo-deny:
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@v4.2.2
-      - uses: EmbarkStudios/cargo-deny-action@v2.0.4
+  # cargo-deny:
+  #   runs-on: blacksmith-4vcpu-ubuntu-2404
+  #   continue-on-error: true
+  #   steps:
+  #     - uses: actions/checkout@v5.0.0
+  #     - uses: EmbarkStudios/cargo-deny-action@v2.0.11
 
   clippy:
     name: Clippy
-    runs-on: windows-latest
+    runs-on: blacksmith-4vcpu-windows-2025
     steps:
-      - uses: actions/checkout@v4.2.2
-      - uses: Swatinem/rust-cache@v2.7.5
+      - uses: actions/checkout@v6
+      - uses: Swatinem/rust-cache@v2
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -48,9 +48,9 @@ jobs:
 
   format:
     name: Formatting
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     steps:
-      - uses: actions/checkout@v4.2.2
+      - uses: actions/checkout@v6
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -62,14 +62,14 @@ jobs:
 
   test:
     name: Test
-    runs-on: windows-latest
+    runs-on: blacksmith-4vcpu-windows-2025
 
     steps:
-      - uses: actions/checkout@v4.2.2
-      - uses: Swatinem/rust-cache@v2.7.5
+      - uses: actions/checkout@v6
+      - uses: Swatinem/rust-cache@v2
 
       - name: Install and setup Scoop
-        uses: MinoruSekine/setup-scoop@v4.0.1
+        uses: winpax/scoop-setup@v1.0.0
         with:
           buckets: extras java
 
@@ -84,14 +84,16 @@ jobs:
       matrix:
         arch: [x86_64, i686, aarch64]
     name: Build for ${{ matrix.arch }}
+    # blacksmith seems to have unique issues compiling the arm version
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v4.2.2
-      - uses: Swatinem/rust-cache@v2.7.5
+      - uses: actions/checkout@v6
+      - uses: Swatinem/rust-cache@v2
+        if: ${{ matrix.arch == 'aarch64' }}
         with:
           key: build-${{ matrix.arch }}
-      - uses: extractions/setup-just@v2
+      - uses: extractions/setup-just@v3
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -106,8 +108,8 @@ jobs:
     needs: [build, test, clippy, format]
 
     steps:
-      - uses: actions/checkout@v4.2.2
-      - uses: extractions/setup-just@v2
+      - uses: actions/checkout@v6
+      - uses: extractions/setup-just@v3
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -137,13 +139,13 @@ jobs:
         run: just beta-release-all
 
       - name: Upload a Build Artifact
-        uses: actions/upload-artifact@v4.6.0
+        uses: actions/upload-artifact@v6
         with:
           name: package.zip
           path: release/*
 
       - name: Upload & Publish
-        uses: softprops/action-gh-release@v2.2.1
+        uses: softprops/action-gh-release@v2
         with:
           files: |
             release/*.exe

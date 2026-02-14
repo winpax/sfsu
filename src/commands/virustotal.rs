@@ -1,9 +1,6 @@
 use std::time::Duration;
 
-use anyhow::Context;
-use clap::{Parser, ValueEnum};
-use rayon::prelude::*;
-use sprinkles::{
+use crate::{
     Architecture, config,
     contexts::ScoopContext,
     hash::Hash,
@@ -11,6 +8,9 @@ use sprinkles::{
     progress::{ProgressOptions, indicatif::ProgressBar, style},
     requests::USER_AGENT,
 };
+use anyhow::Context;
+use clap::{Parser, ValueEnum};
+use rayon::prelude::*;
 
 use crate::{
     calm_panic::CalmUnwrap,
@@ -166,11 +166,11 @@ impl super::Command for Args {
             .into_iter()
             .filter_map(|manifest| {
                 let result = match manifest.install_config(self.arch).hash {
-                    Some(hash) => Some(hash.map(SearchType::FileHash).to_vec()),
+                    Some(hash) => Some(hash.map(SearchType::FileHash).into_vec()),
                     _ => manifest
                         .install_config(self.arch)
                         .urls
-                        .map(|url| url.map(SearchType::Url).to_vec()),
+                        .map(|url| url.map(SearchType::Url).into_vec()),
                 };
 
                 result.map(|result| {
@@ -251,10 +251,10 @@ impl Args {
         detected: u64,
         total: u64,
     ) -> std::fmt::Result {
-        if let Some(filter) = self.filter {
-            if file_status <= filter {
-                return Ok(());
-            }
+        if let Some(filter) = self.filter
+            && file_status <= filter
+        {
+            return Ok(());
         }
 
         let mut info = format!("{}/{}: {detected}/{total}", manifest.bucket, manifest.name,);
@@ -272,7 +272,7 @@ impl Args {
             Status::Malicious => eprintln_red!("{info}"),
             Status::Suspicious => eprintln_yellow!("{info}"),
             Status::Undetected => eprintln_green!("{info}"),
-        };
+        }
 
         Ok(())
     }

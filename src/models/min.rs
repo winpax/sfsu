@@ -1,12 +1,12 @@
+use crate::{
+    contexts::ScoopContext,
+    packages::{CreateManifest, InstallManifest, Manifest},
+};
 use anyhow::Context;
 use chrono::{DateTime, Local};
 use quork::traits::truthy::ContainsTruth;
 use rayon::prelude::*;
 use serde::Serialize;
-use sprinkles::{
-    contexts::ScoopContext,
-    packages::{CreateManifest, InstallManifest, Manifest},
-};
 use std::path::Path;
 use std::time::UNIX_EPOCH;
 
@@ -43,10 +43,10 @@ impl Info {
         apps.par_iter()
             .map(Self::from_path)
             .filter(|package| {
-                if let Ok(pkg) = package {
-                    if let Some(bucket) = bucket {
-                        return &pkg.source == bucket;
-                    }
+                if let Ok(pkg) = package
+                    && let Some(bucket) = bucket
+                {
+                    return &pkg.source == bucket;
                 }
                 // Keep errors so that the following line will return the error
                 true

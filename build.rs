@@ -16,8 +16,7 @@ fn get_contributors((owner, repo): (&str, &str)) -> Result<String, Box<dyn Error
 
     if let Ok(api_key) = std::env::var("CONTRIBUTORS_TOKEN") {
         let contributors = Contributors::new(api_key, owner.into(), repo.into())?;
-        let contributors =
-            tokio::runtime::Runtime::new()?.block_on(async move { contributors.await })?;
+        let contributors = tokio::runtime::Runtime::new()?.block_on(contributors.into_future())?;
 
         let contributors = contributors
             .into_iter()
@@ -69,8 +68,10 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     std::fs::write(
         out_dir.join("long_version.txt"),
-        SprinklesVersion::from_doc(&lockfile).long_version(&shadow),
+        SprinklesVersion::new().long_version(&shadow),
     )?;
+
+    build::buckets::save_known_buckets()?;
 
     Ok(())
 }

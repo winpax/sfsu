@@ -1,5 +1,5 @@
+use crate::{config, contexts::ScoopContext};
 use clap::Parser;
-use sprinkles::{config, contexts::ScoopContext};
 
 use crate::output::colours::eprintln_yellow;
 
@@ -15,8 +15,8 @@ pub struct ArgsWrapper {
 impl super::Command for ArgsWrapper {
     async fn runner(self, ctx: &impl ScoopContext<Config = config::Scoop>) -> anyhow::Result<()> {
         eprintln_yellow!(
-            "Updating buckets has been renamed to `bucket update`. Updating apps is not yet supported and will be added in a future release."
+            "Updating apps is not yet supported and will be added in a future release."
         );
-        bucket::update::Args::runner(self.args, ctx).await
+        bucket::update::Args::runner_internal(self.args, ctx, true).await
     }
 }

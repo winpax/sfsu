@@ -4,7 +4,7 @@ use clap::Parser;
 
 use rayon::prelude::*;
 
-use sprinkles::{
+use crate::{
     Architecture,
     buckets::Bucket,
     cache::{DownloadHandle, Handle},
@@ -85,7 +85,7 @@ impl super::Command for Args {
                             {
                                 Ok(dl) => anyhow::Ok(dl),
                                 Err(e) => match e {
-                                    sprinkles::cache::Error::ErrorCode(status) => {
+                                    crate::cache::Error::Status(status) => {
                                         abandon!("Found {status} error while downloading")
                                     }
                                     _ => Err(e.into()),

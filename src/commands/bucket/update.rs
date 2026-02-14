@@ -1,3 +1,5 @@
+// TODO: Refactor updating code into separate file for use in both update and bucket update commands
+
 use std::borrow::Cow;
 
 use anyhow::Context;
@@ -5,7 +7,7 @@ use clap::Parser;
 use itertools::Itertools;
 use rayon::prelude::*;
 
-use sprinkles::{
+use crate::{
     buckets::{self, Bucket},
     config::Scoop as ScoopConfig,
     contexts::ScoopContext,
@@ -27,7 +29,22 @@ pub struct Args {
 }
 
 impl super::Command for Args {
-    async fn runner(self, ctx: &impl ScoopContext) -> Result<(), anyhow::Error> {
+    async fn runner(
+        self,
+        ctx: &impl ScoopContext<Config = crate::config::Scoop>,
+    ) -> anyhow::Result<()> {
+        self.runner_internal(ctx, false).await
+    }
+}
+
+impl Args {
+    const FINISH_MESSAGE: &'static str = "✅";
+
+    pub async fn runner_internal(
+        self,
+        ctx: &impl ScoopContext,
+        update_scoop: bool,
+    ) -> Result<(), anyhow::Error> {
         let progress_style = style(Some(ProgressOptions::Hide), Some(Message::suffix()));
 
         let buckets = Bucket::list_all(ctx)?;
@@ -41,8 +58,15 @@ impl super::Command for Args {
         // Force checkout to the config's branch
         _ = ctx.outdated().await?;
 
-        let scoop_changelog =
-            self.update_scoop(ctx, longest_bucket_name, progress_style.clone())?;
+        // Only update scoop if `update_scoop` flag is set
+        let scoop_changelog = update_scoop
+            .then(|| {
+                self.update_scoop(ctx, longest_bucket_name, progress_style.clone())
+                    // Flip Result<Option<T>> into Option<Result<T>>
+                    .transpose()
+            })
+            // Flatten Option within Option into single Option<Result<T>>
+            .flatten();
 
         let mp = MultiProgress::new();
 
@@ -63,7 +87,7 @@ impl super::Command for Args {
             })
             .collect_vec();
 
-        let bucket_changelogs = self.update_buckets(ctx, &outdated_buckets)?;
+        let bucket_changelogs = self.update_buckets(&outdated_buckets)?;
 
         let mut scoop_config = ScoopConfig::load()?;
         scoop_config.update_last_update_time();
@@ -73,10 +97,10 @@ impl super::Command for Args {
             println!();
             if let Some(scoop_changelog) = scoop_changelog {
                 let scoop_changelog =
-                    Section::new(Children::from(scoop_changelog)).with_title("Scoop changes:");
+                    Section::new(Children::from(scoop_changelog?)).with_title("Scoop changes:");
 
                 print!("{scoop_changelog}");
-            };
+            }
 
             for bucket_changelog in bucket_changelogs {
                 let (name, changelog) = bucket_changelog;
@@ -94,10 +118,6 @@ impl super::Command for Args {
 
         Ok(())
     }
-}
-
-impl Args {
-    const FINISH_MESSAGE: &'static str = "✅";
 
     fn update_scoop(
         &self,
@@ -113,14 +133,13 @@ impl Args {
             .with_prefix(format!("🍨 {:<longest_bucket_name$}", "Scoop"))
             .with_finish(ProgressFinish::WithMessage(Self::FINISH_MESSAGE.into()));
 
-        let changelog = self.update(ctx, &repo, &pb)?;
+        let changelog = self.update(&repo, &pb)?;
 
         Ok(changelog)
     }
 
     fn update_buckets<'a>(
         &self,
-        ctx: &impl ScoopContext,
         outdated_buckets: &'a [(Bucket, ProgressBar)],
     ) -> anyhow::Result<Vec<(Cow<'a, str>, Vec<String>)>> {
         let bucket_changelogs = outdated_buckets
@@ -128,7 +147,7 @@ impl Args {
             .map(|(bucket, pb)| -> buckets::Result<_> {
                 let repo = bucket.open_repo()?;
 
-                let changelog = self.update(ctx, &repo, pb)?;
+                let changelog = self.update(&repo, pb)?;
 
                 Ok((bucket.name(), changelog.unwrap_or_default()))
             })
@@ -137,21 +156,16 @@ impl Args {
         Ok(bucket_changelogs)
     }
 
-    fn update(
-        &self,
-        ctx: &impl ScoopContext,
-        repo: &Repo,
-        pb: &ProgressBar,
-    ) -> git::Result<Option<Vec<String>>> {
+    fn update(&self, repo: &Repo, pb: &ProgressBar) -> git::Result<Option<Vec<String>>> {
         if !repo.outdated()? {
             pb.finish_with_message("✅ No updates available");
             return Ok(None);
         }
 
         let changelog = if self.changelog {
-            repo.pull_with_changelog(ctx, Some(&Self::gen_stats_callback(pb)))?
+            repo.pull_with_changelog()?
         } else {
-            repo.pull(ctx, Some(&Self::gen_stats_callback(pb)))?;
+            repo.pull()?;
 
             vec![]
         };
@@ -161,24 +175,22 @@ impl Args {
         Ok(Some(changelog))
     }
 
-    fn gen_stats_callback(
-        pb: &ProgressBar,
-    ) -> impl Fn(sprinkles::git::implementations::git2::Progress<'_>, bool) -> bool + '_ {
-        |stats, thin| {
-            if thin {
-                pb.set_position(stats.indexed_objects() as u64);
-                pb.set_length(stats.total_objects() as u64);
-            } else if stats.received_objects() == stats.total_objects() {
-                pb.set_position(stats.indexed_deltas() as u64);
-                pb.set_length(stats.total_deltas() as u64);
-                pb.set_message("Resolving deltas");
-            } else if stats.total_objects() > 0 {
-                pb.set_position(stats.received_objects() as u64);
-                pb.set_length(stats.total_objects() as u64);
-                pb.set_message("Receiving objects");
-            }
+    // fn gen_stats_callback(pb: &ProgressBar) -> impl Fn(git2::Progress<'_>, bool) -> bool + '_ {
+    //     |stats, thin| {
+    //         if thin {
+    //             pb.set_position(stats.indexed_objects() as u64);
+    //             pb.set_length(stats.total_objects() as u64);
+    //         } else if stats.received_objects() == stats.total_objects() {
+    //             pb.set_position(stats.indexed_deltas() as u64);
+    //             pb.set_length(stats.total_deltas() as u64);
+    //             pb.set_message("Resolving deltas");
+    //         } else if stats.total_objects() > 0 {
+    //             pb.set_position(stats.received_objects() as u64);
+    //             pb.set_length(stats.total_objects() as u64);
+    //             pb.set_message("Receiving objects");
+    //         }
 
-            true
-        }
-    }
+    //         true
+    //     }
+    // }
 }

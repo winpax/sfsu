@@ -5,7 +5,8 @@ use std::{ffi::OsString, os::windows::ffi::OsStringExt};
 use anyhow::Error;
 use itertools::Itertools;
 use serde::Serialize;
-use sprinkles::{buckets::Bucket, contexts::ScoopContext};
+
+use crate::{buckets::Bucket, contexts::ScoopContext};
 
 #[derive(Debug, Copy, Clone, Serialize)]
 /// The status of long paths
@@ -228,7 +229,7 @@ impl Diagnostics {
             )?;
         }
 
-        debug!("Filesystem: {:?}", OsString::from_wide(&fs_name));
+        debug!("Filesystem: {}", OsString::from_wide(&fs_name).display());
 
         Ok(fs_name.starts_with(&"NTFS".encode_utf16().collect_vec()))
     }

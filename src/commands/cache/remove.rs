@@ -1,5 +1,5 @@
+use crate::contexts::ScoopContext;
 use clap::Parser;
-use sprinkles::contexts::ScoopContext;
 
 use crate::{commands::Command, output::colours::eprintln_bright_yellow, wrappers::sizes::Size};
 
@@ -8,29 +8,47 @@ use super::CacheEntry;
 #[derive(Debug, Clone, Parser)]
 /// Remove cache entries
 pub struct Args {
-    #[clap(from_global)]
+    #[clap(
+        global = true,
+        help = "Regex pattern(s) for apps to remove cache entries for"
+    )]
     apps: Vec<String>,
+
+    #[clap(from_global)]
+    glob: bool,
 }
 
 impl Command for Args {
     async fn runner(self, ctx: &impl ScoopContext) -> Result<(), anyhow::Error> {
-        let cache_entries = CacheEntry::match_paths(ctx, &self.apps).await?;
+        if self.apps.is_empty() {
+            eprintln_bright_yellow!("No apps specified.");
+            return Ok(());
+        }
+
+        let cache_entries = CacheEntry::match_paths(ctx, &self.apps, self.glob).await?;
 
         let total_entires = cache_entries.len();
         let total_size = cache_entries
             .iter()
-            .fold(Size::new(0), |acc, entry| acc + entry.size);
+            .fold(Size::new(0), |acc, entry| acc + entry.size());
 
         let cache_results =
             futures::future::try_join_all(cache_entries.into_iter().map(|entry| async move {
-                tokio::fs::remove_file(&entry.file_path).await?;
+                tokio::fs::remove_file(&entry.file_path()).await?;
 
                 Ok::<_, std::io::Error>(entry)
             }))
             .await?;
 
         for entry in cache_results {
-            eprintln!("Removed: {}", entry.url);
+            let removed_name = match entry {
+                CacheEntry::Known { hash: url, .. } => url,
+                CacheEntry::Loose { file_path, .. } => file_path
+                    .file_name()
+                    .map_or("Unknown".to_string(), |name| name.display().to_string()),
+            };
+
+            eprintln!("Removed: {removed_name}");
         }
 
         eprintln_bright_yellow!("Deleted {total_entires} files, {total_size}");

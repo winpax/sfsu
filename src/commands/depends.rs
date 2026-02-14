@@ -1,8 +1,8 @@
-use clap::Parser;
-use sprinkles::{
+use crate::{
     contexts::ScoopContext,
     packages::reference::{manifest, package},
 };
+use clap::Parser;
 
 use crate::{
     abandon,
@@ -34,7 +34,7 @@ impl super::Command for Args {
 
         if manifests.is_empty() {
             abandon!("Could not find any packages matching: {}", self.package);
-        };
+        }
 
         if self.json {
             println!("{}", serde_json::to_string(&manifests)?);

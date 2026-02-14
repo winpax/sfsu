@@ -6,7 +6,7 @@ use quork::prelude::*;
 use rayon::prelude::*;
 use serde_json::Value;
 
-use sprinkles::{
+use crate::{
     buckets::Bucket,
     contexts::ScoopContext,
     packages::models::install,
@@ -70,7 +70,7 @@ impl super::Command for Args {
                     Command::Scoop => this.handle_scoop(ctx, &value, &mut output).await?,
                     Command::Buckets => this.handle_buckets(ctx, &value, &mut output)?,
                     Command::Apps => this.handle_packages(ctx, &value, &mut output)?,
-                };
+                }
 
                 pb.inc(1);
 
@@ -252,7 +252,7 @@ impl Args {
         if invalid_apps.is_empty() {
             writeln!(output, "All packages are okay and up to date.")?;
         } else {
-            invalid_apps.par_sort_by(|a, b| a.name.cmp(&b.name));
+            invalid_apps.par_sort_by(|prev, curr| curr.name.cmp(&prev.name));
 
             let values = invalid_apps
                 .par_iter()

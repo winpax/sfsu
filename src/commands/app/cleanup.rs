@@ -1,9 +1,6 @@
 use std::{path::Path, str::FromStr, time::Duration};
 
-use clap::Parser;
-use futures::{StreamExt, TryFutureExt, stream::FuturesUnordered};
-use itertools::Itertools;
-use sprinkles::{
+use crate::{
     contexts::ScoopContext,
     packages::reference::{manifest, package},
     progress::{
@@ -13,6 +10,9 @@ use sprinkles::{
     },
     version::Version,
 };
+use clap::Parser;
+use futures::{StreamExt, TryFutureExt, stream::FuturesUnordered};
+use itertools::Itertools;
 
 use crate::{
     abandon,

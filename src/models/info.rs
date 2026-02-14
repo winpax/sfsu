@@ -2,7 +2,7 @@
 
 use serde::Serialize;
 
-use sprinkles::packages::models::manifest::{NestedArray, PackageLicense};
+use crate::packages::models::manifest::{NestedArray, PackageLicense};
 
 use crate::wrappers::{bool::NicerBool, serialize::SerializeDisplay};
 

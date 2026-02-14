@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.17.4]
+
+### Changed
+
+- Update sprinkles library to 0.23.0
+- Use gitoxide for fetching during bucket update
+
+## [1.17.2]
+
+### Fixed
+
+- `bucket update` command no longer attempts to update Scoop
+- `update` command no longer discourages use
+- cache commands not including non-package archive files
+- cache commands not including all files by default due to regex error
+- `cache rm` would by default remove all cache entries due to reused arguments from list
+- fixed reverse alphabetical sorting in `cache`, `bucket list` and `outdated` commands
+- updated `cache list` columns to align with new Scoop cache file names
+- fixed `cache list` bug that would error when showing loose cache entries
+- update rust version to `1.91`
+
+## [1.17.1]
+
+### Fixed
+
+- Reverse ordering for `sfsu status` command.
+
+## [1.17.0]
+
 ### Added
 
 - Added `app cleanup` command for removing old versions and cache entries
@@ -16,6 +45,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Major refactor of `Structured` output struct
   - This includes an updated design for the output string
+- Updated dependencies
+- `app list` now sorts item in ascending order in line with scoop
+- `app list` now sorts case-insensitive
+- `app list` now sorts using unstable sorting
+  (this may result in inconsistent results between invocations, and in comparison to scoop,
+  in cases where there are two apps with equal sorting fields)
+- `app list` now sorts `Unknown` source first
+- `app list` now uses the `semver` crate for proper semantic version sorting
 
 ## [1.16.0] - 2025-19-01
 
@@ -127,7 +164,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For older version's changelogs, see the [releases](https://github.com/winpax/sfsu/releases) page.
 
-[Unreleased]: https://github.com/winpax/sfsu/compare/v1.16.0...HEAD
+[Unreleased]: https://github.com/winpax/sfsu/compare/v1.17.4...HEAD
+[1.17.4]: https://github.com/winpax/sfsu/releases/tag/v1.17.4
+[1.17.2]: https://github.com/winpax/sfsu/releases/tag/v1.17.2
+[1.17.1]: https://github.com/winpax/sfsu/releases/tag/v1.17.1
+[1.17.0]: https://github.com/winpax/sfsu/releases/tag/v1.17.0
 [1.16.0]: https://github.com/winpax/sfsu/releases/tag/v1.16.0
 [1.15.1]: https://github.com/winpax/sfsu/releases/tag/v1.15.1
 [1.15.0]: https://github.com/winpax/sfsu/releases/tag/v1.15.0

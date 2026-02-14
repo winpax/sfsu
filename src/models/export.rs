@@ -4,7 +4,7 @@ use chrono::{DateTime, Local, SecondsFormat};
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use sprinkles::{
+use crate::{
     buckets::{Bucket as SfsuBucket, Error as BucketError},
     config,
     contexts::ScoopContext,

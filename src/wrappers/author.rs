@@ -2,10 +2,7 @@
 
 use std::fmt::Display;
 
-use sprinkles::git::{
-    implementations::{git2, gix},
-    parity::Signature,
-};
+use crate::git::parity::Signature;
 
 #[must_use]
 /// A wrapper around a git signature to display the author

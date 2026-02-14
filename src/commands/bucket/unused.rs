@@ -1,7 +1,7 @@
 use clap::Parser;
 
+use crate::{buckets::Bucket, contexts::ScoopContext, packages::InstallManifest};
 use rayon::prelude::*;
-use sprinkles::{buckets::Bucket, contexts::ScoopContext, packages::InstallManifest};
 
 use crate::{
     commands,
@@ -45,7 +45,7 @@ impl commands::Command for Args {
                 let unused =
                     Section::new(unused_buckets).with_title("The following buckets are unused:");
                 println!("{unused}");
-            };
+            }
         }
 
         Ok(())

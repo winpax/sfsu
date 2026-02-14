@@ -1,0 +1,8 @@
+{
+  "rust-analyzer.showUnlinkedFileNotification": false,
+  "rust-analyzer.cargo.features": [
+    "beta",
+    "clap",
+    "unstable_linux"
+  ]
+}

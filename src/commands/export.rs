@@ -1,6 +1,6 @@
 use clap::Parser;
 
-use sprinkles::{config, contexts::ScoopContext};
+use crate::{config, contexts::ScoopContext};
 
 use crate::models::export::Export;
 

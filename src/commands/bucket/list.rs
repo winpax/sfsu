@@ -1,9 +1,9 @@
+use crate::{buckets::Bucket, contexts::ScoopContext};
 use anyhow::Context;
 use chrono::FixedOffset;
 use clap::Parser;
 use rayon::prelude::*;
 use serde::Serialize;
-use sprinkles::{buckets::Bucket, contexts::ScoopContext};
 
 use crate::{output, wrappers::time::NicerTime};
 
@@ -29,14 +29,14 @@ impl BucketInfo {
         let updated_time = {
             let repo = bucket.open_repo()?;
             let latest_commit = repo.latest_commit()?;
-            let time = sprinkles::git::parity::Time::from(latest_commit.time()?);
+            let time = crate::git::parity::Time::from(latest_commit.time()?);
 
             time.to_datetime().context("invalid time")?
         };
 
         Ok(Self {
             name: bucket.name().to_string(),
-            source: bucket.source()?.to_string(),
+            source: bucket.source()?.clone(),
             updated: updated_time.into(),
             manifests,
         })
@@ -53,7 +53,7 @@ impl super::Command for Args {
                 .map(BucketInfo::collect)
                 .collect::<Result<Vec<_>, _>>()?;
 
-            buckets.sort_by(|a, b| a.name.cmp(&b.name));
+            buckets.sort_by(|a, b| a.name.cmp(&b.name).reverse());
 
             buckets
         };
