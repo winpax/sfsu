@@ -87,7 +87,7 @@ impl Args {
             })
             .collect_vec();
 
-        let bucket_changelogs = self.update_buckets(ctx, &outdated_buckets)?;
+        let bucket_changelogs = self.update_buckets(&outdated_buckets)?;
 
         let mut scoop_config = ScoopConfig::load()?;
         scoop_config.update_last_update_time();
@@ -133,14 +133,13 @@ impl Args {
             .with_prefix(format!("🍨 {:<longest_bucket_name$}", "Scoop"))
             .with_finish(ProgressFinish::WithMessage(Self::FINISH_MESSAGE.into()));
 
-        let changelog = self.update(ctx, &repo, &pb)?;
+        let changelog = self.update(&repo, &pb)?;
 
         Ok(changelog)
     }
 
     fn update_buckets<'a>(
         &self,
-        ctx: &impl ScoopContext,
         outdated_buckets: &'a [(Bucket, ProgressBar)],
     ) -> anyhow::Result<Vec<(Cow<'a, str>, Vec<String>)>> {
         let bucket_changelogs = outdated_buckets
@@ -148,7 +147,7 @@ impl Args {
             .map(|(bucket, pb)| -> buckets::Result<_> {
                 let repo = bucket.open_repo()?;
 
-                let changelog = self.update(ctx, &repo, pb)?;
+                let changelog = self.update(&repo, pb)?;
 
                 Ok((bucket.name(), changelog.unwrap_or_default()))
             })
@@ -157,21 +156,16 @@ impl Args {
         Ok(bucket_changelogs)
     }
 
-    fn update(
-        &self,
-        ctx: &impl ScoopContext,
-        repo: &Repo,
-        pb: &ProgressBar,
-    ) -> git::Result<Option<Vec<String>>> {
+    fn update(&self, repo: &Repo, pb: &ProgressBar) -> git::Result<Option<Vec<String>>> {
         if !repo.outdated()? {
             pb.finish_with_message("✅ No updates available");
             return Ok(None);
         }
 
         let changelog = if self.changelog {
-            repo.pull_with_changelog(ctx, Some(&Self::gen_stats_callback(pb)))?
+            repo.pull_with_changelog()?
         } else {
-            repo.pull(ctx, Some(&Self::gen_stats_callback(pb)))?;
+            repo.pull()?;
 
             vec![]
         };
@@ -181,22 +175,22 @@ impl Args {
         Ok(Some(changelog))
     }
 
-    fn gen_stats_callback(pb: &ProgressBar) -> impl Fn(git2::Progress<'_>, bool) -> bool + '_ {
-        |stats, thin| {
-            if thin {
-                pb.set_position(stats.indexed_objects() as u64);
-                pb.set_length(stats.total_objects() as u64);
-            } else if stats.received_objects() == stats.total_objects() {
-                pb.set_position(stats.indexed_deltas() as u64);
-                pb.set_length(stats.total_deltas() as u64);
-                pb.set_message("Resolving deltas");
-            } else if stats.total_objects() > 0 {
-                pb.set_position(stats.received_objects() as u64);
-                pb.set_length(stats.total_objects() as u64);
-                pb.set_message("Receiving objects");
-            }
+    // fn gen_stats_callback(pb: &ProgressBar) -> impl Fn(git2::Progress<'_>, bool) -> bool + '_ {
+    //     |stats, thin| {
+    //         if thin {
+    //             pb.set_position(stats.indexed_objects() as u64);
+    //             pb.set_length(stats.total_objects() as u64);
+    //         } else if stats.received_objects() == stats.total_objects() {
+    //             pb.set_position(stats.indexed_deltas() as u64);
+    //             pb.set_length(stats.total_deltas() as u64);
+    //             pb.set_message("Resolving deltas");
+    //         } else if stats.total_objects() > 0 {
+    //             pb.set_position(stats.received_objects() as u64);
+    //             pb.set_length(stats.total_objects() as u64);
+    //             pb.set_message("Receiving objects");
+    //         }
 
-            true
-        }
-    }
+    //         true
+    //     }
+    // }
 }

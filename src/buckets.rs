@@ -377,7 +377,7 @@ mod tests {
 
         let bucket = Bucket::from_name(&ctx, "main").unwrap();
 
-        bucket.open_repo().unwrap().pull(&ctx, None).unwrap();
+        bucket.open_repo().unwrap().pull().unwrap();
     }
 
     #[test]
@@ -386,6 +386,6 @@ mod tests {
 
         let bucket = Bucket::from_name(&ctx, "extras").unwrap();
 
-        bucket.open_repo().unwrap().pull(&ctx, None).unwrap();
+        bucket.open_repo().unwrap().pull().unwrap();
     }
 }

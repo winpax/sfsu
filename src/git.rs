@@ -15,8 +15,6 @@ use gix::{
 
 use crate::{buckets::Bucket, contexts::ScoopContext};
 
-use pull::ProgressCallback;
-
 pub mod clone;
 pub mod errors;
 pub mod options;
@@ -45,7 +43,7 @@ pub enum Error {
     GitParent,
     #[error("Git error: {0}")]
     Git2(#[from] git2::Error),
-    #[error("Gitoxide error: {0}")]
+    #[error("{0}")]
     Gitoxide(Box<errors::GitoxideError>),
     #[error("No remote named {0}")]
     MissingRemote(String),
@@ -268,14 +266,10 @@ impl Repo {
     /// - Missing head
     /// - Missing latest commit
     /// - Git error
-    pub fn pull(
-        &self,
-        ctx: &impl ScoopContext,
-        stats_cb: Option<ProgressCallback<'_>>,
-    ) -> Result<()> {
+    pub fn pull(&self) -> Result<()> {
         let current_branch = self.current_branch()?;
 
-        pull::pull(ctx, self, None, Some(current_branch.as_str()), stats_cb)?;
+        pull::pull(self, None, Some(current_branch.as_str()))?;
 
         Ok(())
     }
@@ -289,16 +283,12 @@ impl Repo {
     /// - Missing head
     /// - Missing latest commit
     /// - Git error
-    pub fn pull_with_changelog(
-        &self,
-        ctx: &impl ScoopContext,
-        stats_cb: Option<ProgressCallback<'_>>,
-    ) -> Result<Vec<String>> {
+    pub fn pull_with_changelog(&self) -> Result<Vec<String>> {
         let repo = self.gitoxide();
 
         let current_commit = repo.head_commit()?;
 
-        self.pull(ctx, stats_cb)?;
+        self.pull()?;
 
         let post_pull_commit = repo.head_commit()?;
 
