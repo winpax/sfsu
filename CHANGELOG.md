@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Use gix for fetch in pull
+- Replace toml_edit with toml crate
 - Update sprinkles library to 0.23.0
 - Use gitoxide for fetching during bucket update
 
