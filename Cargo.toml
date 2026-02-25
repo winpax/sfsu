@@ -128,7 +128,7 @@ serde_with = "3.8"
 sha1 = { version = "0.10", optional = true }
 sha2 = { version = "0.10", optional = true }
 shadow-rs = "1.2"
-strum = { version = "0.27", features = ["derive"] }
+strum = { version = "0.28", features = ["derive"] }
 sxd-document = { version = "0.3", optional = true }
 sxd-xpath = { version = "0.4", optional = true }
 thiserror = "2.0"
