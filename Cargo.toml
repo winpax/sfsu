@@ -76,7 +76,7 @@ dirs = "6.0"
 dunce = "1.0"
 futures = "0.3"
 git2 = "0.20"
-gix = { version = "0.79", features = [
+gix = { version = "0.80", features = [
     "blocking-http-transport-reqwest",
     "blocking-network-client",
     "worktree-mutation",
