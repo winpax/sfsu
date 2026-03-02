@@ -1,12 +1,6 @@
 //! Scoop git helpers
 
-use std::{
-    ffi::OsStr,
-    fmt::Display,
-    path::{Path, PathBuf},
-    process::Command,
-    sync::atomic::AtomicBool,
-};
+use std::{ffi::OsStr, fmt::Display, path::Path, process::Command, sync::atomic::AtomicBool};
 
 use gix::{
     Commit, ObjectId, Repository, bstr::BStr, remote::ref_map, revision::walk::Sorting,
@@ -20,18 +14,6 @@ pub mod errors;
 pub mod options;
 pub mod parity;
 mod pull;
-
-/// Get the path to the git executable
-///
-/// This is just an alias for [`which::which`]
-///
-/// # Errors
-/// - Git path could not be found
-/// - The current dir and path list were empty
-/// - The found path could not be canonicalized
-pub fn which() -> which::Result<PathBuf> {
-    which::which("git")
-}
 
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]

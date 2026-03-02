@@ -25,9 +25,9 @@ use crate::{
 /// Bucket errors
 pub enum Error {
     #[error("Interacting with repo: {0}")]
-    RepoError(#[from] git::Error),
+    Repo(#[from] git::Error),
     #[error("IO Error: {0}")]
-    IOError(#[from] std::io::Error),
+    IO(#[from] std::io::Error),
     #[error("The bucket \"{0}\" does not exist")]
     InvalidBucket(PathBuf),
     #[error("Missing or invalid git output")]
