@@ -67,9 +67,9 @@ pub enum Error {
     #[error("Json error: {0}")]
     Json(#[from] json::Error),
     #[error("RDF error: {0}")]
-    RDF(#[from] formats::rdf::RDFError),
+    Rdf(#[from] formats::rdf::RDFError),
     #[error("XML error: {0}")]
-    XML(#[from] formats::xml::XMLError),
+    Xml(#[from] formats::xml::XMLError),
     #[error("Error parsing json: {0}")]
     SerdeJson(#[from] serde_json::Error),
     #[error("Failed to parse url: {0}")]

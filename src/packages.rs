@@ -19,7 +19,7 @@ use crate::{
     contexts::ScoopContext,
     git::{
         self, Repo,
-        errors::{self, GitoxideError},
+        errors::{self, GixError},
         parity::Signature,
     },
 };
@@ -175,7 +175,7 @@ pub enum Error {
     #[error("Could not find executable in path: {0}")]
     MissingInPath(#[from] which::Error),
     #[error("Gitoxide error: {0}")]
-    Gitoxide(#[from] Box<errors::GitoxideError>),
+    Gitoxide(#[from] Box<errors::GixError>),
     #[error("Git delta did not have a path")]
     DeltaNoPath,
     #[error("Cannot find git commit where package was updated")]
@@ -201,8 +201,8 @@ pub enum Error {
     MissingParent,
 }
 
-impl From<errors::GitoxideError> for Error {
-    fn from(value: errors::GitoxideError) -> Self {
+impl From<errors::GixError> for Error {
+    fn from(value: errors::GixError) -> Self {
         Self::Gitoxide(Box::new(value))
     }
 }
@@ -711,7 +711,7 @@ impl Manifest {
     /// # Errors
     /// - Git2 errors
     pub fn commit_diff_matches(&self, commit: &gix::Commit<'_>) -> Result<bool> {
-        let tree = commit.tree().map_err(GitoxideError::from)?;
+        let tree = commit.tree().map_err(GixError::from)?;
         let parent_tree = commit
             .parent_ids()
             .find_map(|parent| {
@@ -726,7 +726,7 @@ impl Manifest {
         let mut changed = false;
 
         tree.changes()
-            .map_err(GitoxideError::from)?
+            .map_err(GixError::from)?
             .for_each_to_obtain_tree(&parent_tree, |change| {
                 // Check if the changed file's location starts with the manifest name
                 if change
@@ -735,12 +735,12 @@ impl Manifest {
                     .starts_with(unsafe { self.name() })
                 {
                     changed = true;
-                    return Ok::<_, GitoxideError>(Action::Break(()));
+                    return Ok::<_, GixError>(Action::Break(()));
                 }
 
                 Ok(Action::Continue(()))
             })
-            .map_err(GitoxideError::from)?;
+            .map_err(GixError::from)?;
 
         // Given that the diffoptions ensure that we only match the specific manifest
         // we are safe to return as soon as we find a commit thats changed anything
@@ -831,7 +831,7 @@ impl Manifest {
         let date_time = git::parity::Time::from(
             updated_commit
                 .time()
-                .map_err(git::errors::GitoxideError::from)
+                .map_err(git::errors::GixError::from)
                 .map_err(Box::new)?,
         )
         .to_datetime()

@@ -1,35 +1,49 @@
 //! Git specific error helpers
 
+use gix::{date, diff, head, object, open, reference, refspec, remote, revision, traverse};
+
 #[derive(Debug, thiserror::Error)]
-#[allow(missing_docs)]
-/// A collection of gitoxide errors
-#[error("Gitoxide error: {0}")]
-pub enum GitoxideError {
-    Open(#[from] gix::open::Error),
-    Traverse(#[from] gix::traverse::commit::simple::Error),
-    RevWalk(#[from] gix::revision::walk::Error),
-    Head(#[from] gix::reference::head_commit::Error),
+#[error("{0}")]
+pub enum GixErrorInner {
+    Open(#[from] open::Error),
+    Traverse(#[from] traverse::commit::simple::Error),
+    RevWalk(#[from] revision::walk::Error),
+    Head(#[from] reference::head_commit::Error),
     Decode(#[from] gix_object::decode::Error),
-    RevWalkGraph(#[from] gix::object::find::existing::Error),
-    Commit(#[from] gix::object::commit::Error),
-    Rewrites(#[from] gix::diff::new_rewrites::Error),
-    ObjectPeel(#[from] gix::object::peel::to_kind::Error),
-    ObjectDiff(#[from] gix::object::tree::diff::for_each::Error),
-    FindExisting(#[from] gix::reference::find::existing::Error),
-    FindRemote(#[from] gix::remote::find::existing::Error),
-    RemoteConnection(#[from] gix::remote::connect::Error),
-    PeelCommit(#[from] gix::head::peel::to_commit::Error),
-    RefMap(#[from] gix::remote::ref_map::Error),
-    PrepareFetch(#[from] gix::remote::fetch::prepare::Error),
-    Fetch(#[from] gix::remote::fetch::Error),
-    Revwalk(#[from] gix::revision::walk::iter::Error),
-    DiffOptionsInit(#[from] gix::diff::options::init::Error),
-    DateParse(#[from] gix::date::Error),
+    RevWalkGraph(#[from] object::find::existing::Error),
+    Commit(#[from] object::commit::Error),
+    Rewrites(#[from] diff::new_rewrites::Error),
+    ObjectPeel(#[from] object::peel::to_kind::Error),
+    ObjectDiff(#[from] object::tree::diff::for_each::Error),
+    FindExisting(#[from] reference::find::existing::Error),
+    RemoteConnection(#[from] remote::connect::Error),
+    PeelCommit(#[from] head::peel::to_commit::Error),
+    Fetch(#[from] remote::fetch::Error),
+    Revwalk(#[from] revision::walk::iter::Error),
+    DiffOptionsInit(#[from] diff::options::init::Error),
+    DateParse(#[from] date::Error),
+    RefspecParse(#[from] refspec::parse::Error),
+    RefMap(#[from] remote::ref_map::Error),
+    PrepareFetch(#[from] remote::fetch::prepare::Error),
+    FindRemote(#[from] remote::find::existing::Error),
+}
+
+#[derive(Debug, thiserror::Error)]
+#[error("Gitoxide Error: {0}")]
+pub struct GixError(Box<GixErrorInner>);
+
+impl<T> From<T> for GixError
+where
+    GixErrorInner: From<T>,
+{
+    fn from(value: T) -> Self {
+        Self(Box::new(GixErrorInner::from(value)))
+    }
 }
 
 impl<T> From<T> for super::Error
 where
-    GitoxideError: From<T>,
+    GixError: From<T>,
 {
     fn from(value: T) -> Self {
         Self::Gitoxide(Box::new(value.into()))
