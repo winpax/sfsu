@@ -12,6 +12,7 @@ mod hook;
 mod outdated;
 mod search;
 mod status;
+mod uninstall;
 #[path = "commands/update_alias.rs"]
 mod update;
 mod virustotal;
@@ -72,9 +73,11 @@ where
 // TODO: Run command could return `impl Display` and print that itself
 pub trait Command {
     const BETA: bool = false;
-    const NEEDS_ELEVATION: bool = false;
-
     const DEPRECATED: Option<DeprecationWarning> = None;
+
+    fn needs_elevation(&self) -> bool {
+        false
+    }
 
     async fn runner(self, ctx: &impl ScoopContext<Config = config::Scoop>) -> anyhow::Result<()>;
 }
@@ -88,7 +91,7 @@ pub trait CommandRunner: Command {
             eprintln_yellow!("{deprecation_warning}\n");
         }
 
-        if Self::NEEDS_ELEVATION && !quork::root::is_root()? {
+        if self.needs_elevation() && !quork::root::is_root()? {
             abandon!("This command requires elevation. Please run as an administrator.");
         }
 
@@ -112,7 +115,6 @@ impl<T: Command> CommandRunner for T {}
 #[stripped(ident = CommandHooks)]
 #[stripped_meta(derive(Debug, Copy, Clone, quork::macros::ListVariants, PartialEq, Eq))]
 pub enum Commands {
-    App(app::Args),
     #[cfg(not(feature = "v2"))]
     Cat(app::cat::Args),
     Cleanup(app::cleanup::Args),
@@ -148,6 +150,8 @@ pub enum Commands {
     Scan(virustotal::Args),
     #[stripped(ignore)]
     Credits(credits::Args),
+    Uninstall(uninstall::Args),
+    App(app::Args),
     #[stripped(ignore)]
     #[cfg(debug_assertions)]
     Debug(debug::Args),
@@ -187,6 +191,7 @@ impl Runnable for Commands {
             Commands::Credits(args) => args.run(ctx).await,
             #[cfg(debug_assertions)]
             Commands::Debug(args) => args.run(ctx).await,
+            Commands::Uninstall(args) => args.run(ctx).await,
         }
     }
 }
@@ -222,6 +227,7 @@ impl CommandHooks {
             CommandHooks::Scan => "scan",
             #[cfg(feature = "v2")]
             CommandHooks::Update => "update",
+            CommandHooks::Uninstall => "app uninstall",
         }
     }
 
@@ -255,6 +261,7 @@ impl CommandHooks {
             CommandHooks::Scan => "virustotal",
             #[cfg(feature = "v2")]
             CommandHooks::Update => "update",
+            CommandHooks::Uninstall => "uninstall",
         }
     }
 }
