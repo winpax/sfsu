@@ -145,7 +145,7 @@ windows = { version = "0.62", features = [
     "Win32_System_Diagnostics_ToolHelp",
 ] }
 windows-version = "0.1"
-winreg = "0.55"
+winreg = "0.56"
 
 [dev-dependencies]
 anyhow = "1.0"
