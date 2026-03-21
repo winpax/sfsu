@@ -26,7 +26,7 @@ use gix::{
 
 use crate::{
     contexts::ScoopContext,
-    git::{self, errors::GitoxideError},
+    git::{self, errors::GixError},
 };
 
 pub type ProgressCallback<'a> = &'a dyn Fn(git2::Progress<'_>, bool) -> bool;
@@ -58,9 +58,12 @@ fn do_fetch<'a>(
     repo.reference_to_annotated_commit(&fetch_head)
 }
 
-fn gix_do_fetch<'a>(
-    remote: &'a mut gix::Remote<'_>,
-) -> Result<remote::fetch::Outcome, GitoxideError> {
+fn gix_do_fetch(
+    remote: &mut gix::Remote<'_>,
+    ref_specs: &[&str],
+) -> Result<remote::fetch::Outcome, GixError> {
+    remote.replace_refspecs(ref_specs, remote::Direction::Fetch)?;
+
     let outcome = remote
         .connect(remote::Direction::Fetch)?
         .prepare_fetch(progress::Discard, remote::ref_map::Options::default())?
@@ -190,11 +193,10 @@ pub fn pull(
     let mut remote = repo
         .gitoxide()
         .find_remote(remote_name)
-        .map_err(git::errors::GitoxideError::FindRemote)
-        .map_err(Box::new)
-        .map_err(git::Error::Gitoxide)?;
+        .map_err(git::errors::GixError::from)
+        .map_err(git::Error::from)?;
 
-    gix_do_fetch(&mut remote)?;
+    gix_do_fetch(&mut remote, &[remote_branch])?;
 
     let oid = {
         let commit = repo.latest_remote_commit()?;
