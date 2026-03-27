@@ -359,6 +359,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "block-buffer"
+version = "0.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cdd35008169921d80bc60d3d0ab416eecb028c4cd653352907921d95084790be"
+dependencies = [
+ "hybrid-array",
+]
+
+[[package]]
 name = "brotli"
 version = "8.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -653,6 +662,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "const-oid"
+version = "0.10.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a6ef517f0926dd24a1582492c791b6a4818a4d94e789a334894aa15b0d12f55c"
+
+[[package]]
 name = "const_format"
 version = "0.2.35"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -894,6 +909,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "crypto-common"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "77727bb15fa921304124b128af125e7e3b968275d1b108b379190264f4423710"
+dependencies = [
+ "hybrid-array",
+]
+
+[[package]]
 name = "csscolorparser"
 version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1007,8 +1031,19 @@ version = "0.10.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9ed9a281f7bc9b7576e61468ba615a66a5c8cfdff42420a70aa82701a3b1e292"
 dependencies = [
- "block-buffer",
- "crypto-common",
+ "block-buffer 0.10.4",
+ "crypto-common 0.1.7",
+]
+
+[[package]]
+name = "digest"
+version = "0.11.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4850db49bf08e663084f7fb5c87d202ef91a3907271aff24a94eb97ff039153c"
+dependencies = [
+ "block-buffer 0.12.0",
+ "const-oid",
+ "crypto-common 0.2.1",
 ]
 
 [[package]]
@@ -2484,6 +2519,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "eaec953f16e5bcf6b8a3cb3aa959b17e5577dbd2693e94554c462c08be22624b"
 
 [[package]]
+name = "hybrid-array"
+version = "0.4.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8655f91cd07f2b9d0c24137bd650fe69617773435ee5ec83022377777ce65ef1"
+dependencies = [
+ "typenum",
+]
+
+[[package]]
 name = "hyper"
 version = "1.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3169,12 +3213,12 @@ dependencies = [
 
 [[package]]
 name = "md-5"
-version = "0.10.6"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d89e7ee0cfbedfc4da3340218492196241d89eefb6dab27de5df917a6d2e78cf"
+checksum = "69b6441f590336821bb897fb28fc622898ccceb1d6cea3fde5ea86b090c4de98"
 dependencies = [
  "cfg-if",
- "digest",
+ "digest 0.11.2",
 ]
 
 [[package]]
@@ -4752,7 +4796,7 @@ dependencies = [
  "crossterm",
  "derive_more",
  "dialoguer",
- "digest",
+ "digest 0.10.7",
  "dirs",
  "dotenv",
  "dunce",
@@ -4816,7 +4860,7 @@ checksum = "e3bf829a2d51ab4a5ddf1352d8470c140cadc8301b2ae1789db023f01cedd6ba"
 dependencies = [
  "cfg-if",
  "cpufeatures 0.2.17",
- "digest",
+ "digest 0.10.7",
 ]
 
 [[package]]
@@ -4825,7 +4869,7 @@ version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "89f599ac0c323ebb1c6082821a54962b839832b03984598375bff3975b804423"
 dependencies = [
- "digest",
+ "digest 0.10.7",
  "sha1",
 ]
 
@@ -4837,7 +4881,7 @@ checksum = "a7507d819769d01a365ab707794a4084392c824f54a7a6a7862f8c3d0892b283"
 dependencies = [
  "cfg-if",
  "cpufeatures 0.2.17",
- "digest",
+ "digest 0.10.7",
 ]
 
 [[package]]

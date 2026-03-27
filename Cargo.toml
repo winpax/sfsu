@@ -95,7 +95,7 @@ indicatif = { version = "0.18", features = [
 itertools = "0.14"
 konst = "0.4"
 log = { version = "0.4", features = ["std"] }
-md-5 = "0.10"
+md-5 = "0.11"
 open = "5.1"
 parking_lot = "0.12"
 phf = { version = "0.13", default-features = false }
