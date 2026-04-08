@@ -93,7 +93,7 @@ jobs:
         if: ${{ matrix.arch == 'aarch64' }}
         with:
           key: build-${{ matrix.arch }}
-      - uses: extractions/setup-just@v3
+      - uses: extractions/setup-just@v4
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -109,7 +109,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
-      - uses: extractions/setup-just@v3
+      - uses: extractions/setup-just@v4
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
