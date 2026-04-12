@@ -5,7 +5,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use bytes::BytesMut;
+use bytes::{Bytes, BytesMut};
 use digest::Digest;
 use futures::{Stream, StreamExt, TryStreamExt};
 use indicatif::{MultiProgress, ProgressBar};
@@ -93,8 +93,9 @@ impl<'a> CacheFile<'a> {
             let url = self.url.full_url();
 
             hasher.update(url.as_bytes());
+            let hash = Bytes::from_iter(hasher.finalize());
 
-            &format!("{:x}", hasher.finalize())[0..7]
+            &format!("{hash:x}")[0..7]
         };
 
         let extension = if let Some(dest_path) = self.url.file_name.as_ref() {
