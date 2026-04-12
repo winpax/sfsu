@@ -71,9 +71,22 @@ impl Info {
             .map(|f| f.to_string_lossy())
             .context("Missing file name")?;
 
+        let app_current = path.join("current");
+
+        let install_manifest_path = app_current.join("install.json");
+        let (install_manifest_broken, install_manifest) =
+            match InstallManifest::from_path(&install_manifest_path) {
+                Ok(install_manifest) => (false, install_manifest),
+                _ => (true, InstallManifest::default()),
+            };
+
         let updated_time = {
             let updated = {
-                let updated_sys = path.metadata()?.modified()?;
+                let updated_sys = if install_manifest_broken {
+                    path.metadata()?.modified()?
+                } else {
+                    install_manifest_path.metadata()?.modified()?
+                };
 
                 updated_sys.duration_since(UNIX_EPOCH)?.as_secs()
             };
@@ -84,18 +97,10 @@ impl Info {
                 .with_timezone(&Local)
         };
 
-        let app_current = path.join("current");
-
         let (manifest_broken, manifest) =
             match Manifest::from_path(app_current.join("manifest.json")) {
                 Ok(manifest) => (false, manifest),
                 _ => (true, Manifest::default()),
-            };
-
-        let (install_manifest_broken, install_manifest) =
-            match InstallManifest::from_path(app_current.join("install.json")) {
-                Ok(install_manifest) => (false, install_manifest),
-                _ => (true, InstallManifest::default()),
             };
 
         let broken = manifest_broken || install_manifest_broken;
