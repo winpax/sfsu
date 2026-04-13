@@ -16,6 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update sprinkles library to 0.23.0
 - Use gitoxide for fetching during bucket update
 
+### Fixed
+
+- Use install manifest write time instead of app directory write time
+  for "last update" time if available
+
 ## [1.17.2]
 
 ### Fixed
