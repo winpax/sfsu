@@ -57,17 +57,20 @@ impl super::Command for Args {
                 println!("# You can also optionally disable certain hooks via the --disable <COMMAND> flag");
                 println!("#     Invoke-Expression (&sfsu hook --disable list)");
 
-                // Detect WSL and optionally print Bash/Zsh snippet only when activated
+                // Detect WSL and print Bash/Zsh snippet based on defaults and opt-out env vars
                 let has_wsl = which::which("wsl").is_ok() || which::which("wsl.exe").is_ok();
-                let add_wsl = std::env::var("SFSU_ADD_WSL_HOOK")
+                let auto_hook_disabled = std::env::var("SFSU_DISABLE_AUTO_HOOK")
+                    .map(|v| v == "1" || v.to_lowercase() == "true")
+                    .unwrap_or(false);
+                let wsl_disabled = std::env::var("SFSU_DISABLE_WSL_AUTO_HOOK")
                     .map(|v| v == "1" || v.to_lowercase() == "true")
                     .unwrap_or(false);
 
-                if has_wsl && add_wsl {
-                    println!("# Add the following to your .bashrc (or its equivalents, i.e .zshrc) file for WSL installs:");
+                if has_wsl && !auto_hook_disabled && !wsl_disabled {
+                    println!("# WSL detected: installer will add the following to your WSL ~/.bashrc by default (set SFSU_DISABLE_WSL_AUTO_HOOK=1 to opt-out):");
                     println!("#   source <(sfsu.exe hook --shell bash)");
                 } else if has_wsl {
-                    println!("# WSL detected: to enable automatic .bashrc snippet, set SFSU_ADD_WSL_HOOK=1 and re-run the installer or add manually:");
+                    println!("# WSL detected: automatic WSL hook is disabled. To enable, unset SFSU_DISABLE_WSL_AUTO_HOOK or set it to 0.");
                     println!("#   source <(sfsu.exe hook --shell bash)");
                 }
 

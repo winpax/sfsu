@@ -120,6 +120,30 @@ impl PowershellScript {
 
         ScriptRunner::from_path(file_path)
     }
+
+    /// Generate a default post-install PowerShell script to add hooks to user profiles (opt-out).
+    ///
+    /// The script will:
+    /// - Append Invoke-Expression (&sfsu hook) to $PROFILE if not present (unless SFSU_DISABLE_AUTO_HOOK=1).
+    /// - If WSL is present, append source <(sfsu.exe hook --shell bash) to ~/.bashrc inside WSL (unless SFSU_DISABLE_WSL_AUTO_HOOK=1).
+    /// - Be idempotent.
+    #[must_use]
+    pub fn default_post_install_script() -> Self {
+        let script = r#"if ($env:SFSU_DISABLE_AUTO_HOOK -and ($env:SFSU_DISABLE_AUTO_HOOK -in @('1','true','True'))) { Write-Host 'sfsu: auto-hook disabled by SFSU_DISABLE_AUTO_HOOK'; exit 0 }
+$hook = 'Invoke-Expression (&sfsu hook)'
+if (-not (Test-Path -Path (Split-Path -Path $PROFILE -Parent))) { New-Item -ItemType Directory -Path (Split-Path -Path $PROFILE -Parent) -Force | Out-Null }
+if (-not (Test-Path -Path $PROFILE)) { New-Item -ItemType File -Path $PROFILE -Force | Out-Null }
+$profileContent = Get-Content -Path $PROFILE -ErrorAction SilentlyContinue -Raw
+if ($profileContent -notlike '*sfsu hook*') { Add-Content -Path $PROFILE -Value ('`n# >>> sfsu hook >>>`n' + $hook + '`n# <<< sfsu hook <<<`n'); Write-Host ('sfsu: Added hook to ' + $PROFILE) } else { Write-Host ('sfsu: Hook already present in ' + $PROFILE) }
+if (Get-Command wsl -ErrorAction SilentlyContinue) {
+    if (-not ($env:SFSU_DISABLE_WSL_AUTO_HOOK -and ($env:SFSU_DISABLE_WSL_AUTO_HOOK -in @('1','true','True')))) {
+        wsl -- bash -lc "if ! grep -F 'sfsu.exe hook --shell bash' ~/.bashrc >/dev/null 2>&1; then echo '\\n# >>> sfsu hook >>>\\nsource <(sfsu.exe hook --shell bash)\\n# <<< sfsu hook <<<' >> ~/.bashrc; fi"
+        Write-Host 'sfsu: ensured WSL bashrc contains sfsu hook'
+    }
+}
+"#;
+        PowershellScript::new(script)
+    }
 }
 
 impl From<String> for PowershellScript {

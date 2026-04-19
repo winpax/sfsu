@@ -58,7 +58,7 @@ Invoke-Expression (&sfsu hook --disable list)
 
 It also supports Bash in WSL and MSYS2
 
-For WSL installations the snippet can be added automatically when activated (set the environment variable `SFSU_ADD_WSL_HOOK=1`). Otherwise, add the snippet manually:
+For WSL installations the snippet is added automatically by default. To opt-out, set `SFSU_DISABLE_WSL_AUTO_HOOK=1` to disable WSL auto-add, or set `SFSU_DISABLE_AUTO_HOOK=1` to disable automatic hook additions entirely. Otherwise, add the snippet manually:
 
 ```sh
 source <(sfsu.exe hook --shell bash)
