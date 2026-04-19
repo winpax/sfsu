@@ -1,6 +1,7 @@
 use crate::{contexts::ScoopContext, shell::Shell};
 use clap::Parser;
 use quork::traits::list::ListVariants;
+use std::process::Command as SysCommand;
 
 use super::CommandHooks as CommandsHooks;
 
@@ -51,9 +52,42 @@ impl super::Command for Args {
 
                 println!("default {{ scoop.ps1 @args }} }} }}");
 
-                // TODO: Figure out a way to put these in that PowerShell won't throw a fit about
-                // println!("# To add this to your config, add the following line to the end of your PowerShell profile:");
-                // println!("#     Invoke-Expression (&sfsu hook)");
+                println!("# To add this to your config, add the following line to the end of your PowerShell profile:");
+                println!("#     Invoke-Expression (&sfsu hook)");
+                println!("# You can also optionally disable certain hooks via the --disable <COMMAND> flag");
+                println!("#     Invoke-Expression (&sfsu hook --disable list)");
+
+                // Detect WSL and optionally print Bash/Zsh snippet only when activated
+                let has_wsl = which::which("wsl").is_ok() || which::which("wsl.exe").is_ok();
+                let add_wsl = std::env::var("SFSU_ADD_WSL_HOOK")
+                    .map(|v| v == "1" || v.to_lowercase() == "true")
+                    .unwrap_or(false);
+
+                if has_wsl && add_wsl {
+                    println!("# Add the following to your .bashrc (or its equivalents, i.e .zshrc) file for WSL installs:");
+                    println!("#   source <(sfsu.exe hook --shell bash)");
+                } else if has_wsl {
+                    println!("# WSL detected: to enable automatic .bashrc snippet, set SFSU_ADD_WSL_HOOK=1 and re-run the installer or add manually:");
+                    println!("#   source <(sfsu.exe hook --shell bash)");
+                }
+
+                // Detect Nushell on host and in WSL (if present) and print instructions when found
+                let nu_in_host = which::which("nu").is_ok();
+                let mut nu_in_wsl = false;
+                if has_wsl {
+                    nu_in_wsl = SysCommand::new("wsl")
+                        .args(&["which", "nu"]) 
+                        .output()
+                        .map(|o| o.status.success())
+                        .unwrap_or(false);
+                }
+
+                if nu_in_host || nu_in_wsl {
+                    println!("# Nushell is also supported. Run the following command save it to a file.");
+                    println!("#   sfsu hook --shell nu | save -f path/to/some/file.nu");
+                    println!("# Then source it in your config.nu (situated in path $nu.config-path). ");
+                    println!("#   source path/to/the/file.nu");
+                }
             }
             Shell::Bash | Shell::Zsh => {
                 println!(
