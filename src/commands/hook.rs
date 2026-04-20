@@ -12,30 +12,40 @@ pub enum HookCommands {
     Powershell {
         #[clap(short, long, help = "Print the hook instead of installing")]
         print: bool,
+        #[clap(short, long, help = "Uninstall the hook")]
+        uninstall: bool,
     },
     #[clap(name = "bash")]
     /// Install the hook for Bash automatically
     Bash {
         #[clap(short, long, help = "Print the hook instead of installing")]
         print: bool,
+        #[clap(short, long, help = "Uninstall the hook")]
+        uninstall: bool,
     },
     #[clap(name = "zsh")]
     /// Install the hook for Zsh automatically
     Zsh {
         #[clap(short, long, help = "Print the hook instead of installing")]
         print: bool,
+        #[clap(short, long, help = "Uninstall the hook")]
+        uninstall: bool,
     },
     #[clap(name = "nu")]
     /// Install the hook for Nushell automatically
     Nu {
         #[clap(short, long, help = "Print the hook instead of installing")]
         print: bool,
+        #[clap(short, long, help = "Uninstall the hook")]
+        uninstall: bool,
     },
     #[clap(name = "wsl")]
     /// Install the hook for WSL automatically
     Wsl {
         /// The WSL distro to install in (defaults to the default distro)
         distro: Option<String>,
+        #[clap(short, long, help = "Uninstall the hook")]
+        uninstall: bool,
     },
 }
 
@@ -158,15 +168,15 @@ impl Args {
         }
     }
 
-    fn install_powershell_hook() -> anyhow::Result<()> {
-        let script = crate::scripts::PowershellScript::default_post_install_script();
+    fn uninstall_powershell_hook() -> anyhow::Result<()> {
+        let script = crate::scripts::PowershellScript::default_post_uninstall_script();
         let ctx = crate::contexts::User::new()?;
         let runner = script.save(&ctx)?;
         runner.run()?;
         Ok(())
     }
 
-    fn install_wsl_hook(distro: Option<String>) -> anyhow::Result<()> {
+    fn uninstall_wsl_hook(distro: Option<String>) -> anyhow::Result<()> {
         let mut cmd_args = vec![];
         if let Some(ref distro) = distro {
             cmd_args.push("-d");
@@ -174,7 +184,7 @@ impl Args {
         }
 
         cmd_args.extend(["--", "bash", "-lc"]);
-        let script = "if ! grep -F 'sfsu.exe hook --shell bash' ~/.bashrc >/dev/null 2>&1; then printf \"\\n# >>> sfsu hook >>>\\nsource <(sfsu.exe hook --shell bash)\\n# <<< sfsu hook <<<\\n\" >> ~/.bashrc; fi";
+        let script = "sed -i '/# >>> sfsu hook >>>/,/# <<< sfsu hook <<</d' ~/.bashrc";
         cmd_args.push(script);
 
         let wsl_cmd = if which::which("wsl.exe").is_ok() {
@@ -186,11 +196,11 @@ impl Args {
         let output = SysCommand::new(wsl_cmd).args(&cmd_args).output()?;
 
         if output.status.success() {
-            println!("sfsu: ensured WSL bashrc contains sfsu hook");
+            println!("sfsu: removed hook from WSL bashrc");
             Ok(())
         } else {
             anyhow::bail!(
-                "Failed to install hook in WSL: {}",
+                "Failed to uninstall hook from WSL: {}",
                 String::from_utf8_lossy(&output.stderr)
             )
         }
@@ -214,32 +224,60 @@ impl super::Command for Args {
         .collect();
 
         match self.command.clone() {
-            Some(HookCommands::Powershell { print }) if !print => Self::install_powershell_hook()?,
-            Some(HookCommands::Bash { print }) if !print => {
-                anyhow::bail!(
-                    "Automatic installation for Bash is not yet supported on Windows host. Use `sfsu hook bash --print` and add it to your .bashrc manually, or use `sfsu hook wsl` if you are using WSL."
-                )
+            Some(HookCommands::Powershell { print, uninstall }) => {
+                if uninstall {
+                    Self::uninstall_powershell_hook()?
+                } else if !print {
+                    Self::install_powershell_hook()?
+                } else {
+                    self.print_hook(Shell::Powershell, &enabled_hooks)
+                }
             }
-            Some(HookCommands::Zsh { print }) if !print => {
-                anyhow::bail!(
-                    "Automatic installation for Zsh is not yet supported on Windows host. Use `sfsu hook zsh --print` and add it to your .zshrc manually, or use `sfsu hook wsl` if you are using WSL."
-                )
+            Some(HookCommands::Bash { print, uninstall }) => {
+                if uninstall {
+                    anyhow::bail!(
+                        "Automatic uninstallation for Bash is not yet supported on Windows host. Please remove the hook from your .bashrc manually."
+                    )
+                } else if !print {
+                    anyhow::bail!(
+                        "Automatic installation for Bash is not yet supported on Windows host. Use `sfsu hook bash --print` and add it to your .bashrc manually, or use `sfsu hook wsl` if you are using WSL."
+                    )
+                } else {
+                    self.print_hook(Shell::Bash, &enabled_hooks)
+                }
             }
-            Some(HookCommands::Nu { print }) if !print => {
-                anyhow::bail!(
-                    "Automatic installation for Nushell is not yet supported. Use `sfsu hook nu --print` for manual instructions."
-                )
+            Some(HookCommands::Zsh { print, uninstall }) => {
+                if uninstall {
+                    anyhow::bail!(
+                        "Automatic uninstallation for Zsh is not yet supported on Windows host. Please remove the hook from your .zshrc manually."
+                    )
+                } else if !print {
+                    anyhow::bail!(
+                        "Automatic installation for Zsh is not yet supported on Windows host. Use `sfsu hook zsh --print` and add it to your .zshrc manually, or use `sfsu hook wsl` if you are using WSL."
+                    )
+                } else {
+                    self.print_hook(Shell::Zsh, &enabled_hooks)
+                }
             }
-            Some(HookCommands::Wsl { distro }) => Self::install_wsl_hook(distro)?,
-            Some(cmd) => {
-                let shell = match cmd {
-                    HookCommands::Powershell { .. } => Shell::Powershell,
-                    HookCommands::Bash { .. } => Shell::Bash,
-                    HookCommands::Zsh { .. } => Shell::Zsh,
-                    HookCommands::Nu { .. } => Shell::Nu,
-                    _ => unreachable!(),
-                };
-                self.print_hook(shell, &enabled_hooks);
+            Some(HookCommands::Nu { print, uninstall }) => {
+                if uninstall {
+                    anyhow::bail!(
+                        "Automatic uninstallation for Nushell is not yet supported. Please remove the hook from your config.nu manually."
+                    )
+                } else if !print {
+                    anyhow::bail!(
+                        "Automatic installation for Nushell is not yet supported. Use `sfsu hook nu --print` for manual instructions."
+                    )
+                } else {
+                    self.print_hook(Shell::Nu, &enabled_hooks)
+                }
+            }
+            Some(HookCommands::Wsl { distro, uninstall }) => {
+                if uninstall {
+                    Self::uninstall_wsl_hook(distro)?
+                } else {
+                    Self::install_wsl_hook(distro)?
+                }
             }
             None => {
                 let shell = self.shell;

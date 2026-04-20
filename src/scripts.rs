@@ -136,6 +136,27 @@ if ($profileContent -notlike "*sfsu hook*") { Add-Content -Path $PROFILE -Value 
 "#;
         PowershellScript::new(script)
     }
+
+    /// Generate a default post-uninstall PowerShell script to remove hooks from user profiles.
+    ///
+    /// The script will:
+    /// - Remove the sfsu hook block from $PROFILE if present.
+    /// - Be idempotent.
+    #[must_use]
+    pub fn default_post_uninstall_script() -> Self {
+        let script = r#"if (Test-Path -Path $PROFILE) {
+    $profileContent = Get-Content -Path $PROFILE -Raw
+    if ($profileContent -like "*# >>> sfsu hook >>>*") {
+        $newContent = $profileContent -replace "(?s)`r?`n# >>> sfsu hook >>>.*?# <<< sfsu hook <<<`r?`n?", ""
+        $newContent | Set-Content -Path $PROFILE
+        Write-Host "sfsu: Removed hook from $PROFILE"
+    } else {
+        Write-Host "sfsu: Hook not found in $PROFILE"
+    }
+}
+"#;
+        PowershellScript::new(script)
+    }
 }
 
 impl From<String> for PowershellScript {
