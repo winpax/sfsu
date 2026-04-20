@@ -112,6 +112,8 @@ pub enum Error {
     DecodingHexUtf8(#[from] std::str::Utf8Error),
     #[error("Interacting with cache failed: {0}")]
     Cache(#[from] cache::Error),
+    #[error("IO error: {0}")]
+    IO(#[from] std::io::Error),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

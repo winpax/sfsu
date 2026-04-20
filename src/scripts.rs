@@ -128,7 +128,7 @@ impl PowershellScript {
     /// - Be idempotent.
     #[must_use]
     pub fn default_post_install_script() -> Self {
-        let script = r#"$hook = "Invoke-Expression (&sfsu hook)"
+        let script = r##"$hook = "Invoke-Expression (&sfsu hook)"
 if (-not (Test-Path -Path (Split-Path -Path $PROFILE -Parent))) { New-Item -ItemType Directory -Path (Split-Path -Path $PROFILE -Parent) -Force | Out-Null }
 if (-not (Test-Path -Path $PROFILE)) { New-Item -ItemType File -Path $PROFILE -Force | Out-Null }
 $profileContent = Get-Content -Path $PROFILE -ErrorAction SilentlyContinue -Raw
@@ -138,7 +138,7 @@ if ($profileContent -match "# >>> sfsu hook >>>" -or $profileContent.Contains($h
     Add-Content -Path $PROFILE -Value "`r`n# >>> sfsu hook >>>`r`n$hook`r`n# <<< sfsu hook <<<`r`n"
     Write-Host "sfsu: Added hook to $PROFILE"
 }
-"#;
+"##;
         PowershellScript::new(script)
     }
 
@@ -149,7 +149,7 @@ if ($profileContent -match "# >>> sfsu hook >>>" -or $profileContent.Contains($h
     /// - Be idempotent.
     #[must_use]
     pub fn default_post_uninstall_script() -> Self {
-        let script = r#"$hook = "Invoke-Expression (&sfsu hook)"
+        let script = r##"$hook = "Invoke-Expression (&sfsu hook)"
 if (Test-Path -Path $PROFILE) {
     $profileContent = Get-Content -Path $PROFILE -Raw
     if ($profileContent -match "# >>> sfsu hook >>>") {
@@ -166,7 +166,7 @@ if (Test-Path -Path $PROFILE) {
         Write-Host "sfsu: Hook not found in $PROFILE"
     }
 }
-"#;
+"##;
         PowershellScript::new(script)
     }
 }
