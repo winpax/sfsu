@@ -414,9 +414,17 @@ impl Manifest {
     #[must_use]
     /// Get the install config for a given architecture
     pub fn install_config(&self, arch: Architecture) -> InstallConfig {
-        self.architecture
+        let mut config = self
+            .architecture
             .as_ref()
-            .merge_default(self.install_config.clone(), arch)
+            .merge_default(self.install_config.clone(), arch);
+
+        if config.post_install.is_none() {
+            config.post_install =
+                Some(crate::scripts::PowershellScript::default_post_install_script());
+        }
+
+        config
     }
 
     #[must_use]

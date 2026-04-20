@@ -129,16 +129,16 @@ impl PowershellScript {
     /// - Be idempotent.
     #[must_use]
     pub fn default_post_install_script() -> Self {
-        let script = r#"if ($env:SFSU_DISABLE_AUTO_HOOK -and ($env:SFSU_DISABLE_AUTO_HOOK -in @('1','true','True'))) { Write-Host 'sfsu: auto-hook disabled by SFSU_DISABLE_AUTO_HOOK'; exit 0 }
-$hook = 'Invoke-Expression (&sfsu hook)'
+        let script = r#"if ($env:SFSU_DISABLE_AUTO_HOOK -and (($env:SFSU_DISABLE_AUTO_HOOK.Trim().ToLower() -eq 'true') -or ($env:SFSU_DISABLE_AUTO_HOOK.Trim() -eq '1'))) { Write-Host "sfsu: auto-hook disabled by SFSU_DISABLE_AUTO_HOOK"; exit 0 }
+$hook = "Invoke-Expression (&sfsu hook)"
 if (-not (Test-Path -Path (Split-Path -Path $PROFILE -Parent))) { New-Item -ItemType Directory -Path (Split-Path -Path $PROFILE -Parent) -Force | Out-Null }
 if (-not (Test-Path -Path $PROFILE)) { New-Item -ItemType File -Path $PROFILE -Force | Out-Null }
 $profileContent = Get-Content -Path $PROFILE -ErrorAction SilentlyContinue -Raw
-if ($profileContent -notlike '*sfsu hook*') { Add-Content -Path $PROFILE -Value ('`n# >>> sfsu hook >>>`n' + $hook + '`n# <<< sfsu hook <<<`n'); Write-Host ('sfsu: Added hook to ' + $PROFILE) } else { Write-Host ('sfsu: Hook already present in ' + $PROFILE) }
+if ($profileContent -notlike "*sfsu hook*") { Add-Content -Path $PROFILE -Value "`r`n# >>> sfsu hook >>>`r`n$hook`r`n# <<< sfsu hook <<<`r`n"; Write-Host "sfsu: Added hook to $PROFILE" } else { Write-Host "sfsu: Hook already present in $PROFILE" }
 if (Get-Command wsl -ErrorAction SilentlyContinue) {
-    if (-not ($env:SFSU_DISABLE_WSL_AUTO_HOOK -and ($env:SFSU_DISABLE_WSL_AUTO_HOOK -in @('1','true','True')))) {
-        wsl -- bash -lc "if ! grep -F 'sfsu.exe hook --shell bash' ~/.bashrc >/dev/null 2>&1; then echo '\\n# >>> sfsu hook >>>\\nsource <(sfsu.exe hook --shell bash)\\n# <<< sfsu hook <<<' >> ~/.bashrc; fi"
-        Write-Host 'sfsu: ensured WSL bashrc contains sfsu hook'
+    if (-not ($env:SFSU_DISABLE_WSL_AUTO_HOOK -and (($env:SFSU_DISABLE_WSL_AUTO_HOOK.Trim().ToLower() -eq 'true') -or ($env:SFSU_DISABLE_WSL_AUTO_HOOK.Trim() -eq '1')))) {
+        wsl -- bash -lc "if ! grep -F 'sfsu.exe hook --shell bash' ~/.bashrc >/dev/null 2>&1; then printf \"\n# >>> sfsu hook >>>\nsource <(sfsu.exe hook --shell bash)\n# <<< sfsu hook <<<\n\" >> ~/.bashrc; fi"
+        Write-Host "sfsu: ensured WSL bashrc contains sfsu hook"
     }
 }
 "#;
@@ -286,16 +286,37 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_powershell_hello_world() {
-        let ctx = User::new().unwrap();
+    fn test_default_post_install_script_newlines() {
+        let script = PowershellScript::default_post_install_script();
+        let script_content = script.as_str();
 
-        let script = PowershellScript::new("Write-Host 'Hello, world!'")
+        // Basic sanity checks on the script content itself
+        assert!(script_content.contains("`r`n# >>> sfsu hook >>>`r`n"));
+        assert!(script_content.contains("printf \"\\n# >>> sfsu hook >>>\\n"));
+
+        let ctx = User::new().unwrap();
+        let temp_profile = ctx.scripts_path().join("test_profile.ps1");
+        if temp_profile.exists() {
+            std::fs::remove_file(&temp_profile).unwrap();
+        }
+
+        // Create a script that sets a fake $PROFILE and runs the default post-install script
+        let test_runner_script = format!(
+            "$PROFILE = '{}'\n{}",
+            temp_profile.to_string_lossy().replace('\'', "''"),
+            script_content
+        );
+
+        let runner = PowershellScript::new(test_runner_script)
             .save(&ctx)
             .unwrap();
 
-        let output = script.run().unwrap();
+        let output = runner.run().expect("Failed to run test script");
+        assert!(output.status.success());
 
-        assert_eq!(output.status.code(), Some(0));
-        assert_eq!(output.stdout, b"Hello, world!\r\n");
+        let profile_content = std::fs::read_to_string(&temp_profile).unwrap();
+        assert!(profile_content.contains(
+            "\r\n# >>> sfsu hook >>>\r\nInvoke-Expression (&sfsu hook)\r\n# <<< sfsu hook <<<\r\n"
+        ));
     }
 }

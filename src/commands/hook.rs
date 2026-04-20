@@ -52,25 +52,22 @@ impl super::Command for Args {
 
                 println!("default {{ scoop.ps1 @args }} }} }}");
 
-                println!("# To add this to your config, add the following line to the end of your PowerShell profile:");
+                println!(
+                    "# To add this to your config, add the following line to the end of your PowerShell profile:"
+                );
                 println!("#     Invoke-Expression (&sfsu hook)");
-                println!("# You can also optionally disable certain hooks via the --disable <COMMAND> flag");
+                println!(
+                    "# You can also optionally disable certain hooks via the --disable <COMMAND> flag"
+                );
                 println!("#     Invoke-Expression (&sfsu hook --disable list)");
 
-                // Detect WSL and print Bash/Zsh snippet based on defaults and opt-out env vars
+                // Detect WSL and print Bash/Zsh snippet based on defaults
                 let has_wsl = which::which("wsl").is_ok() || which::which("wsl.exe").is_ok();
-                let auto_hook_disabled = std::env::var("SFSU_DISABLE_AUTO_HOOK")
-                    .map(|v| v == "1" || v.to_lowercase() == "true")
-                    .unwrap_or(false);
-                let wsl_disabled = std::env::var("SFSU_DISABLE_WSL_AUTO_HOOK")
-                    .map(|v| v == "1" || v.to_lowercase() == "true")
-                    .unwrap_or(false);
 
-                if has_wsl && !auto_hook_disabled && !wsl_disabled {
-                    println!("# WSL detected: installer will add the following to your WSL ~/.bashrc by default (set SFSU_DISABLE_WSL_AUTO_HOOK=1 to opt-out):");
-                    println!("#   source <(sfsu.exe hook --shell bash)");
-                } else if has_wsl {
-                    println!("# WSL detected: automatic WSL hook is disabled. To enable, unset SFSU_DISABLE_WSL_AUTO_HOOK or set it to 0.");
+                if has_wsl {
+                    println!(
+                        "# WSL detected: installer will add the following to your WSL ~/.bashrc by default (set SFSU_DISABLE_WSL_AUTO_HOOK=1 to opt-out):"
+                    );
                     println!("#   source <(sfsu.exe hook --shell bash)");
                 }
 
@@ -78,17 +75,26 @@ impl super::Command for Args {
                 let nu_in_host = which::which("nu").is_ok();
                 let mut nu_in_wsl = false;
                 if has_wsl {
-                    nu_in_wsl = SysCommand::new("wsl")
-                        .args(&["which", "nu"]) 
+                    let wsl_cmd = if which::which("wsl.exe").is_ok() {
+                        "wsl.exe"
+                    } else {
+                        "wsl"
+                    };
+                    nu_in_wsl = SysCommand::new(wsl_cmd)
+                        .args(&["command", "-v", "nu"])
                         .output()
                         .map(|o| o.status.success())
                         .unwrap_or(false);
                 }
 
                 if nu_in_host || nu_in_wsl {
-                    println!("# Nushell is also supported. Run the following command save it to a file.");
+                    println!(
+                        "# Nushell is also supported. Run the following command to save it to a file."
+                    );
                     println!("#   sfsu hook --shell nu | save -f path/to/some/file.nu");
-                    println!("# Then source it in your config.nu (situated in path $nu.config-path). ");
+                    println!(
+                        "# Then source it in your config.nu (situated in path $nu.config-path). "
+                    );
                     println!("#   source path/to/the/file.nu");
                 }
             }

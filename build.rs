@@ -62,13 +62,15 @@ fn main() -> Result<(), Box<dyn Error>> {
     let target = std::env::var("TARGET").unwrap_or_default();
     if target.contains("windows") {
         if let Err(e) = res.compile() {
+            if std::env::var("IS_RELEASE").is_ok() {
+                panic!("Failed to compile Windows resources: {e}.");
+            }
+
             // Use cargo warning so build systems and CI surface the message.
             println!(
                 "cargo:warning=Failed to compile Windows resources: {e}. Continuing without Windows resources."
             );
         }
-    } else {
-        // Non-Windows target: skip resource compilation.
     }
 
     let lockfile = Lockfile::new();
