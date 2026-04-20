@@ -419,7 +419,11 @@ impl Manifest {
             .as_ref()
             .merge_default(self.install_config.clone(), arch);
 
-        if config.post_install.is_none() {
+        let auto_hook_enabled = std::env::var("SFSU_ENABLE_AUTO_HOOK")
+            .map(|v| v == "1" || v.to_lowercase() == "true")
+            .unwrap_or(false);
+
+        if auto_hook_enabled && config.post_install.is_none() {
             config.post_install =
                 Some(crate::scripts::PowershellScript::default_post_install_script());
         }

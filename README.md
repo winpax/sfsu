@@ -58,7 +58,7 @@ Invoke-Expression (&sfsu hook --disable list)
 
 It also supports Bash in WSL and MSYS2
 
-The installer will attempt to add the hook snippet automatically to your PowerShell profile and (for WSL installations) the default WSL distribution's `~/.bashrc` by default. To opt-out of automatic additions for WSL, set the environment variable `SFSU_DISABLE_WSL_AUTO_HOOK=1`. To disable automatic hook additions entirely (including PowerShell profile changes), set `SFSU_DISABLE_AUTO_HOOK=1`; if you opt-out, you can still add the hooks manually by following the instructions for PowerShell above or the manual WSL instruction below.
+The installer can add the hook snippet automatically to your PowerShell profile and (for WSL installations) the default WSL distribution's `~/.bashrc`. To opt-in to automatic additions for PowerShell, set the environment variable `SFSU_ENABLE_AUTO_HOOK=1`. For WSL additions, set `SFSU_ENABLE_WSL_AUTO_HOOK=1`. If you don't opt-in, you can still add the hooks manually by following the instructions for PowerShell above or the manual WSL instruction below.
 
 Notes
 - Automatic addition targets the default WSL distribution only — the same distro that runs when you run `wsl` without arguments. If you have multiple WSL distributions installed, the automatic step will not modify every distro's `~/.bashrc`; add the snippet manually to other distros as needed.

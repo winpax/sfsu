@@ -66,11 +66,10 @@ impl super::Command for Args {
 
                 if has_wsl {
                     println!(
-                        "# WSL detected: installer will add the following to your WSL ~/.bashrc by default (set SFSU_DISABLE_WSL_AUTO_HOOK=1 to opt-out):"
+                        "# WSL detected: to have the installer add the following to your WSL ~/.bashrc automatically, set SFSU_ENABLE_WSL_AUTO_HOOK=1:"
                     );
                     println!("#   source <(sfsu.exe hook --shell bash)");
                 }
-
                 // Detect Nushell on host and in WSL (if present) and print instructions when found
                 let nu_in_host = which::which("nu").is_ok();
                 let mut nu_in_wsl = false;
