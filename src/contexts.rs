@@ -124,7 +124,9 @@ pub trait ScoopContext: Clone + Send + Sync + 'static {
         let path = self.path().join(segment.as_ref());
 
         if !path.exists() {
-            _ = std::fs::create_dir_all(&path);
+            _ = std::fs::create_dir_all(&path).map_err(|err| {
+                error!("Failed to create directory {}: {err}", path.display());
+            });
         }
 
         if let Ok(dunced) = dunce::canonicalize(&path) {

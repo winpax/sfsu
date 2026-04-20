@@ -172,23 +172,51 @@ impl Args {
         }
     }
 
+    fn check_elevation() -> anyhow::Result<()> {
+        if !quork::root::is_root().unwrap_or(false) {
+            anyhow::bail!(
+                "This command requires administrator privileges. Please run as administrator."
+            );
+        }
+        Ok(())
+    }
+
     fn install_powershell_hook() -> anyhow::Result<()> {
+        Self::check_elevation()?;
         let script = crate::scripts::PowershellScript::default_post_install_script();
         let ctx = crate::contexts::User::new()?;
         let runner = script.save(&ctx)?;
-        runner.run()?;
-        Ok(())
+        match runner.run() {
+            Ok(output) => {
+                print!("{}", String::from_utf8_lossy(&output.stdout));
+                eprint!("{}", String::from_utf8_lossy(&output.stderr));
+                Ok(())
+            }
+            Err(err) => {
+                anyhow::bail!("Failed to run PowerShell installation script: {err}");
+            }
+        }
     }
 
     fn uninstall_powershell_hook() -> anyhow::Result<()> {
+        Self::check_elevation()?;
         let script = crate::scripts::PowershellScript::default_post_uninstall_script();
         let ctx = crate::contexts::User::new()?;
         let runner = script.save(&ctx)?;
-        runner.run()?;
-        Ok(())
+        match runner.run() {
+            Ok(output) => {
+                print!("{}", String::from_utf8_lossy(&output.stdout));
+                eprint!("{}", String::from_utf8_lossy(&output.stderr));
+                Ok(())
+            }
+            Err(err) => {
+                anyhow::bail!("Failed to run PowerShell uninstallation script: {err}");
+            }
+        }
     }
 
     fn install_wsl_hook(distro: Option<String>) -> anyhow::Result<()> {
+        Self::check_elevation()?;
         let mut cmd_args = vec![];
         if let Some(ref distro) = distro {
             cmd_args.push("-d");
@@ -196,7 +224,7 @@ impl Args {
         }
 
         cmd_args.extend(["--", "bash", "-lc"]);
-        let script = "if grep -q '# >>> sfsu hook >>>' ~/.bashrc || grep -q 'sfsu.exe hook --shell bash' ~/.bashrc; then echo 'sfsu: hook already present'; else printf \"\\n# >>> sfsu hook >>>\\nsource <(sfsu.exe hook --shell bash)\\n# <<< sfsu hook <<<\\n\" >> ~/.bashrc; fi";
+        let script = "if [ -f ~/.bashrc ] && (grep -q '# >>> sfsu hook >>>' ~/.bashrc || grep -q 'sfsu.exe hook --shell bash' ~/.bashrc); then echo 'sfsu: hook already present'; else printf \"\\n# >>> sfsu hook >>>\\nsource <(sfsu.exe hook --shell bash)\\n# <<< sfsu hook <<<\\n\" >> ~/.bashrc; fi";
         cmd_args.push(script);
 
         let wsl_cmd = if which::which("wsl.exe").is_ok() {
@@ -205,25 +233,33 @@ impl Args {
             "wsl"
         };
 
-        let output = SysCommand::new(wsl_cmd).args(&cmd_args).output()?;
+        let output = SysCommand::new(wsl_cmd).args(&cmd_args).output();
 
-        if output.status.success() {
-            let stdout = String::from_utf8_lossy(&output.stdout);
-            if stdout.contains("already present") {
-                println!("sfsu: Hook already present in WSL");
-            } else {
-                println!("sfsu: Ensured WSL bashrc contains sfsu hook");
+        match output {
+            Ok(output) if output.status.success() => {
+                let stdout = String::from_utf8_lossy(&output.stdout);
+                if stdout.contains("already present") {
+                    println!("sfsu: Hook already present in WSL");
+                } else {
+                    println!("sfsu: Ensured WSL bashrc contains sfsu hook");
+                }
+                Ok(())
             }
-            Ok(())
-        } else {
-            anyhow::bail!(
-                "Failed to install hook in WSL: {}",
-                String::from_utf8_lossy(&output.stderr)
-            )
+            Ok(output) => {
+                anyhow::bail!(
+                    "Failed to install hook in WSL (exit code {}): {}",
+                    output.status,
+                    String::from_utf8_lossy(&output.stderr)
+                )
+            }
+            Err(err) => {
+                anyhow::bail!("Failed to execute WSL command: {err}");
+            }
         }
     }
 
     fn uninstall_wsl_hook(distro: Option<String>) -> anyhow::Result<()> {
+        Self::check_elevation()?;
         let mut cmd_args = vec![];
         if let Some(ref distro) = distro {
             cmd_args.push("-d");
@@ -232,7 +268,7 @@ impl Args {
 
         cmd_args.extend(["--", "bash", "-lc"]);
         // Try block removal first, fallback to line removal
-        let script = "if grep -q '# >>> sfsu hook >>>' ~/.bashrc; then sed -i '/# >>> sfsu hook >>>/,/# <<< sfsu hook <<</d' ~/.bashrc && echo 'removed block'; elif grep -q 'sfsu.exe hook --shell bash' ~/.bashrc; then sed -i '/sfsu.exe hook --shell bash/d' ~/.bashrc && echo 'removed line'; fi";
+        let script = "if [ -f ~/.bashrc ] && grep -q '# >>> sfsu hook >>>' ~/.bashrc; then sed -i '/# >>> sfsu hook >>>/,/# <<< sfsu hook <<</d' ~/.bashrc && echo 'removed block'; elif [ -f ~/.bashrc ] && grep -q 'sfsu.exe hook --shell bash' ~/.bashrc; then sed -i '/sfsu.exe hook --shell bash/d' ~/.bashrc && echo 'removed line'; fi";
         cmd_args.push(script);
 
         let wsl_cmd = if which::which("wsl.exe").is_ok() {
@@ -241,21 +277,28 @@ impl Args {
             "wsl"
         };
 
-        let output = SysCommand::new(wsl_cmd).args(&cmd_args).output()?;
+        let output = SysCommand::new(wsl_cmd).args(&cmd_args).output();
 
-        if output.status.success() {
-            let stdout = String::from_utf8_lossy(&output.stdout);
-            if stdout.contains("removed") {
-                println!("sfsu: Removed hook from WSL bashrc");
-            } else {
-                println!("sfsu: Hook markers or command not found in WSL");
+        match output {
+            Ok(output) if output.status.success() => {
+                let stdout = String::from_utf8_lossy(&output.stdout);
+                if stdout.contains("removed") {
+                    println!("sfsu: Removed hook from WSL bashrc");
+                } else {
+                    println!("sfsu: Hook markers or command not found in WSL");
+                }
+                Ok(())
             }
-            Ok(())
-        } else {
-            anyhow::bail!(
-                "Failed to uninstall hook from WSL: {}",
-                String::from_utf8_lossy(&output.stderr)
-            )
+            Ok(output) => {
+                anyhow::bail!(
+                    "Failed to uninstall hook from WSL (exit code {}): {}",
+                    output.status,
+                    String::from_utf8_lossy(&output.stderr)
+                )
+            }
+            Err(err) => {
+                anyhow::bail!("Failed to execute WSL command: {err}");
+            }
         }
     }
 }

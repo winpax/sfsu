@@ -112,7 +112,12 @@ impl PowershellScript {
     pub fn save_to(&self, directory: impl AsRef<Path>) -> Result<ScriptRunner> {
         let hash = blake3::hash(self.script.as_bytes());
 
-        let file_path = directory.as_ref().join(format!("{hash}.ps1"));
+        let directory = directory.as_ref();
+        if !directory.exists() {
+            std::fs::create_dir_all(directory)?;
+        }
+
+        let file_path = directory.join(format!("{hash}.ps1"));
 
         if !file_path.exists() {
             std::fs::write(&file_path, self.script.as_bytes())?;
@@ -129,10 +134,14 @@ impl PowershellScript {
     #[must_use]
     pub fn default_post_install_script() -> Self {
         let script = r##"$hook = "Invoke-Expression (&sfsu hook)"
+if (-not $PROFILE) {
+    Write-Error "sfsu: `$PROFILE is not defined. Cannot install hook automatically."
+    exit 1
+}
 if (-not (Test-Path -Path (Split-Path -Path $PROFILE -Parent))) { New-Item -ItemType Directory -Path (Split-Path -Path $PROFILE -Parent) -Force | Out-Null }
 if (-not (Test-Path -Path $PROFILE)) { New-Item -ItemType File -Path $PROFILE -Force | Out-Null }
 $profileContent = Get-Content -Path $PROFILE -ErrorAction SilentlyContinue -Raw
-if ($profileContent -match "# >>> sfsu hook >>>" -or $profileContent.Contains($hook)) {
+if ($null -ne $profileContent -and ($profileContent -match "# >>> sfsu hook >>>" -or $profileContent.Contains($hook))) {
     Write-Host "sfsu: Hook already present in $PROFILE"
 } else {
     Add-Content -Path $PROFILE -Value "`r`n# >>> sfsu hook >>>`r`n$hook`r`n# <<< sfsu hook <<<`r`n"
@@ -150,14 +159,14 @@ if ($profileContent -match "# >>> sfsu hook >>>" -or $profileContent.Contains($h
     #[must_use]
     pub fn default_post_uninstall_script() -> Self {
         let script = r##"$hook = "Invoke-Expression (&sfsu hook)"
-if (Test-Path -Path $PROFILE) {
+if ($PROFILE -and (Test-Path -Path $PROFILE)) {
     $profileContent = Get-Content -Path $PROFILE -Raw
-    if ($profileContent -match "# >>> sfsu hook >>>") {
+    if ($null -ne $profileContent -and $profileContent -match "# >>> sfsu hook >>>") {
         $regex = "(?s)(\r?\n)*# >>> sfsu hook >>>.*?# <<< sfsu hook <<<(\r?\n)*"
         $newContent = $profileContent -replace $regex, "`r`n"
         $newContent.Trim() | Set-Content -Path $PROFILE
         Write-Host "sfsu: Removed hook block from $PROFILE"
-    } elseif ($profileContent.Contains($hook)) {
+    } elseif ($null -ne $profileContent -and $profileContent.Contains($hook)) {
         # Fallback: Remove the command line if markers are missing
         $newContent = $profileContent -replace [regex]::Escape($hook), ""
         $newContent.Trim() | Set-Content -Path $PROFILE
@@ -317,7 +326,6 @@ mod tests {
 
         // Basic sanity checks on the script content itself
         assert!(script_content.contains("`r`n# >>> sfsu hook >>>`r`n"));
-        assert!(script_content.contains("printf \"\\n# >>> sfsu hook >>>\\n"));
 
         let ctx = User::new().unwrap();
         let temp_profile = ctx.scripts_path().join("test_profile.ps1");
