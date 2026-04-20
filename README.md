@@ -58,10 +58,22 @@ Invoke-Expression (&sfsu hook --disable list)
 
 It also supports Bash in WSL and MSYS2
 
-For WSL installations the snippet is added automatically by default. To opt-out, set `SFSU_DISABLE_WSL_AUTO_HOOK=1` to disable WSL auto-add, or set `SFSU_DISABLE_AUTO_HOOK=1` to disable automatic hook additions entirely. Otherwise, add the snippet manually:
+For WSL installations, the installer will attempt to add the Bash hook snippet automatically to the default WSL distribution's `~/.bashrc` by default. To opt-out of automatic additions for WSL, set the environment variable `SFSU_DISABLE_WSL_AUTO_HOOK=1`. To disable automatic hook additions entirely (including PowerShell profile changes), set `SFSU_DISABLE_AUTO_HOOK=1`.
+
+Notes
+- Automatic addition targets the default WSL distribution only — the same distro that runs when you run `wsl` without arguments. If you have multiple WSL distributions installed, the automatic step will not modify every distro's `~/.bashrc`; add the snippet manually to other distros as needed.
+- The automatic step is idempotent and will not add duplicate entries.
+
+To add the hook manually (for other WSL distributions or if you disabled auto-add), place this line in the distro user's shell startup file (for example `~/.bashrc` or `~/.zshrc`):
 
 ```sh
 source <(sfsu.exe hook --shell bash)
+```
+
+To add the PowerShell hook on Windows (if you prefer doing it manually), append the following to your PowerShell profile:
+
+```powershell
+Invoke-Expression (&sfsu hook)
 ```
 
 Nushell is also supported. Run the following command save it to a file.

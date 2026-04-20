@@ -57,7 +57,19 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut res = winres::WindowsResource::new();
     res.set_manifest(WIN_MANIFEST);
 
-    res.compile().expect("Failed to compile Windows resources");
+    // Only attempt to compile Windows resources when targeting Windows.
+    // If the resource compiler (e.g. windres/rc.exe) is not available, emit a cargo warning and continue.
+    let target = std::env::var("TARGET").unwrap_or_default();
+    if target.contains("windows") {
+        if let Err(e) = res.compile() {
+            // Use cargo warning so build systems and CI surface the message.
+            println!(
+                "cargo:warning=Failed to compile Windows resources: {e}. Continuing without Windows resources."
+            );
+        }
+    } else {
+        // Non-Windows target: skip resource compilation.
+    }
 
     let lockfile = Lockfile::new();
 
