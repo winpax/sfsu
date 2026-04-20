@@ -121,11 +121,10 @@ impl PowershellScript {
         ScriptRunner::from_path(file_path)
     }
 
-    /// Generate a default post-install PowerShell script to add hooks to user profiles (opt-in).
+    /// Generate a default post-install PowerShell script to add hooks to user profiles.
     ///
     /// The script will:
     /// - Append Invoke-Expression (&sfsu hook) to $PROFILE if not present.
-    /// - If WSL is present, append source <(sfsu.exe hook --shell bash) to ~/.bashrc inside WSL (if SFSU_ENABLE_WSL_AUTO_HOOK=1).
     /// - Be idempotent.
     #[must_use]
     pub fn default_post_install_script() -> Self {
@@ -134,12 +133,6 @@ if (-not (Test-Path -Path (Split-Path -Path $PROFILE -Parent))) { New-Item -Item
 if (-not (Test-Path -Path $PROFILE)) { New-Item -ItemType File -Path $PROFILE -Force | Out-Null }
 $profileContent = Get-Content -Path $PROFILE -ErrorAction SilentlyContinue -Raw
 if ($profileContent -notlike "*sfsu hook*") { Add-Content -Path $PROFILE -Value "`r`n# >>> sfsu hook >>>`r`n$hook`r`n# <<< sfsu hook <<<`r`n"; Write-Host "sfsu: Added hook to $PROFILE" } else { Write-Host "sfsu: Hook already present in $PROFILE" }
-if (Get-Command wsl -ErrorAction SilentlyContinue) {
-    if ($env:SFSU_ENABLE_WSL_AUTO_HOOK -and (($env:SFSU_ENABLE_WSL_AUTO_HOOK.Trim().ToLower() -eq 'true') -or ($env:SFSU_ENABLE_WSL_AUTO_HOOK.Trim() -eq '1'))) {
-        wsl -- bash -lc "if ! grep -F 'sfsu.exe hook --shell bash' ~/.bashrc >/dev/null 2>&1; then printf \"\n# >>> sfsu hook >>>\nsource <(sfsu.exe hook --shell bash)\n# <<< sfsu hook <<<\n\" >> ~/.bashrc; fi"
-        Write-Host "sfsu: ensured WSL bashrc contains sfsu hook"
-    }
-}
 "#;
         PowershellScript::new(script)
     }
@@ -300,12 +293,12 @@ mod tests {
         }
 
         // Create a script that sets a fake $PROFILE and runs the default post-install script
-        // We set SFSU_ENABLE_WSL_AUTO_HOOK=0 for this test to avoid triggering WSL logic if present
         let test_runner_script = format!(
-            "$env:SFSU_ENABLE_WSL_AUTO_HOOK = '0'\n$PROFILE = '{}'\n{}",
+            "$PROFILE = '{}'\n{}",
             temp_profile.to_string_lossy().replace('\'', "''"),
             script_content
         );
+
         let runner = PowershellScript::new(test_runner_script)
             .save(&ctx)
             .unwrap();

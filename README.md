@@ -44,30 +44,46 @@ scoop install sfsu
 
 You may set up the hooks to use the scoop commands normally
 
-Add the following to your Powershell profile
+To add the hook to your PowerShell profile automatically, run:
 
 ```powershell
-Invoke-Expression (&sfsu hook)
+sfsu hook powershell
 ```
 
-You can also optionally disable certain hooks via the `--disable <COMMAND>` flag
+To add the Bash hook to your default WSL distribution's `~/.bashrc` automatically, run:
 
 ```powershell
-Invoke-Expression (&sfsu hook --disable list)
+sfsu hook wsl
 ```
 
-It also supports Bash in WSL and MSYS2
+You can also specify a distro for WSL:
 
-The installer can add the hook snippet automatically to your PowerShell profile and (for WSL installations) the default WSL distribution's `~/.bashrc`. To opt-in to automatic additions for PowerShell, set the environment variable `SFSU_ENABLE_AUTO_HOOK=1`. For WSL additions, set `SFSU_ENABLE_WSL_AUTO_HOOK=1`. If you don't opt-in, you can still add the hooks manually by following the instructions for PowerShell above or the manual WSL instruction below.
+```powershell
+sfsu hook wsl Ubuntu
+```
 
 Notes
-- Automatic addition targets the default WSL distribution only — the same distro that runs when you run `wsl` without arguments. If you have multiple WSL distributions installed, the automatic step will not modify every distro's `~/.bashrc`; add the snippet manually to other distros as needed.
+- Automatic addition targets the default WSL distribution only unless a distro name is provided.
 - The automatic step is idempotent and will not add duplicate entries.
 
-To add the hook manually (for other WSL distributions or if you disabled auto-add), place this line in the distro user's shell startup file (for example `~/.bashrc` or `~/.zshrc`), or for PowerShell follow the instructions above:
+### Manual Hook Setup
 
-```sh
-source <(sfsu.exe hook --shell bash)
+If you prefer to add the hooks manually, you can print them to your terminal:
+
+```powershell
+# PowerShell
+sfsu hook --shell powershell
+
+# Bash (WSL/MSYS2)
+sfsu hook --shell bash
+```
+
+And then add the output to your shell's profile.
+
+You can also optionally disable certain hooks via the `--disable <COMMAND>` flag:
+
+```powershell
+sfsu hook --disable list
 ```
 
 Nushell is also supported. Run the following command to save it to a file.
