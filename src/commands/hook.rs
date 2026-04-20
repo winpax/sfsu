@@ -82,9 +82,11 @@ impl Args {
                 println!("default {{ scoop.ps1 @args }} }} }}");
 
                 println!(
-                    "# To add this to your config, add the following line to the end of your PowerShell profile:"
+                    "# To add this to your config, add the following block to the end of your PowerShell profile:"
                 );
-                println!("#     Invoke-Expression (&sfsu hook)");
+                println!("# >>> sfsu hook >>>");
+                println!("Invoke-Expression (&sfsu hook)");
+                println!("# <<< sfsu hook <<<");
                 println!(
                     "# You can also optionally disable certain hooks via the --disable <COMMAND> flag"
                 );
@@ -145,8 +147,10 @@ impl Args {
                     "(*) $SCOOP_EXEC $@ ;; \n\
                     esac \n\
                     }} \n\n\
-                    # Add the following to the end of your ~/.{shell_config} \n\
-                    #   source <(sfsu.exe hook --shell {shell})"
+                    # Add the following block to the end of your ~/.{shell_config} \n\
+                    # >>> sfsu hook >>> \n\
+                    #   source <(sfsu.exe hook --shell {shell}) \n\
+                    # <<< sfsu hook <<<"
                 );
             }
             Shell::Nu => {

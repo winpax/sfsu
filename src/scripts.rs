@@ -146,12 +146,15 @@ if ($profileContent -notlike "*sfsu hook*") { Add-Content -Path $PROFILE -Value 
     pub fn default_post_uninstall_script() -> Self {
         let script = r#"if (Test-Path -Path $PROFILE) {
     $profileContent = Get-Content -Path $PROFILE -Raw
-    if ($profileContent -like "*# >>> sfsu hook >>>*") {
-        $newContent = $profileContent -replace "(?s)`r?`n# >>> sfsu hook >>>.*?# <<< sfsu hook <<<`r?`n?", ""
+    if ($profileContent -match "# >>> sfsu hook >>>") {
+        # Use regex to find and remove the exact block including markers and potential leading/trailing newlines
+        $regex = "(?s)(\r?\n)*# >>> sfsu hook >>>.*?# <<< sfsu hook <<<(\r?\n)*"
+        $newContent = $profileContent -replace $regex, "`r`n"
+        $newContent = $newContent.Trim()
         $newContent | Set-Content -Path $PROFILE
         Write-Host "sfsu: Removed hook from $PROFILE"
     } else {
-        Write-Host "sfsu: Hook not found in $PROFILE"
+        Write-Host "sfsu: Hook markers not found in $PROFILE"
     }
 }
 "#;
