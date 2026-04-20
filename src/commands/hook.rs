@@ -172,6 +172,14 @@ impl Args {
         }
     }
 
+    fn install_powershell_hook() -> anyhow::Result<()> {
+        let script = crate::scripts::PowershellScript::default_post_install_script();
+        let ctx = crate::contexts::User::new()?;
+        let runner = script.save(&ctx)?;
+        runner.run()?;
+        Ok(())
+    }
+
     fn uninstall_powershell_hook() -> anyhow::Result<()> {
         let script = crate::scripts::PowershellScript::default_post_uninstall_script();
         let ctx = crate::contexts::User::new()?;
@@ -180,7 +188,7 @@ impl Args {
         Ok(())
     }
 
-    fn uninstall_wsl_hook(distro: Option<String>) -> anyhow::Result<()> {
+    fn install_wsl_hook(distro: Option<String>) -> anyhow::Result<()> {
         let mut cmd_args = vec![];
         if let Some(ref distro) = distro {
             cmd_args.push("-d");
@@ -188,7 +196,7 @@ impl Args {
         }
 
         cmd_args.extend(["--", "bash", "-lc"]);
-        let script = "sed -i '/# >>> sfsu hook >>>/,/# <<< sfsu hook <<</d' ~/.bashrc";
+        let script = "if grep -q '# >>> sfsu hook >>>' ~/.bashrc || grep -q 'sfsu.exe hook --shell bash' ~/.bashrc; then echo 'sfsu: hook already present'; else printf \"\\n# >>> sfsu hook >>>\\nsource <(sfsu.exe hook --shell bash)\\n# <<< sfsu hook <<<\\n\" >> ~/.bashrc; fi";
         cmd_args.push(script);
 
         let wsl_cmd = if which::which("wsl.exe").is_ok() {
@@ -200,7 +208,48 @@ impl Args {
         let output = SysCommand::new(wsl_cmd).args(&cmd_args).output()?;
 
         if output.status.success() {
-            println!("sfsu: removed hook from WSL bashrc");
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            if stdout.contains("already present") {
+                println!("sfsu: Hook already present in WSL");
+            } else {
+                println!("sfsu: Ensured WSL bashrc contains sfsu hook");
+            }
+            Ok(())
+        } else {
+            anyhow::bail!(
+                "Failed to install hook in WSL: {}",
+                String::from_utf8_lossy(&output.stderr)
+            )
+        }
+    }
+
+    fn uninstall_wsl_hook(distro: Option<String>) -> anyhow::Result<()> {
+        let mut cmd_args = vec![];
+        if let Some(ref distro) = distro {
+            cmd_args.push("-d");
+            cmd_args.push(distro.as_str());
+        }
+
+        cmd_args.extend(["--", "bash", "-lc"]);
+        // Try block removal first, fallback to line removal
+        let script = "if grep -q '# >>> sfsu hook >>>' ~/.bashrc; then sed -i '/# >>> sfsu hook >>>/,/# <<< sfsu hook <<</d' ~/.bashrc && echo 'removed block'; elif grep -q 'sfsu.exe hook --shell bash' ~/.bashrc; then sed -i '/sfsu.exe hook --shell bash/d' ~/.bashrc && echo 'removed line'; fi";
+        cmd_args.push(script);
+
+        let wsl_cmd = if which::which("wsl.exe").is_ok() {
+            "wsl.exe"
+        } else {
+            "wsl"
+        };
+
+        let output = SysCommand::new(wsl_cmd).args(&cmd_args).output()?;
+
+        if output.status.success() {
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            if stdout.contains("removed") {
+                println!("sfsu: Removed hook from WSL bashrc");
+            } else {
+                println!("sfsu: Hook markers or command not found in WSL");
+            }
             Ok(())
         } else {
             anyhow::bail!(

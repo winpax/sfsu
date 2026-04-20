@@ -132,7 +132,12 @@ impl PowershellScript {
 if (-not (Test-Path -Path (Split-Path -Path $PROFILE -Parent))) { New-Item -ItemType Directory -Path (Split-Path -Path $PROFILE -Parent) -Force | Out-Null }
 if (-not (Test-Path -Path $PROFILE)) { New-Item -ItemType File -Path $PROFILE -Force | Out-Null }
 $profileContent = Get-Content -Path $PROFILE -ErrorAction SilentlyContinue -Raw
-if ($profileContent -notlike "*sfsu hook*") { Add-Content -Path $PROFILE -Value "`r`n# >>> sfsu hook >>>`r`n$hook`r`n# <<< sfsu hook <<<`r`n"; Write-Host "sfsu: Added hook to $PROFILE" } else { Write-Host "sfsu: Hook already present in $PROFILE" }
+if ($profileContent -match "# >>> sfsu hook >>>" -or $profileContent.Contains($hook)) {
+    Write-Host "sfsu: Hook already present in $PROFILE"
+} else {
+    Add-Content -Path $PROFILE -Value "`r`n# >>> sfsu hook >>>`r`n$hook`r`n# <<< sfsu hook <<<`r`n"
+    Write-Host "sfsu: Added hook to $PROFILE"
+}
 "#;
         PowershellScript::new(script)
     }
@@ -144,17 +149,21 @@ if ($profileContent -notlike "*sfsu hook*") { Add-Content -Path $PROFILE -Value 
     /// - Be idempotent.
     #[must_use]
     pub fn default_post_uninstall_script() -> Self {
-        let script = r#"if (Test-Path -Path $PROFILE) {
+        let script = r#"$hook = "Invoke-Expression (&sfsu hook)"
+if (Test-Path -Path $PROFILE) {
     $profileContent = Get-Content -Path $PROFILE -Raw
     if ($profileContent -match "# >>> sfsu hook >>>") {
-        # Use regex to find and remove the exact block including markers and potential leading/trailing newlines
         $regex = "(?s)(\r?\n)*# >>> sfsu hook >>>.*?# <<< sfsu hook <<<(\r?\n)*"
         $newContent = $profileContent -replace $regex, "`r`n"
-        $newContent = $newContent.Trim()
-        $newContent | Set-Content -Path $PROFILE
-        Write-Host "sfsu: Removed hook from $PROFILE"
+        $newContent.Trim() | Set-Content -Path $PROFILE
+        Write-Host "sfsu: Removed hook block from $PROFILE"
+    } elseif ($profileContent.Contains($hook)) {
+        # Fallback: Remove the command line if markers are missing
+        $newContent = $profileContent -replace [regex]::Escape($hook), ""
+        $newContent.Trim() | Set-Content -Path $PROFILE
+        Write-Host "sfsu: Removed loose hook command from $PROFILE"
     } else {
-        Write-Host "sfsu: Hook markers not found in $PROFILE"
+        Write-Host "sfsu: Hook not found in $PROFILE"
     }
 }
 "#;
