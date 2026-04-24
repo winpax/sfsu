@@ -14,17 +14,16 @@ pub enum HookCommands {
             short,
             long,
             help = "Print the hook instead of installing",
-            conflicts_with = "uninstall"
+            conflicts_with = "rm"
         )]
         print: bool,
         #[arg(
             short = 'r',
             long = "rm",
-            alias = "uninstall",
             help = "Uninstall the hook",
             conflicts_with = "print"
         )]
-        uninstall: bool,
+        rm: bool,
         #[arg(
             short,
             long,
@@ -35,48 +34,28 @@ pub enum HookCommands {
     #[command(name = "bash")]
     /// Print the hook for Bash
     Bash {
-        #[arg(
-            short = 'r',
-            long = "rm",
-            alias = "uninstall",
-            help = "Uninstall the hook"
-        )]
-        uninstall: bool,
+        #[arg(short = 'r', long = "rm", help = "Uninstall the hook")]
+        rm: bool,
     },
     #[command(name = "zsh")]
     /// Print the hook for Zsh
     Zsh {
-        #[arg(
-            short = 'r',
-            long = "rm",
-            alias = "uninstall",
-            help = "Uninstall the hook"
-        )]
-        uninstall: bool,
+        #[arg(short = 'r', long = "rm", help = "Uninstall the hook")]
+        rm: bool,
     },
     #[command(name = "nu")]
     /// Print the hook for Nushell
     Nu {
-        #[arg(
-            short = 'r',
-            long = "rm",
-            alias = "uninstall",
-            help = "Uninstall the hook"
-        )]
-        uninstall: bool,
+        #[arg(short = 'r', long = "rm", help = "Uninstall the hook")]
+        rm: bool,
     },
     #[command(name = "wsl")]
     /// Install the hook for WSL automatically
     Wsl {
         /// The WSL distro to install in (defaults to the default distro)
         distro: Option<String>,
-        #[arg(
-            short = 'r',
-            long = "rm",
-            alias = "uninstall",
-            help = "Uninstall the hook"
-        )]
-        uninstall: bool,
+        #[arg(short = 'r', long = "rm", help = "Uninstall the hook")]
+        rm: bool,
     },
 }
 
@@ -94,11 +73,15 @@ pub struct Args {
     enabled: Vec<CommandsHooks>,
 
     /// Uninstall the hook (top-level flag)
-    #[arg(long = "rm", help = "Uninstall the hook")]
+    #[arg(short = 'r', long = "rm", help = "Uninstall the hook")]
     rm: bool,
 
-    #[arg(short, long, help = "Print hooks for the given shell (ignored if subcommand is used)", default_value_t = Shell::Powershell)]
-    shell: Shell,
+    #[arg(
+        short,
+        long,
+        help = "Print hooks for the given shell (ignored if subcommand is used)"
+    )]
+    shell: Option<Shell>,
 }
 
 impl Args {
@@ -144,20 +127,22 @@ impl Args {
         }
     }
 
-    async fn print_hook(self, shell: Shell, enabled_hooks: &[CommandsHooks]) {
+    async fn print_hook(self, shell: Shell, enabled_hooks: &[CommandsHooks], print_code: bool) {
         match shell {
             Shell::Powershell => {
-                print!("function scoop {{ switch ($args[0]) {{ ");
+                if print_code {
+                    print!("function scoop {{ switch ($args[0]) {{ ");
 
-                for command in enabled_hooks {
-                    print!(
-                        "  '{hook}' {{ return sfsu.exe {command} @($args | Select-Object -Skip 1) }} ",
-                        hook = command.hook(),
-                        command = command.command()
-                    );
+                    for command in enabled_hooks {
+                        print!(
+                            "  '{hook}' {{ return sfsu.exe {command} @($args | Select-Object -Skip 1) }} ",
+                            hook = command.hook(),
+                            command = command.command()
+                        );
+                    }
+
+                    println!("default {{ scoop.ps1 @args }} }} }}");
                 }
-
-                println!("default {{ scoop.ps1 @args }} }} }}");
 
                 println!(
                     "# To add this to your config, add the following block to the end of your PowerShell profile:"
@@ -176,7 +161,7 @@ impl Args {
                     println!(
                         "# WSL detected: to have the installer add the following to your WSL ~/.bashrc automatically, run `sfsu hook wsl`:"
                     );
-                    println!("#   source <(sfsu.exe hook --shell bash)");
+                    println!("#   source <(sfsu.exe hook bash)");
                 }
 
                 let nu_in_host = which::which("nu").is_ok();
@@ -199,7 +184,7 @@ impl Args {
                     println!(
                         "# Nushell is also supported. Run the following command to save it to a file."
                     );
-                    println!("#   sfsu hook --shell nu | save -f path/to/some/file.nu");
+                    println!("#   sfsu hook nu | save -f path/to/some/file.nu");
                     println!(
                         "# Then source it in your config.nu (situated in path $nu.config-path). "
                     );
@@ -208,42 +193,48 @@ impl Args {
             }
             Shell::Bash | Shell::Zsh => {
                 let shell_config = shell.config();
-                println!(
-                    "SCOOP_EXEC=$(which scoop) \n\
-                    scoop () {{ \n\
-                    case $1 in"
-                );
-
-                for command in enabled_hooks {
+                if print_code {
                     println!(
-                        "({hook}) sfsu.exe {command} ${{@:2}} ;;",
-                        hook = command.hook(),
-                        command = command.command()
+                        "SCOOP_EXEC=$(which scoop) \n\
+                        scoop () {{ \n\
+                        case $1 in"
+                    );
+
+                    for command in enabled_hooks {
+                        println!(
+                            "({hook}) sfsu.exe {command} ${{@:2}} ;;",
+                            hook = command.hook(),
+                            command = command.command()
+                        );
+                    }
+
+                    println!(
+                        "(*) $SCOOP_EXEC $@ ;; \n\
+                        esac \n\
+                        }}"
                     );
                 }
-
                 println!(
-                    "(*) $SCOOP_EXEC $@ ;; \n\
-                    esac \n\
-                    }} \n\n\
-                    # Add the following block to the end of your ~/.{shell_config} \n\
+                    "\n# Add the following block to the end of your ~/.{shell_config} \n\
                     # >>> sfsu hook >>> \n\
-                    #   source <(sfsu.exe hook --shell {shell}) \n\
+                    #   source <(sfsu.exe hook {shell}) \n\
                     # <<< sfsu hook <<<"
                 );
             }
             Shell::Nu => {
                 let shell_config = shell.config();
-                for command in enabled_hooks {
-                    println!(
-                        "def --wrapped \"scoop {hook}\" [...rest] {{ sfsu {command} ...$rest }}",
-                        hook = command.hook(),
-                        command = command.command()
-                    );
+                if print_code {
+                    for command in enabled_hooks {
+                        println!(
+                            "def --wrapped \"scoop {hook}\" [...rest] {{ sfsu {command} ...$rest }}",
+                            hook = command.hook(),
+                            command = command.command()
+                        );
+                    }
                 }
 
                 println!(
-                    "\n# To add this to your config, run `sfsu hook --shell {shell} | save ~/.cache/sfsu.nu`\n\
+                    "\n# To add this to your config, run `sfsu hook {shell} | save ~/.cache/sfsu.nu`\n\
                         # And then in your {shell_config} add the following line to the end:\n\
                         #   source ~/.cache/sfsu.nu"
                 );
@@ -405,56 +396,57 @@ impl super::Command for Args {
         .collect();
 
         match self.command.clone() {
-            Some(HookCommands::Powershell {
-                print,
-                uninstall,
-                system,
-            }) => {
-                if uninstall || self.rm {
+            Some(HookCommands::Powershell { print, rm, system }) => {
+                if rm || self.rm {
                     Self::uninstall_powershell_hook(system).await?
                 } else if !print {
                     Self::install_powershell_hook(system).await?
                 } else {
-                    self.print_hook(Shell::Powershell, &enabled_hooks).await
+                    self.print_hook(Shell::Powershell, &enabled_hooks, true)
+                        .await
                 }
             }
-            Some(HookCommands::Bash { uninstall }) => {
-                if uninstall || self.rm {
+            Some(HookCommands::Bash { rm }) => {
+                if rm || self.rm {
                     anyhow::bail!(
                         "Automatic uninstallation for Bash is not yet supported on Windows host. Please remove the hook from your .bashrc manually."
                     )
                 } else {
-                    self.print_hook(Shell::Bash, &enabled_hooks).await
+                    self.print_hook(Shell::Bash, &enabled_hooks, true).await
                 }
             }
-            Some(HookCommands::Zsh { uninstall }) => {
-                if uninstall || self.rm {
+            Some(HookCommands::Zsh { rm }) => {
+                if rm || self.rm {
                     anyhow::bail!(
                         "Automatic uninstallation for Zsh is not yet supported on Windows host. Please remove the hook from your .zshrc manually."
                     )
                 } else {
-                    self.print_hook(Shell::Zsh, &enabled_hooks).await
+                    self.print_hook(Shell::Zsh, &enabled_hooks, true).await
                 }
             }
-            Some(HookCommands::Nu { uninstall }) => {
-                if uninstall || self.rm {
+            Some(HookCommands::Nu { rm }) => {
+                if rm || self.rm {
                     anyhow::bail!(
                         "Automatic uninstallation for Nushell is not yet supported. Please remove the hook from your config.nu manually."
                     )
                 } else {
-                    self.print_hook(Shell::Nu, &enabled_hooks).await
+                    self.print_hook(Shell::Nu, &enabled_hooks, true).await
                 }
             }
-            Some(HookCommands::Wsl { distro, uninstall }) => {
-                if uninstall || self.rm {
+            Some(HookCommands::Wsl { distro, rm }) => {
+                if rm || self.rm {
                     Self::uninstall_wsl_hook(distro).await?
                 } else {
                     Self::install_wsl_hook(distro).await?
                 }
             }
             None => {
-                let shell = self.shell;
-                self.print_hook(shell, &enabled_hooks).await;
+                if let Some(shell) = self.shell {
+                    self.print_hook(shell, &enabled_hooks, false).await;
+                } else {
+                    self.print_hook(Shell::Powershell, &enabled_hooks, true)
+                        .await;
+                }
             }
         }
 
