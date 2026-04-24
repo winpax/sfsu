@@ -1,72 +1,94 @@
 use crate::{contexts::ScoopContext, shell::Shell};
 use clap::{Parser, Subcommand};
 use quork::traits::list::ListVariants;
-use std::process::Command as SysCommand;
+use tokio::process::Command as SysCommand;
 
 use super::CommandHooks as CommandsHooks;
 
 #[derive(Debug, Clone, Subcommand)]
 pub enum HookCommands {
-    #[clap(name = "powershell", alias = "pwsh")]
+    #[command(name = "powershell", alias = "pwsh")]
     /// Install the hook for PowerShell automatically
     Powershell {
-        #[clap(short, long, help = "Print the hook instead of installing")]
+        #[arg(short, long, help = "Print the hook instead of installing", conflicts_with = "uninstall")]
         print: bool,
-        #[clap(short, long, help = "Uninstall the hook")]
+        #[arg(short = 'r', long = "rm", alias = "uninstall", help = "Uninstall the hook", conflicts_with = "print")]
         uninstall: bool,
+        #[arg(short, long, help = "Install/Uninstall for all users (requires elevation)")]
+        system: bool,
     },
-    #[clap(name = "bash")]
+    #[command(name = "bash")]
     /// Install the hook for Bash automatically
     Bash {
-        #[clap(short, long, help = "Print the hook instead of installing")]
+        #[arg(short, long, help = "Print the hook instead of installing", conflicts_with = "uninstall")]
         print: bool,
-        #[clap(short, long, help = "Uninstall the hook")]
+        #[arg(short = 'r', long = "rm", alias = "uninstall", help = "Uninstall the hook", conflicts_with = "print")]
         uninstall: bool,
     },
-    #[clap(name = "zsh")]
+    #[command(name = "zsh")]
     /// Install the hook for Zsh automatically
     Zsh {
-        #[clap(short, long, help = "Print the hook instead of installing")]
+        #[arg(short, long, help = "Print the hook instead of installing", conflicts_with = "uninstall")]
         print: bool,
-        #[clap(short, long, help = "Uninstall the hook")]
+        #[arg(short = 'r', long = "rm", alias = "uninstall", help = "Uninstall the hook", conflicts_with = "print")]
         uninstall: bool,
     },
-    #[clap(name = "nu")]
+    #[command(name = "nu")]
     /// Install the hook for Nushell automatically
     Nu {
-        #[clap(short, long, help = "Print the hook instead of installing")]
+        #[arg(short, long, help = "Print the hook instead of installing", conflicts_with = "uninstall")]
         print: bool,
-        #[clap(short, long, help = "Uninstall the hook")]
+        #[arg(short = 'r', long = "rm", alias = "uninstall", help = "Uninstall the hook", conflicts_with = "print")]
         uninstall: bool,
     },
-    #[clap(name = "wsl")]
+    #[command(name = "wsl")]
     /// Install the hook for WSL automatically
     Wsl {
         /// The WSL distro to install in (defaults to the default distro)
         distro: Option<String>,
-        #[clap(short, long, help = "Uninstall the hook")]
+        #[arg(short = 'r', long = "rm", alias = "uninstall", help = "Uninstall the hook")]
         uninstall: bool,
     },
 }
 
 #[derive(Debug, Clone, Parser)]
+#[command(author, version, about, long_about = None)]
 /// Generate hooks for the given shell
 pub struct Args {
-    #[clap(subcommand)]
+    #[command(subcommand)]
     pub command: Option<HookCommands>,
 
-    #[clap(short = 'D', long, help = "The commands to disable")]
+    #[arg(short = 'D', long, help = "The commands to disable")]
     disable: Vec<CommandsHooks>,
 
-    #[clap(short = 'E', long, help = "The commands to exclusively enable")]
+    #[arg(short = 'E', long, help = "The commands to exclusively enable")]
     enabled: Vec<CommandsHooks>,
 
-    #[clap(short, long, help = "Print hooks for the given shell (ignored if subcommand is used)", default_value_t = Shell::Powershell)]
+    /// Uninstall the hook (top-level flag)
+    #[arg(long = "rm", help = "Uninstall the hook")]
+    rm: bool,
+
+    #[arg(short, long, help = "Print hooks for the given shell (ignored if subcommand is used)", default_value_t = Shell::Powershell)]
     shell: Shell,
 }
 
 impl Args {
-    fn print_hook(self, shell: Shell, enabled_hooks: &[CommandsHooks]) {
+    async fn run_command_with_timeout(
+        mut command: SysCommand,
+        timeout: std::time::Duration,
+    ) -> anyhow::Result<std::process::Output> {
+        let mut child = command.spawn()?;
+        match tokio::time::timeout(timeout, child.wait_with_output()).await {
+            Ok(Ok(output)) => Ok(output),
+            Ok(Err(err)) => Err(err.into()),
+            Err(_) => {
+                child.kill().await?;
+                anyhow::bail!("Command timed out after {}ms", timeout.as_millis())
+            }
+        }
+    }
+
+    async fn print_hook(self, shell: Shell, enabled_hooks: &[CommandsHooks]) {
         match shell {
             Shell::Powershell => {
                 print!("function scoop {{ switch ($args[0]) {{ ");
@@ -110,8 +132,9 @@ impl Args {
                         "wsl"
                     };
                     nu_in_wsl = SysCommand::new(wsl_cmd)
-                        .args(&["command", "-v", "nu"])
+                        .args(&["sh", "-lc", "command -v nu"])
                         .output()
+                        .await
                         .map(|o| o.status.success())
                         .unwrap_or(false);
                 }
@@ -181,9 +204,11 @@ impl Args {
         Ok(())
     }
 
-    fn install_powershell_hook() -> anyhow::Result<()> {
-        Self::check_elevation()?;
-        let script = crate::scripts::PowershellScript::default_post_install_script();
+    async fn install_powershell_hook(system: bool) -> anyhow::Result<()> {
+        if system {
+            Self::check_elevation()?;
+        }
+        let script = crate::scripts::PowershellScript::default_post_install_script(system);
         let ctx = crate::contexts::User::new()?;
         let runner = script.save(&ctx)?;
         match runner.run() {
@@ -198,9 +223,11 @@ impl Args {
         }
     }
 
-    fn uninstall_powershell_hook() -> anyhow::Result<()> {
-        Self::check_elevation()?;
-        let script = crate::scripts::PowershellScript::default_post_uninstall_script();
+    async fn uninstall_powershell_hook(system: bool) -> anyhow::Result<()> {
+        if system {
+            Self::check_elevation()?;
+        }
+        let script = crate::scripts::PowershellScript::default_post_uninstall_script(system);
         let ctx = crate::contexts::User::new()?;
         let runner = script.save(&ctx)?;
         match runner.run() {
@@ -215,8 +242,7 @@ impl Args {
         }
     }
 
-    fn install_wsl_hook(distro: Option<String>) -> anyhow::Result<()> {
-        Self::check_elevation()?;
+    async fn install_wsl_hook(distro: Option<String>) -> anyhow::Result<()> {
         let mut cmd_args = vec![];
         if let Some(ref distro) = distro {
             cmd_args.push("-d");
@@ -233,7 +259,11 @@ impl Args {
             "wsl"
         };
 
-        let output = SysCommand::new(wsl_cmd).args(&cmd_args).output();
+        let output = Self::run_command_with_timeout(
+            SysCommand::new(wsl_cmd).args(&cmd_args),
+            std::time::Duration::from_secs(10),
+        )
+        .await;
 
         match output {
             Ok(output) if output.status.success() => {
@@ -258,8 +288,7 @@ impl Args {
         }
     }
 
-    fn uninstall_wsl_hook(distro: Option<String>) -> anyhow::Result<()> {
-        Self::check_elevation()?;
+    async fn uninstall_wsl_hook(distro: Option<String>) -> anyhow::Result<()> {
         let mut cmd_args = vec![];
         if let Some(ref distro) = distro {
             cmd_args.push("-d");
@@ -277,7 +306,11 @@ impl Args {
             "wsl"
         };
 
-        let output = SysCommand::new(wsl_cmd).args(&cmd_args).output();
+        let output = Self::run_command_with_timeout(
+            SysCommand::new(wsl_cmd).args(&cmd_args),
+            std::time::Duration::from_secs(10),
+        )
+        .await;
 
         match output {
             Ok(output) if output.status.success() => {
@@ -320,64 +353,56 @@ impl super::Command for Args {
         .collect();
 
         match self.command.clone() {
-            Some(HookCommands::Powershell { print, uninstall }) => {
-                if uninstall {
-                    Self::uninstall_powershell_hook()?
+            Some(HookCommands::Powershell {
+                print,
+                uninstall,
+                system,
+            }) => {
+                if uninstall || self.rm {
+                    Self::uninstall_powershell_hook(system).await?
                 } else if !print {
-                    Self::install_powershell_hook()?
+                    Self::install_powershell_hook(system).await?
                 } else {
-                    self.print_hook(Shell::Powershell, &enabled_hooks)
+                    self.print_hook(Shell::Powershell, &enabled_hooks).await
                 }
             }
             Some(HookCommands::Bash { print, uninstall }) => {
-                if uninstall {
+                if uninstall || self.rm {
                     anyhow::bail!(
                         "Automatic uninstallation for Bash is not yet supported on Windows host. Please remove the hook from your .bashrc manually."
                     )
-                } else if !print {
-                    anyhow::bail!(
-                        "Automatic installation for Bash is not yet supported on Windows host. Use `sfsu hook bash --print` and add it to your .bashrc manually, or use `sfsu hook wsl` if you are using WSL."
-                    )
                 } else {
-                    self.print_hook(Shell::Bash, &enabled_hooks)
+                    self.print_hook(Shell::Bash, &enabled_hooks).await
                 }
             }
             Some(HookCommands::Zsh { print, uninstall }) => {
-                if uninstall {
+                if uninstall || self.rm {
                     anyhow::bail!(
                         "Automatic uninstallation for Zsh is not yet supported on Windows host. Please remove the hook from your .zshrc manually."
                     )
-                } else if !print {
-                    anyhow::bail!(
-                        "Automatic installation for Zsh is not yet supported on Windows host. Use `sfsu hook zsh --print` and add it to your .zshrc manually, or use `sfsu hook wsl` if you are using WSL."
-                    )
                 } else {
-                    self.print_hook(Shell::Zsh, &enabled_hooks)
+                    self.print_hook(Shell::Zsh, &enabled_hooks).await
                 }
             }
             Some(HookCommands::Nu { print, uninstall }) => {
-                if uninstall {
+                if uninstall || self.rm {
                     anyhow::bail!(
                         "Automatic uninstallation for Nushell is not yet supported. Please remove the hook from your config.nu manually."
                     )
-                } else if !print {
-                    anyhow::bail!(
-                        "Automatic installation for Nushell is not yet supported. Use `sfsu hook nu --print` for manual instructions."
-                    )
                 } else {
-                    self.print_hook(Shell::Nu, &enabled_hooks)
+                    self.print_hook(Shell::Nu, &enabled_hooks).await
                 }
             }
             Some(HookCommands::Wsl { distro, uninstall }) => {
-                if uninstall {
-                    Self::uninstall_wsl_hook(distro)?
+                if uninstall || self.rm {
+                    Self::uninstall_wsl_hook(distro).await?
                 } else {
-                    Self::install_wsl_hook(distro)?
+                    Self::install_wsl_hook(distro).await?
                 }
             }
             None => {
                 let shell = self.shell;
-                self.print_hook(shell, &enabled_hooks);
+                self.print_hook(shell, &enabled_hooks).await;
             }
         }
 

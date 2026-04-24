@@ -132,22 +132,30 @@ impl PowershellScript {
     /// - Append Invoke-Expression (&sfsu hook) to $PROFILE if not present.
     /// - Be idempotent.
     #[must_use]
-    pub fn default_post_install_script() -> Self {
-        let script = r##"$hook = "Invoke-Expression (&sfsu hook)"
-if (-not $PROFILE) {
-    Write-Error "sfsu: `$PROFILE is not defined. Cannot install hook automatically."
+    pub fn default_post_install_script(system: bool) -> Self {
+        let profile = if system {
+            "$PROFILE.AllUsersAllHosts"
+        } else {
+            "$PROFILE"
+        };
+        let script = format!(
+            r##"$hook = "Invoke-Expression (&sfsu hook)"
+$profilePath = {profile}
+if (-not $profilePath) {{
+    Write-Error "sfsu: Profile path is not defined. Cannot install hook automatically."
     exit 1
-}
-if (-not (Test-Path -Path (Split-Path -Path $PROFILE -Parent))) { New-Item -ItemType Directory -Path (Split-Path -Path $PROFILE -Parent) -Force | Out-Null }
-if (-not (Test-Path -Path $PROFILE)) { New-Item -ItemType File -Path $PROFILE -Force | Out-Null }
-$profileContent = Get-Content -Path $PROFILE -ErrorAction SilentlyContinue -Raw
-if ($null -ne $profileContent -and ($profileContent -match "# >>> sfsu hook >>>" -or $profileContent.Contains($hook))) {
-    Write-Host "sfsu: Hook already present in $PROFILE"
-} else {
-    Add-Content -Path $PROFILE -Value "`r`n# >>> sfsu hook >>>`r`n$hook`r`n# <<< sfsu hook <<<`r`n"
-    Write-Host "sfsu: Added hook to $PROFILE"
-}
-"##;
+}}
+if (-not (Test-Path -Path (Split-Path -Path $profilePath -Parent))) {{ New-Item -ItemType Directory -Path (Split-Path -Path $profilePath -Parent) -Force | Out-Null }}
+if (-not (Test-Path -Path $profilePath)) {{ New-Item -ItemType File -Path $profilePath -Force | Out-Null }}
+$profileContent = Get-Content -Path $profilePath -ErrorAction SilentlyContinue -Raw
+if ($null -ne $profileContent -and ($profileContent -match "# >>> sfsu hook >>>" -or $profileContent.Contains($hook))) {{
+    Write-Host "sfsu: Hook already present in $profilePath"
+}} else {{
+    Add-Content -Path $profilePath -Value "`r`n# >>> sfsu hook >>>`r`n$hook`r`n# <<< sfsu hook <<<`r`n"
+    Write-Host "sfsu: Added hook to $profilePath"
+}}
+"##
+        );
         PowershellScript::new(script)
     }
 
@@ -157,25 +165,33 @@ if ($null -ne $profileContent -and ($profileContent -match "# >>> sfsu hook >>>"
     /// - Remove the sfsu hook block from $PROFILE if present.
     /// - Be idempotent.
     #[must_use]
-    pub fn default_post_uninstall_script() -> Self {
-        let script = r##"$hook = "Invoke-Expression (&sfsu hook)"
-if ($PROFILE -and (Test-Path -Path $PROFILE)) {
-    $profileContent = Get-Content -Path $PROFILE -Raw
-    if ($null -ne $profileContent -and $profileContent -match "# >>> sfsu hook >>>") {
+    pub fn default_post_uninstall_script(system: bool) -> Self {
+        let profile = if system {
+            "$PROFILE.AllUsersAllHosts"
+        } else {
+            "$PROFILE"
+        };
+        let script = format!(
+            r##"$hook = "Invoke-Expression (&sfsu hook)"
+$profilePath = {profile}
+if ($profilePath -and (Test-Path -Path $profilePath)) {{
+    $profileContent = Get-Content -Path $profilePath -Raw
+    if ($null -ne $profileContent -and $profileContent -match "# >>> sfsu hook >>>") {{
         $regex = "(?s)(\r?\n)*# >>> sfsu hook >>>.*?# <<< sfsu hook <<<(\r?\n)*"
         $newContent = $profileContent -replace $regex, "`r`n"
-        $newContent.Trim() | Set-Content -Path $PROFILE
-        Write-Host "sfsu: Removed hook block from $PROFILE"
-    } elseif ($null -ne $profileContent -and $profileContent.Contains($hook)) {
+        $newContent.Trim() | Set-Content -Path $profilePath
+        Write-Host "sfsu: Removed hook block from $profilePath"
+    }} elseif ($null -ne $profileContent -and $profileContent.Contains($hook)) {{
         # Fallback: Remove the command line if markers are missing
         $newContent = $profileContent -replace [regex]::Escape($hook), ""
-        $newContent.Trim() | Set-Content -Path $PROFILE
-        Write-Host "sfsu: Removed loose hook command from $PROFILE"
-    } else {
-        Write-Host "sfsu: Hook not found in $PROFILE"
-    }
-}
-"##;
+        $newContent.Trim() | Set-Content -Path $profilePath
+        Write-Host "sfsu: Removed loose hook command from $profilePath"
+    }} else {{
+        Write-Host "sfsu: Hook not found in $profilePath"
+    }}
+}}
+"##
+        );
         PowershellScript::new(script)
     }
 }
@@ -321,7 +337,7 @@ mod tests {
 
     #[test]
     fn test_default_post_install_script_newlines() {
-        let script = PowershellScript::default_post_install_script();
+        let script = PowershellScript::default_post_install_script(false);
         let script_content = script.as_str();
 
         // Basic sanity checks on the script content itself
