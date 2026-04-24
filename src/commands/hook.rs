@@ -10,35 +10,59 @@ pub enum HookCommands {
     #[command(name = "powershell", alias = "pwsh")]
     /// Install the hook for PowerShell automatically
     Powershell {
-        #[arg(short, long, help = "Print the hook instead of installing", conflicts_with = "uninstall")]
+        #[arg(
+            short,
+            long,
+            help = "Print the hook instead of installing",
+            conflicts_with = "uninstall"
+        )]
         print: bool,
-        #[arg(short = 'r', long = "rm", alias = "uninstall", help = "Uninstall the hook", conflicts_with = "print")]
+        #[arg(
+            short = 'r',
+            long = "rm",
+            alias = "uninstall",
+            help = "Uninstall the hook",
+            conflicts_with = "print"
+        )]
         uninstall: bool,
-        #[arg(short, long, help = "Install/Uninstall for all users (requires elevation)")]
+        #[arg(
+            short,
+            long,
+            help = "Install/Uninstall for all users (requires elevation)"
+        )]
         system: bool,
     },
     #[command(name = "bash")]
-    /// Install the hook for Bash automatically
+    /// Print the hook for Bash
     Bash {
-        #[arg(short, long, help = "Print the hook instead of installing", conflicts_with = "uninstall")]
-        print: bool,
-        #[arg(short = 'r', long = "rm", alias = "uninstall", help = "Uninstall the hook", conflicts_with = "print")]
+        #[arg(
+            short = 'r',
+            long = "rm",
+            alias = "uninstall",
+            help = "Uninstall the hook"
+        )]
         uninstall: bool,
     },
     #[command(name = "zsh")]
-    /// Install the hook for Zsh automatically
+    /// Print the hook for Zsh
     Zsh {
-        #[arg(short, long, help = "Print the hook instead of installing", conflicts_with = "uninstall")]
-        print: bool,
-        #[arg(short = 'r', long = "rm", alias = "uninstall", help = "Uninstall the hook", conflicts_with = "print")]
+        #[arg(
+            short = 'r',
+            long = "rm",
+            alias = "uninstall",
+            help = "Uninstall the hook"
+        )]
         uninstall: bool,
     },
     #[command(name = "nu")]
-    /// Install the hook for Nushell automatically
+    /// Print the hook for Nushell
     Nu {
-        #[arg(short, long, help = "Print the hook instead of installing", conflicts_with = "uninstall")]
-        print: bool,
-        #[arg(short = 'r', long = "rm", alias = "uninstall", help = "Uninstall the hook", conflicts_with = "print")]
+        #[arg(
+            short = 'r',
+            long = "rm",
+            alias = "uninstall",
+            help = "Uninstall the hook"
+        )]
         uninstall: bool,
     },
     #[command(name = "wsl")]
@@ -46,7 +70,12 @@ pub enum HookCommands {
     Wsl {
         /// The WSL distro to install in (defaults to the default distro)
         distro: Option<String>,
-        #[arg(short = 'r', long = "rm", alias = "uninstall", help = "Uninstall the hook")]
+        #[arg(
+            short = 'r',
+            long = "rm",
+            alias = "uninstall",
+            help = "Uninstall the hook"
+        )]
         uninstall: bool,
     },
 }
@@ -77,9 +106,36 @@ impl Args {
         mut command: SysCommand,
         timeout: std::time::Duration,
     ) -> anyhow::Result<std::process::Output> {
+        command.stdout(std::process::Stdio::piped());
+        command.stderr(std::process::Stdio::piped());
         let mut child = command.spawn()?;
-        match tokio::time::timeout(timeout, child.wait_with_output()).await {
-            Ok(Ok(output)) => Ok(output),
+
+        let mut stdout_stream = child.stdout.take().expect("stdout piped");
+        let mut stderr_stream = child.stderr.take().expect("stderr piped");
+
+        let stdout_handle = tokio::spawn(async move {
+            use tokio::io::AsyncReadExt;
+            let mut buf = Vec::new();
+            let _ = stdout_stream.read_to_end(&mut buf).await;
+            buf
+        });
+        let stderr_handle = tokio::spawn(async move {
+            use tokio::io::AsyncReadExt;
+            let mut buf = Vec::new();
+            let _ = stderr_stream.read_to_end(&mut buf).await;
+            buf
+        });
+
+        match tokio::time::timeout(timeout, child.wait()).await {
+            Ok(Ok(status)) => {
+                let stdout = stdout_handle.await.unwrap_or_default();
+                let stderr = stderr_handle.await.unwrap_or_default();
+                Ok(std::process::Output {
+                    status,
+                    stdout,
+                    stderr,
+                })
+            }
             Ok(Err(err)) => Err(err.into()),
             Err(_) => {
                 child.kill().await?;
@@ -132,7 +188,7 @@ impl Args {
                         "wsl"
                     };
                     nu_in_wsl = SysCommand::new(wsl_cmd)
-                        .args(&["sh", "-lc", "command -v nu"])
+                        .args(["--", "bash", "-lc", "command -v nu"])
                         .output()
                         .await
                         .map(|o| o.status.success())
@@ -259,11 +315,9 @@ impl Args {
             "wsl"
         };
 
-        let output = Self::run_command_with_timeout(
-            SysCommand::new(wsl_cmd).args(&cmd_args),
-            std::time::Duration::from_secs(10),
-        )
-        .await;
+        let mut cmd = SysCommand::new(wsl_cmd);
+        cmd.args(&cmd_args);
+        let output = Self::run_command_with_timeout(cmd, std::time::Duration::from_secs(30)).await;
 
         match output {
             Ok(output) if output.status.success() => {
@@ -306,11 +360,9 @@ impl Args {
             "wsl"
         };
 
-        let output = Self::run_command_with_timeout(
-            SysCommand::new(wsl_cmd).args(&cmd_args),
-            std::time::Duration::from_secs(10),
-        )
-        .await;
+        let mut cmd = SysCommand::new(wsl_cmd);
+        cmd.args(&cmd_args);
+        let output = Self::run_command_with_timeout(cmd, std::time::Duration::from_secs(30)).await;
 
         match output {
             Ok(output) if output.status.success() => {
@@ -366,7 +418,7 @@ impl super::Command for Args {
                     self.print_hook(Shell::Powershell, &enabled_hooks).await
                 }
             }
-            Some(HookCommands::Bash { print, uninstall }) => {
+            Some(HookCommands::Bash { uninstall }) => {
                 if uninstall || self.rm {
                     anyhow::bail!(
                         "Automatic uninstallation for Bash is not yet supported on Windows host. Please remove the hook from your .bashrc manually."
@@ -375,7 +427,7 @@ impl super::Command for Args {
                     self.print_hook(Shell::Bash, &enabled_hooks).await
                 }
             }
-            Some(HookCommands::Zsh { print, uninstall }) => {
+            Some(HookCommands::Zsh { uninstall }) => {
                 if uninstall || self.rm {
                     anyhow::bail!(
                         "Automatic uninstallation for Zsh is not yet supported on Windows host. Please remove the hook from your .zshrc manually."
@@ -384,7 +436,7 @@ impl super::Command for Args {
                     self.print_hook(Shell::Zsh, &enabled_hooks).await
                 }
             }
-            Some(HookCommands::Nu { print, uninstall }) => {
+            Some(HookCommands::Nu { uninstall }) => {
                 if uninstall || self.rm {
                     anyhow::bail!(
                         "Automatic uninstallation for Nushell is not yet supported. Please remove the hook from your config.nu manually."
