@@ -72,10 +72,13 @@ If you prefer to add the hooks manually, you can print them to your terminal:
 
 ```powershell
 # PowerShell
-sfsu hook --shell powershell
+sfsu hook powershell
 
 # Bash (WSL/MSYS2)
-sfsu hook --shell bash
+sfsu hook bash
+
+# Nushell
+sfsu hook nu
 ```
 
 And then add the output to your shell's profile.
@@ -86,10 +89,20 @@ You can also optionally disable certain hooks via the `--disable <COMMAND>` flag
 sfsu hook --disable list
 ```
 
+To uninstall the hook, use the `-rm` flag:
+
+```powershell
+# Powershell
+sfsu hook powershell -rm
+
+# WSL
+sfsu hook wsl -rm
+```
+
 Nushell is also supported. Run the following command to save it to a file.
 
 ```sh
-sfsu hook --shell nu | save -f path/to/some/file.nu
+sfsu hook nu | save -f path/to/some/file.nu
 ```
 
 Then source it in your `config.nu` (situated in path `$nu.config-path`).
