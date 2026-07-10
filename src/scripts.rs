@@ -112,13 +112,87 @@ impl PowershellScript {
     pub fn save_to(&self, directory: impl AsRef<Path>) -> Result<ScriptRunner> {
         let hash = blake3::hash(self.script.as_bytes());
 
-        let file_path = directory.as_ref().join(format!("{hash}.ps1"));
+        let directory = directory.as_ref();
+        if !directory.exists() {
+            std::fs::create_dir_all(directory)?;
+        }
+
+        let file_path = directory.join(format!("{hash}.ps1"));
 
         if !file_path.exists() {
             std::fs::write(&file_path, self.script.as_bytes())?;
         }
 
         ScriptRunner::from_path(file_path)
+    }
+
+    /// Generate a default post-install PowerShell script to add hooks to user profiles.
+    ///
+    /// The script will:
+    /// - Append Invoke-Expression (&sfsu hook) to $PROFILE if not present.
+    /// - Be idempotent.
+    #[must_use]
+    pub fn default_post_install_script(system: bool) -> Self {
+        let profile = if system {
+            "$PROFILE.AllUsersAllHosts"
+        } else {
+            "$PROFILE"
+        };
+        let script = format!(
+            r##"$hook = "Invoke-Expression (&sfsu hook)"
+$profilePath = {profile}
+if (-not $profilePath) {{
+    Write-Error "sfsu: Profile path is not defined. Cannot install hook automatically."
+    exit 1
+}}
+if (-not (Test-Path -Path (Split-Path -Path $profilePath -Parent))) {{ New-Item -ItemType Directory -Path (Split-Path -Path $profilePath -Parent) -Force | Out-Null }}
+if (-not (Test-Path -Path $profilePath)) {{ New-Item -ItemType File -Path $profilePath -Force | Out-Null }}
+$profileContent = Get-Content -Path $profilePath -ErrorAction SilentlyContinue -Raw
+if ($null -ne $profileContent -and ($profileContent -match "# >>> sfsu hook >>>" -or $profileContent.Contains($hook))) {{
+    Write-Host "sfsu: Hook already present in $profilePath"
+}} else {{
+    Add-Content -Path $profilePath -Value "`r`n# >>> sfsu hook >>>`r`n$hook`r`n# <<< sfsu hook <<<`r`n"
+    Write-Host "sfsu: Added hook to $profilePath"
+}}
+"##
+        );
+        PowershellScript::new(script)
+    }
+
+    /// Generate a default post-uninstall PowerShell script to remove hooks from user profiles.
+    ///
+    /// The script will:
+    /// - Remove the sfsu hook block from $PROFILE if present.
+    /// - Be idempotent.
+    #[must_use]
+    pub fn default_post_uninstall_script(system: bool) -> Self {
+        let profile = if system {
+            "$PROFILE.AllUsersAllHosts"
+        } else {
+            "$PROFILE"
+        };
+        let script = format!(
+            r##"$hook = "Invoke-Expression (&sfsu hook)"
+$profilePath = {profile}
+if ($profilePath -and (Test-Path -Path $profilePath)) {{
+    $profileContent = Get-Content -Path $profilePath -Raw
+    if ($null -ne $profileContent -and $profileContent -match "# >>> sfsu hook >>>") {{
+        $regex = "(?s)(\r?\n)*# >>> sfsu hook >>>.*?# <<< sfsu hook <<<(\r?\n)*"
+        $newContent = $profileContent -replace $regex, "`r`n"
+        $newContent.Trim() | Set-Content -Path $profilePath
+        Write-Host "sfsu: Removed hook block from $profilePath"
+    }} elseif ($null -ne $profileContent -and $profileContent.Contains($hook)) {{
+        # Fallback: Remove the command line if markers are missing
+        $newContent = $profileContent -replace [regex]::Escape($hook), ""
+        $newContent.Trim() | Set-Content -Path $profilePath
+        Write-Host "sfsu: Removed loose hook command from $profilePath"
+    }} else {{
+        Write-Host "sfsu: Hook not found in $profilePath"
+    }}
+}}
+"##
+        );
+        PowershellScript::new(script)
     }
 }
 
@@ -262,16 +336,36 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_powershell_hello_world() {
-        let ctx = User::new().unwrap();
+    fn test_default_post_install_script_newlines() {
+        let script = PowershellScript::default_post_install_script(false);
+        let script_content = script.as_str();
 
-        let script = PowershellScript::new("Write-Host 'Hello, world!'")
+        // Basic sanity checks on the script content itself
+        assert!(script_content.contains("`r`n# >>> sfsu hook >>>`r`n"));
+
+        let ctx = User::new().unwrap();
+        let temp_profile = ctx.scripts_path().join("test_profile.ps1");
+        if temp_profile.exists() {
+            std::fs::remove_file(&temp_profile).unwrap();
+        }
+
+        // Create a script that sets a fake $PROFILE and runs the default post-install script
+        let test_runner_script = format!(
+            "$PROFILE = '{}'\n{}",
+            temp_profile.to_string_lossy().replace('\'', "''"),
+            script_content
+        );
+
+        let runner = PowershellScript::new(test_runner_script)
             .save(&ctx)
             .unwrap();
 
-        let output = script.run().unwrap();
+        let output = runner.run().expect("Failed to run test script");
+        assert!(output.status.success());
 
-        assert_eq!(output.status.code(), Some(0));
-        assert_eq!(output.stdout, b"Hello, world!\r\n");
+        let profile_content = std::fs::read_to_string(&temp_profile).unwrap();
+        assert!(profile_content.contains(
+            "\r\n# >>> sfsu hook >>>\r\nInvoke-Expression (&sfsu hook)\r\n# <<< sfsu hook <<<\r\n"
+        ));
     }
 }
