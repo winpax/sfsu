@@ -98,7 +98,7 @@ log = { version = "0.4", features = ["std"] }
 md-5 = "0.11"
 open = "5.1"
 parking_lot = "0.12"
-phf = { version = "0.13", default-features = false }
+phf = { version = "0.14", default-features = false }
 prodash = { version = "31", features = [
     "render-line",
     "render-line-crossterm",
