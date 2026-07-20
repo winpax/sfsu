@@ -75,7 +75,7 @@ digest = { version = "0.11", optional = true }
 dirs = "6.0"
 dunce = "1.0"
 futures = "0.3"
-git2 = "0.20"
+git2 = "0.21"
 gix = { version = "0.81", features = [
     "blocking-http-transport-reqwest",
     "blocking-network-client",
@@ -163,7 +163,7 @@ url = "2.5"
 [build-dependencies]
 contribs = { git = "https://github.com/winpax/contribs.git", version = "0.1" }
 dotenv = "0.15"
-git2 = "0.20"
+git2 = "0.21"
 heck = "0.5"
 phf_codegen = "0.13"
 reqwest = { version = "0.13", features = ["blocking", "json"] }
