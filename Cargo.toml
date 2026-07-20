@@ -92,7 +92,7 @@ indicatif = { version = "0.18", features = [
     "tokio",
     "rayon",
 ] }
-itertools = "0.14"
+itertools = "0.15"
 konst = "0.4"
 log = { version = "0.4", features = ["std"] }
 md-5 = "0.11"
