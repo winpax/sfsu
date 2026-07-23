@@ -49,7 +49,7 @@ v2 = []
 
 [dependencies]
 anyhow = "1.0"
-base64 = { version = "0.22", optional = true }
+base64 = { version = "0.23", optional = true }
 bat = { version = "0.26", default-features = false, features = ["regex-onig"] }
 blake3 = { version = "1.8", features = ["rayon"] }
 bytes = "1.10"
