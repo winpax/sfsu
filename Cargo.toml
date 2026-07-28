@@ -31,40 +31,40 @@ contexts = []
 default = ["download", "contexts", "manifest-hashes"]
 download = []
 manifest-hashes = [
-    "base64",
-    "digest",
-    "quick-xml",
-    "serde_json_path",
-    "sha1",
-    "sha2",
-    "sxd-document",
-    "sxd-xpath",
-    "tokio-util",
-    "url",
-    "urlencoding",
-    "tokio/fs",
+	"base64",
+	"digest",
+	"quick-xml",
+	"serde_json_path",
+	"sha1",
+	"sha2",
+	"sxd-document",
+	"sxd-xpath",
+	"tokio-util",
+	"url",
+	"urlencoding",
+	"tokio/fs",
 ]
 # Changes that fundamentally change the API are locked behind this feature flag
 v2 = []
 
 [dependencies]
 anyhow = "1.0"
-base64 = { version = "0.22", optional = true }
+base64 = { version = "0.23", optional = true }
 bat = { version = "0.26", default-features = false, features = ["regex-onig"] }
 blake3 = { version = "1.8", features = ["rayon"] }
 bytes = "1.10"
 cfg-if = "1.0"
 chrono = { version = "0.4", features = [
-    "clock",
-    "serde",
-    "std",
+	"clock",
+	"serde",
+	"std",
 ], default-features = false }
-clap = { version = "4.5", features = [
-    "derive",
-    "env",
-    "string",
-    "unicode",
-    "wrap_help",
+clap = { version = "4.6", features = [
+	"derive",
+	"env",
+	"string",
+	"unicode",
+	"wrap_help",
 ] }
 console = { version = "0.16", features = ["windows-console-colors"] }
 const_format = "0.2"
@@ -75,50 +75,50 @@ digest = { version = "0.11", optional = true }
 dirs = "6.0"
 dunce = "1.0"
 futures = "0.3"
-git2 = "0.20"
-gix = { version = "0.81", features = [
-    "blocking-http-transport-reqwest",
-    "blocking-network-client",
-    "worktree-mutation",
+git2 = "0.21"
+gix = { version = "0.86", features = [
+	"blocking-http-transport-reqwest",
+	"blocking-network-client",
+	"worktree-mutation",
 ] }
-gix-object = "0.58"
-glob = "0.3.3"
+gix-object = "0.63"
+glob = "0.3"
 hashbrown = "0.17"
 heck = "0.5"
 human-panic = "2.0"
 indexmap = { version = "2.14", features = ["rayon"] }
 indicatif = { version = "0.18", features = [
-    "improved_unicode",
-    "tokio",
-    "rayon",
+	"improved_unicode",
+	"tokio",
+	"rayon",
 ] }
-itertools = "0.14"
+itertools = "0.15"
 konst = "0.4"
 log = { version = "0.4", features = ["std"] }
 md-5 = "0.11"
 open = "5.1"
 parking_lot = "0.12"
-phf = { version = "0.13", default-features = false }
+phf = { version = "0.14", default-features = false }
 prodash = { version = "31", features = [
-    "render-line",
-    "render-line-crossterm",
+	"render-line",
+	"render-line-crossterm",
 ] }
-quick-xml = { version = "0.39", optional = true, features = ["serialize"] }
+quick-xml = { version = "0.41", optional = true, features = ["serialize"] }
 quork = { version = "0.9", default-features = false, features = [
-    "traits",
-    "macros",
-    "root",
+	"traits",
+	"macros",
+	"root",
 ] }
 rand = "0.10"
 ratatui = { version = "0.30", features = ["macros"] }
 rayon = "1.10"
 regex = "1.12"
 reqwest = { version = "0.13", features = [
-    "blocking",
-    "brotli",
-    "deflate",
-    "gzip",
-    "stream",
+	"blocking",
+	"brotli",
+	"deflate",
+	"gzip",
+	"stream",
 ] }
 semver = { version = "1.0", features = ["serde"] }
 serde = { version = "1.0", features = ["derive"] }
@@ -127,22 +127,22 @@ serde_json_path = { version = "0.7", optional = true }
 serde_with = "3.8"
 sha1 = { version = "0.11", optional = true }
 sha2 = { version = "0.11", optional = true }
-shadow-rs = "1.2"
+shadow-rs = "2.0"
 strum = { version = "0.28", features = ["derive"] }
 sxd-document = { version = "0.3", optional = true }
 sxd-xpath = { version = "0.4", optional = true }
 thiserror = "2.0"
-tokio = { version = "1.47", features = ["full", "process", "parking_lot"] }
+tokio = { version = "1.53", features = ["full", "process", "parking_lot"] }
 tokio-util = { version = "0.7", features = ["codec"], optional = true }
 url = { version = "2.5", features = ["serde"], optional = true }
 urlencoding = { version = "2.1", optional = true }
 vt3 = "0.7"
 which = "8.0"
 windows = { version = "0.62", features = [
-    "Win32_Storage_FileSystem",
-    "Win32_UI_Shell",
-    "Win32_System_Diagnostics",
-    "Win32_System_Diagnostics_ToolHelp",
+	"Win32_Storage_FileSystem",
+	"Win32_UI_Shell",
+	"Win32_System_Diagnostics",
+	"Win32_System_Diagnostics_ToolHelp",
 ] }
 windows-version = "0.1"
 winreg = "0.56"
@@ -153,23 +153,23 @@ criterion = { version = "0.8", features = ["async_tokio", "html_reports"] }
 rayon = "1.10"
 rstest = "0.26"
 tokio = { version = "1.37", features = [
-    "rt",
-    "rt-multi-thread",
-    "macros",
-    "process",
+	"rt",
+	"rt-multi-thread",
+	"macros",
+	"process",
 ] }
 url = "2.5"
 
 [build-dependencies]
 contribs = { git = "https://github.com/winpax/contribs.git", version = "0.1" }
 dotenv = "0.15"
-git2 = "0.20"
+git2 = "0.21"
 heck = "0.5"
-phf_codegen = "0.13"
+phf_codegen = "0.14"
 reqwest = { version = "0.13", features = ["blocking", "json"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-shadow-rs = "1.0"
+shadow-rs = "2.0"
 tokio = { version = "1.37", features = ["full"] }
 toml = "1.1"
 winres = "0.1"

@@ -95,7 +95,7 @@ impl Repo {
     }
 
     /// Get a reference to a named remote
-    pub fn find_remote<'a>(&self, name: impl Into<&'a BStr>) -> Option<gix::Remote<'_>> {
+    pub fn find_remote<'a>(&self, name: impl gix::config::AsBStr) -> Option<gix::Remote<'_>> {
         self.gitoxide.find_remote(name).ok()
     }
 
