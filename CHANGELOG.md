@@ -20,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Use install manifest write time instead of app directory write time
   for "last update" time if available
+- Temporary fix for failed parsing of certain package names containing non-alphanumeric characters
+  - Thanks @Locietta
 
 ## [1.17.2]
 
