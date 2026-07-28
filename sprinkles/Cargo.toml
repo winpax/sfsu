@@ -5,14 +5,13 @@ description = "A Rust based abstraction layer for Scoop"
 edition = "2024"
 homepage = "https://github.com/winpax/sprinkles"
 include = [
-    "src/**/*",
-    "build.rs",
-    "Cargo.toml",
-    "LICENSE-APACHE",
-    "LICENSE-MIT",
-    "README.md",
-    "benches/**/*",
-    "tests/**/*",
+	"src/**/*",
+	"Cargo.toml",
+	"LICENSE-APACHE",
+	"LICENSE-MIT",
+	"README.md",
+	"benches/**/*",
+	"tests/**/*",
 ]
 keywords = ["api", "scoop", "windows", "package", "manager"]
 license = "MIT OR Apache-2.0"
@@ -29,12 +28,12 @@ name = "sprinkles"
 [package.metadata.docs.rs]
 default-target = "x86_64-unknown-linux-gnu"
 features = [
-    "beta",
-    "git2/vendored-libgit2",
-    "gix/blocking-http-transport-reqwest-native-tls",
-    "reqwest/native-tls-vendored",
-    "git2/vendored-openssl",
-    "manifest-hashes",
+	"beta",
+	"git2/vendored-libgit2",
+	"gix/blocking-http-transport-reqwest-native-tls",
+	"reqwest/native-tls-vendored",
+	"git2/vendored-openssl",
+	"manifest-hashes",
 ]
 rustc-args = ["--cfg", "docsrs", "--cfg", "reqwest_unstable"]
 
