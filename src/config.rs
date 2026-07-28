@@ -36,13 +36,13 @@ pub struct Scoop {
     /// The 'current' version alias will not be used. Shims and shortcuts will point to specific version instead
     pub no_junction: bool,
 
-    #[serde(default, skip_serializing_if = "Skip::skip", rename = "scoop_repo")]
+    #[serde(default, rename = "scoop_repo")]
     /// Git repository containing the scoop adaptor's source code
     ///
     /// This configuration is useful for custom forks of scoop, or a scoop replacement
     pub repo: repo::ScoopRepo,
 
-    #[serde(default, skip_serializing_if = "Skip::skip", rename = "scoop_branch")]
+    #[serde(default, rename = "scoop_branch")]
     /// Allow to use different branch than master
     ///
     /// Could be used for testing specific functionalities before released into all users
