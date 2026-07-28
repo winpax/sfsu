@@ -81,15 +81,14 @@ impl Reference {
                 Some(name.clone())
             }
             manifest::Reference::File(path) => {
-                let valid_path = if path.file_name() == Some(OsStr::new("manifest.json")) {
-                    resolve_name_path(path)
+                if path.file_name() == Some(OsStr::new("manifest.json")) {
+                    resolve_name_path(path)?
+                        .file_name()?
+                        .to_str()
+                        .map(ToString::to_string)
                 } else {
-                    Some(path.clone())
-                };
-
-                valid_path.and_then(|path| {
-                    Some(path.with_extension("").file_name()?.to_str()?.to_string())
-                })
+                    path.file_stem()?.to_str().map(ToString::to_string)
+                }
             }
             #[cfg(feature = "manifest-hashes")]
             manifest::Reference::Url(url) => Some(
@@ -322,6 +321,16 @@ fn resolve_name_path(path: &Path) -> Option<PathBuf> {
         }
     }
 
+    let manifest_dir = path.parent()?;
+    // Installed manifests use `<app>/current/manifest.json`; the app directory
+    // name may contain characters such as dots and hyphens.
+    if manifest_dir.file_name() == Some(OsStr::new("current")) {
+        return manifest_dir
+            .parent()
+            .filter(|app_dir| app_dir.file_name().is_some())
+            .map(Path::to_path_buf);
+    }
+
     let mut path = path.to_path_buf();
 
     loop {
@@ -386,6 +395,12 @@ mod tests {
     #[case("sfsu/manifest.json", Some("sfsu"))]
     #[case("example/sfsu", Some("sfsu"))]
     #[case("sfsu/current/manifest.json", Some("sfsu"))]
+    #[case("draw.io/current/manifest.json", Some("draw.io"))]
+    #[case("obs-studio/current/manifest.json", Some("obs-studio"))]
+    #[case(
+        "win10_brightnessslider/current/manifest.json",
+        Some("win10_brightnessslider")
+    )]
     #[case("sfsu/1.8.0/manifest.json", Some("sfsu"))]
     #[case("example/sfsu.json", Some("sfsu"))]
     fn test_file_reference_name(#[case] path: PathBuf, #[case] expected: Option<&str>) {
