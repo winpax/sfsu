@@ -39,13 +39,13 @@ impl<'a> SprinklesVersion<'a> {
             build_env:{rust_version},{rust_channel} \n\
             libgit2:{major}.{minor}.{patch}",
             sprinkles_version = self.version(),
-            branch = &map.get("BRANCH").expect("missing BRANCH").v,
-            build_time = &map.get("BUILD_TIME").expect("missing BUILD_TIME").v,
-            pkg_version = &map.get("PKG_VERSION").expect("missing PKG_VERSION").v,
-            rust_channel = &map.get("RUST_CHANNEL").expect("missing RUST_CHANNEL").v,
-            rust_version = &map.get("RUST_VERSION").expect("missing RUST_VERSION").v,
-            short_commit = &map.get("SHORT_COMMIT").expect("missing SHORT_COMMIT").v,
-            tag = &map.get("TAG").expect("missing TAG").v,
+            branch = map.get("BRANCH").expect("missing BRANCH").v,
+            build_time = map.get("BUILD_TIME").expect("missing BUILD_TIME").v,
+            pkg_version = map.get("PKG_VERSION").expect("missing PKG_VERSION").v,
+            rust_channel = map.get("RUST_CHANNEL").expect("missing RUST_CHANNEL").v,
+            rust_version = map.get("RUST_VERSION").expect("missing RUST_VERSION").v,
+            short_commit = map.get("SHORT_COMMIT").expect("missing SHORT_COMMIT").v,
+            tag = map.get("TAG").expect("missing TAG").v,
         )
     }
 

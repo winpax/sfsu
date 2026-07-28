@@ -63,17 +63,17 @@ impl Display for SignatureDisplay<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let name = match self.sig {
             Signature::Git2(sig) => sig.name().map(std::string::ToString::to_string),
-            Signature::Gitoxide(sig) => Some(sig.name.to_string()),
+            Signature::Gitoxide(sig) => Ok(sig.name.to_string()),
         }
         .expect("name is always set");
 
         let email = match self.sig {
             Signature::Git2(sig) => sig.email().map(std::string::ToString::to_string),
-            Signature::Gitoxide(sig) => Some(sig.email.to_string()),
+            Signature::Gitoxide(sig) => Ok(sig.email.to_string()),
         };
 
         if self.show_emails
-            && let Some(email) = email
+            && let Ok(email) = email
         {
             return write!(f, "{name} <{email}>");
         }
