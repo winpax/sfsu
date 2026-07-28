@@ -21,7 +21,7 @@ jobs:
     runs-on: blacksmith-4vcpu-windows-2025
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - uses: Swatinem/rust-cache@v2.9.0
 
       - name: Generate docs
@@ -31,7 +31,7 @@ jobs:
         run: echo '<meta http-equiv="refresh" content="0; url=sprinkles">' > target/doc/index.html
 
       - name: Checkout gh-pages
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: gh-pages
           path: gh-pages
