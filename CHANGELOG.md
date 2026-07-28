@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   for "last update" time if available
 - Temporary fix for failed parsing of certain package names containing non-alphanumeric characters
   - Thanks @Locietta
+- Temporary fix for update removing from and adding to config [#1123](https://github.com/winpax/sfsu/issues/1123)
 
 ## [1.17.2]
 
