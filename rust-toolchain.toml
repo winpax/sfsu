@@ -1,9 +1,9 @@
 [toolchain]
-channel = "1.97.0"
+channel = "1.97.1"
 components = ["rustfmt", "clippy"]
 profile = "minimal"
 targets = [
-    "aarch64-pc-windows-msvc",
-    "i686-pc-windows-msvc",
-    "x86_64-pc-windows-msvc",
+	"aarch64-pc-windows-msvc",
+	"i686-pc-windows-msvc",
+	"x86_64-pc-windows-msvc",
 ]

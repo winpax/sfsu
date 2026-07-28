@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Replace toml_edit with toml crate
 - Update sprinkles library to 0.23.0
 - Use gitoxide for fetching during bucket update
+- Build with latest Rust v1.97.1
 
 ### Fixed
 
