@@ -151,7 +151,7 @@ winreg = "0.56"
 anyhow = "1.0"
 criterion = { version = "0.8", features = ["async_tokio", "html_reports"] }
 rayon = "1.10"
-rstest = "0.26"
+rstest = "0.27"
 tokio = { version = "1.37", features = [
 	"rt",
 	"rt-multi-thread",
