@@ -72,7 +72,7 @@ crossterm = "0.29"
 derive_more = { version = "2.0", features = ["deref_mut", "deref", "as_ref"] }
 dialoguer = "0.12"
 digest = { version = "0.11", optional = true }
-dirs = "6.0"
+dirs = "7.0"
 dunce = "1.0"
 futures = "0.3"
 git2 = "0.21"
