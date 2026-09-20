@@ -27,16 +27,13 @@ const LEGACY_INSTALL: &str = "install.json";
 /// Extension-stripped names of every app metadata file, in either layout
 const METADATA_STEMS: [&str; 4] = ["scoop-manifest", "manifest", "scoop-install", "install"];
 
-/// Join `dir` with `name`, falling back to `legacy` when `name` does not exist
-///
-/// This performs a filesystem check on the prefixed path.
+/// Join `dir` with `name`, falling back to `legacy` only when `name` is known
+/// to be absent. An I/O error keeps the prefixed path, so the caller reports it.
 fn resolve(dir: &Path, name: &str, legacy: &str) -> PathBuf {
-    let path = dir.join(name);
-
-    if path.exists() {
-        path
-    } else {
+    if matches!(dir.join(name).try_exists(), Ok(false)) {
         dir.join(legacy)
+    } else {
+        dir.join(name)
     }
 }
 
