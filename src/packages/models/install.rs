@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     Architecture,
     contexts::ScoopContext,
-    packages::{CreateManifest, Result},
+    packages::{CreateManifest, Result, metadata},
 };
 
 #[allow(clippy::unsafe_derive_deserialize)]
@@ -70,11 +70,8 @@ impl Manifest {
     /// - Missing or invalid manifest
     pub fn get_manifest(&self, ctx: &impl ScoopContext) -> Result<super::manifest::Manifest> {
         let name = unsafe { self.name() };
-        let manifest_path = ctx
-            .apps_path()
-            .join(name)
-            .join("current")
-            .join("manifest.json");
+        let manifest_path =
+            metadata::resolve_manifest_path(ctx.apps_path().join(name).join("current"));
 
         Ok(super::manifest::Manifest::from_path(manifest_path)?.with_name(name))
     }

@@ -5,7 +5,7 @@ use std::{path::PathBuf, rc::Rc};
 use crate::{
     contexts::ScoopContext,
     packages::{
-        CreateManifest, InstallManifest, Manifest,
+        CreateManifest, InstallManifest, Manifest, metadata,
         reference::{self, manifest, package},
     },
     system::common::{Common, System},
@@ -129,7 +129,7 @@ impl<'a, C: ScoopContext> PackageHandle<'a, C> {
     /// # Errors
     /// - Loading and parsing the manifest failed
     pub fn local_manifest(&self) -> Result<Manifest> {
-        let manifest_path = self.current().join("manifest.json");
+        let manifest_path = metadata::resolve_manifest_path(self.current());
 
         Ok(Manifest::from_path(manifest_path)?)
     }
@@ -139,7 +139,7 @@ impl<'a, C: ScoopContext> PackageHandle<'a, C> {
     /// # Errors
     /// - Loading and parsing the install manifest failed
     pub fn install_manifest(&self) -> Result<InstallManifest> {
-        let install_path = self.current().join("install.json");
+        let install_path = metadata::resolve_install_path(self.current());
 
         Ok(InstallManifest::from_path(install_path)?)
     }

@@ -4,7 +4,7 @@ use crate::{
     Architecture, config,
     contexts::ScoopContext,
     hash::Hash,
-    packages::{CreateManifest, Manifest, reference::package},
+    packages::{CreateManifest, Manifest, metadata, reference::package},
     progress::{ProgressOptions, indicatif::ProgressBar, style},
     requests::USER_AGENT,
 };
@@ -139,7 +139,7 @@ impl super::Command for Args {
         let manifests = if self.all {
             ctx.installed_apps()?
                 .into_par_iter()
-                .map(|path| path.join("current").join("manifest.json"))
+                .map(|path| metadata::resolve_manifest_path(path.join("current")))
                 .filter(|path| path.exists())
                 // The closure is redundant, but it's necessary to avoid a rust-analyzer error
                 .map(|path| Manifest::from_path(path))

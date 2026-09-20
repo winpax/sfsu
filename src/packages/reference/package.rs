@@ -13,7 +13,7 @@ use crate::{
     buckets::Bucket,
     contexts::ScoopContext,
     handles::{self, packages::PackageHandle},
-    packages::{CreateManifest, Manifest},
+    packages::{CreateManifest, Manifest, metadata},
     requests::Client,
 };
 
@@ -81,7 +81,7 @@ impl Reference {
                 Some(name.clone())
             }
             manifest::Reference::File(path) => {
-                if path.file_name() == Some(OsStr::new("manifest.json")) {
+                if path.file_name().is_some_and(metadata::is_manifest) {
                     resolve_name_path(path)?
                         .file_name()?
                         .to_str()
@@ -207,9 +207,9 @@ impl Reference {
     pub fn first_installed(&self, ctx: &impl ScoopContext) -> Result<Manifest, Error> {
         let app_path = self.first_installed_path(ctx)?;
 
-        Ok(Manifest::from_path(
-            app_path.join("current").join("manifest.json"),
-        )?)
+        Ok(Manifest::from_path(metadata::resolve_manifest_path(
+            app_path.join("current"),
+        ))?)
     }
 
     #[must_use]
@@ -322,8 +322,8 @@ fn resolve_name_path(path: &Path) -> Option<PathBuf> {
     }
 
     let manifest_dir = path.parent()?;
-    // Installed manifests use `<app>/current/manifest.json`; the app directory
-    // name may contain characters such as dots and hyphens.
+    // Installed manifests use `<app>/current/[scoop-]manifest.json`; the app
+    // directory name may contain characters such as dots and hyphens.
     if manifest_dir.file_name() == Some(OsStr::new("current")) {
         return manifest_dir
             .parent()
@@ -403,6 +403,18 @@ mod tests {
     )]
     #[case("sfsu/1.8.0/manifest.json", Some("sfsu"))]
     #[case("example/sfsu.json", Some("sfsu"))]
+    // Scoop 0.6.0 prefixed the installed metadata file names
+    #[case("scoop-manifest.json", None)]
+    #[case("current/scoop-manifest.json", None)]
+    #[case("sfsu/scoop-manifest.json", Some("sfsu"))]
+    #[case("sfsu/current/scoop-manifest.json", Some("sfsu"))]
+    #[case("draw.io/current/scoop-manifest.json", Some("draw.io"))]
+    #[case("obs-studio/current/scoop-manifest.json", Some("obs-studio"))]
+    #[case(
+        "win10_brightnessslider/current/scoop-manifest.json",
+        Some("win10_brightnessslider")
+    )]
+    #[case("sfsu/1.8.0/scoop-manifest.json", Some("sfsu"))]
     fn test_file_reference_name(#[case] path: PathBuf, #[case] expected: Option<&str>) {
         let expected = expected.map(std::string::ToString::to_string);
         let reference = Reference::from(manifest::Reference::File(path));

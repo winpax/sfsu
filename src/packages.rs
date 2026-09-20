@@ -36,6 +36,7 @@ use crate::{
 pub mod array;
 pub mod downloading;
 pub mod installer;
+pub mod metadata;
 pub mod models;
 pub mod reference;
 
@@ -322,22 +323,7 @@ where
 
 impl CreateManifest for Manifest {
     fn with_name(mut self, path: impl AsRef<Path>) -> Self {
-        let ext_stripped = path.as_ref().with_extension("");
-
-        let name = ext_stripped.file_name().map(|f| f.to_string_lossy());
-
-        if let Some(name) = name {
-            if name == "manifest" || name == "install" {
-                let mut path_buf = path.as_ref().to_path_buf();
-
-                if path_buf.pop()
-                    && path_buf.pop()
-                    && let Some(name) = path_buf.file_name()
-                {
-                    self.set_name(name.to_string_lossy());
-                }
-            }
-
+        if let Some(name) = metadata::name_from_path(path.as_ref()) {
             self.set_name(name);
         }
 
@@ -360,12 +346,7 @@ impl CreateManifest for Manifest {
 
 impl CreateManifest for InstallManifest {
     fn with_name(mut self, path: impl AsRef<Path>) -> Self {
-        if let Some(name) = path
-            .as_ref()
-            .with_extension("")
-            .file_name()
-            .map(|f| f.to_string_lossy())
-        {
+        if let Some(name) = metadata::name_from_path(path.as_ref()) {
             self.set_name(name);
         }
 
@@ -387,7 +368,7 @@ impl InstallManifest {
         let installed_apps = ctx.installed_apps()?;
         installed_apps
             .par_iter()
-            .map(|path| Self::from_path(path.join("current/install.json")))
+            .map(|path| Self::from_path(metadata::resolve_install_path(path.join("current"))))
             .collect::<Result<Vec<_>>>()
     }
 
@@ -400,12 +381,12 @@ impl InstallManifest {
 
         Ok(installed_apps
             .par_iter()
-            .filter_map(
-                |path| match Self::from_path(path.join("current/install.json")) {
+            .filter_map(|path| {
+                match Self::from_path(metadata::resolve_install_path(path.join("current"))) {
                     Ok(v) => Some(v.with_name(path)),
                     Err(_) => None,
-                },
-            )
+                }
+            })
             .collect::<Vec<_>>())
     }
 }
@@ -522,15 +503,17 @@ impl Manifest {
         Ok(installed_apps
             .par_iter()
             .map(|path| {
-                Self::from_path(path.join("current/manifest.json")).and_then(|mut manifest| {
-                    manifest.set_name(
-                        path.file_name()
-                            .map(|f| f.to_string_lossy().to_string())
-                            .ok_or(Error::MissingFileName)?,
-                    );
+                Self::from_path(metadata::resolve_manifest_path(path.join("current"))).and_then(
+                    |mut manifest| {
+                        manifest.set_name(
+                            path.file_name()
+                                .map(|f| f.to_string_lossy().to_string())
+                                .ok_or(Error::MissingFileName)?,
+                        );
 
-                    Ok(manifest)
-                })
+                        Ok(manifest)
+                    },
+                )
             })
             .collect::<Vec<_>>())
     }
@@ -850,10 +833,8 @@ impl Manifest {
     /// - Missing or invalid [`InstallManifest`]
     pub fn install_manifest(&self, ctx: &impl ScoopContext) -> Result<InstallManifest> {
         let apps_path = ctx.apps_path();
-        let install_path = apps_path
-            .join(unsafe { self.name() })
-            .join("current")
-            .join("install.json");
+        let install_path =
+            metadata::resolve_install_path(apps_path.join(unsafe { self.name() }).join("current"));
 
         debug!("Getting install manifest for {}", install_path.display());
 
@@ -870,10 +851,8 @@ pub fn is_installed(
     manifest_name: impl AsRef<Path>,
     bucket: Option<impl AsRef<str>>,
 ) -> bool {
-    let install_path = ctx
-        .apps_path()
-        .join(manifest_name)
-        .join("current/install.json");
+    let install_path =
+        metadata::resolve_install_path(ctx.apps_path().join(manifest_name).join("current"));
 
     match bucket {
         Some(bucket) => {

@@ -258,7 +258,7 @@ mod tests {
         app_paths
             .into_iter()
             .filter_map(|path| {
-                let path = path.join("current/install.json");
+                let path = packages::metadata::resolve_install_path(path.join("current"));
                 let result = InstallManifest::from_path(path);
 
                 match result {
