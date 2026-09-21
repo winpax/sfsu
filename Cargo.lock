@@ -4795,7 +4795,7 @@ dependencies = [
 
 [[package]]
 name = "sfsu"
-version = "1.17.4"
+version = "1.18.0"
 dependencies = [
  "anyhow",
  "base64 0.23.1",

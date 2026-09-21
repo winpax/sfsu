@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.18.0]
+
+### Changed
+
+- Various dependency updates
+- Add support for scoop-prefixed metadata names
+  - Thanks @Locietta
+
 ## [1.17.4]
 
 ### Changed
