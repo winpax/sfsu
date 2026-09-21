@@ -2,7 +2,10 @@ use std::{path::Path, str::FromStr, time::Duration};
 
 use crate::{
     contexts::ScoopContext,
-    packages::reference::{manifest, package},
+    packages::{
+        metadata,
+        reference::{manifest, package},
+    },
     progress::{
         Message,
         indicatif::{MultiProgress, ProgressBar},
@@ -102,7 +105,7 @@ impl Args {
                 let installed_apps: Vec<package::Reference> = {
                     let installed_apps = ctx.installed_apps()?;
                     let manifest_paths = installed_apps.into_iter().filter_map(|path| {
-                        let manifest_path = path.join("current").join("manifest.json");
+                        let manifest_path = metadata::resolve_manifest_path(path.join("current"));
 
                         manifest_path
                             .try_exists()

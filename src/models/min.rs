@@ -1,6 +1,6 @@
 use crate::{
     contexts::ScoopContext,
-    packages::{CreateManifest, InstallManifest, Manifest},
+    packages::{CreateManifest, InstallManifest, Manifest, metadata},
 };
 use anyhow::Context;
 use chrono::{DateTime, Local};
@@ -73,7 +73,7 @@ impl Info {
 
         let app_current = path.join("current");
 
-        let install_manifest_path = app_current.join("install.json");
+        let install_manifest_path = metadata::resolve_install_path(&app_current);
         let (install_manifest_broken, install_manifest) =
             match InstallManifest::from_path(&install_manifest_path) {
                 Ok(install_manifest) => (false, install_manifest),
@@ -98,7 +98,7 @@ impl Info {
         };
 
         let (manifest_broken, manifest) =
-            match Manifest::from_path(app_current.join("manifest.json")) {
+            match Manifest::from_path(metadata::resolve_manifest_path(&app_current)) {
                 Ok(manifest) => (false, manifest),
                 _ => (true, Manifest::default()),
             };
