@@ -103,7 +103,7 @@ prodash = { version = "31", features = [
 	"render-line",
 	"render-line-crossterm",
 ] }
-quick-xml = { version = "0.41", optional = true, features = ["serialize"] }
+quick-xml = { version = "0.42", optional = true, features = ["serialize"] }
 quork = { version = "0.9", default-features = false, features = [
 	"traits",
 	"macros",
