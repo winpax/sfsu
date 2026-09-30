@@ -8,6 +8,7 @@ use crate::contexts::Error;
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, ListVariants)]
 /// Supported architectures
 pub enum Architecture {
+    #[serde(rename = "arm64")]
     /// 64 bit Arm
     Arm64,
     /// 64 bit
@@ -80,5 +81,23 @@ impl fmt::Display for Architecture {
 impl Default for Architecture {
     fn default() -> Self {
         Self::from_env()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[rstest]
+    #[case("64bit", super::Architecture::X64)]
+    #[case("32bit", super::Architecture::X86)]
+    #[case("arm64", super::Architecture::Arm64)]
+    fn test_parse_architecture_from_scoop_string(
+        #[case] string: &str,
+        #[case] variant: super::Architecture,
+    ) {
+        let ex_var = super::Architecture::from_scoop_string(string);
+        assert_eq!(ex_var, variant, "mismatched architecture enum");
+
+        let ex_str = variant.to_string();
+        assert_eq!(ex_str, string, "mismatched architecture string");
     }
 }
