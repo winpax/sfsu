@@ -31,7 +31,7 @@ usage = '''
 flag "--target <target>" help="Build for the given target triple" default="{{ vars.target }}"
 flag "--features <features>" help="Build with the given features enabled" default="default"
 flag "--beta" help="Build with the beta feature enabled" env="BETA_BUILD"
-flag "--profile <profile>" help="Build in the given profile" default="debug"
+flag "--profile <profile>" help="Build in the given profile" default="dev"
 '''
 
 [tasks."build:all"]
