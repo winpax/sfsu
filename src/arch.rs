@@ -87,16 +87,17 @@ impl Default for Architecture {
 #[cfg(test)]
 mod tests {
 	use rstest::rstest;
+	use super::Architecture;
 
     #[rstest]
-    #[case("64bit", super::Architecture::X64)]
-    #[case("32bit", super::Architecture::X86)]
-    #[case("arm64", super::Architecture::Arm64)]
+    #[case("64bit", Architecture::X64)]
+    #[case("32bit", Architecture::X86)]
+    #[case("arm64", Architecture::Arm64)]
     fn test_parse_architecture_from_scoop_string(
         #[case] string: &str,
-        #[case] variant: super::Architecture,
+        #[case] variant: Architecture,
     ) {
-        let ex_var = super::Architecture::from_scoop_string(string);
+        let ex_var = Architecture::from_scoop_string(string);
         assert_eq!(ex_var, variant, "mismatched architecture enum");
 
         let ex_str = variant.to_string();
