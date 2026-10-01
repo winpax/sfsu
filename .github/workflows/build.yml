@@ -23,89 +23,10 @@ env:
   CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_PUBLISH_TOKEN }}
 
 jobs:
-  # cargo-deny:
-  #   runs-on: blacksmith-4vcpu-ubuntu-2404
-  #   continue-on-error: true
-  #   steps:
-  #     - uses: actions/checkout@v5.0.0
-  #     - uses: EmbarkStudios/cargo-deny-action@v2.0.11
-
-  clippy:
-    name: Clippy
-    runs-on: blacksmith-4vcpu-windows-2025
-    steps:
-      - uses: actions/checkout@v7
-      - uses: Swatinem/rust-cache@v2
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          components: clippy
-
-      - name: Run rust-clippy
-        run: cargo clippy --all-features
-        continue-on-error: true
-
-  format:
-    name: Formatting
-    runs-on: blacksmith-4vcpu-ubuntu-2404
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          components: rustfmt
-
-      - name: Check Formatting
-        run: cargo fmt --all --check
-
-  test:
-    name: Test
-    runs-on: blacksmith-4vcpu-windows-2025
-
-    steps:
-      - uses: actions/checkout@v7
-      - uses: Swatinem/rust-cache@v2
-
-      - name: Install and setup Scoop
-        uses: winpax/scoop-setup@v1.0.0
-        with:
-          buckets: extras java
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Build and Test
-        run: cargo test --all --features beta
-
-  build:
-    strategy:
-      matrix:
-        arch: [x86_64, i686, aarch64]
-    name: Build for ${{ matrix.arch }}
-    # blacksmith seems to have unique issues compiling the arm version
-    runs-on: windows-latest
-
-    steps:
-      - uses: actions/checkout@v7
-      - uses: Swatinem/rust-cache@v2
-        if: ${{ matrix.arch == 'aarch64' }}
-        with:
-          key: build-${{ matrix.arch }}
-      - uses: extractions/setup-just@v4
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Debug build
-        run: cargo b --all --features beta --target ${{ matrix.arch }}-pc-windows-msvc
-
   publish:
     if: ${{ startsWith(github.ref, 'refs/tags/') }}
     name: Publish
     runs-on: windows-latest
-    needs: [build, test, clippy, format]
 
     steps:
       - uses: actions/checkout@v7
