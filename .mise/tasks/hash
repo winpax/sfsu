@@ -1,11 +1,15 @@
-import sys
+#!/usr/bin/env python
+#MISE description="Hash a file with SHA256"
+#USAGE arg "<file>" help="The file to hash"
+
 import hashlib
+import os
 
 # Totally arbitrary
 BUF_SIZE = 65536  # 64 kb
-TO_HASH = sys.argv[1]
+TO_HASH = os.environ["usage_file"]
 
-sha1 = hashlib.sha256()
+hasher = hashlib.sha256()
 
 with open(TO_HASH, "rb") as f:
     while True:
@@ -13,8 +17,8 @@ with open(TO_HASH, "rb") as f:
         if not data:
             break
 
-        sha1.update(data)
+        hasher.update(data)
 
 
 with open(TO_HASH + ".sha256", "w", encoding="utf8") as f:
-    f.write(sha1.hexdigest())
+    f.write(hasher.hexdigest())

@@ -57,7 +57,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut res = winres::WindowsResource::new();
     res.set_manifest(WIN_MANIFEST);
 
-    res.compile().expect("Failed to compile Windows resources");
+    if let Err(e) = res.compile() {
+		eprintln!("Failed to compile Windows resource: {e}");
+	}
 
     let lockfile = Lockfile::new();
 

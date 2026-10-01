@@ -1,0 +1,71 @@
+[settings]
+idiomatic_version_file_enable_tools = ["rust"]
+
+[vars]
+target = "x86_64-pc-windows-msvc"
+
+[tools]
+python = "3.14"
+
+[tools.rust]
+version = "1.98.1"
+components = ["rustfmt", "clippy"]
+profile = "minimal"
+targets = ["aarch64-pc-windows-msvc", "i686-pc-windows-msvc", "x86_64-pc-windows-msvc", "aarch64-pc-windows-gnullvm", "i686-pc-windows-gnullvm", "x86_64-pc-windows-gnullvm"]
+
+[tasks.check]
+alias = "c"
+run = "cargo c"
+
+[tasks.build]
+alias = "b"
+run = '''
+cargo b --features ${usage_features?:-default} \
+	{% if usage.beta %}
+		--features beta
+	{% endif %} \
+	--target ${usage_target?} \
+	--profile ${usage_profile?}
+'''
+usage = '''
+flag "--target <target>" help="Build for the given target triple" default="{{ vars.target }}"
+flag "--features <features>" help="Build with the given features enabled" default="default"
+flag "--beta" help="Build with the beta feature enabled" env="BETA_BUILD"
+flag "--profile <profile>" help="Build in the given profile" default="debug"
+'''
+
+[tasks."build:all"]
+run = [
+	{ task = "build --target x86_64{{ vars.target }}" },
+	{ task = "build --target i686{{ vars.target }}" },
+	{ task = "build --target aarch64{{ vars.target }}" }
+]
+usage = '''
+flag "--beta" help="Build with the beta feature enabled" env="BETA_BUILD"
+'''
+
+[tasks.release]
+depends = [
+	"build --target {{ usage.arch }}{{ vars.target }} --profile release"
+]
+usage = '''
+flag "--arch <arch>" help="Release for the given architecture" default="x86_64"
+flag "--beta" help="Release with the beta feature enabled" env="BETA_BUILD"
+'''
+run = '''
+mkdir -p release
+TARGET="${usage_arch?}{{vars.target}}"
+TARGET_FILE="./release/sfsu-$TARGET.exe"
+cp ./target/$TARGET/release/sfsu.exe "$TARGET_FILE"
+mise run hash "$TARGET_FILE"
+'''
+
+[tasks."release:all"]
+run = [
+	{ task = "release --arch x86_64" },
+	{ task = "release --arch i686" },
+	{ task = "release --arch aarch64" }
+]
+usage = '''
+flag "--beta" help="Release with the beta feature enabled" env="BETA_BUILD"
+'''

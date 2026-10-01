@@ -1,0 +1,2 @@
+[vars]
+target = "-pc-windows-gnu"
