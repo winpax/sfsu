@@ -15,7 +15,7 @@ targets = ["aarch64-pc-windows-msvc", "i686-pc-windows-msvc", "x86_64-pc-windows
 
 [tasks.check]
 alias = "c"
-run = "cargo c"
+run = "cargo clippy"
 
 [tasks.build]
 alias = "b"
@@ -69,3 +69,10 @@ run = [
 usage = '''
 flag "--beta" help="Release with the beta feature enabled" env="BETA_BUILD"
 '''
+
+[tasks.ci]
+depends = [
+	"check",
+	"build:all",
+	"release:all"
+]
