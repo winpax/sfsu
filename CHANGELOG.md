@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.18.1]
+
+### Fixed
+
+- Arm64 architecture serialised with capital A instead of lowercase
+
+### Changed
+
+- Updated Rust version to 1.98.1
+
 ## [1.18.0]
 
 ### Changed
