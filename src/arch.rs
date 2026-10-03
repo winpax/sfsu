@@ -86,8 +86,8 @@ impl Default for Architecture {
 
 #[cfg(test)]
 mod tests {
-	use rstest::rstest;
-	use super::Architecture;
+    use super::Architecture;
+    use rstest::rstest;
 
     #[rstest]
     #[case("64bit", Architecture::X64)]
