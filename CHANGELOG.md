@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Updated Rust version to 1.98.1
+- Updated Rust version to 1.99.0
 
 ## [1.18.0]
 
@@ -192,7 +192,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For older version's changelogs, see the [releases](https://github.com/winpax/sfsu/releases) page.
 
-[Unreleased]: https://github.com/winpax/sfsu/compare/v1.17.4...HEAD
+[Unreleased]: https://github.com/winpax/sfsu/compare/v1.18.1...HEAD
+[1.18.1]: https://github.com/winpax/sfsu/releases/tag/v1.18.1
+[1.18.0]: https://github.com/winpax/sfsu/releases/tag/v1.18.0
 [1.17.4]: https://github.com/winpax/sfsu/releases/tag/v1.17.4
 [1.17.2]: https://github.com/winpax/sfsu/releases/tag/v1.17.2
 [1.17.1]: https://github.com/winpax/sfsu/releases/tag/v1.17.1
